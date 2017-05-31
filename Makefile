@@ -28,9 +28,9 @@ $(iso): $(kernel) $(grub_cfg)
 	@rm -r build/isofiles
 
 $(kernel): $(assembly_object_files) $(linker_script)
-	@ld  -melf_i386 -n -T $(linker_script) -o $(kernel) $(assembly_object_files)
+	@ld -n -T $(linker_script) -o $(kernel) $(assembly_object_files)
 
 # compile assembly files
 build/arch/$(arch)/%.o: src/arch/$(arch)/%.S
 	@mkdir -p $(shell dirname $@)
-	@as --32 $< -o $@
+	@as --64 $< -o $@
