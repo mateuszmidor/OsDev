@@ -3,6 +3,9 @@
 .equ ERROR_NO_CPUID, '1'
 .equ ERROR_NO_LONGMODE, '2'
 
+.section .data
+hello: .asciz  "Hello in PhobOS!\0"
+
 # kernel entry point
 .global start
 .section .text
@@ -20,8 +23,37 @@ start:
     call check_long_mode
 
     # print `OK` to screen
-    movl $0x2f4b2f4f, 0xb8000
+    #movl $0x2f4b2f4f, 0xb8000
+    mov $hello, %rsi
+    call puts
+
     hlt
+
+# put a string to the screen
+# %rsi - null terminated string pointer
+puts:
+    # %rdi = vga text buffer address
+    mov $0xb8000, %rdi
+
+    .loop:
+        # fetch one character
+        movb (%rsi), %dl
+
+        # check if \0
+        cmp $0, %dl
+        je .end_loop
+
+        # copy characterto vga textbuffer
+        movb %dl, (%rdi)
+        movb $0x2f, 1(%rdi)
+
+        # advance the source pointer and textbuffer pointer
+        add $1, %rsi
+        add $2, %rdi
+        jmp .loop
+
+    .end_loop:
+        ret
 
 # check if bootloader actually loaded our kernel
 check_multiboot:
@@ -102,7 +134,6 @@ error:
     movl $0x4f524f45, 0xb8000
     movl $0x4f3a4f52, 0xb8004
     movl $0x4f204f20, 0xb8008
-
     movb %al, 0xb800a
     hlt
 
