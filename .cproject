@@ -67,12 +67,12 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
-			<target name="make" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="remake" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
-				<buildTarget/>
+				<buildTarget>clean all</buildTarget>
 				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
+				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 			<target name="run" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
@@ -89,6 +89,14 @@
 				<buildTarget>clean</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="is_multiboot2" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>bash</buildCommand>
+				<buildArguments>-c "grub-file --is-x86-multiboot2 build/kernel-x86_64.bin; echo $?"</buildArguments>
+				<buildTarget/>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 		</buildTargets>

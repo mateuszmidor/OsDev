@@ -6,7 +6,7 @@ SECTIONS {
     .boot : ALIGN(4K)
     {
         /* ensure that the multiboot header is at the beginning */
-        *(.multiboot)
+        *(.multiboot_header)
     }
 
     .text : ALIGN(4K)
