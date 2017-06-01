@@ -3,12 +3,11 @@
 .equ ERROR_NO_CPUID, '1'
 .equ ERROR_NO_LONGMODE, '2'
 
-.section .data
-hello: .asciz  "Hello in PhobOS!\0"
 
 # kernel entry point
-.global start
 .section .text
+.code32
+.global start
 start:
     # setup stack
     movl $stack_top, %esp
@@ -22,34 +21,38 @@ start:
     # check if long mode is supported
     call check_long_mode
 
+    call set_up_page_tables
+    call enable_paging
+
     # print `OK` to screen
     #movl $0x2f4b2f4f, 0xb8000
-    mov $hello, %rsi
+
+    mov $hello, %esi
     call puts
 
     hlt
 
 # put a string to the screen
-# %rsi - null terminated string pointer
+# %esi - null terminated string pointer
 puts:
-    # %rdi = vga text buffer address
-    mov $0xb8000, %rdi
+    # %edi = vga text buffer address
+    mov $0xb8000, %edi
 
     .loop:
         # fetch one character
-        movb (%rsi), %dl
+        movb (%esi), %dl
 
         # check if \0
         cmp $0, %dl
         je .end_loop
 
         # copy characterto vga textbuffer
-        movb %dl, (%rdi)
-        movb $0x2f, 1(%rdi)
+        movb %dl, (%edi)
+        movb $0x2f, 1(%edi)
 
         # advance the source pointer and textbuffer pointer
-        add $1, %rsi
-        add $2, %rdi
+        add $1, %esi
+        add $2, %edi
         jmp .loop
 
     .end_loop:
@@ -72,7 +75,7 @@ check_cpuid:
 
     # Copy FLAGS in to EAX via stack
     pushf
-    pop %rax
+    pop %eax
 
     # Copy to ECX as well for comparing later on
     movl %eax, %ecx
@@ -81,16 +84,16 @@ check_cpuid:
     xorl $0x200000, %eax
 
     # Copy EAX to FLAGS via the stack
-    push %rax
+    push %eax
     popf
 
     # Copy FLAGS back to EAX (with the flipped bit if CPUID is supported)
     pushf
-    pop %rax
+    pop %eax
 
-    # Restore FLAGS from the old version stored in ECX (i.e. flipping the
+    # Restore FLAGS from the old veesion stored in ECX (i.e. flipping the
     # ID bit back if it was ever flipped).
-    push %rcx
+    push %ecx
     popf
 
     # Compare EAX and ECX. If they are equal then that means the bit
@@ -123,13 +126,64 @@ check_long_mode:
     movb $ERROR_NO_LONGMODE, %al
     jmp error
 
+# setup page tables before going into long mode
+# this is identity mapping; virtual addresses map to same physical addresses
+set_up_page_tables:
+    # map first P4 entry to P3 table
+    mov $p3_table, %eax
+    or $0b11, %eax       # present + writable
+    mov %eax, p4_table
+
+    # map first P3 entry to P2 table
+    mov $p2_table, %eax
+    or $0b11, %eax       # present + writable
+    mov %eax, p3_table
+
+    # map each P2 entry to a huge 2MiB page
+    mov $0, %ecx
+
+    .map_p2_table:
+        # map ecx-th P2 entry to a huge page that starts at address 2MiB*ecx
+        mov $0x200000, %eax     # 2MiB
+        mul %ecx                # start address of ecx-th page
+        or $0b10000011, %eax    # present + writable + huge
+        mov %eax, p2_table(, %ecx, 8) # map ecx-th entry; memory[p2_table + ecx * 8] = eax
+
+        add $1, %ecx            # increase counter
+        cmp $512, %ecx          # if counter == 512, the whole P2 table is mapped
+        jne .map_p2_table       # else map the next entry
+
+        ret
+
+# enable long mode and paging
+enable_paging:
+    # load P4 to cr3 register (cpu uses this to access the P4 table)
+    mov $p4_table, %eax
+    mov %eax, %cr3
+
+    # enable PAE-flag in cr4 (Physical Address Extension)
+    mov %cr4, %eax
+    or $32, %eax  # 1 << 5
+    mov %eax, %cr4
+
+    # set the long mode bit in the EFER MSR (model specific register)
+    mov $0xC0000080, %ecx
+    rdmsr
+    or $256, %eax # 1 << 8
+    wrmsr
+
+    # enable paging in the cr0 register
+    mov %cr0, %eax
+    or $0x80000000, %eax
+    mov %eax, %cr0
+
+    ret
 
 # Prints `ERR: ` and the given error code to screen and hangs.
 # parameter: error code (in ascii) in al
 # 0 - kernel not loaded by bootloader
 # 1 - no CPUID available
 # 2 - no longmode available
-
 error:
     movl $0x4f524f45, 0xb8000
     movl $0x4f3a4f52, 0xb8004
@@ -137,9 +191,23 @@ error:
     movb %al, 0xb800a
     hlt
 
-# create stack memory
+
+# zero-initialized data section
 .section .bss
+
+# make sure each page table fits into one memory page
+.align 4096
+# 4 level page tables for long mode, each has 512 entries of 8 byte pointer
+.lcomm p4_table, 4096
+.lcomm p3_table, 4096
+.lcomm p2_table, 4096
+
+
+# create stack memory
 stack_bottom:
-    .equ STACK_SIZE, 64
-    .lcomm STACK_DATA, STACK_SIZE
+    .lcomm STACK_DATA, 64
 stack_top:
+
+.section .data
+hello: .asciz "Hello in PhobOS!"
+
