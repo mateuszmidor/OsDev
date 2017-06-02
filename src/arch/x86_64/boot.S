@@ -12,6 +12,7 @@
 .code32
 .section .text
 .global start
+.extern long_mode_start
 start:
     # setup stack
     movl $stack_top, %esp
@@ -28,13 +29,17 @@ start:
     call set_up_page_tables
     call enable_paging
 
-    # print `OK` to screen
-    #movl $0x2f4b2f4f, 0xb8000
+    # load global descriptor table that contains our only one 64bit code selector
+    lgdt gdt64_struct_pointer
 
-    mov $hello, %esi
-    call puts
+    # load cs with gdt64_code_offset by doing far return (retf) to $long_mode_start
+    push $gdt64_code_offset # push new value of code segment(CS)
+    push $long_mode_start   # push return address
+    retf                    # pop EIP, pop CS; effectively far jumping to $long_mode_start
 
-    hlt
+#    mov $hello, %esi
+#    call puts
+#    hlt
 
 /**
     puts
@@ -236,6 +241,16 @@ stack_bottom:
     .lcomm STACK_DATA, 64
 stack_top:
 
-.section .data
-hello: .asciz "Hello in PhobOS!"
+.section .rodata
 
+# Global Descriptor Table for 64bit longmode
+gdt64:
+    .quad 0 # zero-entry
+gdt64_code:
+    .quad 0x20980000000000 # code segment: descriptor type, present, executable and the 64-bit flag
+gdt64_struct_pointer:
+    .word gdt64_struct_pointer - gdt64 - 1  # GDT length -1
+    .quad gdt64                             # GDT address
+.equ gdt64_code_offset, gdt64_code - gdt64  # GDT code segment offset in gdt64 struct
+
+hello: .asciz "Hello in PhobOS!"
