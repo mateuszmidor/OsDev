@@ -5,6 +5,7 @@
 .code64
 .section .text
 .global long_mode_start
+.extern main
 long_mode_start:
     # load 0 into all data segment registers
     mov $0, %ax
@@ -17,6 +18,9 @@ long_mode_start:
     # print hello message to screen
     mov $HELLO_MSG, %rsi
     call print_string
+
+    # enter c++ generated main routine
+    call main
     hlt
 
 /**
@@ -49,4 +53,4 @@ print_string:
         ret
 
  .section .rodata
- HELLO_MSG: .asciz "Hello in PhobOS x64!"
+ HELLO_MSG: .asciz "Hello in PhobOS long mode 64bit!"
