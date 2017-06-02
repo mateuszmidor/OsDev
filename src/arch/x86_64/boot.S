@@ -3,10 +3,14 @@
 .equ ERROR_NO_CPUID, '1'
 .equ ERROR_NO_LONGMODE, '2'
 
-
-# kernel entry point
-.section .text
+/**
+    Kernel Entry Point
+    .code32 makes the gnu assembler generate 32bit instructions;
+    this is necessary because GRUB throws us into 32bit proteced-mode.
+    Once we switch to 64bit long mode, we can use .code64
+*/
 .code32
+.section .text
 .global start
 start:
     # setup stack
@@ -32,8 +36,11 @@ start:
 
     hlt
 
-# put a string to the screen
-# %esi - null terminated string pointer
+/**
+    puts
+    Put a string to the screen.
+    %esi - null terminated string address
+*/
 puts:
     # %edi = vga text buffer address
     mov $0xb8000, %edi
@@ -58,17 +65,23 @@ puts:
     .end_loop:
         ret
 
-# check if bootloader actually loaded our kernel
+/**
+    check_multiboot
+    Check if bootloader actually properly loaded our kernel
+*/
 check_multiboot:
     cmp $0x36d76289, %eax   # check for magic number in eax
     jne .no_multiboot
     ret
 
-.no_multiboot:
-    movb $ERROR_NO_KERNEL_LOADED, %al
-    jmp error
+    .no_multiboot:
+        movb $ERROR_NO_KERNEL_LOADED, %al
+        jmp error
 
-# check if CPUID is supported
+/**
+    check_cpuid
+    Check if CPUID instruction is supported
+*/
 check_cpuid:
     # Check if CPUID is supported by attempting to flip the ID bit (bit 21)
     # in the FLAGS register. If we can flip it, CPUID is available.
@@ -102,12 +115,15 @@ check_cpuid:
     je .no_cpuid
     ret
 
-.no_cpuid:
-    movb $ERROR_NO_CPUID, %al
-    jmp error
+    .no_cpuid:
+        movb $ERROR_NO_CPUID, %al
+        jmp error
 
 
-# check if longmode is supported
+/**
+    check_long_mode
+    Check if longmode is supported
+*/
 check_long_mode:
     # test if extended processor info in available
     movl $0x80000000, %eax  # implicit argument for cpuid
@@ -122,12 +138,18 @@ check_long_mode:
     jz .no_long_mode        # If it's not set, there is no long mode
     ret
 
-.no_long_mode:
-    movb $ERROR_NO_LONGMODE, %al
-    jmp error
+    .no_long_mode:
+        movb $ERROR_NO_LONGMODE, %al
+        jmp error
 
-# setup page tables before going into long mode
-# this is identity mapping; virtual addresses map to same physical addresses
+/**
+    set_up_page_tables
+    Setup page tables before going into long mode.
+    Use huge pages (2MiB); so we only need to configure P4, P3, P2 page tables.
+    P2 maps directly to a 2MiB page that is indexed with 21 remaining bits of the address, see:
+    http://wiki.osdev.org/Page_Tables#2_MiB_pages_2
+    This is identity mapping; virtual addresses map to the same physical addresses
+*/
 set_up_page_tables:
     # map first P4 entry to P3 table
     mov $p3_table, %eax
@@ -155,7 +177,10 @@ set_up_page_tables:
 
         ret
 
-# enable long mode and paging
+/**
+    enable_paging
+    Enable PAE, long mode and paging
+*/
 enable_paging:
     # load P4 to cr3 register (cpu uses this to access the P4 table)
     mov $p4_table, %eax
@@ -179,11 +204,14 @@ enable_paging:
 
     ret
 
-# Prints `ERR: ` and the given error code to screen and hangs.
-# parameter: error code (in ascii) in al
-# 0 - kernel not loaded by bootloader
-# 1 - no CPUID available
-# 2 - no longmode available
+/**
+    error
+    Prints `ERR: ` and the given error code to screen and hangs.
+    %al - error code (in form of ascii character)
+    '0' - kernel not loaded by bootloader
+    '1' - no CPUID available
+    '2' - no longmode available
+*/
 error:
     movl $0x4f524f45, 0xb8000
     movl $0x4f3a4f52, 0xb8004
