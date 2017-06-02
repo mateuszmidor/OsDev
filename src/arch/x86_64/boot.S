@@ -1,8 +1,3 @@
-# ERROR CODE CONSTANTS
-.equ ERROR_NO_KERNEL_LOADED, '0'
-.equ ERROR_NO_CPUID, '1'
-.equ ERROR_NO_LONGMODE, '2'
-
 /**
     Kernel Entry Point
     .code32 makes the gnu assembler generate 32bit instructions;
@@ -33,20 +28,16 @@ start:
     lgdt gdt64_struct_pointer
 
     # load cs with gdt64_code_offset by doing far return (retf) to $long_mode_start
-    push $gdt64_code_offset # push new value of code segment(CS)
+    push $gdt64_code_offset # push new value of code segment offset in GDT (CS)
     push $long_mode_start   # push return address
     retf                    # pop EIP, pop CS; effectively far jumping to $long_mode_start
 
-#    mov $hello, %esi
-#    call puts
-#    hlt
-
 /**
-    puts
+    print_error
     Put a string to the screen.
     %esi - null terminated string address
 */
-puts:
+print_error:
     # %edi = vga text buffer address
     mov $0xb8000, %edi
 
@@ -60,7 +51,7 @@ puts:
 
         # copy characterto vga textbuffer
         movb %dl, (%edi)
-        movb $0x2f, 1(%edi)
+        movb $0x4f, 1(%edi) # 0x4f is white text on red background
 
         # advance the source pointer and textbuffer pointer
         add $1, %esi
@@ -80,8 +71,9 @@ check_multiboot:
     ret
 
     .no_multiboot:
-        movb $ERROR_NO_KERNEL_LOADED, %al
-        jmp error
+        mov $ERROR_NO_KERNEL_LOADED, %esi
+        call print_error
+        hlt
 
 /**
     check_cpuid
@@ -121,8 +113,9 @@ check_cpuid:
     ret
 
     .no_cpuid:
-        movb $ERROR_NO_CPUID, %al
-        jmp error
+        mov $ERROR_NO_CPUID, %esi
+        call print_error
+        hlt
 
 
 /**
@@ -144,8 +137,9 @@ check_long_mode:
     ret
 
     .no_long_mode:
-        movb $ERROR_NO_LONGMODE, %al
-        jmp error
+        mov $ERROR_NO_LONGMODE, %esi
+        call print_error
+        hlt
 
 /**
     set_up_page_tables
@@ -209,20 +203,6 @@ enable_paging:
 
     ret
 
-/**
-    error
-    Prints `ERR: ` and the given error code to screen and hangs.
-    %al - error code (in form of ascii character)
-    '0' - kernel not loaded by bootloader
-    '1' - no CPUID available
-    '2' - no longmode available
-*/
-error:
-    movl $0x4f524f45, 0xb8000
-    movl $0x4f3a4f52, 0xb8004
-    movl $0x4f204f20, 0xb8008
-    movb %al, 0xb800a
-    hlt
 
 
 # zero-initialized data section
@@ -230,6 +210,7 @@ error:
 
 # make sure each page table fits into one memory page
 .align 4096
+
 # 4 level page tables for long mode, each has 512 entries of 8 byte pointer
 .lcomm p4_table, 4096
 .lcomm p3_table, 4096
@@ -245,12 +226,16 @@ stack_top:
 
 # Global Descriptor Table for 64bit longmode
 gdt64:
-    .quad 0 # zero-entry
+    .quad 0 # start with zero-entry
 gdt64_code:
-    .quad 0x20980000000000 # code segment: descriptor type, present, executable and the 64-bit flag
+    .quad 0x20980000000000 # then code segment entry; descriptor type, present, executable and the 64-bit flag
 gdt64_struct_pointer:
     .word gdt64_struct_pointer - gdt64 - 1  # GDT length -1
     .quad gdt64                             # GDT address
 .equ gdt64_code_offset, gdt64_code - gdt64  # GDT code segment offset in gdt64 struct
 
-hello: .asciz "Hello in PhobOS!"
+# ERROR CODE CONSTANTS
+ERROR_NO_KERNEL_LOADED: .asciz "Kernel not properly loaded by GRUB"
+ERROR_NO_CPUID: .asciz "CPUID not supported"
+ERROR_NO_LONGMODE: .asciz "Long mode not supported"
+
