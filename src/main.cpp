@@ -6,33 +6,26 @@
  */
 
 #include "ScreenPrinter.h"
+#include "Multiboot2.h"
+#include "CpuInfo.h"
 
-void getCpuVendor(char buff[17]) {
-    buff[16] = '\0';
+using namespace std;
 
-    __asm__ (
-        "movq %0, %%rdi\n\t"
-        "xor %%rax, %%rax;\n\t"
-         "cpuid;\n\t"
-         "mov %%ebx, (%%rdi);\n\t"
-         "mov %%edx, 4(%%rdi);\n\t"
-         "mov %%ecx, 8(%%rdi);\n\t"
-        : // no output used
-        : "g" (buff)
-        : "memory", "%eax", "%ebx", "%ecx", "%edx", "%rdi"
-    );
-}
+
 /**
- * main
+ * kmain
  * Kernel entry point
  */
-int main() {
+extern "C" int kmain(void *ebx) {
     ScreenPrinter p;
-    p.format("\nHello in main() of main.cpp!\n");
-
-    char cpu_vendor_cstr[17];
-    getCpuVendor(cpu_vendor_cstr);
     p.set_bg_color(Color::Blue);
-    p.format("CPU: %\n", cpu_vendor_cstr);
-}
+    p.format("\n\n"); // go to the third line of console as 1 and 2 are used upon initializing in 32 and then 64 bit mode
+    p.format("Hello in kmain() of main.cpp!\n");
+    p.format("ebx: %\n", (unsigned long long)ebx);
 
+    CpuInfo cpu_info;
+    cpu_info.print(p);
+
+    Multiboot2 mb2(ebx);
+    mb2.print(p);
+}

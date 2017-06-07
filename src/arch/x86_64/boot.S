@@ -12,6 +12,9 @@ start:
     # setup stack
     movl $stack_top, %esp
 
+    # store boot info struct pointer in edi so it then gets passed to kmain function
+    mov %ebx, %edi
+
     # check if kernel was actually loaded by the bootloader
     call check_multiboot
 
@@ -21,6 +24,11 @@ start:
     # check if long mode is supported
     call check_long_mode
 
+    # checkups done, print hello message
+    mov $HELLO_MSG, %esi
+    call print
+
+    # setup paging
     call set_up_page_tables
     call enable_paging
 
@@ -33,12 +41,13 @@ start:
     retf                    # pop EIP, pop CS; effectively far jumping to $long_mode_start
 
 /**
-    print_error
+    print
     Put a string to the screen.
     %esi - null terminated string address
 */
-print_error:
-    # %edi = vga text buffer address
+print:
+    # %edi = vga text buffer address, save it and restore upon return
+    push %edi
     mov $0xb8000, %edi
 
     .loop:
@@ -59,6 +68,7 @@ print_error:
         jmp .loop
 
     .end_loop:
+        pop %edi
         ret
 
 /**
@@ -72,7 +82,7 @@ check_multiboot:
 
     .no_multiboot:
         mov $ERROR_NO_KERNEL_LOADED, %esi
-        call print_error
+        call print
         hlt
 
 /**
@@ -114,7 +124,7 @@ check_cpuid:
 
     .no_cpuid:
         mov $ERROR_NO_CPUID, %esi
-        call print_error
+        call print
         hlt
 
 
@@ -138,7 +148,7 @@ check_long_mode:
 
     .no_long_mode:
         mov $ERROR_NO_LONGMODE, %esi
-        call print_error
+        call print
         hlt
 
 /**
@@ -219,7 +229,7 @@ enable_paging:
 
 # create stack memory
 stack_bottom:
-    .lcomm STACK_DATA, 64
+    .lcomm STACK_DATA, 4*4096
 stack_top:
 
 .section .rodata
@@ -233,6 +243,9 @@ gdt64_struct_pointer:
     .word gdt64_struct_pointer - gdt64 - 1  # GDT length -1
     .quad gdt64                             # GDT address
 .equ gdt64_code_offset, gdt64_code - gdt64  # GDT code segment offset in gdt64 struct
+
+
+HELLO_MSG: .asciz "Hello in PhobOS protected mode 32bit!"
 
 # ERROR CODE CONSTANTS
 ERROR_NO_KERNEL_LOADED: .asciz "Kernel not properly loaded by GRUB"
