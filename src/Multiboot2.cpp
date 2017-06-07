@@ -61,6 +61,13 @@ Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
             break;
         }
 
+        case 9: {
+            ElfSymbols *esp = (ElfSymbols*)tag_ptr;
+            es = *esp;
+            break;
+            // TODO: read ELF section headers
+        }
+
         default:
             break;
         }
@@ -72,11 +79,13 @@ Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
 void Multiboot2::print(ScreenPrinter &p) {
     p.format("boot loader: %\n", bl.name);
     p.format("boot cmdline: %\n", cmd.cmd);
-    p.format("framebuffer %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, fb.fb_type == 0 ? "indexed" : "non indexed");
+    p.format("framebuffer: %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, fb.fb_type == 0 ? "indexed" : "non indexed");
     p.format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
     p.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
     p.format("memory areas:\n");
     for (int i = 0; i < mme_count; i++)
         p.format("   addr: %KB, len: %KB, type: %(%) \n",
                     mme[i].address / 1024, mme[i].length / 1024, mme[i].type, mme[i].type == 1 ? "available" : "reserved");
+
+    p.format("elf symbols: num: %, ent size: %, shndx: %\n", es.num, es.ent_size, es.shndx);
 }

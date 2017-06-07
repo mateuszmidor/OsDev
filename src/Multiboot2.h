@@ -66,6 +66,18 @@ struct FrameBuffer {
     // here color palette if fb_type == 0
 } __attribute__((packed));
 
+struct ElfSymbols {
+    unsigned int type;  // = 9
+    unsigned int size;
+    unsigned short num;
+    unsigned short ent_size;
+    unsigned short shndx;
+    unsigned short reserved;
+    // section headers
+} __attribute__((packed));
+
+
+
 /**
  * @class   Multiboot2
  * @see     http://nongnu.askapache.com/grub/phcoder/multiboot.pdf
@@ -84,6 +96,7 @@ private:
     MemoryMap mm;
     MemoryMapEntry mme[20]; // 20 is selected arbitrarily
     unsigned int mme_count;
+    ElfSymbols es;
 };
 
 
