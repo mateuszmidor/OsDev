@@ -7,14 +7,14 @@
 
 #include "Multiboot2.h"
 
-Multiboot2::Multiboot2(void *ebx) {
+Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
     // skip the global tag that comes first and is always present
-    char *tag_ptr = (char*)ebx + sizeof(GlobalTag);
+    char *tag_ptr = (char*)multiboot2_info_ptr + sizeof(GlobalTag);
 
     // read subsequent tags
     bool done = false;
     while (!done) {
-        TagHeader * t = (TagHeader*) tag_ptr;
+        TagHeader *t = (TagHeader*) tag_ptr;
 
         switch (t->type) {
         case 0: {
@@ -23,19 +23,19 @@ Multiboot2::Multiboot2(void *ebx) {
         }
 
         case 1: {
-            CommandLine * cmdp = (CommandLine*)tag_ptr;
+            CommandLine *cmdp = (CommandLine*)tag_ptr;
             cmd = *cmdp;
             break;
         }
 
         case 2: {
-            BootLoader * blp = (BootLoader*)tag_ptr;
+            BootLoader *blp = (BootLoader*)tag_ptr;
             bl = *blp;
             break;
         }
 
         case 4: {
-            BasicMemInfo * bmip = (BasicMemInfo*)tag_ptr;
+            BasicMemInfo *bmip = (BasicMemInfo*)tag_ptr;
             bmi = *bmip;
             break;
         }
@@ -73,10 +73,10 @@ void Multiboot2::print(ScreenPrinter &p) {
     p.format("boot loader: %\n", bl.name);
     p.format("boot cmdline: %\n", cmd.cmd);
     p.format("framebuffer %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, fb.fb_type == 0 ? "indexed" : "non indexed");
-    p.format("memory info: lower: %KB, upper:%MB\n", bmi.type, bmi.size, bmi.lower, bmi.upper / 1024);
+    p.format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
     p.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
     p.format("memory areas:\n");
     for (int i = 0; i < mme_count; i++)
         p.format("   addr: %KB, len: %KB, type: %(%) \n",
-                mme[i].address / 1024, mme[i].length / 1024, mme[i].type, mme[i].type == 1 ? "available" : "reserved");
+                    mme[i].address / 1024, mme[i].length / 1024, mme[i].type, mme[i].type == 1 ? "available" : "reserved");
 }

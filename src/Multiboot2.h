@@ -42,13 +42,13 @@ struct MemoryMapEntry {
 } __attribute__((packed));
 
 struct CommandLine {
-    unsigned int type;
+    unsigned int type;  // = 1
     unsigned int size;
     char cmd[32];
 } __attribute__((packed));
 
 struct BootLoader {
-    unsigned int type;
+    unsigned int type;  // = 2
     unsigned int size;
     char name[32];
 } __attribute__((packed));
@@ -58,8 +58,8 @@ struct FrameBuffer {
     unsigned int size;
     unsigned long long address; // should be below 4GiB
     unsigned int pitch;
-    unsigned int width;    // in pixels
-    unsigned int height;   // in pixels
+    unsigned int width;
+    unsigned int height;
     unsigned char bpp;      // bits per pixel
     unsigned char fb_type;  // indexed color if = 0
     unsigned char reserved; // = 0
@@ -72,7 +72,7 @@ struct FrameBuffer {
  */
 class Multiboot2 {
 public:
-    Multiboot2(void *ebx);
+    Multiboot2(void *multiboot2_info_ptr);
     void print(ScreenPrinter &p);
 
 private:
