@@ -62,18 +62,16 @@ Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
         }
 
         case 9: {
-            ElfSymbols *esp = (ElfSymbols*)tag_ptr;
+            Elf64Sections *esp = (Elf64Sections*)tag_ptr;
             es = *esp;
+            esh_count = es.num;
 
-
-            // TODO: read ELF section headers
-//            esh_count = es.num;
-//            char *entry_ptr = tag_ptr;
-//            for (int i = 0; i < esh_count; i++) {
-//                Elf64_Shdr *eshp = (Elf64_Shdr*)entry_ptr;
-//                esh[i] = *eshp;
-//                entry_ptr += sizeof(Elf64_Shdr);
-//            }
+            char *entry_ptr = tag_ptr +  sizeof(Elf64Sections);
+            for (int i = 0; i < esh_count; i++) {
+                Elf64SectionHeader *eshp = (Elf64SectionHeader*)entry_ptr;
+                esh[i] = *eshp;
+                entry_ptr += sizeof(Elf64SectionHeader);
+            }
 
             break;
         }
@@ -98,7 +96,7 @@ void Multiboot2::print(ScreenPrinter &p) {
                     mme[i].address / 1024, mme[i].length / 1024, mme[i].type, mme[i].type == 1 ? "available" : "reserved");
 
     p.format("elf symbols: num: %, ent size: %, shndx: %\n", es.num, es.ent_size, es.shndx);
-//    for (int i = 0; i < esh_count; i++)
-//        p.format("   addr: %, len: %\n", (unsigned long long)esh[i].sh_addr, esh[i].sh_size);
+    for (int i = 0; i < esh_count; i++)
+        p.format("   addr: %, len: %, type: %, flags: %\n", esh[i].addr, esh[i].size, esh[i].type, esh[i].flags);
 
 }

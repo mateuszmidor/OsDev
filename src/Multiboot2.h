@@ -27,18 +27,19 @@ struct BasicMemInfo {
     unsigned int upper;
 } __attribute__((packed));
 
-struct MemoryMap {
-    unsigned int type;  // = 6
-    unsigned int size;
-    unsigned int entry_size;
-    unsigned int entry_version;
-} __attribute__((packed));
-
 struct MemoryMapEntry {
     unsigned long long address;  // physical
     unsigned long long length;
     unsigned int type;  // 0 = reserved, 1 = available, 3 = ACPI info, 4 = hibernation reserved
     unsigned int reserved;
+} __attribute__((packed));
+
+struct MemoryMap {
+    unsigned int type;  // = 6
+    unsigned int size;
+    unsigned int entry_size;
+    unsigned int entry_version;
+    MemoryMapEntry entries[0];
 } __attribute__((packed));
 
 struct CommandLine {
@@ -66,36 +67,29 @@ struct FrameBuffer {
     // here color palette if fb_type == 0
 } __attribute__((packed));
 
-struct ElfSymbols {
-    unsigned int type;  // = 9
-    unsigned int size;
-    unsigned short num;
-    unsigned short ent_size;
-    unsigned short shndx;
-    unsigned short reserved;
-    // section headers
+struct Elf64SectionHeader {
+    unsigned int name;
+    unsigned int type;
+    unsigned long long flags;
+    unsigned long long addr;
+    unsigned long long offset;
+    unsigned long long size;
+    unsigned int link;
+    unsigned int info;
+    unsigned long long addralign;
+    unsigned long long entsize;
 } __attribute__((packed));
 
-//using Elf64_Addr = void*;
-//using Elf64_Off = unsigned long long;
-//using Elf64_Half = unsigned short;
-//using Elf64_Word = unsigned int;
-//using Elf64_Sword = int;
-//using Elf64_Xword = unsigned long long;
-//using Elf64_Sxword = long long;
-//
-//struct Elf64_Shdr {
-//    Elf64_Word    sh_name;    /*  Section  name  */
-//    Elf64_Word    sh_type;    /*  Section  type  */
-//    Elf64_Xword   sh_flags;   /*  Section  attributes  */
-//    Elf64_Addr    sh_addr;    /*  Virtual  address  in  memory  */
-//    Elf64_Off     sh_offset;  /*  Offset  in  file  */
-//    Elf64_Xword   sh_size;    /*  Size  of  section  */
-//    Elf64_Word    sh_link;    /*  Link  to  other  section  */
-//    Elf64_Word    sh_info;    /*  Miscellaneous  information  */
-//    Elf64_Xword   sh_addralign;  /*  Address  alignment  boundary  */
-//    Elf64_Xword    sh_entsize;   /*  Size  of  entries,  if  section  has  table  */
-//}__attribute__((packed));
+struct Elf64Sections {
+    unsigned int type;  // = 9
+    unsigned int size;
+    unsigned int num;
+    unsigned int ent_size;
+    unsigned int shndx;
+    Elf64SectionHeader headers[0];
+} __attribute__((packed));
+
+
 
 /**
  * @class   Multiboot2
@@ -115,9 +109,9 @@ private:
     MemoryMap mm;
     MemoryMapEntry mme[20]; // 20 is selected arbitrarily
     unsigned int mme_count;
-    ElfSymbols es;
-//    Elf64_Shdr esh[20];
-//    unsigned int esh_count;
+    Elf64Sections es;
+    Elf64SectionHeader esh[20];
+    unsigned int esh_count;
 };
 
 
