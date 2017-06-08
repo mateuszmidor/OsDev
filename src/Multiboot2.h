@@ -101,7 +101,8 @@ public:
     void print(ScreenPrinter &p);
 
 private:
-
+    unsigned long long multiboot2_info_addr;
+    unsigned int multiboot2_info_totalsize;
     BasicMemInfo bmi;
     CommandLine cmd;
     BootLoader bl;

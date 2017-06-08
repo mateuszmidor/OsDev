@@ -8,10 +8,15 @@
 #include "Multiboot2.h"
 
 Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
-    // skip the global tag that comes first and is always present
-    char *tag_ptr = (char*)multiboot2_info_ptr + sizeof(GlobalTag);
+    multiboot2_info_addr = (unsigned long long)multiboot2_info_ptr;
+    char *tag_ptr = (char*)multiboot2_info_ptr;
 
-    // read subsequent tags
+    // read the always present Multiboot2 global tag
+    GlobalTag *global = (GlobalTag*)tag_ptr;
+    multiboot2_info_totalsize = global->total_size;
+    tag_ptr += sizeof(GlobalTag);
+
+    // read subsequent optional tags
     bool done = false;
     while (!done) {
         TagHeader *t = (TagHeader*) tag_ptr;
@@ -85,18 +90,20 @@ Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
 }
 
 void Multiboot2::print(ScreenPrinter &p) {
-    p.format("boot loader: %\n", bl.name);
+    p.format("boot loader: %, ", bl.name);
     p.format("boot cmdline: %\n", cmd.cmd);
     p.format("framebuffer: %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, fb.fb_type == 0 ? "indexed" : "non indexed");
     p.format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
-    p.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
+//    p.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
     p.format("memory areas:\n");
     for (int i = 0; i < mme_count; i++)
         p.format("   addr: %KB, len: %KB, type: %(%) \n",
                     mme[i].address / 1024, mme[i].length / 1024, mme[i].type, mme[i].type == 1 ? "available" : "reserved");
 
-    p.format("elf symbols: num: %, ent size: %, shndx: %\n", es.num, es.ent_size, es.shndx);
-    for (int i = 0; i < esh_count; i++)
+
+    p.format("elf sections: \n");
+    for (int i = 1; i < esh_count; i++)
         p.format("   addr: %, len: %, type: %, flags: %\n", esh[i].addr, esh[i].size, esh[i].type, esh[i].flags);
 
+    p.format("multiboot: addr: %, len: %\n", multiboot2_info_addr, multiboot2_info_totalsize);
 }
