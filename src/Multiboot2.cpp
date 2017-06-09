@@ -104,31 +104,31 @@ void Multiboot2::print(ScreenPrinter &p) {
 
     p.format("elf sections: \n");
 
-    for (int i = 1; i < esh_count; i++) {
+    for (int i = 0; i < esh_count; i++) {
         kstd::string type =
                 kstd::enum_to_str(esh[i].flags,
                 "NULL=0x0",
                 "PROGBITS=0x1",
                 "SYMTAB=0x2",
                 "STRTAB=0x3",
-//                "RELA=0x4",
-//                "HASH=0x5",
+                "RELA=0x4",
+                "HASH=0x5",
                 "DYNAMIC=0x6"
-//                "NOTE=0x7",
-//                ".BSS=0x8",
-//                "REL=0x9",
-//                "SHLIB=0x0A",
-//                "DYNSYM=0x0B"
-//                "CONSTRUCTORS=0x0E",
-//                "DESTRUCTORS=0x0F",
-//                "PRECONSTRUC=0x10",
-//                "GROUP=0x11",
-//                "SYMTAB_SHNDX=0x12",
-//                "NUM=0x13",
-//                "OS_SPECYFIC=0x60000000"
+                "NOTE=0x7",
+                ".BSS=0x8",
+                "REL=0x9",
+                "SHLIB=0x0A",
+                "DYNSYM=0x0B"
+                "CONSTRUCTORS=0x0E",
+                "DESTRUCTORS=0x0F",
+                "PRECONSTRUC=0x10",
+                "GROUP=0x11",
+                "SYMTAB_SHNDX=0x12",
+                "NUM=0x13",
+                "OS_SPECYFIC=0x60000000"
                 );
 
-        kstd::string flags = ""; /*
+        kstd::string flags =
                 kstd::flags_to_str(esh[i].flags,
                 "WRITE=0x1",
                 "ALLOC=0x2",
@@ -136,16 +136,16 @@ void Multiboot2::print(ScreenPrinter &p) {
                 "MERGE=0x10",
                 "STRINGS=0x20",
                 "INFO_LINK=0x40",
-//                "LINK_ORDER=0x80",
-//                "OS_NONCONFORMING=0x100"
-//                "GROUP=0x200",
-//                "TLS=0x400",
-//                "MASKOS=0x0FF00000",
-//                "MASKPROC=0xF0000000",
-//                "ORDERED=0x4000000",
+                "LINK_ORDER=0x80",
+                "OS_NONCONFORMING=0x100"
+                "GROUP=0x200",
+                "TLS=0x400",
+                "MASKOS=0x0FF00000",
+                "MASKPROC=0xF0000000",
+                "ORDERED=0x4000000",
                 "EXCLUDE=0x8000000"
                 );
-*/
+
         p.format("   addr: %, len: %, type: %, flags: %\n", esh[i].addr, esh[i].size, type.c_str(), flags.c_str());
     }
 

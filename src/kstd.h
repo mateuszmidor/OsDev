@@ -82,20 +82,20 @@ unsigned long long hex_to_long(const char* str);
     @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");
                 > READ WRITE
 */
-//inline string flags_to_str(unsigned long long flags) {
-//    return string();
-//}
-//
-//template <class H, class ...T>
-//string flags_to_str(unsigned long long flags, H head, T... tail) {
-//    string k, v;
-//    split_key_value(head, k, v);
-//    unsigned long long val = hex_to_long(v.c_str());
-//    if ((flags & val) == val)
-//        return string(k) + " " + flags_to_str(flags, tail...);
-//    else
-//        return flags_to_str(flags, tail...);
-//}
+inline string flags_to_str(unsigned long long flags) {
+    return string();
+}
+
+template <class H, class ...T>
+string flags_to_str(unsigned long long flags, H head, T... tail) {
+    string k, v;
+    split_key_value(head, k, v);
+    unsigned long long val = hex_to_long(v.c_str());
+    if ((flags & val) == val)
+        return string(k) + " " + flags_to_str(flags, tail...);
+    else
+        return flags_to_str(flags, tail...);
+}
 
 
 /**
@@ -103,7 +103,7 @@ unsigned long long hex_to_long(const char* str);
                 > CLOSE
 */
 inline string enum_to_str(unsigned long long enumval) {
-    return string();
+    return string("[UNKNOWN]");
 }
 
 template <class H, class ...T>
