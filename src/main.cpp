@@ -16,7 +16,7 @@ using namespace kstd;
 void test_kstd(ScreenPrinter &p) {
     // test vector
     vector<long long> vec;
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 10; i++)
         vec.push_back(i);
     for (auto a : vec)
         p.format("%, ", a);
@@ -24,9 +24,13 @@ void test_kstd(ScreenPrinter &p) {
     p.format("\n");
 
     // test sting
-    string s("abcdefghijklkmnoprstuwxyz\n");
+    string s("abcdefghijklkmnoprstuwxyz");
     s += "123456abcdefghijklkmnoprstuwxyz";
     p.format("%\n", s.c_str());
+
+    // test flags
+//    string s2= flags_to_str(5, "READ=0x4", "WRITE=0x2", "EXEC=0x1");
+//    p.format("%\n", s2.c_str());
 }
 
 

@@ -15,42 +15,6 @@
 #include <string>
 
 
-void* operator new(size_t size) {
-    // allocation should be done using memory manager
-    return (void*)(2 * 1024 * 1024); // allocate at 2MB physical address
-}
-
-void operator delete(void *ptr) {
-    // should deallocate using memory manager
-}
-
-extern "C" void * memcpy( void * destination, const void * source, size_t num ) {
-    char *dst = (char*)destination;
-    const char *src = (const char*)source;
-    for (int i = 0; i < num; i++)
-        dst[i] = src[i];
-    return dst;
-}
-
-extern "C" void * memmove( void * destination, const void * source, size_t num ) {
-    return memcpy(destination, source, num);
-}
-
-
-void std::__throw_length_error(char const* s) {
-    ScreenPrinter p;
-    p.format("ERROR:%", s);
-}
-
-void std::__throw_logic_error(char const* s) {
-    ScreenPrinter p;
-    p.format("ERROR:%", s);
-}
-
-void std::__throw_bad_alloc() {
-    ScreenPrinter p;
-    p.format("BAD ALLOC");
-}
 
 namespace kstd {
 
@@ -106,13 +70,52 @@ public :
     inline bool operator!=(Allocator const& a) { return !operator==(a); }
 };    //    end of class Allocator
 
-
-
 template <class T>
-using vector = std::vector<T>;
+using vector = std::vector<T, Allocator<T>>;
 
 using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;
 
+void split_key_value(const string &kv, string &key, string &value);
+unsigned long long hex_to_long(const char* str);
+
+/**
+    @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");
+                > READ WRITE
+*/
+//inline string flags_to_str(unsigned long long flags) {
+//    return string();
+//}
+//
+//template <class H, class ...T>
+//string flags_to_str(unsigned long long flags, H head, T... tail) {
+//    string k, v;
+//    split_key_value(head, k, v);
+//    unsigned long long val = hex_to_long(v.c_str());
+//    if ((flags & val) == val)
+//        return string(k) + " " + flags_to_str(flags, tail...);
+//    else
+//        return flags_to_str(flags, tail...);
+//}
+
+
+/**
+    @example    enum_to_str(3, "CLOSE=0x3", "READ=0x2", "OPEN=0x1");
+                > CLOSE
+*/
+inline string enum_to_str(unsigned long long enumval) {
+    return string();
+}
+
+template <class H, class ...T>
+string enum_to_str(unsigned long long enumval, H head, T... tail) {
+    string k, v;
+    split_key_value(head, k, v);
+    unsigned long long val = hex_to_long(v.c_str());
+    if (val == enumval)
+        return string(k);
+    else
+        return enum_to_str(enumval, tail...);
+}
 
 
 }; // namespace kstd

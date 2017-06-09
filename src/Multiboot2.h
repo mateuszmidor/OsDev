@@ -7,7 +7,7 @@
 
 #ifndef SRC_MULTIBOOT2_H_
 #define SRC_MULTIBOOT2_H_
-
+#include <cstdint>
 #include "ScreenPrinter.h"
 
 struct GlobalTag {
@@ -21,7 +21,7 @@ struct TagHeader {
 } __attribute__((packed));
 
 struct BasicMemInfo {
-    unsigned int type;  // = 4
+    uint32_t type;  // = 4
     unsigned int size;
     unsigned int lower;
     unsigned int upper;
