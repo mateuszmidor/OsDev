@@ -97,10 +97,18 @@ void Multiboot2::print(ScreenPrinter &p) {
     p.format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
 //    p.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
 //    p.format("memory areas:\n");
-    for (int i = 0; i < mme_count; i++)
-        p.format("   addr: %KB, len: %KB, type: %(%) \n",
-                    mme[i].address / 1024, mme[i].length / 1024, mme[i].type, mme[i].type == 1 ? "available" : "reserved");
+    for (int i = 0; i < mme_count; i++) {
+        kstd::string type =
+                kstd::enum_to_str(mme[i].type,
+                        "Available=0x1",
+                        "Reserved=0x2",
+                        "ACPI reclaimable=0x3",
+                        "ACPI NVS=0x4",
+                        "BAD=0x5");
 
+        p.format("   addr: %KB, len: %KB, type: %\n",
+                    mme[i].address / 1024, mme[i].length / 1024, type.c_str());
+    }
 
     p.format("elf sections: \n");
 

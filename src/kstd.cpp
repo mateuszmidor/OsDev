@@ -10,9 +10,9 @@
 
 void* operator new(size_t size) {
     // allocation should be done using memory manager
-    static char *addr = (char*)(2 * 1024 * 1024);
-    addr += size + 8;
-    return addr;
+    static size_t addr = 2 * 1024 * 1024;
+    addr = (addr + 7) / 8 * 8; // next 8-aligned address
+    return (void*)addr;
 }
 
 void operator delete(void *ptr) {
