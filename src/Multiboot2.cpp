@@ -93,7 +93,7 @@ Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
 void Multiboot2::print(ScreenPrinter &p) {
     p.format("boot loader: %, ", bl.name);
     p.format("boot cmdline: %\n", cmd.cmd);
-    p.format("framebuffer: %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, fb.fb_type == 0 ? "indexed" : "non indexed");
+    p.format("framebuffer: %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, kstd::enum_to_str(fb.fb_type, "indexed=0x0"," RGB=0x1", "EGA text=0x2").c_str());
     p.format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
 //    p.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
 //    p.format("memory areas:\n");
@@ -106,7 +106,7 @@ void Multiboot2::print(ScreenPrinter &p) {
 
     for (int i = 0; i < esh_count; i++) {
         kstd::string type =
-                kstd::enum_to_str(esh[i].flags,
+                kstd::enum_to_str(esh[i].type,
                 "NULL=0x0",
                 "PROGBITS=0x1",
                 "SYMTAB=0x2",

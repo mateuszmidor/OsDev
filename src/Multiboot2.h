@@ -62,7 +62,7 @@ struct FrameBuffer {
     unsigned int width;
     unsigned int height;
     unsigned char bpp;      // bits per pixel
-    unsigned char fb_type;  // indexed color if = 0
+    unsigned char fb_type;  // indexed=0x0, RGB=0x1, EGA text=0x2
     unsigned char reserved; // = 0
     // here color palette if fb_type == 0
 } __attribute__((packed));
