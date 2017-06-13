@@ -238,7 +238,7 @@ stack_top:
 gdt64:
     .quad 0 # start with zero-entry
 gdt64_code:
-    .quad 0x20980000000000 # then code segment entry; descriptor type, present, executable and the 64-bit flag
+    .quad 0x20980000000000 # then code segment entry; USER_SEGMENT(44) | PRESENT(47) | EXECUTABLE(43) | LONG_MODE(53)
 gdt64_struct_pointer:
     .word gdt64_struct_pointer - gdt64 - 1  # GDT length -1
     .quad gdt64                             # GDT address
