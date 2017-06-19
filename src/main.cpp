@@ -51,7 +51,11 @@ void test_idt() {
 
     // check zero division exception handler
     asm("mov $0, %rcx; mov $0, %rdx; idiv %rcx");
+
+    // check page fault exception handler (write to non mapped page)
+    //asm("mov %rax, (1024*1024*1024)");
 }
+
 /**
  * @name    callGlobalConstructors
  * @brief   Call the constructors of objects defined in global namespace (if any)
@@ -175,9 +179,15 @@ void configIDT() {
             );
 }
 
-extern "C" void on_interrupt(u8 int_no) {
+/**
+ * @name    on_interrupt
+ * @brief   Interrupt/CPU exception handler
+ * @param   rsp
+ * @param   int_no
+ */
+extern "C" void on_interrupt(u8 interrupt_no, u64 error_code) {
     static u32 count = 1;
-    printer.format("interrupt no. % [%]\n", int_no, count++);
+    printer.format("interrupt no. %, error code % [%]\n", interrupt_no, error_code, count++);
 }
 
 /**
