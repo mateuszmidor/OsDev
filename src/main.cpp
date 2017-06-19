@@ -78,7 +78,7 @@ struct IdtEntryOptions {
         interrupts_enabled = 0;
         always_1 = 7; // 0b111
         always_0 = 0;
-        min_privilege_level = 3;
+        min_privilege_level = 0;
         present = is_present;
 
     }
@@ -134,7 +134,7 @@ void configIDT() {
     idt_size_address.size_minus_1 = sizeof(idt) - 1;
     idt_size_address.address = (u64)idt;
 
-    __asm__ ("lidt %0"
+    __asm__ volatile("lidt %0"
             :
             : "m" (idt_size_address)
             );
@@ -150,6 +150,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // configure Interrupt Descriptor Table
     configIDT();
+    test_idt();
 
     // print hello message to the user
     ScreenPrinter p;
@@ -166,5 +167,5 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     mb2.print(p);
 
     //test_kstd(p);
-    test_idt();
+
 }

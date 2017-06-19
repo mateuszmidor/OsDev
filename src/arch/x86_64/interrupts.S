@@ -21,5 +21,8 @@ handle_interrupt:
     pop %rsi
     pop %rdi
     pop %rbp
-    hlt
-    iret
+
+    # divide by zero - fix the denominator
+    mov $1, %rbx
+
+    iretq
