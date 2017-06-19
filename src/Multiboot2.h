@@ -30,7 +30,7 @@ struct BasicMemInfo {
 struct MemoryMapEntry {
     unsigned long long address;  // physical
     unsigned long long length;
-    unsigned int type;  // 0 = reserved, 1 = available, 3 = ACPI info, 4 = hibernation reserved
+    unsigned int type;  // 1 = available, 2 = reserved, 3 = ACPI info, 4 = hibernation reserved, 5 = badram
     unsigned int reserved;
 } __attribute__((packed));
 

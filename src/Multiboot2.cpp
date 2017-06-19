@@ -98,6 +98,7 @@ void Multiboot2::print(ScreenPrinter &p) {
 //    p.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
 //    p.format("memory areas:\n");
     for (int i = 0; i < mme_count; i++) {
+        if (mme[i].type == 2) continue;
         kstd::string type =
                 kstd::enum_to_str(mme[i].type,
                         "Available=0x1",
