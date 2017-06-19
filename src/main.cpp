@@ -14,6 +14,11 @@
 
 using namespace kstd;
 
+
+// screen printer for printing to the screen
+ScreenPrinter printer;
+
+
 /**
  * Test kstd namespace functionality
  */
@@ -45,7 +50,7 @@ void test_idt() {
     asm("int3");
 
     // check zero division exception handler
-    asm("xor %rbx, %rbx; idiv %rbx");
+    asm("mov $0, %rcx; mov $0, %rdx; idiv %rcx");
 }
 /**
  * @name    callGlobalConstructors
@@ -110,25 +115,55 @@ IdtEntry make_entry(u64 pointer) {
     return e;
 }
 
-IdtEntry idt[16] ;
+IdtEntry idt[0x14] ;
 
 struct IdtSizeAddress {
     u16 size_minus_1;
     u64 address;
 } __attribute__((packed)) ;
 
-//extern "C" void* divide_by_zero_handler(void *rsp) {
-//    ScreenPrinter p;
-//    p.format("ZERO DIVISION\n");
-//
-//    return rsp;
-//}
-
-extern "C" void handle_interrupt();
+extern "C" void handle_exception_no_0x00();
+extern "C" void handle_exception_no_0x01();
+extern "C" void handle_exception_no_0x02();
+extern "C" void handle_exception_no_0x03();
+extern "C" void handle_exception_no_0x04();
+extern "C" void handle_exception_no_0x05();
+extern "C" void handle_exception_no_0x06();
+extern "C" void handle_exception_no_0x07();
+extern "C" void handle_exception_no_0x08();
+extern "C" void handle_exception_no_0x09();
+extern "C" void handle_exception_no_0x0A();
+extern "C" void handle_exception_no_0x0B();
+extern "C" void handle_exception_no_0x0C();
+extern "C" void handle_exception_no_0x0D();
+extern "C" void handle_exception_no_0x0E();
+extern "C" void handle_exception_no_0x0F();
+extern "C" void handle_exception_no_0x10();
+extern "C" void handle_exception_no_0x11();
+extern "C" void handle_exception_no_0x12();
+extern "C" void handle_exception_no_0x13();
 
 void configIDT() {
-    idt[0] = make_entry((u64)handle_interrupt); // zero division
-    idt[3] = make_entry((u64)handle_interrupt); // breakpoint
+    idt[0x00] = make_entry((u64)handle_exception_no_0x00); // zero division
+    idt[0x01] = make_entry((u64)handle_exception_no_0x01);
+    idt[0x02] = make_entry((u64)handle_exception_no_0x02);
+    idt[0x03] = make_entry((u64)handle_exception_no_0x03); // breakpoint
+    idt[0x04] = make_entry((u64)handle_exception_no_0x04);
+    idt[0x05] = make_entry((u64)handle_exception_no_0x05);
+    idt[0x06] = make_entry((u64)handle_exception_no_0x06);
+    idt[0x07] = make_entry((u64)handle_exception_no_0x07);
+    idt[0x08] = make_entry((u64)handle_exception_no_0x08);
+    idt[0x09] = make_entry((u64)handle_exception_no_0x09);
+    idt[0x0A] = make_entry((u64)handle_exception_no_0x0A);
+    idt[0x0B] = make_entry((u64)handle_exception_no_0x0B);
+    idt[0x0C] = make_entry((u64)handle_exception_no_0x0C);
+    idt[0x0D] = make_entry((u64)handle_exception_no_0x0D);
+    idt[0x0E] = make_entry((u64)handle_exception_no_0x0E);
+    idt[0x0F] = make_entry((u64)handle_exception_no_0x0F);
+    idt[0x10] = make_entry((u64)handle_exception_no_0x10);
+    idt[0x11] = make_entry((u64)handle_exception_no_0x11);
+    idt[0x12] = make_entry((u64)handle_exception_no_0x12);
+    idt[0x13] = make_entry((u64)handle_exception_no_0x13);
 
     IdtSizeAddress idt_size_address ;
     idt_size_address.size_minus_1 = sizeof(idt) - 1;
@@ -138,6 +173,11 @@ void configIDT() {
             :
             : "m" (idt_size_address)
             );
+}
+
+extern "C" void on_interrupt(u8 int_no) {
+    static u32 count = 1;
+    printer.format("interrupt no. % [%]\n", int_no, count++);
 }
 
 /**
@@ -150,22 +190,23 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // configure Interrupt Descriptor Table
     configIDT();
-    test_idt();
 
     // print hello message to the user
-    ScreenPrinter p;
-    p.set_bg_color(Color::Blue);
-    p.format("\n\n"); // go to the third line of console as 1 and 2 are used upon initializing in 32 and then 64 bit mode
-    p.format("Hello in kmain() of main.cpp!\n");
+    printer.set_bg_color(Color::Blue);
+    printer.format("\n\n"); // go to the third line of console as 1 and 2 are used upon initializing in 32 and then 64 bit mode
+    printer.format("Hello in kmain() of main.cpp!\n");
 
     // print CPU info
     CpuInfo cpu_info;
-    cpu_info.print(p);
+    cpu_info.print(printer);
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
     Multiboot2 mb2(multiboot2_info_ptr);
-    mb2.print(p);
+    mb2.print(printer);
 
     //test_kstd(p);
+    test_idt();
 
+    // inform setup done
+    printer.format("KERNEL SETUP DONE.\n");
 }
