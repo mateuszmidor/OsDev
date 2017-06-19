@@ -46,21 +46,25 @@ extern "C" int memcmp ( const void * ptr1, const void * ptr2, size_t num ) {
 void std::__throw_length_error(char const* s) {
 //    ScreenPrinter p;
 //    p.format("ERROR:%", s);
+    __builtin_unreachable();
 }
 
 void std::__throw_logic_error(char const* s) {
 //    ScreenPrinter p;
 //    p.format("ERROR:%", s);
+    __builtin_unreachable();
 }
 
 void std::__throw_bad_alloc() {
 //    ScreenPrinter p;
 //    p.format("BAD ALLOC");
+    __builtin_unreachable();
 }
 
 void std::__throw_out_of_range_fmt(char const*, ...) {
 //    ScreenPrinter p;
 //    p.format("OUT OF RANGE");
+    __builtin_unreachable();
 }
 
 
