@@ -47,4 +47,4 @@ build/arch/$(arch)/%.o: src/arch/$(arch)/%.S
 # compile c++ files
 build/%.o: src/%.cpp
 	@mkdir -p $(shell dirname $@)
-	@g++ -std=c++11 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -c  $< -o $@	
+	@g++ -std=c++11 -mno-red-zone -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -c  $< -o $@	
