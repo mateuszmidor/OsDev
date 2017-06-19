@@ -8,6 +8,7 @@
 #include "ScreenPrinter.h"
 #include "Multiboot2.h"
 #include "CpuInfo.h"
+#include "InterruptManager.h"
 #include "kstd.h"
 #include "types.h"
 
@@ -70,120 +71,8 @@ void callGlobalConstructors() {
 }
 
 /**
- * Interrupt Descriptor Table Entry Options
- */
-struct IdtEntryOptions {
-    u16 interrupt_stack_table_index : 3;    // 0 for DONT CHANGE THE STACKS
-    u16 reserved                    : 5;    // always 0
-    u16 interrupts_enabled          : 1;    // better be 0 for now
-    u16 always_1                    : 3;    // always 0b111
-    u16 always_0                    : 1;    // always 0
-    u16 min_privilege_level         : 2;    // 3 for user space
-    u16 present                     : 1;    // 1 for true
-
-    IdtEntryOptions(bool is_present = false) {
-        interrupt_stack_table_index = 0;
-        reserved = 0;
-        interrupts_enabled = 0;
-        always_1 = 7; // 0b111
-        always_0 = 0;
-        min_privilege_level = 0;
-        present = is_present;
-
-    }
-} __attribute__((packed));
-
-/**
- * Interrupt Descriptor Table Entry
- */
-struct IdtEntry {
-    u16 pointer_low;
-    u16 gdt_code_segment_selector;  // offset of code segment in GDT, in our case 8
-    IdtEntryOptions options;
-    u16 pointer_middle;
-    u32 pointer_high;
-    u32 always_0;
-
-} __attribute__((packed));
-
-IdtEntry make_entry(u64 pointer) {
-    IdtEntry e;
-
-    e.gdt_code_segment_selector = 8; // at offset 8 starts our one and the only code segment entry for 64 bit long mode
-    e.pointer_low = pointer & 0xFFFF;
-    e.pointer_middle = (pointer >> 16) & 0xFFFF;
-    e.pointer_high = (pointer >> 32) & 0xFFFFFFFF;
-    e.options = IdtEntryOptions(true);
-    e.always_0 = 0;
-
-    return e;
-}
-
-IdtEntry idt[0x14] ;
-
-struct IdtSizeAddress {
-    u16 size_minus_1;
-    u64 address;
-} __attribute__((packed)) ;
-
-extern "C" void handle_exception_no_0x00();
-extern "C" void handle_exception_no_0x01();
-extern "C" void handle_exception_no_0x02();
-extern "C" void handle_exception_no_0x03();
-extern "C" void handle_exception_no_0x04();
-extern "C" void handle_exception_no_0x05();
-extern "C" void handle_exception_no_0x06();
-extern "C" void handle_exception_no_0x07();
-extern "C" void handle_exception_no_0x08();
-extern "C" void handle_exception_no_0x09();
-extern "C" void handle_exception_no_0x0A();
-extern "C" void handle_exception_no_0x0B();
-extern "C" void handle_exception_no_0x0C();
-extern "C" void handle_exception_no_0x0D();
-extern "C" void handle_exception_no_0x0E();
-extern "C" void handle_exception_no_0x0F();
-extern "C" void handle_exception_no_0x10();
-extern "C" void handle_exception_no_0x11();
-extern "C" void handle_exception_no_0x12();
-extern "C" void handle_exception_no_0x13();
-
-void configIDT() {
-    idt[0x00] = make_entry((u64)handle_exception_no_0x00); // zero division
-    idt[0x01] = make_entry((u64)handle_exception_no_0x01);
-    idt[0x02] = make_entry((u64)handle_exception_no_0x02);
-    idt[0x03] = make_entry((u64)handle_exception_no_0x03); // breakpoint
-    idt[0x04] = make_entry((u64)handle_exception_no_0x04);
-    idt[0x05] = make_entry((u64)handle_exception_no_0x05);
-    idt[0x06] = make_entry((u64)handle_exception_no_0x06);
-    idt[0x07] = make_entry((u64)handle_exception_no_0x07);
-    idt[0x08] = make_entry((u64)handle_exception_no_0x08);
-    idt[0x09] = make_entry((u64)handle_exception_no_0x09);
-    idt[0x0A] = make_entry((u64)handle_exception_no_0x0A);
-    idt[0x0B] = make_entry((u64)handle_exception_no_0x0B);
-    idt[0x0C] = make_entry((u64)handle_exception_no_0x0C);
-    idt[0x0D] = make_entry((u64)handle_exception_no_0x0D);
-    idt[0x0E] = make_entry((u64)handle_exception_no_0x0E);
-    idt[0x0F] = make_entry((u64)handle_exception_no_0x0F);
-    idt[0x10] = make_entry((u64)handle_exception_no_0x10);
-    idt[0x11] = make_entry((u64)handle_exception_no_0x11);
-    idt[0x12] = make_entry((u64)handle_exception_no_0x12);
-    idt[0x13] = make_entry((u64)handle_exception_no_0x13);
-
-    IdtSizeAddress idt_size_address ;
-    idt_size_address.size_minus_1 = sizeof(idt) - 1;
-    idt_size_address.address = (u64)idt;
-
-    __asm__ volatile("lidt %0"
-            :
-            : "m" (idt_size_address)
-            );
-}
-
-/**
  * @name    on_interrupt
- * @brief   Interrupt/CPU exception handler
- * @param   rsp
- * @param   int_no
+ * @brief   Interrupt/CPU exception handler. This is called from interrupts.S
  */
 extern "C" void on_interrupt(u8 interrupt_no, u64 error_code) {
     static u32 count = 1;
