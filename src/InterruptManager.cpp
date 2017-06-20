@@ -6,8 +6,11 @@
  */
 
 #include "InterruptManager.h"
+#include "Port.h"
 
+extern u8 IRQ_BASE;
 
+// CPU exceptions
 extern "C" void handle_exception_no_0x00();
 extern "C" void handle_exception_no_0x01();
 extern "C" void handle_exception_no_0x02();
@@ -28,12 +31,21 @@ extern "C" void handle_exception_no_0x10();
 extern "C" void handle_exception_no_0x11();
 extern "C" void handle_exception_no_0x12();
 extern "C" void handle_exception_no_0x13();
+extern "C" void handle_exception_no_0x14();
+extern "C" void handle_exception_no_0x1E();
+
+// PIC interrupts, shifted by IRQ_BASE
+extern "C" void ignore_interrupt();
+extern "C" void handle_interrupt_no_0x20();
+extern "C" void handle_interrupt_no_0x21();
+
 
 // Interrupt Descriptor Table
-IdtEntry InterruptManager::idt[0x14];
+IdtEntry InterruptManager::idt[MAX_INTERRUPT_COUNT];
 
 // Interrupt Handler Routine
-InterruptHandler InterruptManager::interrupt_handler = [](u8, u64) {};
+InterruptHandler INTERRUPT_IGNORE = [](u8, u64) { /* do nothing */ };
+InterruptHandler InterruptManager::interrupt_handler = INTERRUPT_IGNORE;
 
 /**
  * @name    on_interrupt
@@ -44,8 +56,13 @@ void InterruptManager::on_interrupt(u8 interrupt_no, u64 error_code) {
 }
 
 void InterruptManager::config_interrupts() {
+    setup_programmable_interrupt_controllers();
     setup_interrupt_descriptor_table();
     install_interrupt_descriptor_table();
+}
+
+void InterruptManager::activate_interrupts() {
+    __asm__("sti");
 }
 
 void InterruptManager::set_handler(const InterruptHandler &h) {
@@ -53,6 +70,7 @@ void InterruptManager::set_handler(const InterruptHandler &h) {
 }
 
 void InterruptManager::setup_interrupt_descriptor_table() {
+    // CPU exceptions
     idt[0x00] = make_entry((u64) (handle_exception_no_0x00)); // zero division
     idt[0x01] = make_entry((u64) (handle_exception_no_0x01));
     idt[0x02] = make_entry((u64) (handle_exception_no_0x02));
@@ -73,6 +91,16 @@ void InterruptManager::setup_interrupt_descriptor_table() {
     idt[0x11] = make_entry((u64) (handle_exception_no_0x11));
     idt[0x12] = make_entry((u64) (handle_exception_no_0x12));
     idt[0x13] = make_entry((u64) (handle_exception_no_0x13));
+    idt[0x14] = make_entry((u64) (handle_exception_no_0x14));
+    idt[0x1E] = make_entry((u64) (handle_exception_no_0x1E));
+
+    // PIC interrupts, they start at IRQ_BASE = 0x20, defined in interrupts.S
+    idt[0x20] = make_entry((u64) (handle_interrupt_no_0x20));   // timer
+    idt[0x21] = make_entry((u64) (handle_interrupt_no_0x21));   // keyboard
+
+    // ignore rest of the interrupts
+    for (u32 i = 0x22; i < MAX_INTERRUPT_COUNT; i++)
+        idt[i] = make_entry((u64) (ignore_interrupt));
 }
 
 IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {
@@ -86,6 +114,40 @@ IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {
     e.always_0 = 0;
 
     return e;
+}
+
+void InterruptManager::setup_programmable_interrupt_controllers() {
+    // define command/data ports for master/slave PIC
+    Port8bitSlow pic_master_cmd(0x20);
+    Port8bitSlow pic_master_data(0x21);
+    Port8bitSlow pic_slave_cmd(0xA0);
+    Port8bitSlow pic_slave_data(0xA1);
+
+    // save master and slave masks
+    u8 master_mask = pic_master_data.read();
+    u8 slave_mask = pic_slave_data.read();
+
+    // start PIC initialization sequence
+    pic_master_cmd.write(0x11);
+    pic_slave_cmd.write(0x11);
+
+    // setup IRQ BASE
+    pic_master_data.write(IRQ_BASE);
+    pic_slave_data.write(IRQ_BASE + 8);
+
+    // tell master PIC that there is slave PIC at IRQ2 (0000 0100)
+    pic_master_data.write(0x04);
+
+    // tell slave PIC its cascade identity (0000 0010)
+    pic_slave_data.write(0x02);
+
+    // set PICs in 8086/88 (MCS-80/85) mode
+    pic_master_data.write(0x01);
+    pic_slave_data.write(0x01);
+
+    // restore saved masks
+    pic_master_data.write(master_mask);
+    pic_slave_data.write(slave_mask);
 }
 
 void InterruptManager::install_interrupt_descriptor_table() {

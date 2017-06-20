@@ -27,7 +27,7 @@ public:
     u8 read() const;
 };
 
-class Port8bitSlow : protected Port8bit {
+class Port8bitSlow : public Port8bit {
 public:
     Port8bitSlow(u16 port_number);
     void write(u8 data) const;

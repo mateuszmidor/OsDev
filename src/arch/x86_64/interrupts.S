@@ -1,6 +1,5 @@
 .section .text
 
-
 # exception handler without error code generator
 .macro HandleException num
 .global handle_exception_no_\num
@@ -18,6 +17,17 @@ handle_exception_no_\num:
 handle_exception_no_\num:
     // error code comes at the top of the stack, so pop it into memory
     pop (error_code)
+    movb $\num, (interrupt_number)
+    jmp handle_interrupt
+.endm
+
+
+# interrupt handler generator
+.macro HandleInterrupt num
+.global handle_interrupt_no_\num
+handle_interrupt_no_\num:
+    // clear error code as there is none
+    movq $0, (error_code)
     movb $\num, (interrupt_number)
     jmp handle_interrupt
 .endm
@@ -44,7 +54,12 @@ HandleException 0x10
 HandleExceptionWithErrorCode 0x11
 HandleException 0x12
 HandleException 0x13
+HandleException 0x14
+HandleExceptionWithErrorCode 0x1E
 
+# generate handlers for interrupts, shifted by IRQ_BASE
+HandleInterrupt 0x20
+HandleInterrupt 0x21
 
 .extern _ZN16InterruptManager12on_interruptEhy
 handle_interrupt:
@@ -79,11 +94,22 @@ handle_interrupt:
     # divide by zero - fix the denominator
     mov $1, %rcx
 
+.global ignore_interrupt
+ignore_interrupt:
+
     # return from interrupt handler
     iretq
 
 
+
+# read only data section
+.section .rodata
+    # IRQ_BASE will be added to the interrupt number coming from PIC so we dont mix it with CPU exceptions
+    # It is used from cpp code so we make it global symbol
+    .global IRQ_BASE
+    IRQ_BASE: .byte 0x20
+
 # data section
-.data
+.section .data
     error_code: .quad 0
     interrupt_number: .byte 0

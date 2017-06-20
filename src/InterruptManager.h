@@ -61,16 +61,20 @@ using InterruptHandler = std::function<void(u8 interrupt_no, u64 error_code)>;
 class InterruptManager {
 public:
     static void config_interrupts();
+    static void activate_interrupts();
     static void set_handler(const InterruptHandler &h);
 
 private:
     static void on_interrupt(u8 interrupt_no, u64 error_code);
     static void setup_interrupt_descriptor_table();
     static IdtEntry make_entry(u64 pointer, u16 code_segment_selector = 8);
+    static void setup_programmable_interrupt_controllers();
     static void install_interrupt_descriptor_table();
 
-    static IdtEntry idt[0x14];
+    static IdtEntry idt[];
     static InterruptHandler interrupt_handler;
+
+    static constexpr int MAX_INTERRUPT_COUNT = 256;
 };
 
 #endif /* SRC_INTERRUPTMANAGER_H_ */

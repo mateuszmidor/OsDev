@@ -75,8 +75,9 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     // configure Interrupt Descriptor Table
-    InterruptManager::config_interrupts();
     InterruptManager::set_handler(on_interrupt);
+    InterruptManager::config_interrupts();
+    InterruptManager::activate_interrupts();
 
     // print hello message to the user
     printer.set_bg_color(Color::Blue);
@@ -92,8 +93,13 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     mb2.print(printer);
 
     //test_kstd(p);
-    test_idt();
+    //test_idt();
 
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
+
+    // loop forever handling interrupts
+    for(;;)
+       asm("hlt");
+
 }
