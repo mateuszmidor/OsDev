@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "GlobalConstructorsRunner.h"
 #include "ScreenPrinter.h"
 #include "Multiboot2.h"
 #include "CpuInfo.h"
@@ -58,19 +59,6 @@ void test_idt() {
 }
 
 /**
- * @name    callGlobalConstructors
- * @brief   Call the constructors of objects defined in global namespace (if any)
- * @note    start_ctors and end_ctors defined in linker.ld
- */
-typedef void (*Constructor)();
-extern "C" Constructor start_ctors;
-extern "C" Constructor end_ctors;
-void callGlobalConstructors() {
-    for (Constructor* c = &start_ctors; c != &end_ctors; c++)
-        (*c)();
-}
-
-/**
  * @name    on_interrupt
  * @brief   Interrupt/CPU exception handler. This is called from interrupts.S
  */
@@ -85,7 +73,7 @@ extern "C" void on_interrupt(u8 interrupt_no, u64 error_code) {
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
     // run constructors of global objects. This could be run from long_mode_init.S
-    callGlobalConstructors();
+    GlobalConstructorsRunner::run();
 
     // configure Interrupt Descriptor Table
     configIDT();
