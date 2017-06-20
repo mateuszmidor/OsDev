@@ -12,13 +12,14 @@
 #include "InterruptManager.h"
 #include "kstd.h"
 #include "types.h"
-
+#include "ScanCodeSet1.h"
 
 using namespace kstd;
 
 
 // screen printer for printing to the screen
 ScreenPrinter printer;
+ScanCodeSet1 scan_code_set1;
 
 /**
  * Test kstd namespace functionality
@@ -71,8 +72,8 @@ void on_interrupt(u8 interrupt_no, u64 error_code) {
 
     case 33: {  // keyboard
         Port8bitSlow keyboard_key_port(0x60);
-        u8 key = keyboard_key_port.read();
-        printer.format("Key %, ", key);
+        u8 key_code = keyboard_key_port.read();
+        printer.format("%", scan_code_set1.code_to_ascii(key_code).c_str());
         break;
     }
 

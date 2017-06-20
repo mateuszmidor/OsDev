@@ -115,6 +115,8 @@ private:
     Color background = Color::Black;
 
     void newline();
+    void tab();
+    void backspace();
     void putc(const char c);
 };
 
