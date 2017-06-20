@@ -59,10 +59,9 @@ void test_idt() {
 }
 
 /**
- * @name    on_interrupt
- * @brief   Interrupt/CPU exception handler. This is called from interrupts.S
+ * Minimal interrupt handling routine
  */
-extern "C" void on_interrupt(u8 interrupt_no, u64 error_code) {
+void on_interrupt(u8 interrupt_no, u64 error_code) {
     static u32 count = 1;
     printer.format("interrupt no. %, error code % [%]\n", interrupt_no, error_code, count++);
 }
@@ -76,7 +75,8 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     // configure Interrupt Descriptor Table
-    configIDT();
+    InterruptManager::config_interrupts();
+    InterruptManager::set_handler(on_interrupt);
 
     // print hello message to the user
     printer.set_bg_color(Color::Blue);

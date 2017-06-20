@@ -67,6 +67,9 @@ void std::__throw_out_of_range_fmt(char const*, ...) {
     __builtin_unreachable();
 }
 
+void std::__throw_bad_function_call() {
+    __builtin_unreachable();
+}
 
 namespace kstd {
 

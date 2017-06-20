@@ -46,7 +46,7 @@ HandleException 0x12
 HandleException 0x13
 
 
-.extern on_interrupt
+.extern _ZN16InterruptManager12on_interruptEhy
 handle_interrupt:
     # save scratch registers
     push %rax
@@ -62,7 +62,7 @@ handle_interrupt:
     # handle interrupt/exception
     mov (error_code), %rsi
     mov (interrupt_number), %rdi
-    call on_interrupt
+    call _ZN16InterruptManager12on_interruptEhy
 
     # restore scratch registers
     pop %r11

@@ -8,6 +8,7 @@
 #ifndef SRC_INTERRUPTMANAGER_H_
 #define SRC_INTERRUPTMANAGER_H_
 
+#include <functional>
 #include "types.h"
 
 /**
@@ -55,11 +56,21 @@ struct IdtSizeAddress {
     u64 address;
 } __attribute__((packed)) ;
 
-
-
-void configIDT();
+using InterruptHandler = std::function<void(u8 interrupt_no, u64 error_code)>;
 
 class InterruptManager {
+public:
+    static void config_interrupts();
+    static void set_handler(const InterruptHandler &h);
+
+private:
+    static void on_interrupt(u8 interrupt_no, u64 error_code);
+    static void setup_interrupt_descriptor_table();
+    static IdtEntry make_entry(u64 pointer, u16 code_segment_selector = 8);
+    static void install_interrupt_descriptor_table();
+
+    static IdtEntry idt[0x14];
+    static InterruptHandler interrupt_handler;
 };
 
 #endif /* SRC_INTERRUPTMANAGER_H_ */
