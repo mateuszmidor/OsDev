@@ -6,7 +6,6 @@
  */
 
 #include "InterruptManager.h"
-#include "Port.h"
 
 extern u8 IRQ_BASE;
 
@@ -47,12 +46,22 @@ IdtEntry InterruptManager::idt[MAX_INTERRUPT_COUNT];
 InterruptHandler INTERRUPT_IGNORE = [](u8, u64) { /* do nothing */ };
 InterruptHandler InterruptManager::interrupt_handler = INTERRUPT_IGNORE;
 
+Port8bitSlow InterruptManager::pic_master_cmd(0x20);
+Port8bitSlow InterruptManager::pic_slave_cmd(0xA0);
+
 /**
  * @name    on_interrupt
  * @brief   Interrupt/CPU exception handler. This is called from interrupts.S
  */
 void InterruptManager::on_interrupt(u8 interrupt_no, u64 error_code) {
     interrupt_handler(interrupt_no, error_code);
+
+    // send End Of Interrupt (confirm it has been handled)
+    if (interrupt_no >= IRQ_BASE) {
+        if (interrupt_no >= IRQ_BASE + 8)
+            pic_slave_cmd.write(0x20);
+        pic_master_cmd.write(0x20);
+    }
 }
 
 void InterruptManager::config_interrupts() {
@@ -117,10 +126,8 @@ IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {
 }
 
 void InterruptManager::setup_programmable_interrupt_controllers() {
-    // define command/data ports for master/slave PIC
-    Port8bitSlow pic_master_cmd(0x20);
+    // define data ports for master/slave PIC
     Port8bitSlow pic_master_data(0x21);
-    Port8bitSlow pic_slave_cmd(0xA0);
     Port8bitSlow pic_slave_data(0xA1);
 
     // save master and slave masks

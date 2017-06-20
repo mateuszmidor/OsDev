@@ -20,7 +20,6 @@ using namespace kstd;
 // screen printer for printing to the screen
 ScreenPrinter printer;
 
-
 /**
  * Test kstd namespace functionality
  */
@@ -63,7 +62,26 @@ void test_idt() {
  */
 void on_interrupt(u8 interrupt_no, u64 error_code) {
     static u32 count = 1;
-    printer.format("interrupt no. %, error code % [%]\n", interrupt_no, error_code, count++);
+
+
+    switch (interrupt_no) {
+    case 32: {  // timer
+        return;
+    }
+
+    case 33: {  // keyboard
+        Port8bitSlow keyboard_key_port(0x60);
+        u8 key = keyboard_key_port.read();
+        printer.format("Key %, ", key);
+        break;
+    }
+
+    default: {
+        printer.format("interrupt no. %, error code % [%]\n", interrupt_no, error_code, count++);
+    }
+    }
+
+
 }
 
 /**
@@ -101,5 +119,4 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // loop forever handling interrupts
     for(;;)
        asm("hlt");
-
 }

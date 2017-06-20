@@ -10,6 +10,7 @@
 
 #include <functional>
 #include "types.h"
+#include "Port.h"
 
 /**
  * Interrupt Descriptor Table Entry Options
@@ -73,6 +74,9 @@ private:
 
     static IdtEntry idt[];
     static InterruptHandler interrupt_handler;
+
+    static Port8bitSlow pic_master_cmd;
+    static Port8bitSlow pic_slave_cmd;
 
     static constexpr int MAX_INTERRUPT_COUNT = 256;
 };
