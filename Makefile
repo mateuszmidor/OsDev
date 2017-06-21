@@ -20,7 +20,7 @@ clean:
 	@rm -rf build
 
 run: $(iso)
-	@qemu-system-x86_64 -cdrom $(iso)
+	@qemu-system-x86_64 -show-cursor -cdrom $(iso) # -show-cursor needed for qemu ps/2 mouse emulation; must be a glitch
 
 debug: $(iso)
 	@qemu-system-x86_64 -d int -no-reboot -cdrom $(iso)
