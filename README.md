@@ -4,9 +4,16 @@ Based on:
     http://wyoos.org
     http://os.phil-opp.com/multiboot-kernel.html
     
+    
 # Need install
 sudo apt install xorriso
 sudo apt install qemu-system-x86
+
+
+# Run it
+make run
+make debug
+
 
 # Tools
 objdump -f - entry point logical address
