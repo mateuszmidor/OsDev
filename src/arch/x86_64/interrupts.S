@@ -60,6 +60,7 @@ HandleExceptionWithErrorCode 0x1E
 # generate handlers for interrupts, shifted by IRQ_BASE
 HandleInterrupt 0x20
 HandleInterrupt 0x21
+HandleInterrupt 0x2C
 
 .extern _ZN16InterruptManager12on_interruptEhy
 handle_interrupt:

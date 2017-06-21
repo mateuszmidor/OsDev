@@ -58,9 +58,32 @@ void test_idt() {
     //asm("mov %rax, (1024*1024*1024)");
 }
 
+
+void setup_mouse() {
+    Port8bit mouse_cmd_port(0x64);
+    Port8bit mouse_data_port(0x60);
+
+    mouse_cmd_port.write(0xA8);
+    mouse_cmd_port.write(0x20);
+    u8 status = mouse_data_port.read() | 0x02;
+    mouse_cmd_port.write(0x60);
+    mouse_data_port.write(status);
+
+    mouse_cmd_port.write(0xD4);
+    mouse_data_port.write(0xF4);
+    if (mouse_data_port.read() != 0xFA)
+        printer.format("mouse init error\n");
+}
 /**
  * Minimal interrupt handling routine
  */
+s16 x = 0, y = 0;
+u8 buttons = 0;
+u8 offset = 0;
+u8 buffer[3];
+Port8bit mouse_cmd_port(0x64);
+Port8bit mouse_data_port(0x60);
+
 void on_interrupt(u8 interrupt_no, u64 error_code) {
     static u32 count = 1;
 
@@ -71,9 +94,37 @@ void on_interrupt(u8 interrupt_no, u64 error_code) {
     }
 
     case 33: {  // keyboard
-        Port8bitSlow keyboard_key_port(0x60);
+        Port8bit keyboard_key_port(0x60);
         u8 key_code = keyboard_key_port.read();
         printer.format("%", scan_code_set1.code_to_ascii(key_code).c_str());
+        break;
+    }
+
+    case 44: {  // mouse
+
+        u8 status = mouse_cmd_port.read();
+        if (!(status & 0x01) || !(status & 0x20)) // check for mice data available
+            return;
+
+        buffer[offset] = mouse_data_port.read();
+        offset = (offset + 1) % 3;
+        if (offset == 0) {
+            x += (buffer[1] - ((buffer[0] << 4) & 0x100)) ;
+            y -= (buffer[2] - ((buffer[0] << 3) & 0x100)) ;
+            printer.format("[%, %]                      \n", x, y);
+
+            for (u8 i = 0; i < 3; i++) {
+
+                if ((buffer[0] & (1 << i)) && !(buttons & (1 << i)))
+                    printer.format("button % down\n", i);
+
+                if (!(buffer[0] & (1 << i)) && (buttons & (1 << i)))
+                    printer.format("button % up\n", i);
+            }
+            buttons = buffer[0];
+        }
+
+       // printer.format("mouse ");
         break;
     }
 
@@ -93,10 +144,13 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // run constructors of global objects. This could be run from long_mode_init.S
     GlobalConstructorsRunner::run();
 
+
     // configure Interrupt Descriptor Table
     InterruptManager::set_handler(on_interrupt);
     InterruptManager::config_interrupts();
+    setup_mouse();
     InterruptManager::activate_interrupts();
+
 
     // print hello message to the user
     printer.set_bg_color(Color::Blue);

@@ -37,7 +37,7 @@ extern "C" void handle_exception_no_0x1E();
 extern "C" void ignore_interrupt();
 extern "C" void handle_interrupt_no_0x20();
 extern "C" void handle_interrupt_no_0x21();
-
+extern "C" void handle_interrupt_no_0x2C();
 
 // Interrupt Descriptor Table
 IdtEntry InterruptManager::idt[MAX_INTERRUPT_COUNT];
@@ -104,12 +104,15 @@ void InterruptManager::setup_interrupt_descriptor_table() {
     idt[0x1E] = make_entry((u64) (handle_exception_no_0x1E));
 
     // PIC interrupts, they start at IRQ_BASE = 0x20, defined in interrupts.S
+    // first setupe idt to ignore all interrupts
+    for (u32 i = 0x20; i < MAX_INTERRUPT_COUNT; i++)
+        idt[i] = make_entry((u64) (ignore_interrupt));
+
+    // then handle just the interrupts of interest
     idt[0x20] = make_entry((u64) (handle_interrupt_no_0x20));   // timer
     idt[0x21] = make_entry((u64) (handle_interrupt_no_0x21));   // keyboard
+    idt[0x2C] = make_entry((u64) (handle_interrupt_no_0x2C));   // mouse
 
-    // ignore rest of the interrupts
-    for (u32 i = 0x22; i < MAX_INTERRUPT_COUNT; i++)
-        idt[i] = make_entry((u64) (ignore_interrupt));
 }
 
 IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {
