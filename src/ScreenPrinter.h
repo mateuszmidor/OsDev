@@ -8,7 +8,10 @@
 #ifndef SRC_SCREENPRINTER_H_
 #define SRC_SCREENPRINTER_H_
 
-enum Color : unsigned char {
+#include "types.h"
+
+
+enum Color : u8 {
     Black      = 0,
     Blue       = 1,
     Green      = 2,
@@ -24,20 +27,33 @@ enum Color : unsigned char {
     LightRed   = 12,
     Pink       = 13,
     Yellow     = 14,
-    White      = 15,
+    White      = 15
+};
+
+/**
+ * This is the structure describing single character in VGA buffer
+ */
+struct VgaCharacter {
+    s8      character;
+    u8      fg_color    : 4;
+    u8      bg_color    : 4;
 };
 
 class ScreenPrinter {
 public:
+    VgaCharacter& at(u16 x, u16 y);
+    void move_to(u16 x, u16 y);
+    void swap_fg_bg_at(u16 x, u16 y);
     void set_fg_color(const Color value);
     void set_bg_color(const Color value);
     void clearscreen();
 
-    void format(long long int num) {
-        int base = 10;
+
+    void format(s64 num) {
+        u8 base = 10;
         char str[12];
 
-            int i = 0;
+            u8 i = 0;
             bool isNegative = false;
 
             /* Handle 0 explicitely, otherwise empty string is printed for 0 */
@@ -70,8 +86,8 @@ public:
             str[i] = '\0'; // Append string terminator
 
             // Reverse the string
-            int start = 0;
-            int end = i -1;
+            u8 start = 0;
+            u8 end = i -1;
             while (start < end)
             {
 
@@ -107,10 +123,10 @@ public:
     }
 
 private:
-    const unsigned int NUM_COLS = 80u;
-    const unsigned int NUM_ROWS = 25u;
-    unsigned short* vga = (unsigned short*)0xb8000;
-    unsigned int cursor_pos = 0;
+    const u16 NUM_COLS = 80u;
+    const u16 NUM_ROWS = 25u;
+    VgaCharacter* const vga = (VgaCharacter*)0xb8000;
+    u32 cursor_pos = 0;
     Color foreground = Color::White;
     Color background = Color::Black;
 
