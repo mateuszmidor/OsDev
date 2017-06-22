@@ -20,7 +20,7 @@ long_mode_start:
     call print_string
 
 
-    # enter c++ generated main routine
+    # enter c++ generated main routine, dsi should still hold multiboot2 information pointer so it's passed as 1st parameter
     call kmain
     hlt
 
@@ -42,7 +42,7 @@ print_string:
         cmp $0, %dl
         je .end_loop
 
-        # copy characterto vga textbuffer
+        # copy character to vga textbuffer
         movb %dl, (%edi)
         movb $0x2f, 1(%edi) # 0x2f is white text on green background
 

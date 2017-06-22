@@ -12,7 +12,7 @@ start:
     # setup stack
     movl $stack_top, %esp
 
-    # store boot info struct pointer in edi so it then gets passed to kmain function
+    # store multiboot2 info struct pointer in edi so it then gets passed to kmain function
     mov %ebx, %edi
 
     # check if kernel was actually loaded by the bootloader
@@ -153,8 +153,8 @@ check_long_mode:
 
 /**
     set_up_page_tables
-    Setup page tables before going into long mode.
-    Use huge pages (2MiB); so we only need to configure P4, P3, P2 page tables.
+    Setup page tables to map first 1GiB of RAM before going into long mode.
+    Use huge pages (2MiB); so we only need to configure P4 (1 entry), P3 (1 entry), P2 (512 entries) page tables.
     P2 maps directly to a 2MiB page that is indexed with 21 remaining bits of the address, see:
     http://wiki.osdev.org/Page_Tables#2_MiB_pages_2
     This is identity mapping; virtual addresses map to the same physical addresses
@@ -180,7 +180,7 @@ set_up_page_tables:
         or $0b10000011, %eax    # present + writable + huge
         mov %eax, p2_table(, %ecx, 8) # map ecx-th entry; memory[p2_table + ecx * 8] = eax
 
-        add $1, %ecx            # increase counter
+        inc %ecx                # increase counter
         cmp $512, %ecx          # if counter == 512, the whole P2 table is mapped
         jne .map_p2_table       # else map the next entry
 
