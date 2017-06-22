@@ -50,6 +50,13 @@ InterruptManager& InterruptManager::instance() {
 }
 
 InterruptManager::InterruptManager() {
+
+}
+
+void InterruptManager::config_interrupts() {
+    setup_programmable_interrupt_controllers();
+    setup_interrupt_descriptor_table();
+    install_interrupt_descriptor_table();
 }
 
 /**
@@ -74,13 +81,8 @@ void InterruptManager::on_interrupt(u8 interrupt_no, u64 error_code) {
         mngr.exception_handler(interrupt_no, error_code);
 }
 
-void InterruptManager::config_interrupts() {
-    setup_programmable_interrupt_controllers();
-    setup_interrupt_descriptor_table();
-    install_interrupt_descriptor_table();
-}
-
-void InterruptManager::activate_interrupts() {
+void InterruptManager::config_and_activate_interrupts() {
+    config_interrupts();
     __asm__("sti");
 }
 

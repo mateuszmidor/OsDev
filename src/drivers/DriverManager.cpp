@@ -6,6 +6,7 @@
  */
 
 #include "DriverManager.h"
+#include "UnhandledDeviceDriver.h"
 
 namespace drivers {
 
@@ -16,23 +17,20 @@ DriverManager& DriverManager::instance() {
 }
 
 DriverManager::~DriverManager() {
-    for (auto d : drivers)
-        if (d)
-            delete d;
 }
 
 DriverManager::DriverManager() {
+    DeviceDriverPtr unhandled_device_driver = std::make_shared<UnhandledDeviceDriver>();
+    for (int i = 0; i < drivers.size(); i++)
+        drivers[i] = unhandled_device_driver;
 }
 
-/**
- * @brief   This method takes ownership and of pointer drv
- */
-void DriverManager::install_driver(DeviceDriver *drv, u8 interrupt_no) {
+void DriverManager::install_driver(DeviceDriverPtr drv) {
+    auto interrupt_no = drv->handled_interrupt_no();
     drivers[interrupt_no] = drv;
 }
 
 void DriverManager::on_interrupt(u8 interrupt_no) const {
-    if (auto d = drivers[interrupt_no])
-        d->on_interrupt();
+    drivers[interrupt_no]->on_interrupt();
 }
 } /* namespace drivers */

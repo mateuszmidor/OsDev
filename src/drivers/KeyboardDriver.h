@@ -22,6 +22,8 @@ public:
     KeyboardDriver(KeyboardScanCodeSet& scs);
     virtual ~KeyboardDriver();
     void set_on_key_press(const KeyEvent &event);
+
+    s16 handled_interrupt_no() override;
     void on_interrupt() override;
 
 private:

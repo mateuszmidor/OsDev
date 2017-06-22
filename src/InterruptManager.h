@@ -64,8 +64,7 @@ using ExceptionHandler = std::function<void(u8 exception_no, u64 error_code)>;
 class InterruptManager {
 public:
     static InterruptManager& instance();
-    void config_interrupts();
-    void activate_interrupts();
+    void config_and_activate_interrupts();
     void set_interrupt_handler(const InterruptHandler &h);
     void set_exception_handler(const ExceptionHandler &h);
 
@@ -77,6 +76,7 @@ private:
 
     InterruptManager();
     static void on_interrupt(u8 interrupt_no, u64 error_code);
+    void config_interrupts();
     void setup_interrupt_descriptor_table();
     IdtEntry make_entry(u64 pointer, u16 code_segment_selector = 8);
     void setup_programmable_interrupt_controllers();

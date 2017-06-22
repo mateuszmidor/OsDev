@@ -74,11 +74,16 @@ void on_mouse_down(u8 button) {
     printer.move_to(mouse_x / 9, mouse_y / 16);
 }
 
+void on_key_press(s8 key) {
+    char s[2] = {key, '\0'};
+    printer.format("%", s);
+}
+
 InterruptManager &interrupt_manager = InterruptManager::instance();
 drivers::DriverManager &driver_manager = drivers::DriverManager::instance();
 drivers::KeyboardScanCodeSet1 scs1;
-drivers::KeyboardDriver keyboard(scs1);
-drivers::MouseDriver mouse;
+auto keyboard = std::make_shared<drivers::KeyboardDriver> (scs1);
+auto mouse = std::make_shared<drivers::MouseDriver>();
 
 /**
  * kmain
@@ -89,18 +94,17 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     // configure drivers
-    keyboard.set_on_key_press([](s8 key){ char s[2] = {key, '\0'};  printer.format("%", s); });
-    mouse.set_on_move(on_mouse_move);
-    mouse.set_on_down(on_mouse_down);
+    keyboard->set_on_key_press(on_key_press);
+    mouse->set_on_move(on_mouse_move);
+    mouse->set_on_down(on_mouse_down);
 
     // install drivers
-    driver_manager.install_driver(&keyboard, 33);
-    driver_manager.install_driver(&mouse, 44);
+    driver_manager.install_driver(keyboard);
+    driver_manager.install_driver(mouse);
 
     // configure Interrupt Descriptor Table
     interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no); } );
-    interrupt_manager.config_interrupts();
-    interrupt_manager.activate_interrupts();
+    interrupt_manager.config_and_activate_interrupts();
 
 
     // print hello message to the user

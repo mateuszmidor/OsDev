@@ -21,7 +21,9 @@ public:
     MouseDriver();
     virtual ~MouseDriver();
 
+    s16 handled_interrupt_no() override;
     void on_interrupt() override;
+
     void set_on_move(const MouseMoveEvent &event);
     void set_on_down(const MouseButtonEvent &event);
     void set_on_up(const MouseButtonEvent &event);

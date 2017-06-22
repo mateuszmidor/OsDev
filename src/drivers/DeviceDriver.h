@@ -18,6 +18,7 @@ public:
     DeviceDriver();
     virtual ~DeviceDriver();
 
+    virtual s16 handled_interrupt_no() = 0;
     virtual void on_interrupt() = 0;
 };
 

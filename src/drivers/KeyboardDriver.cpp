@@ -23,6 +23,10 @@ void KeyboardDriver::set_on_key_press(const KeyEvent &event) {
     on_key_press = event;
 }
 
+s16 KeyboardDriver::handled_interrupt_no() {
+    return 33;
+}
+
 void KeyboardDriver::on_interrupt() {
     u8 key_code = keyboard_data_port.read();
     s8 ascii_key = scan_code_set.code_to_ascii(key_code).c_str()[0];

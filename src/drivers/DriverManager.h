@@ -9,15 +9,18 @@
 #define SRC_DRIVERS_DRIVERMANAGER_H_
 
 #include <array>
+#include <memory>
 #include "DeviceDriver.h"
 
 namespace drivers {
+
+using DeviceDriverPtr = std::shared_ptr<DeviceDriver>;
 
 class DriverManager {
 public:
     static DriverManager& instance();
     virtual ~DriverManager();
-    void install_driver(DeviceDriver *drv, u8 interrupt_no);
+    void install_driver(DeviceDriverPtr drv);
     void on_interrupt(u8 interrupt_no) const;
 
 private:
@@ -25,7 +28,7 @@ private:
 
     DriverManager();
 
-    std::array<DeviceDriver*, 256> drivers; // this array maps interrupt_no to handling driver
+    std::array<DeviceDriverPtr, 256> drivers; // this array maps interrupt_no to handling driver
     u8 driver_count = 0;
 
 };

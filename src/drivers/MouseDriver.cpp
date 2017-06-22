@@ -16,6 +16,10 @@ MouseDriver::MouseDriver() {
 MouseDriver::~MouseDriver() {
 }
 
+s16 MouseDriver::handled_interrupt_no() {
+    return 44;
+}
+
 void MouseDriver::on_interrupt() {
     // check for mouse data available
     u8 status = mouse_cmd_port.read();
