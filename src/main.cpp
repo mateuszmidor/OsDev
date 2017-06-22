@@ -88,17 +88,18 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // run constructors of global objects. This could be run from long_mode_init.S
     GlobalConstructorsRunner::run();
 
+    // configure drivers
     keyboard.set_on_key_press([](s8 key){ char s[2] = {key, '\0'};  printer.format("%", s); });
     mouse.set_on_move(on_mouse_move);
     mouse.set_on_down(on_mouse_down);
 
+    // install drivers
+    driver_manager.install_driver(&keyboard, 33);
+    driver_manager.install_driver(&mouse, 44);
+
     // configure Interrupt Descriptor Table
     interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no); } );
     interrupt_manager.config_interrupts();
-
-        driver_manager.install_driver(&keyboard, 33);
-        driver_manager.install_driver(&mouse, 44);
-    //setup_mouse();
     interrupt_manager.activate_interrupts();
 
 
