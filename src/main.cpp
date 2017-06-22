@@ -77,7 +77,7 @@ void setup_mouse() {
 /**
  * Minimal interrupt handling routine
  */
-s16 x = 0, y = 0;
+s16 x = 360, y = 200; // center of 720x400 screen
 u8 buttons = 0;
 u8 offset = 0;
 u8 buffer[3];
@@ -109,17 +109,25 @@ void on_interrupt(u8 interrupt_no, u64 error_code) {
         buffer[offset] = mouse_data_port.read();
         offset = (offset + 1) % 3;
         if (offset == 0) {
-            x += (buffer[1] - ((buffer[0] << 4) & 0x100)) ;
-            y -= (buffer[2] - ((buffer[0] << 3) & 0x100)) ;
-            printer.format("[%, %]                      \n", x, y);
+            if ((buffer[1] != 0) || (buffer[2] != 0)) { // detect mouse movement
+                printer.swap_fg_bg_at(x / 9, y / 16); // 9x16 is character size
+                s16 dx = (buffer[1] - ((buffer[0] << 4) & 0x100));
+                x += dx ;
+                s16 dy = -(buffer[2] - ((buffer[0] << 3) & 0x100));
+                y += dy;
+                if (x < 0) x = 0; if (y < 0) y = 0; if (x > 719) x = 719; if (y > 399) y = 399;
+                printer.swap_fg_bg_at(x / 9, y / 16);
+            }
+
 
             for (u8 i = 0; i < 3; i++) {
 
                 if ((buffer[0] & (1 << i)) && !(buttons & (1 << i)))
-                    printer.format("button % down\n", i);
+                    printer.move_to(x / 9, y / 16);
+                //    printer.format("button % down\n", i);
 
-                if (!(buffer[0] & (1 << i)) && (buttons & (1 << i)))
-                    printer.format("button % up\n", i);
+                if (!(buffer[0] & (1 << i)) && (buttons & (1 << i)));
+               //     printer.format("button % up\n", i);
             }
             buttons = buffer[0];
         }
