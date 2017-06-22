@@ -9,17 +9,18 @@
 #include "ScreenPrinter.h"
 #include "Multiboot2.h"
 #include "CpuInfo.h"
+#include "KeyboardScanCodeSet.h"
 #include "InterruptManager.h"
 #include "kstd.h"
 #include "types.h"
-#include "ScanCodeSet1.h"
+#include "DriverManager.h"
+#include "KeyboardDriver.h"
 
 using namespace kstd;
 
 
 // screen printer for printing to the screen
 ScreenPrinter printer;
-ScanCodeSet1 scan_code_set1;
 
 /**
  * Test kstd namespace functionality
@@ -84,7 +85,7 @@ u8 buffer[3];
 Port8bit mouse_cmd_port(0x64);
 Port8bit mouse_data_port(0x60);
 
-void on_interrupt(u8 interrupt_no, u64 error_code) {
+void on_interrupt(u8 interrupt_no) {
     static u32 count = 1;
 
 
@@ -94,9 +95,6 @@ void on_interrupt(u8 interrupt_no, u64 error_code) {
     }
 
     case 33: {  // keyboard
-        Port8bit keyboard_key_port(0x60);
-        u8 key_code = keyboard_key_port.read();
-        printer.format("%", scan_code_set1.code_to_ascii(key_code).c_str());
         break;
     }
 
@@ -126,7 +124,7 @@ void on_interrupt(u8 interrupt_no, u64 error_code) {
                     printer.move_to(x / 9, y / 16);
                 //    printer.format("button % down\n", i);
 
-                if (!(buffer[0] & (1 << i)) && (buttons & (1 << i)));
+               // if (!(buffer[0] & (1 << i)) && (buttons & (1 << i)));
                //     printer.format("button % up\n", i);
             }
             buttons = buffer[0];
@@ -137,12 +135,17 @@ void on_interrupt(u8 interrupt_no, u64 error_code) {
     }
 
     default: {
-        printer.format("interrupt no. %, error code % [%]\n", interrupt_no, error_code, count++);
+        printer.format("interrupt no. % [%]\n", interrupt_no, count++);
     }
     }
 
 
 }
+
+InterruptManager &interrupt_manager = InterruptManager::instance();
+drivers::DriverManager &driver_manager = drivers::DriverManager::instance();
+drivers::KeyboardScanCodeSet1 scs1;
+drivers::KeyboardDriver keyboard(scs1);
 
 /**
  * kmain
@@ -152,12 +155,15 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // run constructors of global objects. This could be run from long_mode_init.S
     GlobalConstructorsRunner::run();
 
+    keyboard.set_on_key_press([](s8 key){ char s[2] = {key, '\0'};  printer.format("%", s); });
 
     // configure Interrupt Descriptor Table
-    InterruptManager::set_handler(on_interrupt);
-    InterruptManager::config_interrupts();
-    setup_mouse();
-    InterruptManager::activate_interrupts();
+    interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no);} );
+    interrupt_manager.config_interrupts();
+
+        driver_manager.install_driver(&keyboard, 33);
+    //setup_mouse();
+    interrupt_manager.activate_interrupts();
 
 
     // print hello message to the user

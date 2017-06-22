@@ -5,9 +5,15 @@
  * @author: Mateusz Midor
  */
 
-#include "ScanCodeSet1.h"
+#include "KeyboardScanCodeSet.h"
 
-ScanCodeSet1::ScanCodeSet1 () {
+namespace drivers {
+
+
+KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
+    for (auto &e : key_ascii)
+        e = "";
+
     key_ascii[0x02] = "1";
     key_ascii[0x03] = "2";
     key_ascii[0x04] = "3";
@@ -84,6 +90,7 @@ ScanCodeSet1::ScanCodeSet1 () {
     key_ascii[0x52] = "0";
     key_ascii[0x53] = ".";
 
+    /*
     key_description[0x01] = "escape pressed";
     key_description[0x02] = "1 pressed";
     key_description[0x03] = "2 pressed";
@@ -254,12 +261,15 @@ ScanCodeSet1::ScanCodeSet1 () {
     key_description[0xD3] = "(key_descriptionpad) . released";
     key_description[0xD7] = "F11 released";
     key_description[0xD8] = "F12 released";
+    */
 }
 
-kstd::string ScanCodeSet1::code_to_key_description(u8 key_code) const {
-    return key_description[key_code];
-}
+//kstd::string KeyboardScanCodeSet1::code_to_key_description(u8 key_code) const {
+//    return key_description[key_code];
+//}
 
-kstd::string ScanCodeSet1::code_to_ascii(u8 key_code) const {
+const kstd::string& KeyboardScanCodeSet1::code_to_ascii(u8 key_code) const {
     return key_ascii[key_code];
 }
+
+}   /* namespace drivers */

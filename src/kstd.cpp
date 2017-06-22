@@ -6,13 +6,32 @@
  */
 
 #include "kstd.h"
+#include "types.h"
+#include "ScreenPrinter.h"
 
+extern ScreenPrinter printer;
+
+// allocation should be done using memory manager
+void* bump_alloc(size_t size) {
+    static size_t addr = 2 * 1024 * 1024;
+    const u16 align = 8;
+
+    size_t old = addr;
+    addr += size;
+    addr = (addr + (align-1)) / align * align; // next aligned address
+    return (void*)old;
+}
 
 void* operator new(size_t size) {
-    // allocation should be done using memory manager
-    static size_t addr = 2 * 1024 * 1024;
-    addr = (addr + 7) / 8 * 8; // next 8-aligned address
-    return (void*)addr;
+    return bump_alloc(size);
+}
+
+void* operator new[](size_t size) {
+    return bump_alloc(size);
+}
+
+void operator delete[](void* ptr) {
+    // should deallocate using memory manager
 }
 
 void operator delete(void *ptr) {
@@ -41,6 +60,10 @@ extern "C" int memcmp ( const void * ptr1, const void * ptr2, size_t num ) {
             return 1;
 
     return 0;
+}
+
+extern "C" void __cxa_pure_virtual() {
+    printer.format("pure virtual function called\n");
 }
 
 void std::__throw_length_error(char const* s) {

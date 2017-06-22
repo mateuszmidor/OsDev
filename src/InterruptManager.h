@@ -9,6 +9,7 @@
 #define SRC_INTERRUPTMANAGER_H_
 
 #include <functional>
+#include <array>
 #include "types.h"
 #include "Port.h"
 
@@ -57,28 +58,33 @@ struct IdtSizeAddress {
     u64 address;
 } __attribute__((packed)) ;
 
-using InterruptHandler = std::function<void(u8 interrupt_no, u64 error_code)>;
+using InterruptHandler = std::function<void(u8 interrupt_no)>;
+using ExceptionHandler = std::function<void(u8 exception_no, u64 error_code)>;
 
 class InterruptManager {
 public:
-    static void config_interrupts();
-    static void activate_interrupts();
-    static void set_handler(const InterruptHandler &h);
+    static InterruptManager& instance();
+    void config_interrupts();
+    void activate_interrupts();
+    void set_interrupt_handler(const InterruptHandler &h);
+    void set_exception_handler(const ExceptionHandler &h);
 
 private:
-    static void on_interrupt(u8 interrupt_no, u64 error_code);
-    static void setup_interrupt_descriptor_table();
-    static IdtEntry make_entry(u64 pointer, u16 code_segment_selector = 8);
-    static void setup_programmable_interrupt_controllers();
-    static void install_interrupt_descriptor_table();
-
-    static IdtEntry idt[];
-    static InterruptHandler interrupt_handler;
-
+    static constexpr int MAX_INTERRUPT_COUNT = 256;
+    static InterruptManager _instance;
     static Port8bitSlow pic_master_cmd;
     static Port8bitSlow pic_slave_cmd;
 
-    static constexpr int MAX_INTERRUPT_COUNT = 256;
+    InterruptManager();
+    static void on_interrupt(u8 interrupt_no, u64 error_code);
+    void setup_interrupt_descriptor_table();
+    IdtEntry make_entry(u64 pointer, u16 code_segment_selector = 8);
+    void setup_programmable_interrupt_controllers();
+    void install_interrupt_descriptor_table();
+
+    std::array<IdtEntry, MAX_INTERRUPT_COUNT> idt;
+    InterruptHandler interrupt_handler = [](u8) { /* do nothing */ };
+    ExceptionHandler exception_handler = [](u8, u64) { /* do nothing */ };
 };
 
 #endif /* SRC_INTERRUPTMANAGER_H_ */

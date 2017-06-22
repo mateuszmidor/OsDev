@@ -6,7 +6,7 @@
  */
 
 #include "InterruptManager.h"
-
+#include "ScreenPrinter.h"
 extern u8 IRQ_BASE;
 
 // CPU exceptions
@@ -39,29 +39,39 @@ extern "C" void handle_interrupt_no_0x20();
 extern "C" void handle_interrupt_no_0x21();
 extern "C" void handle_interrupt_no_0x2C();
 
-// Interrupt Descriptor Table
-IdtEntry InterruptManager::idt[MAX_INTERRUPT_COUNT];
 
-// Interrupt Handler Routine
-InterruptHandler INTERRUPT_IGNORE = [](u8, u64) { /* do nothing */ };
-InterruptHandler InterruptManager::interrupt_handler = INTERRUPT_IGNORE;
+InterruptManager InterruptManager::_instance;
+Port8bitSlow InterruptManager::pic_master_cmd (0x20);
+Port8bitSlow InterruptManager::pic_slave_cmd (0xA0);
 
-Port8bitSlow InterruptManager::pic_master_cmd(0x20);
-Port8bitSlow InterruptManager::pic_slave_cmd(0xA0);
+
+InterruptManager& InterruptManager::instance() {
+    return _instance;
+}
+
+InterruptManager::InterruptManager() {
+}
 
 /**
  * @name    on_interrupt
  * @brief   Interrupt/CPU exception handler. This is called from interrupts.S
+ * @note    STATIC FUNCTION
  */
 void InterruptManager::on_interrupt(u8 interrupt_no, u64 error_code) {
-    interrupt_handler(interrupt_no, error_code);
+    InterruptManager &mngr = InterruptManager::instance();
 
-    // send End Of Interrupt (confirm it has been handled)
+    // if its PIC interrupt
     if (interrupt_no >= IRQ_BASE) {
+        mngr.interrupt_handler(interrupt_no);
+
+        // send End Of Interrupt (confirm to PIC that interrupt has been handled)
         if (interrupt_no >= IRQ_BASE + 8)
             pic_slave_cmd.write(0x20);
         pic_master_cmd.write(0x20);
     }
+    // if its CPU exception
+    else
+        mngr.exception_handler(interrupt_no, error_code);
 }
 
 void InterruptManager::config_interrupts() {
@@ -74,8 +84,12 @@ void InterruptManager::activate_interrupts() {
     __asm__("sti");
 }
 
-void InterruptManager::set_handler(const InterruptHandler &h) {
+void InterruptManager::set_interrupt_handler(const InterruptHandler &h) {
     interrupt_handler = h;
+}
+
+void InterruptManager::set_exception_handler(const ExceptionHandler &h) {
+    exception_handler = h;
 }
 
 void InterruptManager::setup_interrupt_descriptor_table() {
@@ -163,7 +177,7 @@ void InterruptManager::setup_programmable_interrupt_controllers() {
 void InterruptManager::install_interrupt_descriptor_table() {
     IdtSizeAddress idt_size_address;
     idt_size_address.size_minus_1 = sizeof(idt) - 1;
-    idt_size_address.address = (u64) (idt);
+    idt_size_address.address = (u64) (idt.data());
 
     asm("lidt %0" : : "m" (idt_size_address));
 }
