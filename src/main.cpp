@@ -15,6 +15,7 @@
 #include "types.h"
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
+#include "MouseDriver.h"
 
 using namespace kstd;
 
@@ -59,93 +60,25 @@ void test_idt() {
     //asm("mov %rax, (1024*1024*1024)");
 }
 
-
-void setup_mouse() {
-    Port8bit mouse_cmd_port(0x64);
-    Port8bit mouse_data_port(0x60);
-
-    mouse_cmd_port.write(0xA8);
-    mouse_cmd_port.write(0x20);
-    u8 status = mouse_data_port.read() | 0x02;
-    mouse_cmd_port.write(0x60);
-    mouse_data_port.write(status);
-
-    mouse_cmd_port.write(0xD4);
-    mouse_data_port.write(0xF4);
-    if (mouse_data_port.read() != 0xFA)
-        printer.format("mouse init error\n");
+s16 mouse_x = 360;
+s16 mouse_y = 200;
+void on_mouse_move(s8 dx, s8 dy) {
+    printer.swap_fg_bg_at(mouse_x / 9, mouse_y / 16); // 9x16 is character size
+    mouse_x += dx ;
+    mouse_y += dy;
+    if (mouse_x < 0) mouse_x = 0; if (mouse_y < 0) mouse_y = 0; if (mouse_x > 719) mouse_x = 719; if (mouse_y > 399) mouse_y = 399;
+    printer.swap_fg_bg_at(mouse_x / 9, mouse_y / 16);
 }
-/**
- * Minimal interrupt handling routine
- */
-s16 x = 360, y = 200; // center of 720x400 screen
-u8 buttons = 0;
-u8 offset = 0;
-u8 buffer[3];
-Port8bit mouse_cmd_port(0x64);
-Port8bit mouse_data_port(0x60);
 
-void on_interrupt(u8 interrupt_no) {
-    static u32 count = 1;
-
-
-    switch (interrupt_no) {
-    case 32: {  // timer
-        return;
-    }
-
-    case 33: {  // keyboard
-        break;
-    }
-
-    case 44: {  // mouse
-
-        u8 status = mouse_cmd_port.read();
-        if (!(status & 0x01) || !(status & 0x20)) // check for mice data available
-            return;
-
-        buffer[offset] = mouse_data_port.read();
-        offset = (offset + 1) % 3;
-        if (offset == 0) {
-            if ((buffer[1] != 0) || (buffer[2] != 0)) { // detect mouse movement
-                printer.swap_fg_bg_at(x / 9, y / 16); // 9x16 is character size
-                s16 dx = (buffer[1] - ((buffer[0] << 4) & 0x100));
-                x += dx ;
-                s16 dy = -(buffer[2] - ((buffer[0] << 3) & 0x100));
-                y += dy;
-                if (x < 0) x = 0; if (y < 0) y = 0; if (x > 719) x = 719; if (y > 399) y = 399;
-                printer.swap_fg_bg_at(x / 9, y / 16);
-            }
-
-
-            for (u8 i = 0; i < 3; i++) {
-
-                if ((buffer[0] & (1 << i)) && !(buttons & (1 << i)))
-                    printer.move_to(x / 9, y / 16);
-                //    printer.format("button % down\n", i);
-
-               // if (!(buffer[0] & (1 << i)) && (buttons & (1 << i)));
-               //     printer.format("button % up\n", i);
-            }
-            buttons = buffer[0];
-        }
-
-       // printer.format("mouse ");
-        break;
-    }
-
-    default: {
-        printer.format("interrupt no. % [%]\n", interrupt_no, count++);
-    }
-    }
-
-
+void on_mouse_down(u8 button) {
+    printer.move_to(mouse_x / 9, mouse_y / 16);
 }
 
 InterruptManager &interrupt_manager = InterruptManager::instance();
 drivers::DriverManager &driver_manager = drivers::DriverManager::instance();
 drivers::KeyboardScanCodeSet1 scs1;
 drivers::KeyboardDriver keyboard(scs1);
+drivers::MouseDriver mouse;
 
 /**
  * kmain
@@ -156,12 +89,15 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     keyboard.set_on_key_press([](s8 key){ char s[2] = {key, '\0'};  printer.format("%", s); });
+    mouse.set_on_move(on_mouse_move);
+    mouse.set_on_down(on_mouse_down);
 
     // configure Interrupt Descriptor Table
-    interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no);} );
+    interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no); } );
     interrupt_manager.config_interrupts();
 
         driver_manager.install_driver(&keyboard, 33);
+        driver_manager.install_driver(&mouse, 44);
     //setup_mouse();
     interrupt_manager.activate_interrupts();
 
