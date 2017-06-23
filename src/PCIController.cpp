@@ -43,6 +43,15 @@ void PCIController::select_drivers() {
                 if (dev.vendor_id == 0x0000 || dev.vendor_id == 0xFFFF) // this means no function
                     continue;
 
+                for (u8 bar_num = 0; bar_num < 6; bar_num++) {
+                    BaseAddressRegister bar = get_base_address_register(bus, device, function, bar_num);
+                    if (bar.address && (bar.type == BaseAddressRegisterType::InputOutput))
+                        dev.port_base = (u32)(u64)bar.address; // for IO registers, address is port number
+                }
+                /* DeviceDriver drv = */ get_driver(dev);
+
+
+
                 printer.format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
                 printer.format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
                 printer.format("DEVICE_NO % %\n", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
@@ -67,6 +76,60 @@ PCIDeviceDescriptor PCIController::get_device_descriptor(u16 bus, u16 device, u1
     result.interrupt_no = read(bus, device, function, 0x3C);
 
     return result;
+}
+
+BaseAddressRegister PCIController::get_base_address_register(u16 bus, u16 device, u16 function, u16 bar_no) {
+    BaseAddressRegister result;
+
+    u32 header_type = read(bus, device, function, 0x0E) & 0x7F;
+    u8 max_bars = 6 - (4 * header_type);
+    if (bar_no > max_bars)
+        return result;
+
+    u32 bar_value = read(bus, device, function, 0x10 + 4 * bar_no);
+    result.type = (bar_value & 0x01) ? BaseAddressRegisterType::InputOutput : BaseAddressRegisterType::MemoryMapping;
+    u32 temp;
+
+    if (result.type == BaseAddressRegisterType::MemoryMapping) {
+        switch ((bar_value >> 1) & 0x03) {
+        case 0: break; // 32 bit mode
+        case 1: break; // 20 bit mode
+        case 2: break; // 64 bit mode
+        }
+        result.prefetchable = ((bar_value >> 3) & 0x01) == 0x01;
+    } else {
+        result.address = (u8*)(u64)(bar_value & ~0x03);
+        result.prefetchable = false;
+    }
+
+
+    return result;
+}
+
+void PCIController::get_driver(PCIDeviceDescriptor &dev) {
+    ScreenPrinter &printer = ScreenPrinter::instance();
+    switch (dev.vendor_id) {
+    case 0x1022:    // AMD
+        switch (dev.device_id) {
+        case 0x2000:    // am79c973 network chip
+            printer.format("AMD am79c973\n");
+            break;
+        }
+        break;
+
+    case 0x8086:    // intel
+        break;
+    }
+
+    switch (dev.class_id) { // generic devices
+    case 0x03:  // graphics
+        switch (dev.subclass_id) {
+        case 0x00:  // vga
+            printer.format("Generic graphics VGA\n");
+            break;
+        }
+    }
+
 }
 
 u32 PCIController::make_id(u16 bus, u16 device, u16 function, u32 register_offset) {

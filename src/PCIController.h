@@ -10,6 +10,17 @@
 
 #include "Port.h"
 
+enum BaseAddressRegisterType {
+    MemoryMapping   = 0,
+    InputOutput     = 1
+};
+
+struct BaseAddressRegister {
+    bool prefetchable;
+    u8 *address;
+    u32 size;
+    BaseAddressRegisterType type;
+};
 
 struct PCIDeviceDescriptor {
     u32 port_base;
@@ -39,6 +50,8 @@ public:
     bool device_has_functions(u16 bus, u16 device);
     void select_drivers();
     PCIDeviceDescriptor get_device_descriptor(u16 bus, u16 device, u16 function);
+    BaseAddressRegister get_base_address_register(u16 bus, u16 device, u16 function, u16 bar_no);
+    void get_driver(PCIDeviceDescriptor &dev);
 
 private:
     Port32bit data_port { 0xCFC };
