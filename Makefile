@@ -23,7 +23,7 @@ clean:
 	@rm -rf build
 
 run: $(iso)
-	@qemu-system-x86_64 -cdrom $(iso) # -show-cursor or qemu 2.9.0 required for mouse to work 
+	@qemu-system-x86_64 -net nic,model=pcnet -cdrom $(iso) # pcnet is AMD am79c973 network chip
 
 debug: $(iso)
 	@qemu-system-x86_64 -d int -no-reboot -cdrom $(iso)

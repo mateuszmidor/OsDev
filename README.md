@@ -11,6 +11,7 @@ sudo apt install qemu-system-x86
 
 
 # Run it
+set your emulator to network chip AMD am79c973 (default for VBox, for QEMU: -net nic,model=pcnet)
 make run
 make debug
 

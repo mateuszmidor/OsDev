@@ -16,6 +16,7 @@
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
+#include "PCIController.h"
 
 using namespace kstd;
 
@@ -114,12 +115,15 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // print CPU info
     CpuInfo cpu_info;
-    cpu_info.print(printer);
+    //cpu_info.print(printer);
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
     Multiboot2 mb2(multiboot2_info_ptr);
-    mb2.print(printer);
+    //mb2.print(printer);
 
+
+    PCIController pcic;
+    pcic.select_drivers();
     //test_kstd(p);
     //test_idt();
 
