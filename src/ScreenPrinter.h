@@ -41,6 +41,8 @@ struct VgaCharacter {
 
 class ScreenPrinter {
 public:
+    static ScreenPrinter& instance();
+
     VgaCharacter& at(u16 x, u16 y);
     void move_to(u16 x, u16 y);
     void swap_fg_bg_at(u16 x, u16 y);
@@ -126,9 +128,12 @@ private:
     const u16 NUM_COLS = 80u;
     const u16 NUM_ROWS = 25u;
     VgaCharacter* const vga = (VgaCharacter*)0xb8000;
+
+    static ScreenPrinter _instance;
     u32 cursor_pos = 0;
     Color foreground = Color::White;
     Color background = Color::Black;
+
 
     void newline();
     void tab();

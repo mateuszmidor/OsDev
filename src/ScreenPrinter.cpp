@@ -7,6 +7,11 @@
 
 #include "ScreenPrinter.h"
 
+ScreenPrinter ScreenPrinter::_instance;
+
+ScreenPrinter& ScreenPrinter::instance() {
+    return _instance;
+}
 
 VgaCharacter& ScreenPrinter::at(u16 x, u16 y) {
     if ((x > NUM_COLS) || (y > NUM_ROWS))

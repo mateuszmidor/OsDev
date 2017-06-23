@@ -31,8 +31,9 @@ bool PCIController::device_has_functions(u16 bus, u16 device) {
 }
 
 #include "ScreenPrinter.h"
-extern ScreenPrinter printer;
+
 void PCIController::select_drivers() {
+    ScreenPrinter &printer = ScreenPrinter::instance();
     for (u8 bus = 0; bus < 8; bus++)
         for (u8 device = 0; device < 32; device++) {
             u8 num_functions = device_has_functions(bus, device) ? 8 : 1;

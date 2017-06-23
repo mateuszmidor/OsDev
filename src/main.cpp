@@ -22,7 +22,7 @@ using namespace kstd;
 
 
 // screen printer for printing to the screen
-ScreenPrinter printer;
+ScreenPrinter &printer = ScreenPrinter::instance();
 
 /**
  * Test kstd namespace functionality
@@ -114,11 +114,11 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     printer.format("Hello in kmain() of main.cpp!\n");
 
     // print CPU info
-    CpuInfo cpu_info;
+    //CpuInfo cpu_info;
     //cpu_info.print(printer);
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
-    Multiboot2 mb2(multiboot2_info_ptr);
+    //Multiboot2 mb2(multiboot2_info_ptr);
     //mb2.print(printer);
 
 

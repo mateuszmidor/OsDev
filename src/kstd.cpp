@@ -9,7 +9,7 @@
 #include "types.h"
 #include "ScreenPrinter.h"
 
-extern ScreenPrinter printer;
+static ScreenPrinter &printer = ScreenPrinter::instance();
 
 // allocation should be done using memory manager
 void* bump_alloc(size_t size) {
@@ -19,6 +19,7 @@ void* bump_alloc(size_t size) {
     size_t old = addr;
     addr += size;
     addr = (addr + (align-1)) / align * align; // next aligned address
+    //printer.format("Allocated % bytes of mem\n", size);
     return (void*)old;
 }
 
@@ -67,30 +68,27 @@ extern "C" void __cxa_pure_virtual() {
 }
 
 void std::__throw_length_error(char const* s) {
-//    ScreenPrinter p;
-//    p.format("ERROR:%", s);
+    printer.format("__throw_length_error: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_logic_error(char const* s) {
-//    ScreenPrinter p;
-//    p.format("ERROR:%", s);
+    printer.format("__throw_logic_error: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_bad_alloc() {
-//    ScreenPrinter p;
-//    p.format("BAD ALLOC");
+    printer.format("__throw_bad_alloc\n");
     __builtin_unreachable();
 }
 
-void std::__throw_out_of_range_fmt(char const*, ...) {
-//    ScreenPrinter p;
-//    p.format("OUT OF RANGE");
+void std::__throw_out_of_range_fmt(char const* s, ...) {
+    printer.format("__throw_out_of_range_fmt: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_bad_function_call() {
+    printer.format("__throw_bad_function_call\n");
     __builtin_unreachable();
 }
 
