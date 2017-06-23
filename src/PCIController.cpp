@@ -40,8 +40,8 @@ void PCIController::select_drivers() {
             for (u8 function = 0; function < num_functions; function++) {
                 PCIDeviceDescriptor dev = get_device_descriptor(bus, device, function);
 
-                if (dev.vendor_id == 0x0000 || dev.vendor_id == 0xFFFF) // this means end of functions for this device
-                    break;
+                if (dev.vendor_id == 0x0000 || dev.vendor_id == 0xFFFF) // this means no function
+                    continue;
 
                 printer.format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
                 printer.format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
