@@ -64,7 +64,7 @@ using ExceptionHandler = std::function<void(u8 exception_no, u64 error_code)>;
 class InterruptManager {
 public:
     static InterruptManager& instance();
-    void config_and_activate_interrupts();
+    void config_and_activate_exceptions_and_interrupts();
     void set_interrupt_handler(const InterruptHandler &h);
     void set_exception_handler(const ExceptionHandler &h);
 

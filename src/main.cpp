@@ -17,6 +17,7 @@
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "PCIController.h"
+#include "ExceptionManager.h"
 
 using namespace kstd;
 
@@ -80,6 +81,7 @@ void on_key_press(s8 key) {
     printer.format("%", s);
 }
 
+cpuexceptions::ExceptionManager exception_manager = cpuexceptions::ExceptionManager::instance();
 InterruptManager &interrupt_manager = InterruptManager::instance();
 drivers::DriverManager &driver_manager = drivers::DriverManager::instance();
 drivers::KeyboardScanCodeSet1 scs1;
@@ -104,8 +106,9 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(mouse);
 
     // configure Interrupt Descriptor Table
+    interrupt_manager.set_exception_handler([] (u8 exc_no, u64 error) { exception_manager.on_exception(exc_no, error); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no); } );
-    interrupt_manager.config_and_activate_interrupts();
+    interrupt_manager.config_and_activate_exceptions_and_interrupts();
 
 
     // print hello message to the user

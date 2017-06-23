@@ -82,7 +82,7 @@ void InterruptManager::ack_interrupt_handled(u8 interrupt_no) {
     pic_master_cmd.write(0x20);
 }
 
-void InterruptManager::config_and_activate_interrupts() {
+void InterruptManager::config_and_activate_exceptions_and_interrupts() {
     config_interrupts();
     __asm__("sti");
 }
