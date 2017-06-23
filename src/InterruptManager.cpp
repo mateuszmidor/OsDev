@@ -6,7 +6,8 @@
  */
 
 #include "InterruptManager.h"
-#include "ScreenPrinter.h"
+
+// defined in interrupts.S
 extern u8 IRQ_BASE;
 
 // CPU exceptions
@@ -41,8 +42,6 @@ extern "C" void handle_interrupt_no_0x2C();
 
 
 InterruptManager InterruptManager::_instance;
-Port8bitSlow InterruptManager::pic_master_cmd (0x20);
-Port8bitSlow InterruptManager::pic_slave_cmd (0xA0);
 
 
 InterruptManager& InterruptManager::instance() {
@@ -50,7 +49,6 @@ InterruptManager& InterruptManager::instance() {
 }
 
 InterruptManager::InterruptManager() {
-
 }
 
 void InterruptManager::config_interrupts() {
@@ -70,15 +68,18 @@ void InterruptManager::on_interrupt(u8 interrupt_no, u64 error_code) {
     // if its PIC interrupt
     if (interrupt_no >= IRQ_BASE) {
         mngr.interrupt_handler(interrupt_no);
-
-        // send End Of Interrupt (confirm to PIC that interrupt has been handled)
-        if (interrupt_no >= IRQ_BASE + 8)
-            pic_slave_cmd.write(0x20);
-        pic_master_cmd.write(0x20);
+        mngr.ack_interrupt_handled(interrupt_no);
     }
     // if its CPU exception
     else
         mngr.exception_handler(interrupt_no, error_code);
+}
+
+void InterruptManager::ack_interrupt_handled(u8 interrupt_no) {
+    // send End Of Interrupt (confirm to PIC that interrupt has been handled)
+    if (interrupt_no >= IRQ_BASE + 8)
+        pic_slave_cmd.write(0x20);
+    pic_master_cmd.write(0x20);
 }
 
 void InterruptManager::config_and_activate_interrupts() {

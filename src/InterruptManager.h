@@ -71,11 +71,12 @@ public:
 private:
     static constexpr int MAX_INTERRUPT_COUNT = 256;
     static InterruptManager _instance;
-    static Port8bitSlow pic_master_cmd;
-    static Port8bitSlow pic_slave_cmd;
+    Port8bitSlow pic_master_cmd  {0x20};
+    Port8bitSlow pic_slave_cmd   {0xA0};
 
     InterruptManager();
     static void on_interrupt(u8 interrupt_no, u64 error_code);
+    void ack_interrupt_handled(u8 interrupt_no);
     void config_interrupts();
     void setup_interrupt_descriptor_table();
     IdtEntry make_entry(u64 pointer, u16 code_segment_selector = 8);
