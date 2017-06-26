@@ -9,26 +9,8 @@
 #define SRC_SCREENPRINTER_H_
 
 #include "types.h"
+#include "VgaDriver.h"
 
-
-enum Color : u8 {
-    Black      = 0,
-    Blue       = 1,
-    Green      = 2,
-    Cyan       = 3,
-    Red        = 4,
-    Magenta    = 5,
-    Brown      = 6,
-    LightGray  = 7,
-    DarkGray   = 8,
-    LightBlue  = 9,
-    LightGreen = 10,
-    LightCyan  = 11,
-    LightRed   = 12,
-    Pink       = 13,
-    Yellow     = 14,
-    White      = 15
-};
 
 /**
  * This is the structure describing single character in VGA buffer
@@ -46,8 +28,8 @@ public:
     VgaCharacter& at(u16 x, u16 y);
     void move_to(u16 x, u16 y);
     void swap_fg_bg_at(u16 x, u16 y);
-    void set_fg_color(const Color value);
-    void set_bg_color(const Color value);
+    void set_fg_color(const drivers::EgaColor value);
+    void set_bg_color(const drivers::EgaColor value);
     void clearscreen();
 
 
@@ -125,14 +107,14 @@ public:
     }
 
 private:
-    const u16 NUM_COLS = 80u;
-    const u16 NUM_ROWS = 25u;
+    const u16 NUM_COLS = 90u;
+    const u16 NUM_ROWS = 30u;
     VgaCharacter* const vga = (VgaCharacter*)0xb8000;
 
     static ScreenPrinter _instance;
     u32 cursor_pos = 0;
-    Color foreground = Color::White;
-    Color background = Color::Black;
+    drivers::EgaColor foreground = drivers::EgaColor::White;
+    drivers::EgaColor background = drivers::EgaColor::Black;
 
 
     void newline();

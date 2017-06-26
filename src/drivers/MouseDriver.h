@@ -13,7 +13,13 @@
 
 namespace drivers {
 
-using MouseButtonEvent = std::function<void(u8 button)>;
+enum MouseButton : u8 {
+    LEFT    = 0,
+    RIGHT   = 1,
+    MIDDLE  = 2
+};
+
+using MouseButtonEvent = std::function<void(MouseButton button)>;
 using MouseMoveEvent = std::function<void(s8 dx, s8 dy)>;
 
 class MouseDriver : public DeviceDriver {

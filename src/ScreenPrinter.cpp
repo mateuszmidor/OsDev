@@ -32,11 +32,11 @@ void ScreenPrinter::swap_fg_bg_at(u16 x, u16 y) {
     at(x, y) = VgaCharacter { .character = c.character, .fg_color = c.bg_color, .bg_color = c.fg_color };
 }
 
-void ScreenPrinter::set_fg_color(const Color value) {
+void ScreenPrinter::set_fg_color(const drivers::EgaColor value) {
     foreground = value;
 }
 
-void ScreenPrinter::set_bg_color(const Color value) {
+void ScreenPrinter::set_bg_color(const drivers::EgaColor value) {
     background = value;
 }
 
@@ -70,5 +70,5 @@ void ScreenPrinter::tab() {
 
 void ScreenPrinter::backspace() {
     cursor_pos = (cursor_pos + NUM_COLS * NUM_ROWS - 1) % (NUM_COLS * NUM_ROWS);
-    vga[cursor_pos] = VgaCharacter { .character = ' ', .fg_color = Color::Black, .bg_color = Color::Black };
+    vga[cursor_pos] = VgaCharacter { .character = ' ', .fg_color = drivers::EgaColor::Black, .bg_color = drivers::EgaColor::Black };
 }

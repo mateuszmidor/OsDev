@@ -48,13 +48,12 @@ void PCIController::select_drivers() {
                     if (bar.address && (bar.type == BaseAddressRegisterType::InputOutput))
                         dev.port_base = (u32)(u64)bar.address; // for IO registers, address is port number
                 }
-                /* DeviceDriver drv = */ get_driver(dev);
-
-
 
                 printer.format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
                 printer.format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
-                printer.format("DEVICE_NO % %\n", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
+                printer.format("DEVICE_NO % % ", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
+                /* DeviceDriver drv = */ get_driver(dev);
+                printer.format("\n");
             }
         }
 }
@@ -112,7 +111,7 @@ void PCIController::get_driver(PCIDeviceDescriptor &dev) {
     case 0x1022:    // AMD
         switch (dev.device_id) {
         case 0x2000:    // am79c973 network chip
-            printer.format("AMD am79c973\n");
+            printer.format("[AMD am79c973]");
             break;
         }
         break;
@@ -125,7 +124,7 @@ void PCIController::get_driver(PCIDeviceDescriptor &dev) {
     case 0x03:  // graphics
         switch (dev.subclass_id) {
         case 0x00:  // vga
-            printer.format("Generic graphics VGA\n");
+            printer.format("[Generic VGA]");
             break;
         }
     }

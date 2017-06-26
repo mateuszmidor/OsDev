@@ -18,12 +18,25 @@
 #include "MouseDriver.h"
 #include "PCIController.h"
 #include "ExceptionManager.h"
+#include "VgaDriver.h"
 
 using namespace kstd;
 
 
 // screen printer for printing to the screen
 ScreenPrinter &printer = ScreenPrinter::instance();
+
+cpuexceptions::ExceptionManager exception_manager = cpuexceptions::ExceptionManager::instance();
+InterruptManager &interrupt_manager = InterruptManager::instance();
+drivers::DriverManager &driver_manager = drivers::DriverManager::instance();
+drivers::KeyboardScanCodeSet1 scs1;
+auto keyboard = std::make_shared<drivers::KeyboardDriver> (scs1);
+auto mouse = std::make_shared<drivers::MouseDriver>();
+drivers::VgaDriver vga;
+
+s16 mouse_x = 360;
+s16 mouse_y = 200;
+
 
 /**
  * Test kstd namespace functionality
@@ -62,18 +75,39 @@ void test_idt() {
     //asm("mov %rax, (1024*1024*1024)");
 }
 
-s16 mouse_x = 360;
-s16 mouse_y = 200;
-void on_mouse_move(s8 dx, s8 dy) {
-    printer.swap_fg_bg_at(mouse_x / 9, mouse_y / 16); // 9x16 is character size
+void on_mouse_move_text(s8 dx, s8 dy) {
+    const u8 CHAR_WIDTH = 720 / vga.screen_width();
+    const u8 CHAR_HEIGHT = 400 / vga.screen_height();
+    printer.swap_fg_bg_at(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
     mouse_x += dx ;
     mouse_y += dy;
     if (mouse_x < 0) mouse_x = 0; if (mouse_y < 0) mouse_y = 0; if (mouse_x > 719) mouse_x = 719; if (mouse_y > 399) mouse_y = 399;
-    printer.swap_fg_bg_at(mouse_x / 9, mouse_y / 16);
+    printer.swap_fg_bg_at(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
 }
 
-void on_mouse_down(u8 button) {
-    printer.move_to(mouse_x / 9, mouse_y / 16);
+drivers::EgaColor pen_color = drivers::EgaColor::LightRed;
+void on_mouse_move_graphics(s8 dx, s8 dy) {
+    mouse_x += dx ;
+    mouse_y += dy;
+    if (mouse_x < 0) mouse_x = 0; if (mouse_y < 0) mouse_y = 0;
+    if (mouse_x > vga.screen_width()) mouse_x = vga.screen_width(); if (mouse_y > vga.screen_height()) mouse_y = vga.screen_height();
+
+    vga.put_pixel(mouse_x, mouse_y, pen_color);
+}
+
+void on_mouse_down_text(u8 button) {
+    const u8 CHAR_WIDTH = 720 / vga.screen_width();
+    const u8 CHAR_HEIGHT = 400 / vga.screen_height();
+    printer.move_to(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
+}
+
+void on_mouse_down_graphics(u8 button) {
+    switch (button) {
+    default:
+    case drivers::MouseButton::LEFT:    pen_color = drivers::EgaColor::LightRed; break;
+    case drivers::MouseButton::RIGHT:   pen_color = drivers::EgaColor::LightGreen; break;
+    case drivers::MouseButton::MIDDLE:  pen_color = drivers::EgaColor::LightBlue; break;
+    }
 }
 
 void on_key_press(s8 key) {
@@ -81,12 +115,17 @@ void on_key_press(s8 key) {
     printer.format("%", s);
 }
 
-cpuexceptions::ExceptionManager exception_manager = cpuexceptions::ExceptionManager::instance();
-InterruptManager &interrupt_manager = InterruptManager::instance();
-drivers::DriverManager &driver_manager = drivers::DriverManager::instance();
-drivers::KeyboardScanCodeSet1 scs1;
-auto keyboard = std::make_shared<drivers::KeyboardDriver> (scs1);
-auto mouse = std::make_shared<drivers::MouseDriver>();
+void vga_demo() {
+    // vga demo
+    mouse->set_on_move(on_mouse_move_graphics);
+    mouse->set_on_down(on_mouse_down_graphics);
+    vga.set_graphics_mode_320_200_256();
+    mouse_x = 320 / 2;
+    mouse_y = 200 / 2;
+    for (u16 x = 0; x < vga.screen_width(); x++)
+        for (u16 y = 0; y < vga.screen_height(); y++)
+            vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? drivers::EgaColor::LightGreen : drivers::EgaColor::Black); // 4 pixels thick frame around the screen
+}
 
 /**
  * kmain
@@ -98,8 +137,8 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // configure drivers
     keyboard->set_on_key_press(on_key_press);
-    mouse->set_on_move(on_mouse_move);
-    mouse->set_on_down(on_mouse_down);
+    mouse->set_on_move(on_mouse_move_text);
+    mouse->set_on_down(on_mouse_down_text);
 
     // install drivers
     driver_manager.install_driver(keyboard);
@@ -110,28 +149,32 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
 
-
     // print hello message to the user
-    printer.set_bg_color(Color::Blue);
-    printer.format("\n\n"); // go to the third line of console as 1 and 2 are used upon initializing in 32 and then 64 bit mode
-    printer.format("Hello in kmain() of main.cpp!\n");
+    vga.set_text_mode_90_30();
+    printer.clearscreen();
+    printer.set_bg_color(drivers::EgaColor::Blue);
 
     // print CPU info
-    //CpuInfo cpu_info;
-    //cpu_info.print(printer);
+    CpuInfo cpu_info;
+    cpu_info.print(printer);
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
-    //Multiboot2 mb2(multiboot2_info_ptr);
-    //mb2.print(printer);
+    Multiboot2 mb2(multiboot2_info_ptr);
+    mb2.print(printer);
 
-
+    // print PCI devics
     PCIController pcic;
     pcic.select_drivers();
+
     //test_kstd(p);
-    //test_idt();
+    // test interrupt descriptor table
+    test_idt();
 
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
+
+    // vga demo
+    vga_demo();
 
     // loop forever handling interrupts
     for(;;)
