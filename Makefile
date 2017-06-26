@@ -2,7 +2,7 @@ arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 
-GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore 
+GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding
 GCCINCLUDES = -Isrc -Isrc/drivers -Isrc/cpuexceptions
 
 linker_script := src/arch/$(arch)/linker.ld
@@ -22,6 +22,9 @@ all: $(kernel)
 clean:
 	@rm -rf build
 
+install: $(kernel)
+	sudo cp $< /boot/PhobOS.bin
+	
 run: $(iso)
 	@qemu-system-x86_64 -net nic,model=pcnet -cdrom $(iso) # pcnet is AMD am79c973 network chip
 
