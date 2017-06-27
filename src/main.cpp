@@ -16,9 +16,11 @@
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
+#include "TimerDriver.h"
 #include "PCIController.h"
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
+#include "TaskManager.h"
 
 using namespace kstd;
 using namespace cpu;
@@ -26,13 +28,16 @@ using namespace cpu;
 // screen printer for printing to the screen
 ScreenPrinter &printer = ScreenPrinter::instance();
 
-cpuexceptions::ExceptionManager exception_manager = cpuexceptions::ExceptionManager::instance();
-InterruptManager &interrupt_manager = InterruptManager::instance();
-drivers::DriverManager &driver_manager = drivers::DriverManager::instance();
+TaskManager& task_manager = TaskManager::instance();
+cpuexceptions::ExceptionManager& exception_manager = cpuexceptions::ExceptionManager::instance();
+InterruptManager& interrupt_manager = InterruptManager::instance();
+drivers::DriverManager& driver_manager = drivers::DriverManager::instance();
+
 drivers::KeyboardScanCodeSet1 scs1;
 auto keyboard = std::make_shared<drivers::KeyboardDriver> (scs1);
 auto mouse = std::make_shared<drivers::MouseDriver>();
-drivers::VgaDriver vga;
+auto timer = std::make_shared<drivers::TimerDriver>();
+auto vga = drivers::VgaDriver();
 
 s16 mouse_x = 360;
 s16 mouse_y = 200;
@@ -62,7 +67,8 @@ void test_kstd(ScreenPrinter &p) {
 }
 
 /**
- * Test Interrupt Descriptor Table
+ * Test Interrupt Descriptor Table.
+ * Interrupts must be configured and activated before!
  */
 void test_idt() {
     // check breakpoint exception handler
@@ -115,6 +121,10 @@ void on_key_press(s8 key) {
     printer.format("%", s);
 }
 
+CpuState* on_timer_tick(CpuState* cpu_state) {
+    return task_manager.schedule(cpu_state);
+}
+
 void vga_demo() {
     // vga demo
     mouse->set_on_move(on_mouse_move_graphics);
@@ -125,6 +135,20 @@ void vga_demo() {
     for (u16 x = 0; x < vga.screen_width(); x++)
         for (u16 y = 0; y < vga.screen_height(); y++)
             vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? drivers::EgaColor::LightGreen : drivers::EgaColor::Black); // 4 pixels thick frame around the screen
+}
+
+void task1() {
+    while (true) {
+        printer.format("A");
+        asm("hlt");
+    }
+}
+
+void task2() {
+    while (true) {
+        printer.format("B");
+        asm("hlt");
+    }
 }
 
 /**
@@ -139,10 +163,12 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     keyboard->set_on_key_press(on_key_press);
     mouse->set_on_move(on_mouse_move_text);
     mouse->set_on_down(on_mouse_down_text);
+    timer->set_on_tick(on_timer_tick);
 
     // install drivers
     driver_manager.install_driver(keyboard);
     driver_manager.install_driver(mouse);
+    driver_manager.install_driver(timer);
 
     // configure Interrupt Descriptor Table
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
@@ -166,13 +192,15 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     PCIController pcic;
     pcic.select_drivers();
 
-    //test_kstd(p);
     // test interrupt descriptor table
     test_idt();
 
+    // test multitasking
+    task_manager.add_task(new Task(task1));
+    task_manager.add_task(new Task(task2));
+
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
-
     // vga demo
     //vga_demo();
 

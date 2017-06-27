@@ -21,6 +21,9 @@ using DeviceDriverPtr = std::shared_ptr<DeviceDriver>;
 class DriverManager {
 public:
     static DriverManager& instance();
+    DriverManager operator=(const DriverManager&) = delete;
+    DriverManager operator=(DriverManager&&) = delete;
+
     virtual ~DriverManager();
     void install_driver(DeviceDriverPtr drv);
     cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state) const;

@@ -48,9 +48,6 @@ InterruptManager& InterruptManager::instance() {
     return _instance;
 }
 
-InterruptManager::InterruptManager() {
-}
-
 void InterruptManager::config_interrupts() {
     setup_programmable_interrupt_controllers();
     setup_interrupt_descriptor_table();

@@ -13,7 +13,8 @@
 namespace cpu {
 
 /**
- * On CPU exception/PIC interrupt, following structure is layed on top of the stack
+ * On CPU exception/PIC interrupt, following structure is layed on top of the stack before InterruptManager::on_interrupt is called
+ * See: https://os.phil-opp.com/handling-exceptions/
  */
 struct CpuState {
     CpuState(u64 rip);
@@ -33,9 +34,10 @@ struct CpuState {
     u64 r10;
     u64 r11;
 
-    // this second part is part of exception/interrupt protocol; see https://os.phil-opp.com/handling-exceptions/
-    u64 error_code;  // only provided by CPU exceptions that carry error code
-    u64 rip;    // this is iret return address while finishing handling the interrupt
+    // this second part is filled by CPU as part of exception/interrupt protocol
+    // see https://os.phil-opp.com/handling-exceptions/
+    u64 error_code; // only provided by CPU exceptions that carry error code
+    u64 rip;        // this is iret return address that jump from interrupt to task to be executed
     u64 cs;
     u64 rflags;
     u64 rsp;

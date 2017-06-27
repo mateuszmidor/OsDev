@@ -33,7 +33,6 @@ void DriverManager::install_driver(DeviceDriverPtr drv) {
 }
 
 CpuState* DriverManager::on_interrupt(u8 interrupt_no, CpuState* cpu_state) const {
-    drivers[interrupt_no]->on_interrupt();
-    return cpu_state;
+    return drivers[interrupt_no]->on_interrupt(cpu_state);
 }
 } /* namespace drivers */

@@ -7,6 +7,8 @@
 
 #include "MouseDriver.h"
 
+using namespace cpu;
+
 namespace drivers {
 
 MouseDriver::MouseDriver() {
@@ -20,7 +22,37 @@ s16 MouseDriver::handled_interrupt_no() {
     return 44;
 }
 
-void MouseDriver::on_interrupt() {
+CpuState* MouseDriver::on_interrupt(CpuState* cpu_state) {
+    handle_mouse_interrupt();
+    return cpu_state;
+}
+
+void MouseDriver::set_on_move(const MouseMoveEvent &event) {
+    on_move = event;
+}
+
+void MouseDriver::set_on_down(const MouseButtonEvent &event) {
+    on_down = event;
+}
+
+void MouseDriver::set_on_up(const MouseButtonEvent &event) {
+    on_up = event;
+}
+
+bool MouseDriver::setup() {
+    mouse_cmd_port.write(0xA8);
+    mouse_cmd_port.write(0x20);
+    u8 status = mouse_data_port.read() | 0x02;
+    mouse_cmd_port.write(0x60);
+    mouse_data_port.write(status);
+
+    mouse_cmd_port.write(0xD4);
+    mouse_data_port.write(0xF4);
+
+    return (mouse_data_port.read() == 0xFA);
+}
+
+void MouseDriver::handle_mouse_interrupt() {
     // check for mouse data available
     u8 status = mouse_cmd_port.read();
     if (!(status & 0x01) || !(status & 0x20))
@@ -52,30 +84,5 @@ void MouseDriver::on_interrupt() {
         // remember button state
         buttons = buffer[0];
     }
-}
-
-void MouseDriver::set_on_move(const MouseMoveEvent &event) {
-    on_move = event;
-}
-
-void MouseDriver::set_on_down(const MouseButtonEvent &event) {
-    on_down = event;
-}
-
-void MouseDriver::set_on_up(const MouseButtonEvent &event) {
-    on_up = event;
-}
-
-bool MouseDriver::setup() {
-    mouse_cmd_port.write(0xA8);
-    mouse_cmd_port.write(0x20);
-    u8 status = mouse_data_port.read() | 0x02;
-    mouse_cmd_port.write(0x60);
-    mouse_data_port.write(status);
-
-    mouse_cmd_port.write(0xD4);
-    mouse_data_port.write(0xF4);
-
-    return (mouse_data_port.read() == 0xFA);
 }
 } /* namespace drivers */

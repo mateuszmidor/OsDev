@@ -16,6 +16,9 @@ namespace cpuexceptions {
 class ExceptionManager {
 public:
     static ExceptionManager &instance();
+    ExceptionManager operator=(const ExceptionManager&) = delete;
+    ExceptionManager operator=(ExceptionManager&&) = delete;
+
     cpu::CpuState* on_exception(u8 exception_no, cpu::CpuState* cpu_state) const;
 
 private:

@@ -14,11 +14,8 @@ namespace drivers {
 
 class UnhandledDeviceDriver: public DeviceDriver {
 public:
-    UnhandledDeviceDriver();
-    virtual ~UnhandledDeviceDriver();
-
     s16 handled_interrupt_no() override;
-    void on_interrupt() override;
+    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
 };
 
 } /* namespace drivers */

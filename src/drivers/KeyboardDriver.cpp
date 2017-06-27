@@ -7,6 +7,8 @@
 
 #include "KeyboardDriver.h"
 
+using namespace cpu;
+
 namespace drivers {
 
 /**
@@ -27,7 +29,12 @@ s16 KeyboardDriver::handled_interrupt_no() {
     return 33;
 }
 
-void KeyboardDriver::on_interrupt() {
+CpuState* KeyboardDriver::on_interrupt(CpuState* cpu_state) {
+    handle_keyboard_interrupt();
+    return cpu_state;
+}
+
+void KeyboardDriver::handle_keyboard_interrupt() {
     u8 key_code = keyboard_data_port.read();
     s8 ascii_key = scan_code_set.code_to_ascii(key_code).c_str()[0];
     on_key_press(ascii_key);

@@ -18,8 +18,11 @@ public:
     DeviceDriver();
     virtual ~DeviceDriver();
 
+    // number of interrupt in idt that this driver handles
     virtual s16 handled_interrupt_no() = 0;
-    virtual void on_interrupt() = 0;
+
+    // if no task switching to be done, we should just return cpu_state
+    virtual cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) = 0;
 };
 
 } /* namespace drivers */

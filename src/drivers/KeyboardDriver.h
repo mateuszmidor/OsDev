@@ -24,12 +24,14 @@ public:
     void set_on_key_press(const KeyEvent &event);
 
     s16 handled_interrupt_no() override;
-    void on_interrupt() override;
+    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
 
 private:
     Port8bit keyboard_data_port;
     KeyboardScanCodeSet& scan_code_set;
     KeyEvent on_key_press = [](u8) { /* do nothing */ };
+
+    void handle_keyboard_interrupt();
 };
 
 } /* namespace drivers */

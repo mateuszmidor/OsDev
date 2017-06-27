@@ -28,7 +28,7 @@ public:
     virtual ~MouseDriver();
 
     s16 handled_interrupt_no() override;
-    void on_interrupt() override;
+    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
 
     void set_on_move(const MouseMoveEvent &event);
     void set_on_down(const MouseButtonEvent &event);
@@ -44,6 +44,7 @@ private:
     MouseButtonEvent on_down = [] (u8 button) { /* do nothing */ };
     MouseButtonEvent on_up = [] (u8 button) { /* do nothing */ };
 
+    void handle_mouse_interrupt();
     bool setup();
 };
 

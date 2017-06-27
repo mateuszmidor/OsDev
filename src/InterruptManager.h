@@ -65,6 +65,9 @@ using ExceptionHandler = std::function<cpu::CpuState*(u8 exception_no, cpu::CpuS
 class InterruptManager {
 public:
     static InterruptManager& instance();
+    InterruptManager operator=(const InterruptManager&) = delete;
+    InterruptManager operator=(InterruptManager&&) = delete;
+
     void config_and_activate_exceptions_and_interrupts();
     void set_interrupt_handler(const InterruptHandler &h);
     void set_exception_handler(const ExceptionHandler &h);
@@ -75,7 +78,7 @@ private:
     Port8bitSlow pic_master_cmd  {0x20};
     Port8bitSlow pic_slave_cmd   {0xA0};
 
-    InterruptManager();
+    InterruptManager() {}
     static cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state);
     void ack_interrupt_handled(u8 interrupt_no);
     void config_interrupts();
