@@ -7,6 +7,7 @@
 
 #include "ExceptionManager.h"
 #include "ScreenPrinter.h"
+#include "TaskManager.h"
 
 using namespace cpu;
 
@@ -23,11 +24,12 @@ ExceptionManager &ExceptionManager::instance() {
 // but lets keep it simple for now
 CpuState* ExceptionManager::on_exception(u8 exception_no, CpuState* cpu_state) const {
     ScreenPrinter &printer = ScreenPrinter::instance();
-    printer.format("CPU EXCEPTION %, error code %\n", exception_no, cpu_state->error_code);
+    TaskManager& mngr = TaskManager::instance();
+    Task const * current = mngr.get_current_task();
+    printer.format("\nCPU EXCEPTION % by \"%\", error code %. KILLING\n",
+            exception_no, current->name.c_str(), cpu_state->error_code);
 
-    if (exception_no == 0) cpu_state->rcx = 1; // fix zero division
-
-    return cpu_state;
+    return mngr.kill_current_task();
 }
 
 } /* namespace cpuexceptions */

@@ -66,21 +66,6 @@ void test_kstd(ScreenPrinter &p) {
     p.format("%\n", s2.c_str());
 }
 
-/**
- * Test Interrupt Descriptor Table.
- * Interrupts must be configured and activated before!
- */
-void test_idt() {
-    // check breakpoint exception handler
-    asm("int3");
-
-    // check zero division exception handler
-    asm("mov $0, %rcx; mov $0, %rdx; idiv %rcx");
-
-    // check page fault exception handler (write to non mapped page)
-    //asm("mov %rax, (1024*1024*1024)");
-}
-
 void on_mouse_move_text(s8 dx, s8 dy) {
     const u8 CHAR_WIDTH = 720 / vga.screen_width();
     const u8 CHAR_HEIGHT = 400 / vga.screen_height();
@@ -137,18 +122,30 @@ void vga_demo() {
             vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? drivers::EgaColor::LightGreen : drivers::EgaColor::Black); // 4 pixels thick frame around the screen
 }
 
-void task1() {
-    while (true) {
+// at least this guy should ever live :)
+void task_idle() {
+    while (true)
+        asm("hlt");
+}
+
+void task_print_A() {
+    for (int i = 0; i < 20; i++) {
         printer.format("A");
         asm("hlt");
     }
 }
 
-void task2() {
+void task_print_b() {
     while (true) {
         printer.format("B");
         asm("hlt");
     }
+}
+
+void task_init() {
+    task_manager.add_task(new Task(task_idle, "idle"));
+    task_manager.add_task(new Task(task_print_A, "A printer"));
+    task_manager.add_task(new Task(task_print_b, "B printer"));
 }
 
 /**
@@ -192,19 +189,12 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     PCIController pcic;
     pcic.select_drivers();
 
-    // test interrupt descriptor table
-    test_idt();
-
-    // test multitasking
-    task_manager.add_task(new Task(task1));
-    task_manager.add_task(new Task(task2));
-
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
     // vga demo
     //vga_demo();
 
-    // loop forever handling interrupts
-    for(;;)
-       asm("hlt");
+    // start multitasking
+    task_manager.add_task(new Task(task_init, "init"));
+    // NO CODE SHALL BE EXECUTED PAST THIS POINT
 }
