@@ -196,5 +196,8 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // start multitasking
     task_manager.add_task(new Task(task_init, "init"));
-    // NO CODE SHALL BE EXECUTED PAST THIS POINT
+    
+    // wait until timer interrupt switches execution to init task
+    while (true)
+        asm("hlt");
 }
