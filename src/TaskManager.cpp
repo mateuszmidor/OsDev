@@ -6,8 +6,9 @@
  */
 
 #include "TaskManager.h"
-
+#include "ScreenPrinter.h"
 using namespace cpu;
+
 
 TaskManager TaskManager::_instance;
 
@@ -15,9 +16,29 @@ TaskManager& TaskManager::instance() {
     return _instance;
 }
 
+/**
+ * Constructor.
+ * Task stack is constructed as follows:
+   0|FREE STACK|CpuState|TaskEpilogue|4095
+                        ^
+                  here is rsp when first time jumping from interrupt to task function
+*/
 Task::Task(TaskEntryPoint entrypoint, kstd::string name) : name(name) {
-    void* addr = (stack + sizeof(stack) - sizeof(CpuState)); // cpu state is stored at end of the stack
-    cpu_state = new (addr) CpuState((u64)entrypoint);
+    const u64 STACK_END = (u64)stack + sizeof(stack);
+
+    // prepare task epilogue ie. where to return from task function
+    TaskEpilogue* task_epilogue = (TaskEpilogue*)(STACK_END - sizeof(TaskEpilogue));
+    new (task_epilogue) TaskEpilogue {(u64)TaskManager::on_task_exit};
+
+    // prepare task cpu state to setup cpu register with
+    cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
+    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue};
+}
+
+void TaskManager::on_task_exit() {
+    auto &p = ScreenPrinter::instance();
+    p.format(" [TASK EXIT] ");
+    //asm("int $EXIT_TASK_INTERRUPT_NO");
 }
 
 bool TaskManager::add_task(Task* task) {

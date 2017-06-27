@@ -21,12 +21,17 @@ struct Task {
     cpu::CpuState* cpu_state;
 };
 
+struct TaskEpilogue {
+    u64 rip;    // rip cpu register value for retq instruction on task function exit
+} __attribute__((packed));
+
 class TaskManager {
 public:
     static TaskManager& instance();
     TaskManager operator=(const TaskManager&) = delete;
     TaskManager operator=(TaskManager&&) = delete;
 
+    static void on_task_exit();
     bool add_task(Task* task);
     Task const * get_current_task() const;
     cpu::CpuState* schedule(cpu::CpuState* cpu_state);

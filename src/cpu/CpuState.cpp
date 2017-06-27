@@ -13,7 +13,7 @@ namespace cpu {
  * Constructor
  * @param rip   Return address for iretq in interrupts.S
  */
-CpuState::CpuState (u64 rip = 0) {
+CpuState::CpuState(u64 rip = 0, u64 rsp = 0) {
     rax = 0;
     rbx = 0;
     rcx = 0;
@@ -32,7 +32,7 @@ CpuState::CpuState (u64 rip = 0) {
     this->rip = rip;        // this is return address for iretq instruction in interrupt handler in interrupts.S
     cs = 8;                 // for long mode we have only null segment(gdt offset 0) and code segment(gdt offset 8)
     rflags = 0x202;         // 1000000010; INTERRUPTS | BIT_1 (always set)
-    this->rsp = (u64)this;  // must be set to CpuState struct for interrupts.S interrupt handler to restore the CPU registers
+    this->rsp = rsp;
     ss = 0;
 }
 } /* namespace cpu */

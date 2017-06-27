@@ -17,7 +17,7 @@ namespace cpu {
  * See: https://os.phil-opp.com/handling-exceptions/
  */
 struct CpuState {
-    CpuState(u64 rip);
+    CpuState(u64 rip, u64 rsp);
 
     // this first part we save/restore manually
     u64 rax;
