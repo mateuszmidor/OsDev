@@ -12,6 +12,8 @@
 #include <memory>
 #include "DeviceDriver.h"
 
+#include "CpuState.h"
+
 namespace drivers {
 
 using DeviceDriverPtr = std::shared_ptr<DeviceDriver>;
@@ -21,7 +23,7 @@ public:
     static DriverManager& instance();
     virtual ~DriverManager();
     void install_driver(DeviceDriverPtr drv);
-    void on_interrupt(u8 interrupt_no) const;
+    cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state) const;
 
 private:
     static DriverManager _instance;

@@ -8,14 +8,15 @@
 #ifndef SRC_CPUEXCEPTIONS_EXCEPTIONMANAGER_H_
 #define SRC_CPUEXCEPTIONS_EXCEPTIONMANAGER_H_
 
-namespace cpuexceptions {
+#include "CpuState.h"
 
-#include "types.h"
+
+namespace cpuexceptions {
 
 class ExceptionManager {
 public:
     static ExceptionManager &instance();
-    void on_exception(u8 exception_no, u64 error_code) const;
+    cpu::CpuState* on_exception(u8 exception_no, cpu::CpuState* cpu_state) const;
 
 private:
     ExceptionManager() {}

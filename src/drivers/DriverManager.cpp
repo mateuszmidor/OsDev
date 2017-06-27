@@ -8,6 +8,8 @@
 #include "DriverManager.h"
 #include "UnhandledDeviceDriver.h"
 
+using namespace cpu;
+
 namespace drivers {
 
 DriverManager DriverManager::_instance;
@@ -30,7 +32,8 @@ void DriverManager::install_driver(DeviceDriverPtr drv) {
     drivers[interrupt_no] = drv;
 }
 
-void DriverManager::on_interrupt(u8 interrupt_no) const {
+CpuState* DriverManager::on_interrupt(u8 interrupt_no, CpuState* cpu_state) const {
     drivers[interrupt_no]->on_interrupt();
+    return cpu_state;
 }
 } /* namespace drivers */

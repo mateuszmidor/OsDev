@@ -21,7 +21,7 @@
 #include "VgaDriver.h"
 
 using namespace kstd;
-
+using namespace cpu;
 
 // screen printer for printing to the screen
 ScreenPrinter &printer = ScreenPrinter::instance();
@@ -145,8 +145,8 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(mouse);
 
     // configure Interrupt Descriptor Table
-    interrupt_manager.set_exception_handler([] (u8 exc_no, u64 error) { exception_manager.on_exception(exc_no, error); } );
-    interrupt_manager.set_interrupt_handler([] (u8 int_no) { driver_manager.on_interrupt(int_no); } );
+    interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
+    interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
 
     // print hello message to the user
@@ -174,7 +174,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     printer.format("KERNEL SETUP DONE.\n");
 
     // vga demo
-    vga_demo();
+    //vga_demo();
 
     // loop forever handling interrupts
     for(;;)

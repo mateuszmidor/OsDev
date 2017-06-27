@@ -12,6 +12,7 @@
 #include <array>
 #include "types.h"
 #include "Port.h"
+#include "CpuState.h"
 
 /**
  * Interrupt Descriptor Table Entry Options
@@ -58,8 +59,8 @@ struct IdtSizeAddress {
     u64 address;
 } __attribute__((packed)) ;
 
-using InterruptHandler = std::function<void(u8 interrupt_no)>;
-using ExceptionHandler = std::function<void(u8 exception_no, u64 error_code)>;
+using InterruptHandler = std::function<cpu::CpuState*(u8 interrupt_no, cpu::CpuState* cpu_state)>;
+using ExceptionHandler = std::function<cpu::CpuState*(u8 exception_no, cpu::CpuState* cpu_state)>;
 
 class InterruptManager {
 public:
@@ -75,7 +76,7 @@ private:
     Port8bitSlow pic_slave_cmd   {0xA0};
 
     InterruptManager();
-    static void on_interrupt(u8 interrupt_no, u64 error_code);
+    static cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state);
     void ack_interrupt_handled(u8 interrupt_no);
     void config_interrupts();
     void setup_interrupt_descriptor_table();
@@ -84,8 +85,8 @@ private:
     void install_interrupt_descriptor_table();
 
     std::array<IdtEntry, MAX_INTERRUPT_COUNT> idt;
-    InterruptHandler interrupt_handler = [](u8) { /* do nothing */ };
-    ExceptionHandler exception_handler = [](u8, u64) { /* do nothing */ };
+    InterruptHandler interrupt_handler = [](u8, cpu::CpuState* state) { return state; };
+    ExceptionHandler exception_handler = [](u8, cpu::CpuState* state) { return state; };
 };
 
 #endif /* SRC_INTERRUPTMANAGER_H_ */

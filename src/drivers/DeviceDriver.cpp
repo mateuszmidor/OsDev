@@ -10,12 +10,9 @@
 namespace drivers {
 
 DeviceDriver::DeviceDriver() {
-    // TODO Auto-generated constructor stub
-
 }
 
 DeviceDriver::~DeviceDriver() {
-    // TODO Auto-generated destructor stub
 }
 
 } /* namespace drivers */

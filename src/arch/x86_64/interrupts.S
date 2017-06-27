@@ -4,8 +4,7 @@
 .macro HandleException num
 .global handle_exception_no_\num
 handle_exception_no_\num:
-    // clear error code as there is none
-    movq $0, (error_code)
+    push $0 # no error_code here so just push 0 for CpuState::error_code struct sake
     movb $\num, (interrupt_number)
     jmp handle_interrupt
 .endm
@@ -15,8 +14,7 @@ handle_exception_no_\num:
 .macro HandleExceptionWithErrorCode num
 .global handle_exception_no_\num
 handle_exception_no_\num:
-    // error code comes at the top of the stack, so pop it into memory
-    pop (error_code)
+    # error_code comes with exception at the top of the stack and lands just in CpuState::error_code field
     movb $\num, (interrupt_number)
     jmp handle_interrupt
 .endm
@@ -26,8 +24,7 @@ handle_exception_no_\num:
 .macro HandleInterrupt num
 .global handle_interrupt_no_\num
 handle_interrupt_no_\num:
-    // clear error code as there is none
-    movq $0, (error_code)
+    push $0 # no error_code here so just push 0 for CpuState::error_code struct sake
     movb $\num, (interrupt_number)
     jmp handle_interrupt
 .endm
@@ -62,42 +59,47 @@ HandleInterrupt 0x20
 HandleInterrupt 0x21
 HandleInterrupt 0x2C
 
-.extern _ZN16InterruptManager12on_interruptEhy
+.extern _ZN16InterruptManager12on_interruptEhPN3cpu8CpuStateE
 handle_interrupt:
-    # save scratch registers
-    push %rax
-    push %rcx
-    push %rdx
-    push %rsi
-    push %rdi
-    push %r8
-    push %r9
-    push %r10
+    # save registers to CpuState struct, in the right order that reflects CpuState struct fields
+    # CpuState::error_code is already pushed in HandleInterrupt/HandleException/HandleExceptionWithErrorCode
     push %r11
+    push %r10
+    push %r9
+    push %r8
+
+    push %rbp
+    push %rdi
+    push %rsi
+
+    push %rdx
+    push %rcx
+    push %rbx
+    push %rax
 
     # handle interrupt/exception
-    mov (error_code), %rsi
-    mov (interrupt_number), %rdi
-    call _ZN16InterruptManager12on_interruptEhy
+    mov (interrupt_number), %rdi    # interrupt number as first param
+    mov %rsp, %rsi                  # stack pointer (holding CpuState struct) as second param
+    call _ZN16InterruptManager12on_interruptEhPN3cpu8CpuStateE
+    mov %rax, %rsp  # set stack pointer to the one returned from on_interrupt
 
-    # restore scratch registers
-    pop %r11
-    pop %r10
-    pop %r9
-    pop %r8
-    pop %rdi
-    pop %rsi
-    pop %rdx
-    pop %rcx
+    # restore scratch registers from CpuState struct
     pop %rax
+    pop %rbx
+    pop %rcx
+    pop %rdx
+    pop %rsi
+    pop %rdi
+    pop %rbp
+    pop %r8
+    pop %r9
+    pop %r10
+    pop %r11
+    add $8, %rsp # pop CpuState::error_code from stack
 
-
-    # divide by zero - fix the denominator
-    mov $1, %rcx
 
 .global ignore_interrupt
 ignore_interrupt:
-
     # return from interrupt handler
     iretq
 
@@ -112,5 +114,4 @@ ignore_interrupt:
 
 # data section
 .section .data
-    error_code: .quad 0
     interrupt_number: .byte 0

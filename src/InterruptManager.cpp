@@ -60,19 +60,25 @@ void InterruptManager::config_interrupts() {
 /**
  * @name    on_interrupt
  * @brief   Interrupt/CPU exception handler. This is called from interrupts.S
+ * @param   interrupt_no Number of CPU exception/PIC interrupt (offset by IRQ_BASE) being handled
+ * @param   cpu_state Pointer to the stack holding current cpu::CpuState struct
+ * @return  Pointer to stack pointer holding destination cpu::CpuState struct (for task switching)
  * @note    STATIC FUNCTION
  */
-void InterruptManager::on_interrupt(u8 interrupt_no, u64 error_code) {
+cpu::CpuState* InterruptManager::on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state) {
     InterruptManager &mngr = InterruptManager::instance();
+    cpu::CpuState* new_cpu_state;
 
     // if its PIC interrupt
     if (interrupt_no >= IRQ_BASE) {
-        mngr.interrupt_handler(interrupt_no);
+        new_cpu_state = mngr.interrupt_handler(interrupt_no, cpu_state);
         mngr.ack_interrupt_handled(interrupt_no);
     }
     // if its CPU exception
     else
-        mngr.exception_handler(interrupt_no, error_code);
+        new_cpu_state = mngr.exception_handler(interrupt_no, cpu_state);
+
+    return new_cpu_state;
 }
 
 void InterruptManager::ack_interrupt_handled(u8 interrupt_no) {

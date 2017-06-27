@@ -8,8 +8,8 @@
 #ifndef SRC_DRIVERS_DEVICEDRIVER_H_
 #define SRC_DRIVERS_DEVICEDRIVER_H_
 
-#include "types.h"
 #include "Port.h"
+#include "CpuState.h"
 
 namespace drivers {
 
