@@ -21,6 +21,7 @@
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
 #include "TaskManager.h"
+#include "AtaDriver.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -40,7 +41,10 @@ auto keyboard = make_shared<KeyboardDriver> (scs1);
 auto mouse = make_shared<MouseDriver>();
 auto timer = make_shared<TimerDriver>();
 auto vga = VgaDriver();
-
+auto ata0m = AtaDriver(AtaDriver::FIRST_PORT_BASE, true);
+auto ata0s = AtaDriver(AtaDriver::FIRST_PORT_BASE, false);
+auto ata1m = AtaDriver(AtaDriver::SECOND_PORT_BASE, true);
+auto ata1s = AtaDriver(AtaDriver::SECOND_PORT_BASE, false);
 s16 mouse_x = 360;
 s16 mouse_y = 200;
 
@@ -124,6 +128,30 @@ void vga_demo() {
             vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
 }
 
+void ata_demo() {
+    printer.format("ATA Primary Master: ");
+    ata0m.identify();
+    printer.format("\n");
+
+    printer.format("ATA Primary Slave: ");
+    ata0s.identify();
+    printer.format("\n");
+
+    // ata0s is supposed to be installed
+    // write data to HDD
+    string data = "Litwo ojczyzno moja, Ty jestes na hdb!";
+    ata0s.write28(0, (u8 const*)data.c_str(), data.length());
+
+    // flush caches to actual disk
+    ata0s.flush_cache();
+
+    // read data from HDD
+    char buff[256];
+    buff[255] = '\0';
+    ata0s.read28(0, (u8*)buff, sizeof(buff));
+    printer.format("hdb: %\n", buff);
+}
+
 // at least this guy should ever live :)
 void task_idle() {
     while (true)
@@ -191,13 +219,16 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     PCIController pcic;
     pcic.select_drivers();
 
+    // ata demo
+    ata_demo();
+
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
     // vga demo
     //vga_demo();
 
     // start multitasking
-    task_manager.add_task(make_shared<Task>(task_init, "init"));
+    //task_manager.add_task(make_shared<Task>(task_init, "init"));
     
     // wait until timer interrupt switches execution to init task
     while (true)

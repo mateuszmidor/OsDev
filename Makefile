@@ -1,6 +1,7 @@
 arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
+hdd := build/hdd.img
 
 GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding
 GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers
@@ -25,11 +26,11 @@ clean:
 install: $(kernel)
 	sudo cp $< /boot/PhobOS.bin
 	
-run: $(iso)
-	@qemu-system-x86_64 -net nic,model=pcnet -cdrom $(iso) # pcnet is AMD am79c973 network chip
+run: $(iso) $(hdd)
+	@qemu-system-x86_64 -net nic,model=pcnet -hdb $(hdd) -cdrom $(iso) # pcnet is AMD am79c973 network chip
 
 debug: $(iso)
-	@qemu-system-x86_64 -d int -no-reboot -cdrom $(iso)
+	@qemu-system-x86_64 -net nic,model=pcnet -hdb $(hdd) -cdrom $(iso) -d int -no-reboot
 	
 iso: $(iso)
 
@@ -41,6 +42,10 @@ $(iso): $(kernel) $(grub_cfg)
 	@grub-mkrescue -o $(iso) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
+# create hdd drive image
+$(hdd):
+	@qemu-img create -f vdi $(hdd) 64M
+	
 # bulid kernel binary
 $(kernel): $(assembly_object_files) $(c_object_files) $(linker_script)
 	@ld -n -T $(linker_script) -o $(kernel) $(assembly_object_files) $(c_object_files)
