@@ -41,7 +41,7 @@ void TaskManager::on_task_exit() {
     //asm("int $EXIT_TASK_INTERRUPT_NO");
 }
 
-bool TaskManager::add_task(Task* task) {
+bool TaskManager::add_task(TaskPtr task) {
     if (num_tasks == tasks.size())
         return false;
 
@@ -49,7 +49,7 @@ bool TaskManager::add_task(Task* task) {
     return true;
 }
 
-Task const* TaskManager::get_current_task() const {
+TaskPtr TaskManager::get_current_task() const {
     return tasks[current_task];
 }
 
@@ -66,7 +66,7 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
 
 cpu::CpuState* TaskManager::kill_current_task() {
     // remove current task from the list
-    for (auto i = current_task; i < num_tasks -1; i++)
+    for (u16 i = current_task; i < num_tasks -1; i++)
         tasks[i] = tasks[i+1];
     num_tasks--;
 

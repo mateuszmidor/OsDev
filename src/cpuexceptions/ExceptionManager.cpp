@@ -25,7 +25,7 @@ ExceptionManager &ExceptionManager::instance() {
 CpuState* ExceptionManager::on_exception(u8 exception_no, CpuState* cpu_state) const {
     ScreenPrinter &printer = ScreenPrinter::instance();
     TaskManager& mngr = TaskManager::instance();
-    Task const * current = mngr.get_current_task();
+    auto current = mngr.get_current_task();
     printer.format("\nCPU EXCEPTION % by \"%\", error code %. KILLING\n",
             exception_no, current->name.c_str(), cpu_state->error_code);
 

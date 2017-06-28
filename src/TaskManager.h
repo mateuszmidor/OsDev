@@ -9,11 +9,11 @@
 #define SRC_TASKMANAGER_H_
 
 #include <array>
+#include <memory>
 #include "CpuState.h"
 #include "kstd.h"
 
 using TaskEntryPoint = void (*)();
-
 struct Task {
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask");
     kstd::string name;
@@ -25,6 +25,7 @@ struct TaskEpilogue {
     u64 rip;    // rip cpu register value for retq instruction on task function exit
 } __attribute__((packed));
 
+using TaskPtr = std::shared_ptr<Task>;
 class TaskManager {
 public:
     static TaskManager& instance();
@@ -32,8 +33,8 @@ public:
     TaskManager operator=(TaskManager&&) = delete;
 
     static void on_task_exit();
-    bool add_task(Task* task);
-    Task const * get_current_task() const;
+    bool add_task(TaskPtr task);
+    TaskPtr get_current_task() const;
     cpu::CpuState* schedule(cpu::CpuState* cpu_state);
     cpu::CpuState* kill_current_task();
 
@@ -41,7 +42,7 @@ private:
     TaskManager() {}
     static TaskManager _instance;
 
-    std::array<Task*, 256> tasks; // TODO: make it array of shared_ptr<Task>
+    std::array<TaskPtr, 256> tasks;
     u16 num_tasks       =  0;
     s16 current_task    = -1;
 };

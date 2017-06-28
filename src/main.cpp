@@ -22,22 +22,24 @@
 #include "VgaDriver.h"
 #include "TaskManager.h"
 
+using std::make_shared;
 using namespace kstd;
+using namespace drivers;
+using namespace cpuexceptions;
 using namespace cpu;
 
-// screen printer for printing to the screen
+
 ScreenPrinter &printer = ScreenPrinter::instance();
-
 TaskManager& task_manager = TaskManager::instance();
-cpuexceptions::ExceptionManager& exception_manager = cpuexceptions::ExceptionManager::instance();
+ExceptionManager& exception_manager = ExceptionManager::instance();
 InterruptManager& interrupt_manager = InterruptManager::instance();
-drivers::DriverManager& driver_manager = drivers::DriverManager::instance();
+DriverManager& driver_manager = DriverManager::instance();
 
-drivers::KeyboardScanCodeSet1 scs1;
-auto keyboard = std::make_shared<drivers::KeyboardDriver> (scs1);
-auto mouse = std::make_shared<drivers::MouseDriver>();
-auto timer = std::make_shared<drivers::TimerDriver>();
-auto vga = drivers::VgaDriver();
+KeyboardScanCodeSet1 scs1;
+auto keyboard = make_shared<KeyboardDriver> (scs1);
+auto mouse = make_shared<MouseDriver>();
+auto timer = make_shared<TimerDriver>();
+auto vga = VgaDriver();
 
 s16 mouse_x = 360;
 s16 mouse_y = 200;
@@ -76,7 +78,7 @@ void on_mouse_move_text(s8 dx, s8 dy) {
     printer.swap_fg_bg_at(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
 }
 
-drivers::EgaColor pen_color = drivers::EgaColor::LightRed;
+EgaColor pen_color = EgaColor::LightRed;
 void on_mouse_move_graphics(s8 dx, s8 dy) {
     mouse_x += dx ;
     mouse_y += dy;
@@ -95,9 +97,9 @@ void on_mouse_down_text(u8 button) {
 void on_mouse_down_graphics(u8 button) {
     switch (button) {
     default:
-    case drivers::MouseButton::LEFT:    pen_color = drivers::EgaColor::LightRed; break;
-    case drivers::MouseButton::RIGHT:   pen_color = drivers::EgaColor::LightGreen; break;
-    case drivers::MouseButton::MIDDLE:  pen_color = drivers::EgaColor::LightBlue; break;
+    case MouseButton::LEFT:    pen_color = EgaColor::LightRed; break;
+    case MouseButton::RIGHT:   pen_color = EgaColor::LightGreen; break;
+    case MouseButton::MIDDLE:  pen_color = EgaColor::LightBlue; break;
     }
 }
 
@@ -119,7 +121,7 @@ void vga_demo() {
     mouse_y = 200 / 2;
     for (u16 x = 0; x < vga.screen_width(); x++)
         for (u16 y = 0; y < vga.screen_height(); y++)
-            vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? drivers::EgaColor::LightGreen : drivers::EgaColor::Black); // 4 pixels thick frame around the screen
+            vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
 }
 
 // at least this guy should ever live :)
@@ -129,23 +131,23 @@ void task_idle() {
 }
 
 void task_print_A() {
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0 ; i < 100; i++) {
         printer.format("A");
         asm("hlt");
     }
 }
 
 void task_print_b() {
-    while (true) {
+    for (int i = 0 ; i < 50; i++) {
         printer.format("B");
         asm("hlt");
     }
 }
 
 void task_init() {
-    task_manager.add_task(new Task(task_idle, "idle"));
-    task_manager.add_task(new Task(task_print_A, "A printer"));
-    task_manager.add_task(new Task(task_print_b, "B printer"));
+    task_manager.add_task(make_shared<Task>(task_idle, "idle"));
+    task_manager.add_task(make_shared<Task>(task_print_A, "A printer"));
+    task_manager.add_task(make_shared<Task>(task_print_b, "B printer"));
 }
 
 /**
@@ -175,7 +177,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // print hello message to the user
     vga.set_text_mode_90_30();
     printer.clearscreen();
-    printer.set_bg_color(drivers::EgaColor::Blue);
+    printer.set_bg_color(EgaColor::Blue);
 
     // print CPU info
     CpuInfo cpu_info;
@@ -195,7 +197,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     //vga_demo();
 
     // start multitasking
-    task_manager.add_task(new Task(task_init, "init"));
+    task_manager.add_task(make_shared<Task>(task_init, "init"));
     
     // wait until timer interrupt switches execution to init task
     while (true)

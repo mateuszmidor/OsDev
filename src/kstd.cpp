@@ -14,12 +14,10 @@ static ScreenPrinter &printer = ScreenPrinter::instance();
 // allocation should be done using memory manager
 void* bump_alloc(size_t size) {
     static size_t addr = 2 * 1024 * 1024;
-    const u16 align = 8;
 
     size_t old = addr;
     addr += size;
-    addr = (addr + (align-1)) / align * align; // next aligned address
-    //printer.format("Allocated % bytes of mem\n", size);
+   // printer.format("Allocated % bytes of mem\n", size);
     return (void*)old;
 }
 
