@@ -6,7 +6,7 @@
  */
 
 #include "TaskManager.h"
-#include "ScreenPrinter.h"
+
 using namespace cpu;
 
 
@@ -36,9 +36,8 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name) : name(name) {
 }
 
 void TaskManager::on_task_exit() {
-    auto &p = ScreenPrinter::instance();
-    p.format(" [TASK EXIT] ");
-    //asm("int $EXIT_TASK_INTERRUPT_NO");
+    // int 15 is handled by Int15Handler that simply calls TaskManager::kill_current_task()
+    asm("int $15");
 }
 
 bool TaskManager::add_task(TaskPtr task) {
@@ -70,7 +69,7 @@ cpu::CpuState* TaskManager::kill_current_task() {
         tasks[i] = tasks[i+1];
     num_tasks--;
 
-    // return next task
+    // return next task to switch to
     current_task = (current_task) % num_tasks;
     return tasks[current_task]->cpu_state;
 }

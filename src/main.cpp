@@ -22,6 +22,7 @@
 #include "VgaDriver.h"
 #include "TaskManager.h"
 #include "AtaDriver.h"
+#include "Int15Handler.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -197,7 +198,10 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(mouse);
     driver_manager.install_driver(timer);
 
-    // configure Interrupt Descriptor Table
+    // install exceptions
+    exception_manager.install_handler(make_shared<Int15Handler>());
+
+    // configure Interrupt Descriptor Tablesrc/cpuexceptions/ExceptionManager.h
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
@@ -220,7 +224,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     pcic.select_drivers();
 
     // ata demo
-    ata_demo();
+   // ata_demo();
 
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
@@ -228,7 +232,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     //vga_demo();
 
     // start multitasking
-    //task_manager.add_task(make_shared<Task>(task_init, "init"));
+    task_manager.add_task(make_shared<Task>(task_init, "init"));
     
     // wait until timer interrupt switches execution to init task
     while (true)

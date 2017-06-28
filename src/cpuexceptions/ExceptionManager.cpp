@@ -6,6 +6,7 @@
  */
 
 #include "ExceptionManager.h"
+#include "UnhandledExceptionHandler.h"
 #include "ScreenPrinter.h"
 #include "TaskManager.h"
 
@@ -20,16 +21,18 @@ ExceptionManager &ExceptionManager::instance() {
     return _instance;
 }
 
-// this should dispatch different exceptions to individual exception handlers
-// but lets keep it simple for now
-CpuState* ExceptionManager::on_exception(u8 exception_no, CpuState* cpu_state) const {
-    ScreenPrinter &printer = ScreenPrinter::instance();
-    TaskManager& mngr = TaskManager::instance();
-    auto current = mngr.get_current_task();
-    printer.format("\nCPU EXCEPTION % by \"%\", error code %. KILLING\n",
-            exception_no, current->name.c_str(), cpu_state->error_code);
+ExceptionManager::ExceptionManager() {
+    for (u16 i = 0; i < handlers.size(); i++)
+        handlers[i] = std::make_shared<UnhandledExceptionHandler>(i);
+}
 
-    return mngr.kill_current_task();
+void ExceptionManager::install_handler(ExceptionHandlerPtr handler) {
+    auto exception_no = handler->handled_exception_no();
+    handlers[exception_no] = handler;
+}
+
+CpuState* ExceptionManager::on_exception(u8 exception_no, CpuState* cpu_state) const {
+    return handlers[exception_no]->on_exception(cpu_state);
 }
 
 } /* namespace cpuexceptions */
