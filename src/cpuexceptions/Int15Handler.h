@@ -9,7 +9,6 @@
 #define SRC_CPUEXCEPTIONS_INT15HANDLER_H_
 
 #include "ExceptionHandler.h"
-#include "TaskManager.h"
 
 namespace cpuexceptions {
 

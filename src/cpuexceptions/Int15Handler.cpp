@@ -7,6 +7,7 @@
 
 #include "Int15Handler.h"
 #include "ScreenPrinter.h"
+#include "TaskManager.h"
 
 using cpu::CpuState;
 namespace cpuexceptions {

@@ -23,6 +23,7 @@
 #include "TaskManager.h"
 #include "AtaDriver.h"
 #include "Int15Handler.h"
+#include "PageFaultHandler.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -171,6 +172,8 @@ void task_print_b() {
         printer.format("B");
         asm("hlt");
     }
+
+    asm("movb $1, (1024*1024*1024)"); // simulate page fault; we only have 1GB mapped
 }
 
 void task_init() {
@@ -200,6 +203,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // install exceptions
     exception_manager.install_handler(make_shared<Int15Handler>());
+    exception_manager.install_handler(make_shared<PageFaultHandler>());
 
     // configure Interrupt Descriptor Tablesrc/cpuexceptions/ExceptionManager.h
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
