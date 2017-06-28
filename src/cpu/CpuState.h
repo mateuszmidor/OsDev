@@ -33,6 +33,10 @@ struct CpuState {
     u64 r9;
     u64 r10;
     u64 r11;
+    u64 r12;
+    u64 r13;
+    u64 r14;
+    u64 r15;
 
     // this second part is filled by CPU as part of exception/interrupt protocol
     // see https://os.phil-opp.com/handling-exceptions/
