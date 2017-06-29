@@ -55,9 +55,11 @@ HandleException 0x14
 HandleExceptionWithErrorCode 0x1E
 
 # generate handlers for interrupts, shifted by IRQ_BASE
-HandleInterrupt 0x20
-HandleInterrupt 0x21
-HandleInterrupt 0x2C
+HandleInterrupt 0x20    # timer
+HandleInterrupt 0x21    # keyboard
+HandleInterrupt 0x2C    # mouse
+HandleInterrupt 0x2E    # primary ata hdd
+HandleInterrupt 0x2F    # secondary ata hdd
 
 .extern _ZN16InterruptManager12on_interruptEhPN3cpu8CpuStateE
 handle_interrupt:

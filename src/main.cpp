@@ -44,10 +44,7 @@ auto keyboard = make_shared<KeyboardDriver> (scs1);
 auto mouse = make_shared<MouseDriver>();
 auto timer = make_shared<TimerDriver>();
 auto vga = VgaDriver();
-auto ata0m = AtaDriver(AtaDriver::FIRST_PORT_BASE, true);
-auto ata0s = AtaDriver(AtaDriver::FIRST_PORT_BASE, false);
-auto ata1m = AtaDriver(AtaDriver::SECOND_PORT_BASE, true);
-auto ata1s = AtaDriver(AtaDriver::SECOND_PORT_BASE, false);
+auto ata_primary_bus = make_shared<AtaPrimaryBusDriver>();
 s16 mouse_x = 360;
 s16 mouse_y = 200;
 
@@ -133,28 +130,20 @@ void vga_demo() {
 
 void ata_demo() {
     printer.format("ATA Primary Master: ");
-    ata0m.identify();
-    printer.format("\n");
+    if (ata_primary_bus->master_hdd.identify()) {
+        printer.format("present\n");
+        MsDosPartitionTable::read_partitions(ata_primary_bus->master_hdd);
+    }
+    else
+        printer.format("not present \n\n");
 
     printer.format("ATA Primary Slave: ");
-    ata0s.identify();
-    printer.format("\n");
-
-    MsDosPartitionTable::read_partitions(&ata0s);
-
-    // ata0s is supposed to be installed
-    // write data to HDD
-//    string data = "Litwo ojczyzno moja, Ty jestes na hdb!";
-//    ata0s.write28(0, (u8 const*)data.c_str(), data.length());
-
-    // flush caches to actual disk
-//    ata0s.flush_cache();
-
-    // read data from HDD
-//    char buff[256];
-//    buff[255] = '\0';
-//    ata0s.read28(0, (u8*)buff, sizeof(buff));
-//    printer.format("hdb: %\n", buff);
+    if (ata_primary_bus->slave_hdd.identify()) {
+        printer.format("present\n");
+        MsDosPartitionTable::read_partitions(ata_primary_bus->slave_hdd);
+    }
+    else
+        printer.format("not present \n\n");
 }
 
 // at least this guy should ever live :)
@@ -203,17 +192,18 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(keyboard);
     driver_manager.install_driver(mouse);
     driver_manager.install_driver(timer);
+    driver_manager.install_driver(ata_primary_bus);
 
     // install exceptions
     exception_manager.install_handler(make_shared<Int15Handler>());
     exception_manager.install_handler(make_shared<PageFaultHandler>());
 
-    // configure Interrupt Descriptor Tablesrc/cpuexceptions/ExceptionManager.h
+    // configure Interrupt Descriptor Table
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
 
-    // print hello message to the user
+    // prepare the text  mode
     vga.set_text_mode_90_30();
     printer.clearscreen();
     printer.set_bg_color(EgaColor::Blue);

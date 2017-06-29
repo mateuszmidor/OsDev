@@ -39,7 +39,8 @@ extern "C" void ignore_interrupt();
 extern "C" void handle_interrupt_no_0x20();
 extern "C" void handle_interrupt_no_0x21();
 extern "C" void handle_interrupt_no_0x2C();
-
+extern "C" void handle_interrupt_no_0x2E();
+extern "C" void handle_interrupt_no_0x2F();
 
 InterruptManager InterruptManager::_instance;
 
@@ -132,7 +133,8 @@ void InterruptManager::setup_interrupt_descriptor_table() {
     idt[0x20] = make_entry((u64) (handle_interrupt_no_0x20));   // timer
     idt[0x21] = make_entry((u64) (handle_interrupt_no_0x21));   // keyboard
     idt[0x2C] = make_entry((u64) (handle_interrupt_no_0x2C));   // mouse
-
+    idt[0x2E] = make_entry((u64) (handle_interrupt_no_0x2E));   // primary ata hdd
+    idt[0x2F] = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata hdd
 }
 
 IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {

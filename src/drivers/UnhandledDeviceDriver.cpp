@@ -6,17 +6,26 @@
  */
 
 #include "UnhandledDeviceDriver.h"
+#include "ScreenPrinter.h"
 
 namespace drivers {
 
+/**
+ * Constructor.
+ * This is generic handler so you can set the interrupt_no that it handles so it knows what it handles :)
+ */
+UnhandledDeviceDriver::UnhandledDeviceDriver(u8 interrupt_no) : interrupt_no(interrupt_no) {
+}
 
 s16 UnhandledDeviceDriver::handled_interrupt_no() {
-    return -1; // not relevant; can handle any interrupt ;)
+    return interrupt_no;
 }
 
 cpu::CpuState* UnhandledDeviceDriver::on_interrupt(cpu::CpuState* cpu_state) {
+    ScreenPrinter& printer = ScreenPrinter::instance();
     // print warning msg that UnhandledDeviceDriver interrupt has been raised
     // WARNING: unhandled interrupt may stop PIC from sending any further interrupts so this is error
+    printer.format("\nUNHANDLED INTERRUPT %\n", interrupt_no);
     return cpu_state;
 }
 

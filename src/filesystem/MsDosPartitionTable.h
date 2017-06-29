@@ -19,7 +19,7 @@ struct PartitionTableEntry {
     u8  start_sector    : 6;
     u16 start_cylinder  :10;
 
-    u8  partition_id;   // 0x83 for linux, 0x00 for no partition
+    u8  partition_id;   // 0x00 for no partition, 0x0B for windows, 0x83 for linux, see https://www.win.tue.nl/~aeb/partitions/partition_types-1.html
 
     u8  end_head;
     u8  end_sector      : 6;
@@ -41,7 +41,7 @@ class MsDosPartitionTable {
 public:
     MsDosPartitionTable();
     virtual ~MsDosPartitionTable();
-    static void read_partitions(drivers::AtaDriver* hd);
+    static void read_partitions(drivers::AtaDevice& hd);
 };
 
 } /* namespace filesystem */

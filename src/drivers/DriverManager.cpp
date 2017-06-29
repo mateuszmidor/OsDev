@@ -22,9 +22,8 @@ DriverManager::~DriverManager() {
 }
 
 DriverManager::DriverManager() {
-    DeviceDriverPtr unhandled_device_driver = std::make_shared<UnhandledDeviceDriver>();
     for (int i = 0; i < drivers.size(); i++)
-        drivers[i] = unhandled_device_driver;
+        drivers[i] = std::make_shared<UnhandledDeviceDriver>(i);
 }
 
 void DriverManager::install_driver(DeviceDriverPtr drv) {

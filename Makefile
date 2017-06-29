@@ -1,7 +1,7 @@
 arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
-hdd := build/hdd.img
+hdd := build/hdd.vdi
 
 GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding
 GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem
@@ -31,10 +31,10 @@ install: $(kernel)
 	sudo cp $< /boot/PhobOS.bin
 	
 run: $(iso) $(hdd)
-	@qemu-system-x86_64 -net nic,model=pcnet -hdb $(hdd) -cdrom $(iso) # pcnet is AMD am79c973 network chip
+	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso)  # pcnet is AMD am79c973 network chip
 
-debug: $(iso)
-	@qemu-system-x86_64 -net nic,model=pcnet -hdb $(hdd) -cdrom $(iso) -d int -no-reboot
+debug: $(iso) $(hdd)
+	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso) -d int -no-reboot
 	
 iso: $(iso)
 
@@ -48,8 +48,8 @@ $(iso): $(kernel) $(grub_cfg)
 
 # copy beforehand-prepared hdd drive image
 $(hdd):
-	@cp media/hdd.iso $(hdd)
-	#@qemu-img create -f vdi $(hdd) 64M
+	@cp media/hdd.vdi $(hdd)
+	#@qemu-img create -f vdi $(hdd) 64M, then create DOS partition table and 2 FAT32 partitions
 	
 # bulid kernel binary
 $(kernel): $(assembly_object_files) $(c_object_files) $(linker_script)

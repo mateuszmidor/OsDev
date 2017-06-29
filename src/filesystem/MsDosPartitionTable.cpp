@@ -7,8 +7,11 @@
 
 #include "MsDosPartitionTable.h"
 #include "ScreenPrinter.h"
+#include "kstd.h"
 
-using drivers::AtaDriver;
+using drivers::AtaDevice;
+using kstd::string;
+using kstd::enum_to_str;
 
 namespace filesystem {
 
@@ -18,11 +21,12 @@ MsDosPartitionTable::MsDosPartitionTable() {
 MsDosPartitionTable::~MsDosPartitionTable() {
 }
 
-void MsDosPartitionTable::read_partitions(AtaDriver* hd) {
+void MsDosPartitionTable::read_partitions(AtaDevice& hd) {
     ScreenPrinter& printer = ScreenPrinter::instance();
 
     MasterBotRecord mbr;
-    hd->read28(0, &mbr, sizeof(mbr));
+    hd.read28(0, &mbr, sizeof(mbr));
+
 
     if (mbr.magic_number != 0xAA55)
         printer.format("MBR mgic number % != %\n", mbr.magic_number, 0xAA55);
@@ -32,8 +36,17 @@ void MsDosPartitionTable::read_partitions(AtaDriver* hd) {
 
         printer.format("Parition %\n", i);
 
+        string bootable = enum_to_str(pte.bootable,
+                "false=0x0",
+                "true=0x80");
+
+        string partition_id = enum_to_str(pte.partition_id,
+                "EMPTY=0x0",
+                "WIN95 FAT32=0xB",
+                "LINUX NATIVE=0x83");
+
         printer.format("bootable %, partition_id %, start_lba %, length %\n",
-                pte.bootable, pte.partition_id, pte.start_lba, pte.length);
+                bootable.c_str(), partition_id.c_str(), pte.start_lba, pte.length);
 
         printer.format("START head %, cylinder %, sector %, END head % cylinder % sector %\n\n",
                 pte.start_head, pte.start_cylinder, pte.start_sector,
