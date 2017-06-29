@@ -141,11 +141,11 @@ void ata_demo() {
 
     // ata0s is supposed to be installed
     // write data to HDD
-    string data = "Litwo ojczyzno moja, Ty jestes na hdb!";
-    ata0s.write28(0, (u8 const*)data.c_str(), data.length());
+//    string data = "Litwo ojczyzno moja, Ty jestes na hdb!";
+//    ata0s.write28(0, (u8 const*)data.c_str(), data.length());
 
     // flush caches to actual disk
-    ata0s.flush_cache();
+//    ata0s.flush_cache();
 
     // read data from HDD
     char buff[256];

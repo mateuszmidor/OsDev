@@ -26,7 +26,7 @@ clean:
 install: $(kernel)
 	sudo cp $< /boot/PhobOS.bin
 	
-run: $(iso) $(hdd)
+run: $(iso) #$(hdd)
 	@qemu-system-x86_64 -net nic,model=pcnet -hdb $(hdd) -cdrom $(iso) # pcnet is AMD am79c973 network chip
 
 debug: $(iso)
