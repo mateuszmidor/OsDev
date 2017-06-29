@@ -67,8 +67,9 @@ void AtaDriver::identify() {
     }
 }
 
-void AtaDriver::read28(u32 sector, u8* data, u32 count) {
+void AtaDriver::read28(u32 sector, void* data, u32 count) {
     ScreenPrinter& printer = ScreenPrinter::instance();
+    u8* dst = (u8*)data;
 
     if (sector >= (1 << 28)) {
         printer.format("Cant write to sector that far: %", sector);
@@ -99,9 +100,9 @@ void AtaDriver::read28(u32 sector, u8* data, u32 count) {
     // read data from sector
     for (u16 i = 0; i < count; i += 2) {
         u16 data_chunk = data_port.read();
-        data[i] = data_chunk & 0xFF;
+        dst[i] = data_chunk & 0xFF;
         if (i + 1 < count)
-            data[i + 1] = data_chunk >> 8;
+            dst[i + 1] = data_chunk >> 8;
     }
 
     // read rest of the sector, we always need to read entire sector

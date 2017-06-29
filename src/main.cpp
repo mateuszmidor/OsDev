@@ -24,13 +24,14 @@
 #include "AtaDriver.h"
 #include "Int15Handler.h"
 #include "PageFaultHandler.h"
+#include "MsDosPartitionTable.h"
 
 using std::make_shared;
 using namespace kstd;
 using namespace drivers;
 using namespace cpuexceptions;
 using namespace cpu;
-
+using namespace filesystem;
 
 ScreenPrinter &printer = ScreenPrinter::instance();
 TaskManager& task_manager = TaskManager::instance();
@@ -139,6 +140,8 @@ void ata_demo() {
     ata0s.identify();
     printer.format("\n");
 
+    MsDosPartitionTable::read_partitions(&ata0s);
+
     // ata0s is supposed to be installed
     // write data to HDD
 //    string data = "Litwo ojczyzno moja, Ty jestes na hdb!";
@@ -148,10 +151,10 @@ void ata_demo() {
 //    ata0s.flush_cache();
 
     // read data from HDD
-    char buff[256];
-    buff[255] = '\0';
-    ata0s.read28(0, (u8*)buff, sizeof(buff));
-    printer.format("hdb: %\n", buff);
+//    char buff[256];
+//    buff[255] = '\0';
+//    ata0s.read28(0, (u8*)buff, sizeof(buff));
+//    printer.format("hdb: %\n", buff);
 }
 
 // at least this guy should ever live :)
@@ -220,15 +223,15 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     cpu_info.print(printer);
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
-    Multiboot2 mb2(multiboot2_info_ptr);
-    mb2.print(printer);
+//    Multiboot2 mb2(multiboot2_info_ptr);
+//    mb2.print(printer);
 
     // print PCI devics
-    PCIController pcic;
-    pcic.select_drivers();
+//    PCIController pcic;
+//    pcic.select_drivers();
 
     // ata demo
-   // ata_demo();
+    ata_demo();
 
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
@@ -236,7 +239,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     //vga_demo();
 
     // start multitasking
-    task_manager.add_task(make_shared<Task>(task_init, "init"));
+    //task_manager.add_task(make_shared<Task>(task_init, "init"));
     
     // wait until timer interrupt switches execution to init task
     while (true)

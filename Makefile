@@ -4,7 +4,7 @@ iso := build/os-$(arch).iso
 hdd := build/hdd.img
 
 GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding
-GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers
+GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
@@ -12,7 +12,11 @@ assembly_source_files := $(wildcard src/arch/$(arch)/*.S)
 assembly_object_files := $(patsubst src/arch/$(arch)/%.S, \
 	build/arch/$(arch)/%.o, $(assembly_source_files))
 	
-c_source_files := $(wildcard src/*.cpp) $(wildcard src/cpu/*.cpp) $(wildcard src/drivers/*.cpp) $(wildcard src/cpuexceptions/*.cpp)
+c_source_files :=  $(wildcard src/*.cpp) \
+                   $(wildcard src/cpu/*.cpp) \
+                   $(wildcard src/drivers/*.cpp) \
+                   $(wildcard src/cpuexceptions/*.cpp)\
+                   $(wildcard src/filesystem/*.cpp)
 c_object_files := $(patsubst src/%.cpp, \
 	build/%.o, $(c_source_files))
 
@@ -26,7 +30,7 @@ clean:
 install: $(kernel)
 	sudo cp $< /boot/PhobOS.bin
 	
-run: $(iso) #$(hdd)
+run: $(iso) $(hdd)
 	@qemu-system-x86_64 -net nic,model=pcnet -hdb $(hdd) -cdrom $(iso) # pcnet is AMD am79c973 network chip
 
 debug: $(iso)
@@ -42,9 +46,10 @@ $(iso): $(kernel) $(grub_cfg)
 	@grub-mkrescue -o $(iso) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
-# create hdd drive image
+# copy beforehand-prepared hdd drive image
 $(hdd):
-	@qemu-img create -f vdi $(hdd) 64M
+	@cp media/hdd.iso $(hdd)
+	#@qemu-img create -f vdi $(hdd) 64M
 	
 # bulid kernel binary
 $(kernel): $(assembly_object_files) $(c_object_files) $(linker_script)
