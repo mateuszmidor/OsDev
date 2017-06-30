@@ -9,6 +9,7 @@
 #define SRC_SCREENPRINTER_H_
 
 #include "types.h"
+#include "kstd.h"
 #include "VgaDriver.h"
 
 
@@ -83,6 +84,10 @@ public:
             }
 
         format(str);
+    }
+
+    void format(const kstd::string& fmt) {
+        format(fmt.c_str());
     }
 
     void format(char const *fmt) {
