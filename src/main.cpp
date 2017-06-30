@@ -25,6 +25,7 @@
 #include "Int15Handler.h"
 #include "PageFaultHandler.h"
 #include "MsDosPartitionTable.h"
+#include "Fat32.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -128,22 +129,39 @@ void vga_demo() {
             vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
 }
 
-void ata_demo() {
-    printer.format("ATA Primary Master: ");
-    if (ata_primary_bus->master_hdd.identify()) {
-        printer.format("present\n");
-        MsDosPartitionTable::read_partitions(ata_primary_bus->master_hdd);
-    }
-    else
-        printer.format("not present \n\n");
+void print_hdd_info(AtaDevice& hdd) {
+    MasterBootRecord mbr = MsDosPartitionTable::read_mbr(hdd);
+//    printer.format("MasterBootRecord details:\n");
+//    MsDosPartitionTable::print_mbr(mbr, printer);
 
-    printer.format("ATA Primary Slave: ");
-    if (ata_primary_bus->slave_hdd.identify()) {
-        printer.format("present\n");
-        MsDosPartitionTable::read_partitions(ata_primary_bus->slave_hdd);
+
+    Fat32 fat(hdd);
+    for (u8 i = 0; i < 4; i++) {
+        auto& partition = mbr.primary_partition[i];
+        if (partition.partition_id == 0x00)
+            continue;
+
+        printer.format("Partition % details: ", i);
+        auto bpb = fat.read_bios_block(partition.start_lba);
+        fat.print_bios_block(bpb, printer);
+        auto entries = fat.read_root_directory(partition.start_lba);
+        fat.print_directory_entries(bpb, partition.start_lba, entries, printer);
+        printer.format("\n");
     }
-    else
-        printer.format("not present \n\n");
+}
+
+void ata_demo() {
+    if (ata_primary_bus->master_hdd.is_present()) {
+        printer.format("ATA Primary Master: present\n");
+        print_hdd_info(ata_primary_bus->master_hdd);
+    } else
+        printer.format("ATA Primary Master: not present\n");
+
+    if (ata_primary_bus->slave_hdd.is_present()) {
+        printer.format("ATA Primary Slave: present\n");
+        print_hdd_info(ata_primary_bus->slave_hdd);
+    } else
+        printer.format("ATA Primary Slave: not present\n");
 }
 
 // at least this guy should ever live :)

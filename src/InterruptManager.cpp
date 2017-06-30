@@ -126,15 +126,15 @@ void InterruptManager::setup_interrupt_descriptor_table() {
 
     // PIC interrupts, they start at IRQ_BASE = 0x20, defined in interrupts.S
     // first setupe idt to ignore all interrupts
-    for (u32 i = 0x20; i < MAX_INTERRUPT_COUNT; i++)
+    for (u32 i = IRQ_BASE; i < MAX_INTERRUPT_COUNT; i++)
         idt[i] = make_entry((u64) (ignore_interrupt));
 
     // then handle just the interrupts of interest
     idt[0x20] = make_entry((u64) (handle_interrupt_no_0x20));   // timer
     idt[0x21] = make_entry((u64) (handle_interrupt_no_0x21));   // keyboard
     idt[0x2C] = make_entry((u64) (handle_interrupt_no_0x2C));   // mouse
-    idt[0x2E] = make_entry((u64) (handle_interrupt_no_0x2E));   // primary ata hdd
-    idt[0x2F] = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata hdd
+    idt[0x2E] = make_entry((u64) (handle_interrupt_no_0x2E));   // primary ata bus
+    idt[0x2F] = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata bus
 }
 
 IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {

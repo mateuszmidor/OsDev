@@ -22,7 +22,7 @@ public:
     AtaDevice(u16 port_base, bool is_master);
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state);
 
-    bool identify();
+    bool is_present();
     bool read28(u32 sector, void* data, u32 count);
     bool write28(u32 sector, u8 const * data, u32 count);
     bool flush_cache();

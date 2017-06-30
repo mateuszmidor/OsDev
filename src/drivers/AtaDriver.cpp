@@ -28,7 +28,7 @@ cpu::CpuState* AtaDevice::on_interrupt(cpu::CpuState* cpu_state) {
     return cpu_state;
 }
 
-bool AtaDevice::identify() {
+bool AtaDevice::is_present() {
 //    ScreenPrinter& printer = ScreenPrinter::instance();
 
     device_port.write(is_master ? 0xA0 : 0xB0);
