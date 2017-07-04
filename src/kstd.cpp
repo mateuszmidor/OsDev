@@ -5,6 +5,7 @@
  * @author: mateusz
  */
 
+#include <algorithm>
 #include "kstd.h"
 #include "types.h"
 #include "ScreenPrinter.h"
@@ -118,6 +119,14 @@ unsigned long long hex_to_long(const char* str) {
     }
 
     return res;
+}
+
+// build string from arrach of characters and trim non-writable characters on the right
+string rtrim(const u8 *in, u16 len) {
+    string s((const char*)in, len);
+    auto pred = [] (u8 c) { return (c < 33 || c > 127); };
+    auto last = std::find_if(s.begin(), s.end(), pred);
+    return string (s.begin(), last);
 }
 
 } // namespace kstd

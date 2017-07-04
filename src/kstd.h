@@ -13,7 +13,7 @@
 #include <limits>
 #include <vector>
 #include <string>
-
+#include "types.h"
 
 
 namespace kstd {
@@ -77,6 +77,7 @@ using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;
 
 void split_key_value(const string &kv, string &key, string &value);
 unsigned long long hex_to_long(const char* str);
+string rtrim(const u8 *in, u16 len);
 
 /**
     @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");

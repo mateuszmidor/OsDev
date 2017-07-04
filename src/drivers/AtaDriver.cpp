@@ -65,7 +65,7 @@ bool AtaDevice::read28(u32 sector, void* data, u32 count) {
     u8* dst = (u8*)data;
 
     if (sector >= (1 << 28)) {
-        printer.format("Cant write to sector that far: %", sector);
+        printer.format("Cant read from sector that far: %", sector);
         return false;
     }
 

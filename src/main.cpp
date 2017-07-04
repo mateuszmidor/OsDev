@@ -22,10 +22,10 @@
 #include "VgaDriver.h"
 #include "TaskManager.h"
 #include "AtaDriver.h"
+#include "filesystem/VolumeFat32.h"
 #include "Int15Handler.h"
 #include "PageFaultHandler.h"
-#include "MsDosPartitionTable.h"
-#include "Fat32.h"
+#include "MassStorageMsDos.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -130,23 +130,16 @@ void vga_demo() {
 }
 
 void print_hdd_info(AtaDevice& hdd) {
-    MasterBootRecord mbr = MsDosPartitionTable::read_mbr(hdd);
-//    printer.format("MasterBootRecord details:\n");
-//    MsDosPartitionTable::print_mbr(mbr, printer);
+    if (!MassStorageMsDos::verify(hdd)) {
+        printer.format("Not MBR formatted device\n");
+        return;
+    }
 
-
-    Fat32 fat(hdd);
-    for (u8 i = 0; i < 4; i++) {
-        auto& partition = mbr.primary_partition[i];
-        if (partition.partition_id == 0x00)
-            continue;
-
-        printer.format("Partition % details: ", i);
-        auto bpb = fat.read_bios_block(partition.start_lba);
-        fat.print_bios_block(bpb, printer);
-        auto entries = fat.read_root_directory(partition.start_lba);
-        fat.print_directory_entries(bpb, partition.start_lba, entries, printer);
-        printer.format("\n");
+    MassStorageMsDos ms(hdd);
+    auto& volumes = ms.get_volumes();
+    for (auto& v : volumes) {
+        v.print_volume_info(printer);
+        v.print_root_tree(printer);
     }
 }
 
