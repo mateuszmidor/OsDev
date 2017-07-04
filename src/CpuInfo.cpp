@@ -15,8 +15,8 @@ void CpuInfo::print(ScreenPrinter &p) {
     p.format("CPU: %\n", vendor);
 }
 
-void CpuInfo::getCpuVendor(char buff[17]) {
-    buff[16] = '\0';
+void CpuInfo::getCpuVendor(char buff[13]) {
+    buff[12] = '\0';
 
     __asm__ (
         "movq %0, %%rdi\n\t"

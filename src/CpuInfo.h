@@ -16,8 +16,8 @@ public:
     void print(ScreenPrinter &p);
 
 private:
-    char vendor[17];
-    void getCpuVendor(char buff[17]);
+    char vendor[13];
+    void getCpuVendor(char buff[13]);
 };
 
 #endif /* SRC_CPUINFO_H_ */
