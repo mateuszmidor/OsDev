@@ -75,6 +75,21 @@ using vector = std::vector<T, Allocator<T>>;
 
 using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;
 
+template <class T>
+class Optional : public T {
+public:
+    Optional(const T& t) : T(t), valid(true) {}
+    Optional(T&& t) : T(std::move(t)), valid(true) {}
+    T& operator=(const T& t) = delete;
+    T&& operator=(T&& t) = delete;
+    Optional() : valid(false) {}
+    virtual ~Optional() {};
+    bool is_valid() { return valid; }
+
+private:
+    bool valid;
+};
+
 void split_key_value(const string &kv, string &key, string &value);
 unsigned long long hex_to_long(const char* str);
 string rtrim(const u8 *in, u16 len);
@@ -118,6 +133,40 @@ string enum_to_str(unsigned long long enumval, H head, T... tail) {
         return enum_to_str(enumval, tail...);
 }
 
+/**
+ * @brief   Split string on delimiter, return only nonempty segments
+ */
+template <typename C>
+C split_string(const string& s, char delimiter)
+{
+    // define result holder
+    C result;
+
+    // segment begin, segment end
+    string::const_iterator s_begin = s.begin();
+    string::const_iterator s_end = s.begin();
+
+    // scan the string till the end
+    while (s_end != s.end())
+    {
+        // if delimiter found
+        if (*s_end == delimiter)
+        {
+            // add the string segment to results
+            if (s_begin != s_end)
+                result.push_back(string(s_begin, s_end));
+
+            // move the begin past the delimiter
+            s_begin = s_end + 1;
+        }
+        ++s_end;
+    }
+
+    // add remaining string segment and return
+    if (s_begin != s_end)
+        result.push_back(string(s_begin, s_end));
+    return result;
+}
 
 }; // namespace kstd
 

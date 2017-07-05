@@ -9,6 +9,7 @@
 #ifndef SRC_FILESYSTEM_VOLUMEFAT32_H_
 #define SRC_FILESYSTEM_VOLUMEFAT32_H_
 
+#include <functional>
 #include "kstd.h"
 #include "AtaDriver.h"
 #include "ScreenPrinter.h"
@@ -72,6 +73,8 @@ struct DirectoryEntryFat32 {
     u32 size;
 } __attribute__((packed));
 
+
+
 /**
  * @name    VolumeFat32
  * @brief   Fat32 volume/partition abstraction.
@@ -83,11 +86,19 @@ public:
     void print_root_tree(ScreenPrinter& printer) const;
 
 private:
+    // return true to continue directory contents iteration
+    using OnEntryFound = std::function<bool(const DirectoryEntryFat32& e, const kstd::string& full_name)>;
+
     void print_dir_tree(u32 dentry_cluster, ScreenPrinter& printer, u8 level) const;
     void print_file(u32 file_cluster, u32 file_size, ScreenPrinter& printer) const;
+    bool enumerate_dentry(u32 dentry_cluster, const OnEntryFound& on_entry_found) const;
+    bool get_entry_for_path(const kstd::string& unix_path, DirectoryEntryFat32& e) const;
+    bool get_entry_for_name(u32 dentry_cluster, const kstd::string& filename, DirectoryEntryFat32& e) const;
     u32 get_next_cluster(u32 current_cluster) const;
     bool read_fat_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
     bool read_fat_table_sector(u32 sector, void* data, u32 size) const;
+    bool is_directory(const filesystem::DirectoryEntryFat32& e) const;
+    DirectoryEntryFat32 get_root_dentry() const;
 
     static const int ATTR_READ_ONLY = 0x01; // Should not allow writing
     static const int ATTR_HIDDEN    = 0x02; // Should not show in dir listing

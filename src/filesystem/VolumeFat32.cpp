@@ -8,8 +8,10 @@
 #include "VolumeFat32.h"
 
 #include <algorithm>
+#include <array>
 #include "kstd.h"
 
+using std::array;
 using kstd::vector;
 using kstd::string;
 using kstd::rtrim;
@@ -42,6 +44,13 @@ void VolumeFat32::print_volume_info(ScreenPrinter& printer) const {
 
 void VolumeFat32::print_root_tree(ScreenPrinter& printer) const {
     print_dir_tree(vbr.root_cluster, printer, 1);
+//    DirectoryEntryFat32 e;
+//    if (!get_entry_for_path("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT", e))
+//        printer.format("Not found\n");
+//    else if (is_directory(e))
+//        printer.format("Directory\n");
+//    else
+//        print_file(e.first_cluster_hi << 16 | e.first_cluster_lo, e.size, printer);
 }
 
 static const char* INDENTS[] = {
@@ -56,52 +65,24 @@ static const char* INDENTS[] = {
         "                ",
         "                  "};
 
+
+
 void VolumeFat32::print_dir_tree(u32 dentry_cluster, ScreenPrinter& printer, u8 level) const {
-    DirectoryEntryFat32 entries[16];
-    while (dentry_cluster != CLUSTER_END_OF_CHAIN) { // iterate cluster chain
-        for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
 
-            // read 1 sector of data (512 bytes)
-            read_fat_data_sector(dentry_cluster, sector_offset, entries, sizeof(entries));
+    auto on_entry = [&](const DirectoryEntryFat32& e, const kstd::string& full_name) -> bool {
+        if (full_name == "." || full_name == "..") // skip . and ..
+            return true;
 
-            for (u8 i = 0; i < 16; i++) { // iterate directory entries
-                auto& e = entries[i];
-                if (e.name[0] == DIR_ENTRY_NO_MORE)
-                    return;     // no more entries for this dir
+        if (is_directory(e)) {
+            printer.format("%[%]\n", INDENTS[level], full_name);
+            print_dir_tree(e.first_cluster_hi << 16 | e.first_cluster_lo, printer, level+1);
+        } else
+            printer.format("%% - %B\n", INDENTS[level], full_name, e.size);
 
-                if (e.name[0] == DIR_ENTRY_UNUSED)
-                    continue;   // unused entry, skip
+        return true;
+    };
 
-                if ((e.attributes & ATTR_VOLUMEID) == ATTR_VOLUMEID)
-                    continue;   // partition label
-
-                if ((e.attributes & ATTR_LONGNAME) == ATTR_LONGNAME)
-                    continue;   // extension for 8.3 filename
-
-                string name = rtrim(e.name, sizeof(e.name));
-                string ext = rtrim(e.ext, sizeof(e.ext));
-                string full_name = ext.empty() ? name : name + "." + ext;
-
-                if ((e.attributes & ATTR_DIRECTORY) == ATTR_DIRECTORY) {
-                    if (name == "." || name == "..")
-                        continue;   // skip "." and ".." entries
-
-                    u32 clust = e.first_cluster_hi << 16 | e.first_cluster_lo;
-                    printer.format("%[%] - cluster no. %\n", INDENTS[level], full_name, clust);
-                    print_dir_tree(clust, printer, level + 1);
-                }
-                else {
-                    printer.format("%% - %B ", INDENTS[level], full_name, e.size, e.attributes);
-                    u32 first_file_cluster = e.first_cluster_hi << 16 | e.first_cluster_lo;
-                    if (e.size > 0 && e.size < 60)
-                        print_file(first_file_cluster, e.size, printer);
-                    else
-                        printer.format("\n");
-                }
-            }
-        }
-        dentry_cluster = get_next_cluster(dentry_cluster);
-    }
+    enumerate_dentry(dentry_cluster, on_entry);
 }
 
 void VolumeFat32::print_file(u32 file_cluster, u32 file_size, ScreenPrinter& printer) const {
@@ -115,12 +96,102 @@ void VolumeFat32::print_file(u32 file_cluster, u32 file_size, ScreenPrinter& pri
             buffer[read_count] = '\0';
             printer.format("%", (char*) buffer);
             remaining_size -= read_count;
-            if (remaining_size <= 0)
+            if (remaining_size == 0)
                 break;
         }
 
         file_cluster = get_next_cluster(file_cluster);
     }
+}
+
+/**
+ * @brief   Get directory entry for given path
+ * @param   unix_path Absolute path to directory entry Eg.
+ *          "/home/docs/myphoto.jpg"
+ *          "/home/music/"
+ *          "/home/music"
+ *          "/./" and "/../" and "//" in path are also supported, eg
+ *          "/home/music/..
+ * @return  True if entry found, False otherwise
+ */
+bool VolumeFat32::get_entry_for_path(const kstd::string& unix_path, DirectoryEntryFat32& out_entry) const {
+    if (unix_path.empty() || unix_path.front() != '/')
+        return false;
+
+    // start at root...
+    DirectoryEntryFat32 e = get_root_dentry();
+
+    // ...and descend down the path to the very last entry
+    auto segments = kstd::split_string<vector<string>>(unix_path, '/');
+    for (const auto& path_segment : segments) {
+        if (!is_directory(e))
+            return false;   // path segment is not a directory. this is error
+
+        if (!get_entry_for_name(e.first_cluster_hi << 16 | e.first_cluster_lo, path_segment, e))
+            return false;   // path segment does not exist. this is error
+    }
+
+    // managed to descend to the very last element of the path, means element found
+    out_entry = e;
+    return true;
+}
+
+/**
+ * @brief   Get directory entry for directory pointed by dentry_cluster
+ * @param   Filename Entry name. Case sensitive
+ * @return  True if entry found, False otherwise
+ */
+bool VolumeFat32::get_entry_for_name(u32 dentry_cluster, const kstd::string& filename, DirectoryEntryFat32& out_entry) const {
+    auto on_entry = [&filename, &out_entry](const DirectoryEntryFat32& e, const kstd::string& full_name) -> bool {
+        if (full_name == filename) {
+            out_entry = e;
+            return false;   // entry found. stop enumeration
+        } else
+            return true;    // continue searching for entry
+    };
+
+    return !enumerate_dentry(dentry_cluster, on_entry); // enumeration not finished means entry found
+}
+
+/**
+ *
+ * @param   dentry_cluster Cluster od directory entry for which we want to enumerate elements
+ * @param   on_entry_found Callback called for every element in the directory
+ * @return  True if all entries have been enumerated,
+ *          False if enumeration broke by on_entry_found() returning false
+ */
+bool VolumeFat32::enumerate_dentry(u32 dentry_cluster, const OnEntryFound& on_entry_found) const {
+    array<DirectoryEntryFat32, 16> entries;
+    while (dentry_cluster != CLUSTER_END_OF_CHAIN) { // iterate cluster chain
+        for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
+
+            // read 1 sector of data (512 bytes)
+            read_fat_data_sector(dentry_cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+
+            for (const auto& e : entries) { // iterate directory entries
+                if (e.name[0] == DIR_ENTRY_NO_MORE)
+                    return true;    // no more entries for this dir
+
+                if (e.name[0] == DIR_ENTRY_UNUSED)
+                    continue;       // unused entry, skip
+
+                if ((e.attributes & ATTR_VOLUMEID) == ATTR_VOLUMEID)
+                    continue;       // partition label
+
+                if ((e.attributes & ATTR_LONGNAME) == ATTR_LONGNAME)
+                    continue;   // extension for 8.3 filename
+
+                string name = rtrim(e.name, sizeof(e.name));
+                string ext = rtrim(e.ext, sizeof(e.ext));
+                string full_name = ext.empty() ? name : name + "." + ext;
+
+                if (!on_entry_found(e, full_name))
+                    return false;
+            }
+        }
+        dentry_cluster = get_next_cluster(dentry_cluster);
+    }
+    return true; // all entries enumerated
 }
 
 u32 VolumeFat32::get_next_cluster(u32 current_cluster) const {
@@ -141,5 +212,18 @@ bool VolumeFat32::read_fat_data_sector(u32 cluster, u8 sector_offset, void* data
 bool VolumeFat32::read_fat_table_sector(u32 sector, void* data, u32 size) const {
     return hdd.read28(fat_start + sector, data, size);
 }
+
+bool VolumeFat32::is_directory(const filesystem::DirectoryEntryFat32& e) const {
+    return (e.attributes & ATTR_DIRECTORY) == ATTR_DIRECTORY;
+}
+
+DirectoryEntryFat32 VolumeFat32::get_root_dentry() const {
+    DirectoryEntryFat32 e;
+    e.first_cluster_hi = vbr.root_cluster >> 16;
+    e.first_cluster_lo = vbr.root_cluster & 0xFF;
+    e.attributes = ATTR_DIRECTORY;
+    return e;
+}
+
 
 } /* namespace filesystem */
