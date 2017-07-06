@@ -17,7 +17,7 @@ using TaskEntryPoint = void (*)();
 struct Task {
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask");
     kstd::string name;
-    u8  stack[4096];
+    u8  stack[2*4096];
     cpu::CpuState* cpu_state;
 };
 

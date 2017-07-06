@@ -19,7 +19,7 @@ TaskManager& TaskManager::instance() {
 /**
  * Constructor.
  * Task stack is constructed as follows:
-   0|FREE STACK|CpuState|TaskEpilogue|4095
+   0|FREE STACK|CpuState|TaskEpilogue|STACK_MAX
                         ^
                   here is rsp when first time jumping from interrupt to task function
 */
