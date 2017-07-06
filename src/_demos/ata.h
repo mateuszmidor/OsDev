@@ -22,6 +22,14 @@ using namespace filesystem;
 
 static ScreenPrinter& printer = ScreenPrinter::instance();
 
+void print_volume_info(VolumeFat32& v) {
+    printer.format("Label: %, Type: %, Size: %MB, Used: %B\n",
+            v.get_label(),
+            v.get_type(),
+            v.get_size_in_bytes() / 1024 / 1024,
+            v.get_used_space_in_bytes());
+}
+
 static const char* INDENTS[] = {
         "",
         "  ",
@@ -98,7 +106,7 @@ void print_hdd_info(AtaDevice& hdd) {
     MassStorageMsDos ms(hdd);
     auto& volumes = ms.get_volumes();
     for (auto& v : volumes) {
-        v.print_volume_info(printer);
+        print_volume_info(v);
         print_tree(v, "/TMP");
         print_file(v, "/TO_BE_~1");
     }

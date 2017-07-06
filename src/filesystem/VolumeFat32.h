@@ -36,7 +36,7 @@ struct VolumeBootRecordFat32 {
     u32 hidden_sectors;
     u32 total_sector_count;
 
-    u32 fat_table_size;         // how many sectors makes a single FAT
+    u32 fat_table_size_in_sectors;         // how many sectors makes a single FAT
     u16 ext_flags;
     u16 fat_version;
     u32 root_cluster;
@@ -108,7 +108,12 @@ public:
     using OnEntryFound = std::function<bool(const SimpleDentryFat32& e)>;
 
     VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors);
-    void print_volume_info(ScreenPrinter& printer) const;
+
+    kstd::string get_label() const;
+    kstd::string get_type() const;
+    u32 get_size_in_bytes() const;
+    u32 get_used_space_in_bytes() const;
+
     bool get_entry_for_path(const kstd::string& unix_path, SimpleDentryFat32& e) const;
     bool enumerate_directory(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
     u32 read_file(const SimpleDentryFat32& file, void* data, u32 count) const;
@@ -125,6 +130,7 @@ private:
     static const u8 DIR_ENTRY_NO_MORE = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir
     static const u8 DIR_ENTRY_UNUSED  = 0xE5;   // Unused entry means the file was deleted
 
+    static const u32 CLUSTER_UNUSED             = 0;            // In Fat32 table, unused clusters are marked as 0
     static const u32 CLUSTER_FIRST_VALID        = 2;            // Clusters 0 and 1 are reserved, 2 usually is the cluster of root dir
     static const u32 CLUSTER_END_OF_FILE        = 0x0FFFFFF8;   // Such entry in Fat32 table indicates we've reached last cluster in file chain
     static const u32 CLUSTER_END_OF_DIRECTORY   = 0x0FFFFFFF;   // Such entry in Fat32 table indicates we've reached the last cluster in dir chain

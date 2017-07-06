@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <array>
 #include "kstd.h"
-
 using std::array;
 using kstd::vector;
 using kstd::string;
@@ -26,20 +25,40 @@ VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_o
 
     hdd.read28(partition_offset_in_sectors, &vbr, sizeof(vbr));
     fat_start = partition_offset_in_sectors + vbr.reserved_sectors;
-    data_start = fat_start + vbr.fat_table_size * vbr.fat_table_copies;
+    data_start = fat_start + vbr.fat_table_size_in_sectors * vbr.fat_table_copies;
+
+//    if (vbr.bytes_per_sector != 512) ERROR;
 }
 
-void VolumeFat32::print_volume_info(ScreenPrinter& printer) const {
-    string label = rtrim(vbr.volume_label, sizeof(vbr.volume_label));
-    string software = rtrim (vbr.software_name, sizeof(vbr.software_name));
-    string fat_type = rtrim(vbr.fat_type_label, sizeof(vbr.fat_type_label));
-    printer.format("%, bootable: %, size: %MB, cluster size: %, software: %, fat type: %\n",
-            label,
-            bootable,
-            partition_size_in_sectors * 512 / 1024 / 1024,
-            vbr.sectors_per_cluster,
-            software,
-            fat_type);
+string VolumeFat32::get_label() const {
+    return rtrim(vbr.volume_label, sizeof(vbr.volume_label));
+}
+
+string VolumeFat32::get_type() const {
+    return rtrim(vbr.fat_type_label, sizeof(vbr.fat_type_label));
+}
+
+u32 VolumeFat32::get_size_in_bytes() const {
+    return partition_size_in_sectors * vbr.bytes_per_sector;
+}
+
+u32 VolumeFat32::get_used_space_in_bytes() const {
+    u32 table[128];
+    u32 used_clusters = 0;
+
+    for (u32 sector = 0; sector < vbr.fat_table_size_in_sectors; sector++) {
+        read_fat_table_sector(sector, table, sizeof(table));
+        for (u32 j = 0; j < 128; j++) {
+            if (sector == 0 && j < CLUSTER_FIRST_VALID)
+                continue; // first two entries in FAT are reserved just as first two data clusters and not accounted here
+
+            u32 cluster = table[j] & FAT32_CLUSTER_28BIT_MASK;
+            if (cluster != CLUSTER_UNUSED)
+                used_clusters++;
+        }
+    }
+
+    return used_clusters * vbr.sectors_per_cluster * vbr.bytes_per_sector;
 }
 
 /**
