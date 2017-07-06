@@ -58,7 +58,7 @@ struct VolumeBootRecordFat32 {
 struct DirectoryEntryFat32 {
     u8  name[8];
     u8  ext[3];
-    u8  attributes;
+    u8  attributes;         // see: DirectoryEntryFat32Attrib
     u8  reserved;
     u8  c_time_tenth;       // creation time
     u16 c_time;
@@ -73,7 +73,30 @@ struct DirectoryEntryFat32 {
     u32 size;
 } __attribute__((packed));
 
+enum DirectoryEntryFat32Attrib : u8 {
+    READ_ONLY = 0x01, // Should not allow writing
+    HIDDEN    = 0x02, // Should not show in dir listing
+    SYSTEM    = 0x04, // Should not be moved physically; OS file
+    VOLUMEID  = 0x08, // Filename is Volume ID
+    LONGNAME  = 0x0F, // Entry providing long filename
+    DIRECTORY = 0x10, // Is a subdirectory (16 x 32-byte records)
+    ARCHIVE   = 0x20  // Has been changed since last backup
+};
 
+/**
+ * @name    SimpleDentryFat32
+ * @brief   User friendly replacement for DirectoryEntryFat32. Represents file or directory
+ */
+struct SimpleDentryFat32 {
+    SimpleDentryFat32() : SimpleDentryFat32("", 0, false, 0) {}
+    SimpleDentryFat32(const kstd::string& name, u32 size, bool is_directory, u32 cluster_no):
+        name(name), size(size), is_directory(is_directory), cluster_no(cluster_no) {}
+
+    kstd::string    name;
+    u32             size;
+    bool            is_directory;
+    u32             cluster_no;
+};
 
 /**
  * @name    VolumeFat32
@@ -81,39 +104,31 @@ struct DirectoryEntryFat32 {
  */
 class VolumeFat32 {
 public:
+    // return true to continue directory contents iteration
+    using OnEntryFound = std::function<bool(const SimpleDentryFat32& e)>;
+
     VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors);
     void print_volume_info(ScreenPrinter& printer) const;
-    void print_root_tree(ScreenPrinter& printer) const;
+    bool get_entry_for_path(const kstd::string& unix_path, SimpleDentryFat32& e) const;
+    bool enumerate_directory(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
+    u32 read_file(const SimpleDentryFat32& file, void* data, u32 count) const;
 
 private:
-    // return true to continue directory contents iteration
-    using OnEntryFound = std::function<bool(const DirectoryEntryFat32& e, const kstd::string& full_name)>;
-
-    void print_dir_tree(u32 dentry_cluster, ScreenPrinter& printer, u8 level) const;
-    void print_file(u32 file_cluster, u32 file_size, ScreenPrinter& printer) const;
-    bool enumerate_dentry(u32 dentry_cluster, const OnEntryFound& on_entry_found) const;
-    bool get_entry_for_path(const kstd::string& unix_path, DirectoryEntryFat32& e) const;
-    bool get_entry_for_name(u32 dentry_cluster, const kstd::string& filename, DirectoryEntryFat32& e) const;
+    SimpleDentryFat32 get_root_dentry() const;
+    bool get_entry_for_name(const SimpleDentryFat32& dentry, const kstd::string& filename, SimpleDentryFat32& out) const;
     u32 get_next_cluster(u32 current_cluster) const;
     bool read_fat_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
     bool read_fat_table_sector(u32 sector, void* data, u32 size) const;
-    bool is_directory(const filesystem::DirectoryEntryFat32& e) const;
-    DirectoryEntryFat32 get_root_dentry() const;
+    SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry) const;
 
-    static const int ATTR_READ_ONLY = 0x01; // Should not allow writing
-    static const int ATTR_HIDDEN    = 0x02; // Should not show in dir listing
-    static const int ATTR_SYSTEM    = 0x04; // Should not be moved physically; OS file
-    static const int ATTR_VOLUMEID  = 0x08; // Filename is Volume ID
-    static const int ATTR_DIRECTORY = 0x10; // Is a subdirectory (32-byte records)
-    static const int ATTR_ARCHIVE   = 0x20; // Has been changed since last backup
-    static const int ATTR_LONGNAME  = 0x0F; // Entry providing long filename
 
     static const u8 DIR_ENTRY_NO_MORE = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir
     static const u8 DIR_ENTRY_UNUSED  = 0xE5;   // Unused entry means the file was deleted
 
-    static const u32 CLUSTER_END_OF_FILE        = 0x0FFFFFF8;
-    static const u32 CLUSTER_END_OF_CHAIN       = 0x0FFFFFFF;     // Such entry in Fat32 table indicates we've reached the last cluster in the chain
-    static const u32 FAT32_CLUSTER_28BIT_MASK   = 0x0FFFFFFF; // Fat32 table cluster index actually use 28 bits, highest 4 bits should be ignored
+    static const u32 CLUSTER_FIRST_VALID        = 2;            // Clusters 0 and 1 are reserved, 2 usually is the cluster of root dir
+    static const u32 CLUSTER_END_OF_FILE        = 0x0FFFFFF8;   // Such entry in Fat32 table indicates we've reached last cluster in file chain
+    static const u32 CLUSTER_END_OF_DIRECTORY   = 0x0FFFFFFF;   // Such entry in Fat32 table indicates we've reached the last cluster in dir chain
+    static const u32 FAT32_CLUSTER_28BIT_MASK   = 0x0FFFFFFF;   // Fat32 table cluster index actually use 28 bits, highest 4 bits should be ignored
 
     drivers::AtaDevice& hdd;
     VolumeBootRecordFat32 vbr;

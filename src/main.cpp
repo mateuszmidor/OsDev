@@ -21,11 +21,11 @@
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
 #include "TaskManager.h"
-#include "AtaDriver.h"
-#include "filesystem/VolumeFat32.h"
 #include "Int15Handler.h"
 #include "PageFaultHandler.h"
-#include "MassStorageMsDos.h"
+
+
+#include "_demos/ata.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -129,33 +129,7 @@ void vga_demo() {
             vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
 }
 
-void print_hdd_info(AtaDevice& hdd) {
-    if (!MassStorageMsDos::verify(hdd)) {
-        printer.format("Not MBR formatted device\n");
-        return;
-    }
 
-    MassStorageMsDos ms(hdd);
-    auto& volumes = ms.get_volumes();
-    for (auto& v : volumes) {
-        v.print_volume_info(printer);
-        v.print_root_tree(printer);
-    }
-}
-
-void ata_demo() {
-    if (ata_primary_bus->master_hdd.is_present()) {
-        printer.format("ATA Primary Master: present\n");
-        print_hdd_info(ata_primary_bus->master_hdd);
-    } else
-        printer.format("ATA Primary Master: not present\n");
-
-    if (ata_primary_bus->slave_hdd.is_present()) {
-        printer.format("ATA Primary Slave: present\n");
-        print_hdd_info(ata_primary_bus->slave_hdd);
-    } else
-        printer.format("ATA Primary Slave: not present\n");
-}
 
 // at least this guy should ever live :)
 void task_idle() {
@@ -179,10 +153,16 @@ void task_print_b() {
     asm("movb $1, (1024*1024*1024)"); // simulate page fault; we only have 1GB mapped
 }
 
+void ata_demo() {
+    demos::ata_demo(ata_primary_bus);
+}
+
 void task_init() {
     task_manager.add_task(make_shared<Task>(task_idle, "idle"));
-    task_manager.add_task(make_shared<Task>(task_print_A, "A printer"));
-    task_manager.add_task(make_shared<Task>(task_print_b, "B printer"));
+    task_manager.add_task(make_shared<Task>(ata_demo, "ata_demo"));
+//    task_manager.add_task(make_shared<Task>(vga_demo, "vga_demo"));
+//    task_manager.add_task(make_shared<Task>(task_print_A, "A printer"));
+//    task_manager.add_task(make_shared<Task>(task_print_b, "B printer"));
 }
 
 /**
@@ -231,16 +211,12 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 //    PCIController pcic;
 //    pcic.select_drivers();
 
-    // ata demo
-    ata_demo();
-
     // inform setup done
     printer.format("KERNEL SETUP DONE.\n");
-    // vga demo
-    //vga_demo();
+
 
     // start multitasking
-    //task_manager.add_task(make_shared<Task>(task_init, "init"));
+    task_manager.add_task(make_shared<Task>(task_init, "init"));
     
     // wait until timer interrupt switches execution to init task
     while (true)
