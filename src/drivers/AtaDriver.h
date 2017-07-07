@@ -24,7 +24,7 @@ public:
 
     bool is_present();
     bool read28(u32 sector, void* data, u32 count);
-    bool write28(u32 sector, u8 const * data, u32 count);
+    bool write28(u32 sector, void const* data, u32 count);
     bool flush_cache();
 
     static const u16 BYTES_PER_SECTOR          {512};

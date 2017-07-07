@@ -104,12 +104,28 @@ void print_hdd_info(AtaDevice& hdd) {
     }
 
     MassStorageMsDos ms(hdd);
-    auto& volumes = ms.get_volumes();
-    for (auto& v : volumes) {
+    //auto& volumes = ms.get_volumes();
+    auto &v = ms.get_volumes()[1];
+    //for (auto& v : volumes) {
         print_volume_info(v);
-        print_tree(v, "/TMP");
-        print_file(v, "/TO_BE_~1");
-    }
+//        print_tree(v, "/TMP");
+//        print_file(v, "/TO_BE_~1");
+//        print_tree(v, "/TMP");
+        for (int i = 1; i < 10; i++) {
+            string name = "/FILE_";
+            name.push_back(char('0' + i));
+            v.delete_file(name);
+        }
+        v.delete_file("/TMP/TMP1.TXT");
+        v.delete_file("/TMP/TMP2.TXT");
+        v.delete_file("/TMP");
+//        if (v.delete_file("/TO_BE_~1"))
+//            printer.format("File deleted\n");
+//        else
+//            printer.format("File not deleted\n");
+        print_volume_info(v);
+        print_tree(v, "/");
+   // }
 }
 
 void ata_demo(std::shared_ptr<AtaPrimaryBusDriver> ata_primary_bus) {

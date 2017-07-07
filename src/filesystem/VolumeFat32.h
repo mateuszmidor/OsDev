@@ -88,14 +88,32 @@ enum DirectoryEntryFat32Attrib : u8 {
  * @brief   User friendly replacement for DirectoryEntryFat32. Represents file or directory
  */
 struct SimpleDentryFat32 {
-    SimpleDentryFat32() : SimpleDentryFat32("", 0, false, 0) {}
-    SimpleDentryFat32(const kstd::string& name, u32 size, bool is_directory, u32 cluster_no):
-        name(name), size(size), is_directory(is_directory), cluster_no(cluster_no) {}
+    SimpleDentryFat32() : SimpleDentryFat32("", 0, false, 0, 0, 0, 0) {}
+    SimpleDentryFat32(const kstd::string& name,
+            u32 size,
+            bool is_directory,
+            u32 data_cluster,
+            u32 entry_cluster,
+            u16 entry_sector,
+            u8 entry_index_no):
+        name(name),
+        size(size),
+        is_directory(is_directory),
+        data_cluster(data_cluster),
+        entry_cluster(entry_cluster),
+        entry_sector(entry_sector),
+        entry_index(entry_index_no) {}
 
+    // useful data
     kstd::string    name;
     u32             size;
     bool            is_directory;
-    u32             cluster_no;
+    u32             data_cluster;    // pointer to entry data
+
+    // entry localization in parent dir, for file/dir operations
+    u32             entry_cluster;
+    u16             entry_sector;
+    u8              entry_index;
 };
 
 /**
@@ -114,17 +132,28 @@ public:
     u32 get_size_in_bytes() const;
     u32 get_used_space_in_bytes() const;
 
+    void clear_cluster_chain_in_fat_table(u32 e_cluster) const;
+    void detach_cluster(const SimpleDentryFat32& dentry, u32 cluster_no) const;
+    void cleanup_dir_cluster(const SimpleDentryFat32& dentry, u32 cluster) const;
+    bool write_fat_table_for_cluster(u32 cluster, u32 value) const;
+    bool delete_file(const kstd::string& filename) const;
     bool get_entry_for_path(const kstd::string& unix_path, SimpleDentryFat32& e) const;
     bool enumerate_directory(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
     u32 read_file(const SimpleDentryFat32& file, void* data, u32 count) const;
+    void mark_entry_unused(const SimpleDentryFat32& e) const;
 
 private:
+    enum class EnumerateResult { ENUMERATION_FINISHED, ENUMERATION_STOPPED, ENUMERATION_CONTINUE };
+
+    EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry) const;
     SimpleDentryFat32 get_root_dentry() const;
     bool get_entry_for_name(const SimpleDentryFat32& dentry, const kstd::string& filename, SimpleDentryFat32& out) const;
     u32 get_next_cluster(u32 current_cluster) const;
     bool read_fat_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
+    bool write_fat_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
     bool read_fat_table_sector(u32 sector, void* data, u32 size) const;
-    SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry) const;
+    bool write_fat_table_sector(u32 sector, void const* data, u32 size) const;
+    SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const;
 
 
     static const u8 DIR_ENTRY_NO_MORE = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir

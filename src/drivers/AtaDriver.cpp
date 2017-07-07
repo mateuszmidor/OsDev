@@ -102,8 +102,9 @@ bool AtaDevice::read28(u32 sector, void* data, u32 count) {
     return true;
 }
 
-bool AtaDevice::write28(u32 sector, u8 const * data, u32 count) {
+bool AtaDevice::write28(u32 sector, void const* data, u32 count) {
     ScreenPrinter& printer = ScreenPrinter::instance();
+    u8 const* dst = (u8*)data;
 
     if (sector >= (1 << 28)) {
         printer.format("Cant write to sector that far: %", sector);
@@ -127,9 +128,9 @@ bool AtaDevice::write28(u32 sector, u8 const * data, u32 count) {
 
     // write data to sector
     for (u16 i = 0; i < count; i += 2) {
-        u16 data_chunk = data[i];
+        u16 data_chunk = dst[i];
         if (i + 1 < count)
-            data_chunk |= data[i+1] << 8;
+            data_chunk |= dst[i+1] << 8;
 
         data_port.write(data_chunk);
     }
@@ -138,7 +139,8 @@ bool AtaDevice::write28(u32 sector, u8 const * data, u32 count) {
     for (u16 i = count + (count % 2); i < BYTES_PER_SECTOR; i += 2)
         data_port.write(0x0000);
 
-    return true;
+
+    return flush_cache();
 }
 
 bool AtaDevice::flush_cache() {

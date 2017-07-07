@@ -5,11 +5,13 @@
  * @author: Mateusz Midor
  */
 
-#include "VolumeFat32.h"
 
 #include <algorithm>
 #include <array>
+#include "VolumeFat32.h"
+#include "ScreenPrinter.h"
 #include "kstd.h"
+
 using std::array;
 using kstd::vector;
 using kstd::string;
@@ -58,7 +60,198 @@ u32 VolumeFat32::get_used_space_in_bytes() const {
         }
     }
 
-    return used_clusters * vbr.sectors_per_cluster * vbr.bytes_per_sector;
+    return used_clusters;// * vbr.sectors_per_cluster * vbr.bytes_per_sector;
+}
+
+string extract_file_name(const string& filename) {
+    auto pivot = filename.rfind('/');
+    return filename.substr(pivot+1, filename.size());
+}
+
+string extract_file_directory(const string& filename) {
+    auto pivot = filename.rfind('/');
+    return filename.substr(0, pivot+1);
+}
+
+void VolumeFat32::clear_cluster_chain_in_fat_table(u32 cluster) const {
+    const u8 FAT_ENTRIES_PER_SECTOR = 512 / sizeof(u32); // makes 512 bytes so 1 sector
+    u32 fat_buffer[FAT_ENTRIES_PER_SECTOR];
+    while (cluster >= CLUSTER_FIRST_VALID && cluster != CLUSTER_END_OF_DIRECTORY) {
+        u32 fat_sector_for_current_cluster = cluster / FAT_ENTRIES_PER_SECTOR;
+        read_fat_table_sector(fat_sector_for_current_cluster, fat_buffer, sizeof(fat_buffer));
+        u32 fat_offset_in_sector_for_current_cluster = cluster % FAT_ENTRIES_PER_SECTOR;
+        u32 next_cluster = fat_buffer[fat_offset_in_sector_for_current_cluster] & FAT32_CLUSTER_28BIT_MASK;
+
+        fat_buffer[fat_offset_in_sector_for_current_cluster] = CLUSTER_UNUSED; // clear cluster in fat table
+        write_fat_table_sector(fat_sector_for_current_cluster, fat_buffer, sizeof(fat_buffer));
+        cluster = next_cluster;
+    }
+}
+
+void VolumeFat32::detach_cluster(const SimpleDentryFat32& dentry, u32 cluster_no) const {
+    // set cluster as not used
+    clear_cluster_chain_in_fat_table(cluster_no);
+}
+
+void VolumeFat32::cleanup_dir_cluster(const SimpleDentryFat32& e, u32 cluster) const {
+    auto on_entry = [](const SimpleDentryFat32& e) -> bool {
+        if (e.name == "." || e.name == "..") // skip . and ..
+            return true;
+
+        return false; // file found, stop enumeration
+    };
+
+    if (enumerate_directory_cluster(cluster, on_entry) == EnumerateResult::ENUMERATION_STOPPED)
+        return; // cluster has more files, nothing to cleanup
+
+    if (cluster == e.data_cluster) { // is this the only one cluster of the dir just emptied?
+        clear_cluster_chain_in_fat_table(e.data_cluster);
+        array<DirectoryEntryFat32, 16> entries;
+        read_fat_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+        entries[e.entry_index].first_cluster_lo = 0; entries[e.entry_index].first_cluster_hi = 0; // mark entry as deleted
+        write_fat_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    } else { // not last cluster
+
+        // find one cluster before "cluster"
+        u32 prev_cluster;
+        u32 curr_cluster = e.data_cluster;
+        do {
+            prev_cluster = curr_cluster;
+            curr_cluster = get_next_cluster(curr_cluster);
+
+        } while (curr_cluster != cluster);
+
+        write_fat_table_for_cluster(prev_cluster, CLUSTER_END_OF_DIRECTORY);
+        write_fat_table_for_cluster(curr_cluster, CLUSTER_UNUSED);
+
+    }
+
+}
+
+bool VolumeFat32::write_fat_table_for_cluster(u32 cluster, u32 value) const {
+    if (!(cluster >= CLUSTER_FIRST_VALID && cluster < CLUSTER_END_OF_DIRECTORY))
+        return true;
+
+    const u8 FAT_ENTRIES_PER_SECTOR = 512 / sizeof(u32); // makes 512 bytes so 1 sector
+    u32 fat_buffer[FAT_ENTRIES_PER_SECTOR];
+
+    u32 fat_sector_for_cluster = cluster / FAT_ENTRIES_PER_SECTOR;
+    if (!read_fat_table_sector(fat_sector_for_cluster, fat_buffer, sizeof(fat_buffer)))
+        return false;
+
+    u32 fat_offset_in_sector_for_current_cluster = cluster % FAT_ENTRIES_PER_SECTOR;
+
+    fat_buffer[fat_offset_in_sector_for_current_cluster] = value;
+    if (!write_fat_table_sector(fat_sector_for_cluster, fat_buffer, sizeof(fat_buffer)))
+        return false;
+
+    return true;
+}
+
+void VolumeFat32::mark_entry_unused(const SimpleDentryFat32& e) const {
+    // 1. mark entry as UNUSED
+    array<DirectoryEntryFat32, 16> entries;
+    read_fat_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    entries[e.entry_index].name[0] = DIR_ENTRY_UNUSED; // mark entry as deleted
+    write_fat_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+}
+
+bool VolumeFat32::delete_file(const string& filename) const {
+    ScreenPrinter& printer = ScreenPrinter::instance();
+
+    SimpleDentryFat32 e;
+    if (!get_entry_for_path(filename, e))
+        return false;
+
+    string parent_dir = extract_file_directory(filename);
+    SimpleDentryFat32 parent_e;
+    get_entry_for_path(parent_dir, parent_e);
+
+    if (e.is_directory) {
+        if (e.data_cluster != CLUSTER_UNUSED) return false; // can only delete empty directory
+
+        // 1. mark entry as UNUSED
+        mark_entry_unused(e);
+
+        // 3. cleanup parent dir eg detach unused cluster if this was last entry
+        cleanup_dir_cluster(parent_e, e.entry_cluster);
+    }
+    else {
+        // 1. mark entry as UNUSED
+        mark_entry_unused(e);
+
+        // 2. clear data cluster chain
+        clear_cluster_chain_in_fat_table(e.data_cluster);
+
+        // 3. cleanup parent dir eg detach unused cluster if this was last entry
+        cleanup_dir_cluster(parent_e, e.entry_cluster);
+    }
+    /*
+    string name = extract_file_name(filename);
+    string path = extract_file_directory(filename);
+    SimpleDentryFat32 dentry;
+    if (!get_entry_for_path(path, dentry))
+        return false; // directory not exists
+
+    if (!dentry.is_directory)
+        return false; // parent must be directory
+*/
+
+
+
+    /*
+    array<DirectoryEntryFat32, 16> entries;
+    u32 cluster = dentry.data_cluster;
+    u32 prev_cluster = cluster;
+    while (cluster >= CLUSTER_FIRST_VALID && cluster != CLUSTER_END_OF_DIRECTORY) { // iterate cluster chain
+        u32 num_entries_in_dir = 0;
+        for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
+
+            // read 1 sector of data (512 bytes)
+            read_fat_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+
+            for (u8 i = 0; i < entries.size(); i++) { // iterate directory entries
+                auto& e = entries[i];
+                if (e.name[0] == DIR_ENTRY_NO_MORE)
+                    return false;    // no more entries for this dir
+
+                if (e.name[0] == DIR_ENTRY_UNUSED)
+                    continue;       // unused entry, skip
+
+                if ((e.attributes & DirectoryEntryFat32Attrib::VOLUMEID) == DirectoryEntryFat32Attrib::VOLUMEID)
+                    continue;       // partition label
+
+                if ((e.attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME)
+                    continue;   // extension for 8.3 filename
+
+
+
+                SimpleDentryFat32 simple_e = make_simple_dentry(e, cluster, sector_offset, i);
+                if (simple_e.name == name) { // file found
+                    if (simple_e.is_directory && simple_e.data_cluster != CLUSTER_UNUSED)
+                        return false; // can only delete empty directory
+
+                    // 1. set file entry to unused
+                    e.name[0] = DIR_ENTRY_UNUSED;
+                    write_fat_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+
+                    // 2. clear sector chain in fat table
+                    u32 e_cluster = simple_e.data_cluster;
+                   // printer.format("e_cluster: %\n", e_cluster);
+                    clear_cluster_chain_in_fat_table(e_cluster);
+                    entry_deleted = true;
+                } else
+                    num_entries_in_dir++;
+            }
+        }
+        if (num_entries_in_dir == 0) { //detach cluster
+            clear_cluster_chain_in_fat_table(cluster);
+            detach_cluster(dentry, cluster);
+        }
+        prev_cluster = cluster;
+        cluster = get_next_cluster(cluster);
+    }*/
+    return true;
 }
 
 /**
@@ -71,7 +264,7 @@ u32 VolumeFat32::get_used_space_in_bytes() const {
  *          "/home/music/..
  * @return  True if entry exists, False otherwise
  */
-bool VolumeFat32::get_entry_for_path(const kstd::string& unix_path, SimpleDentryFat32& out_entry) const {
+bool VolumeFat32::get_entry_for_path(const string& unix_path, SimpleDentryFat32& out_entry) const {
     if (unix_path.empty() || unix_path.front() != '/')
         return false;
 
@@ -102,35 +295,49 @@ bool VolumeFat32::get_entry_for_path(const kstd::string& unix_path, SimpleDentry
  *          False if enumeration stopped by on_entry() returning false
  */
 bool VolumeFat32::enumerate_directory(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry) const {
-    array<DirectoryEntryFat32, 16> entries;
-    u32 cluster = dentry.cluster_no;
 
-    while (cluster >= CLUSTER_FIRST_VALID && cluster != CLUSTER_END_OF_DIRECTORY) { // iterate cluster chain
-        for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
+    u32 cluster = dentry.data_cluster;
 
-            // read 1 sector of data (512 bytes)
-            read_fat_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
-
-            for (const auto& e : entries) { // iterate directory entries
-                if (e.name[0] == DIR_ENTRY_NO_MORE)
-                    return true;    // no more entries for this dir
-
-                if (e.name[0] == DIR_ENTRY_UNUSED)
-                    continue;       // unused entry, skip
-
-                if ((e.attributes & DirectoryEntryFat32Attrib::VOLUMEID) == DirectoryEntryFat32Attrib::VOLUMEID)
-                    continue;       // partition label
-
-                if ((e.attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME)
-                    continue;   // extension for 8.3 filename
-
-                if (!on_entry(make_simple_dentry(e)))
-                    return false;
-            }
+    while (cluster >= CLUSTER_FIRST_VALID && cluster < CLUSTER_END_OF_DIRECTORY) { // iterate cluster chain
+        switch (enumerate_directory_cluster(cluster, on_entry)) {
+        case EnumerateResult::ENUMERATION_STOPPED :
+            return false;
+        case EnumerateResult::ENUMERATION_FINISHED :
+            return true;
+        default: ;
         }
         cluster = get_next_cluster(cluster);
     }
     return true; // all entries enumerated
+}
+
+VolumeFat32::EnumerateResult VolumeFat32::enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry) const {
+    array<DirectoryEntryFat32, 16> entries;
+
+    for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
+
+        // read 1 sector of data (512 bytes)
+        read_fat_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+
+        for (u8 i = 0; i < entries.size(); i++) { // iterate directory entries
+            const auto& e = entries[i];
+            if (e.name[0] == DIR_ENTRY_NO_MORE)
+                return EnumerateResult::ENUMERATION_FINISHED;    // no more entries for this dir
+
+            if (e.name[0] == DIR_ENTRY_UNUSED)
+                continue;       // unused entry, skip
+
+            if ((e.attributes & DirectoryEntryFat32Attrib::VOLUMEID) == DirectoryEntryFat32Attrib::VOLUMEID)
+                continue;       // partition label
+
+            if ((e.attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME)
+                continue;   // extension for 8.3 filename
+
+            if (!on_entry(make_simple_dentry(e, cluster, sector_offset, i)))
+                return EnumerateResult::ENUMERATION_STOPPED;
+        }
+    }
+    return EnumerateResult::ENUMERATION_CONTINUE;
 }
 
 /**
@@ -143,7 +350,7 @@ bool VolumeFat32::enumerate_directory(const SimpleDentryFat32& dentry, const OnE
 u32 VolumeFat32::read_file(const SimpleDentryFat32& file, void* data, u32 count) const {
     u32 total_bytes_read = 0;
     u32 remaining_size = (count < file.size) ? count : file.size; // read the min of (count, file size)
-    u32 cluster = file.cluster_no;
+    u32 cluster = file.data_cluster;
     u8* dst = (u8*)data;
 
     while (cluster >= CLUSTER_FIRST_VALID && cluster < CLUSTER_END_OF_FILE && remaining_size > 0) {
@@ -166,7 +373,7 @@ u32 VolumeFat32::read_file(const SimpleDentryFat32& file, void* data, u32 count)
  * @brief   Return root directory entry; this is the entry point to entire volume dir tree
  */
 SimpleDentryFat32 VolumeFat32::get_root_dentry() const {
-    return SimpleDentryFat32("/", 0, true, vbr.root_cluster);
+    return SimpleDentryFat32("/", 0, true, vbr.root_cluster, 0, 0, 0);
 }
 
 /**
@@ -174,7 +381,7 @@ SimpleDentryFat32 VolumeFat32::get_root_dentry() const {
  * @param   Filename Entry name. Case sensitive
  * @return  True if entry found, False otherwise
  */
-bool VolumeFat32::get_entry_for_name(const SimpleDentryFat32& dentry, const kstd::string& filename, SimpleDentryFat32& out_entry) const {
+bool VolumeFat32::get_entry_for_name(const SimpleDentryFat32& dentry, const string& filename, SimpleDentryFat32& out_entry) const {
     auto on_entry = [&filename, &out_entry](const SimpleDentryFat32& e) -> bool {
         if (e.name == filename) {
             out_entry = e;
@@ -201,11 +408,19 @@ bool VolumeFat32::read_fat_data_sector(u32 cluster, u8 sector_offset, void* data
     return hdd.read28(data_start + vbr.sectors_per_cluster * (cluster - 2) + sector_offset, data, size);
 }
 
+bool VolumeFat32::write_fat_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const {
+    return hdd.write28(data_start + vbr.sectors_per_cluster * (cluster - 2) + sector_offset, data, size);
+}
+
 bool VolumeFat32::read_fat_table_sector(u32 sector, void* data, u32 size) const {
     return hdd.read28(fat_start + sector, data, size);
 }
 
-SimpleDentryFat32 VolumeFat32::make_simple_dentry(const DirectoryEntryFat32& dentry) const {
+bool VolumeFat32::write_fat_table_sector(u32 sector, void const* data, u32 size) const {
+    return hdd.write28(fat_start + sector, data, size);
+}
+
+SimpleDentryFat32 VolumeFat32::make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const {
     string name = rtrim(dentry.name, sizeof(dentry.name));
     string ext = rtrim(dentry.ext, sizeof(dentry.ext));
 
@@ -213,7 +428,10 @@ SimpleDentryFat32 VolumeFat32::make_simple_dentry(const DirectoryEntryFat32& den
                 ext.empty() ? name : name + "." + ext,
                 dentry.size,
                 (dentry.attributes & DirectoryEntryFat32Attrib::DIRECTORY) == DirectoryEntryFat32Attrib::DIRECTORY,
-                dentry.first_cluster_hi << 16 | dentry.first_cluster_lo
+                dentry.first_cluster_hi << 16 | dentry.first_cluster_lo,
+                entry_cluster,
+                entry_sector,
+                entry_index
             );
 
 }
