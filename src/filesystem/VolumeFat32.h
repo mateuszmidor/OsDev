@@ -126,35 +126,40 @@ public:
     using OnEntryFound = std::function<bool(const SimpleDentryFat32& e)>;
 
     VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors);
-
     kstd::string get_label() const;
     kstd::string get_type() const;
     u32 get_size_in_bytes() const;
     u32 get_used_space_in_bytes() const;
+    u32 get_used_space_in_clusters() const;
 
-    void clear_cluster_chain_in_fat_table(u32 e_cluster) const;
-    void detach_cluster(const SimpleDentryFat32& dentry, u32 cluster_no) const;
-    void cleanup_dir_cluster(const SimpleDentryFat32& dentry, u32 cluster) const;
-    bool write_fat_table_for_cluster(u32 cluster, u32 value) const;
-    bool delete_file(const kstd::string& filename) const;
     bool get_entry_for_path(const kstd::string& unix_path, SimpleDentryFat32& e) const;
-    bool enumerate_directory(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
-    u32 read_file(const SimpleDentryFat32& file, void* data, u32 count) const;
-    void mark_entry_unused(const SimpleDentryFat32& e) const;
+    u32 read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const;
+    bool enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
+    bool delete_entry(const kstd::string& filename) const;
 
 private:
+    using FatTableEntry = u32;  // FatEntry represents cluster index which is 32 bit (28 actually used)
     enum class EnumerateResult { ENUMERATION_FINISHED, ENUMERATION_STOPPED, ENUMERATION_CONTINUE };
 
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry) const;
     SimpleDentryFat32 get_root_dentry() const;
     bool get_entry_for_name(const SimpleDentryFat32& dentry, const kstd::string& filename, SimpleDentryFat32& out) const;
-    u32 get_next_cluster(u32 current_cluster) const;
+    u32 get_next_cluster(u32 cluster) const;
+    u32 get_prev_cluster(u32 first_cluster, u32 cluster) const;
     bool read_fat_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
     bool write_fat_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
     bool read_fat_table_sector(u32 sector, void* data, u32 size) const;
     bool write_fat_table_sector(u32 sector, void const* data, u32 size) const;
     SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const;
 
+    // delete_file stuff
+    void free_cluster_chain_in_fat_table(u32 e_cluster) const;
+    void remove_dir_cluster_if_empty(const SimpleDentryFat32& dentry, u32 cluster) const;
+    bool write_fat_table_for_cluster(u32 cluster, u32 value) const;
+    void update_entry_first_cluster(const SimpleDentryFat32& e, u32 first_cluster) const;
+    void mark_entry_unused(const SimpleDentryFat32& e) const;
+    bool is_directory_empty(const SimpleDentryFat32& e) const;
+    bool is_directory_cluster_empty(u32& cluster) const;
 
     static const u8 DIR_ENTRY_NO_MORE = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir
     static const u8 DIR_ENTRY_UNUSED  = 0xE5;   // Unused entry means the file was deleted
@@ -164,6 +169,8 @@ private:
     static const u32 CLUSTER_END_OF_FILE        = 0x0FFFFFF8;   // Such entry in Fat32 table indicates we've reached last cluster in file chain
     static const u32 CLUSTER_END_OF_DIRECTORY   = 0x0FFFFFFF;   // Such entry in Fat32 table indicates we've reached the last cluster in dir chain
     static const u32 FAT32_CLUSTER_28BIT_MASK   = 0x0FFFFFFF;   // Fat32 table cluster index actually use 28 bits, highest 4 bits should be ignored
+
+    static const u8 FAT_ENTRIES_PER_SECTOR = 512 / sizeof(FatTableEntry); // makes 512 bytes so 1 sector
 
     drivers::AtaDevice& hdd;
     VolumeBootRecordFat32 vbr;

@@ -129,4 +129,13 @@ string rtrim(const u8 *in, u16 len) {
     return string (s.begin(), last);
 }
 
+string extract_file_name(const string& filename) {
+    auto pivot = filename.rfind('/');
+    return filename.substr(pivot+1, filename.size());
+}
+
+string extract_file_directory(const string& filename) {
+    auto pivot = filename.rfind('/');
+    return filename.substr(0, pivot+1);
+}
 } // namespace kstd

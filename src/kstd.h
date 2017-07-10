@@ -93,7 +93,8 @@ private:
 void split_key_value(const string &kv, string &key, string &value);
 unsigned long long hex_to_long(const char* str);
 string rtrim(const u8 *in, u16 len);
-
+string extract_file_name(const string& filename);
+string extract_file_directory(const string& filename);
 /**
     @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");
                 > READ WRITE
