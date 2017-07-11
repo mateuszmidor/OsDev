@@ -23,7 +23,6 @@ namespace filesystem {
  */
 class VolumeFat32 {
 public:
-
     VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors);
     kstd::string get_label() const;
     kstd::string get_type() const;

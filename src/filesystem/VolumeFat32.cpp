@@ -100,7 +100,7 @@ u32 VolumeFat32::read_file_entry(const SimpleDentryFat32& file, void* data, u32 
     u32 cluster = file.data_cluster;
     u8* dst = (u8*)data;
 
-    while (fat_table.is_valid_allocated_cluster(cluster) && remaining_size > 0) {
+    while (fat_table.is_allocated_cluster(cluster) && remaining_size > 0) {
         for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) {
             u16 read_count = remaining_size >= SECTOR_SIZE ? SECTOR_SIZE : remaining_size;
             fat_data.read_data_sector(cluster, sector_offset, dst, read_count);
@@ -124,10 +124,9 @@ u32 VolumeFat32::read_file_entry(const SimpleDentryFat32& file, void* data, u32 
  *          ENUMERATION_STOPPED if enumeration stopped by on_entry() returning false
  */
 EnumerateResult VolumeFat32::enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry) const {
-
     u32 cluster = dentry.data_cluster;
 
-    while (fat_table.is_valid_allocated_cluster(cluster)) { // iterate cluster chain
+    while (fat_table.is_allocated_cluster(cluster)) { // iterate cluster chain
         switch (fat_data.enumerate_directory_cluster(cluster, on_entry)) {
         case EnumerateResult::ENUMERATION_STOPPED:
             return EnumerateResult::ENUMERATION_STOPPED;
@@ -177,7 +176,7 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
     }
     else {
         // 1. clear file data cluster chain
-        fat_table.free_cluster_chain_in_fat_table(e.data_cluster);
+        fat_table.free_cluster_chain(e.data_cluster);
 
         // 2. mark dir entry as UNUSED
         fat_data.mark_entry_unused(e);
@@ -214,9 +213,7 @@ bool VolumeFat32::get_entry_for_name(const SimpleDentryFat32& dentry, const stri
 }
 
 void VolumeFat32::remove_dir_cluster_if_empty(const SimpleDentryFat32& parent_dir, u32 cluster) const {
-    bool cluster_empty = fat_data.is_directory_cluster_empty(cluster);
-
-    if (!cluster_empty)
+    if (!fat_data.is_directory_cluster_empty(cluster))
         return; // cluster has files; dont touch it
 
     // first, remember next cluster no in the chain
@@ -227,15 +224,15 @@ void VolumeFat32::remove_dir_cluster_if_empty(const SimpleDentryFat32& parent_di
         u32 directory_first_cluster = (next_cluster == Fat32Table::CLUSTER_END_OF_DIRECTORY) ? Fat32Table::CLUSTER_UNUSED : next_cluster;
 
         // update head
-        fat_data.update_entry_first_cluster(parent_dir, directory_first_cluster);
+        fat_data.set_entry_data_cluster(parent_dir, directory_first_cluster);
     }
     // removing not first cluster? update previous cluster to point to the next cluster effectively removing current link
     else {
-        // find one cluster before "cluster"
+        // find one cluster before "cluster" and link it with next_cluster, detaching cluster
         u32 prev_cluster = fat_table.get_prev_cluster(parent_dir.data_cluster, cluster);
-        fat_table.write_fat_table_for_cluster(prev_cluster, next_cluster);
+        fat_table.set_next_cluster(prev_cluster, next_cluster);
     }
-    fat_table.write_fat_table_for_cluster(cluster, Fat32Table::CLUSTER_UNUSED);
+    fat_table.set_next_cluster(cluster, Fat32Table::CLUSTER_UNUSED);    // this cluster is free
 }
 
 bool VolumeFat32::is_directory_empty(const SimpleDentryFat32& e) const {

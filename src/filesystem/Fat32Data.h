@@ -64,7 +64,7 @@ public:
     bool write_fat_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry) const;
     void mark_entry_unused(const SimpleDentryFat32& e) const;
-    void update_entry_first_cluster(const SimpleDentryFat32& e, u32 first_cluster) const;
+    void set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_cluster) const;
     bool is_directory_cluster_empty(u32 cluster) const;
     SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const;
 

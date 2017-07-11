@@ -20,9 +20,9 @@ public:
     u32 get_used_space_in_clusters() const;
     u32 get_next_cluster(u32 cluster) const;
     u32 get_prev_cluster(u32 first_cluster, u32 cluster) const;
-    bool is_valid_allocated_cluster(u32 cluster) const;
-    void free_cluster_chain_in_fat_table(u32 e_cluster) const;
-    bool write_fat_table_for_cluster(u32 cluster, u32 value) const;
+    bool set_next_cluster(u32 cluster, u32 next_cluster) const;
+    bool is_allocated_cluster(u32 cluster) const;
+    void free_cluster_chain(u32 e_cluster) const;
 
     static const u32 CLUSTER_UNUSED             = 0;            // In Fat32 table, unused clusters are marked as 0
     static const u32 CLUSTER_FIRST_VALID        = 2;            // Clusters 0 and 1 are reserved, 2 usually is the cluster of root dir

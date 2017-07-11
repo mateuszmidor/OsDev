@@ -68,7 +68,7 @@ void Fat32Data::mark_entry_unused(const SimpleDentryFat32& e) const {
     write_fat_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
 }
 
-void Fat32Data::update_entry_first_cluster(const SimpleDentryFat32& e, u32 first_cluster) const {
+void Fat32Data::set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_cluster) const {
     // update head
     array<DirectoryEntryFat32, 16> entries;
     read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
