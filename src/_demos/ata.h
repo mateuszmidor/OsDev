@@ -30,49 +30,9 @@ void print_volume_info(VolumeFat32& v) {
             v.get_used_space_in_clusters());
 }
 
-static const char* INDENTS[] = {
-        "",
-        "  ",
-        "    ",
-        "      ",
-        "        ",
-        "          ",
-        "            ",
-        "              ",
-        "                ",
-        "                  "};
-
-
-
-void print_dir_tree(VolumeFat32& v, const SimpleDentryFat32& entry, u8 level)  {
-    auto on_entry = [&](const SimpleDentryFat32& e) -> bool {
-        if (e.name == "." || e.name == "..") // skip . and ..
-            return true;
-
-        if (e.is_directory) {
-            printer.format("%[%]\n", INDENTS[level], e.name);
-            print_dir_tree(v, e, level+1);
-        } else {
-            if (e.size == 0)
-                printer.format("%% - %B\n", INDENTS[level], e.name, e.size);
-            else
-            {
-                const u32 SIZE = 33;
-                char buff[SIZE];
-                u32 count = v.read_file_entry(e, buff, SIZE-1);
-                buff[count-1] = '\0';
-                printer.format("%% - %B, %\n", INDENTS[level], e.name, e.size, buff);
-            }
-        }
-        return true;
-    };
-
-    v.enumerate_directory_entry(entry, on_entry);
-}
-
 void print_file(VolumeFat32& v, string filename) {
     SimpleDentryFat32 file;
-    if (!v.get_entry_for_path(filename, file)) {
+    if (!v.get_entry(filename, file)) {
         printer.format("File % not found\n", filename);
         return;
     }
@@ -90,21 +50,76 @@ void print_file(VolumeFat32& v, string filename) {
     printer.format("%\n", buff);
 }
 
-void print_tree(VolumeFat32& v, string path) {
-    SimpleDentryFat32 directory;
-    if (!v.get_entry_for_path(path, directory)) {
-        printer.format("Directory % does not exist\n", path);
-        return;
-    }
+static const char* INDENTS[] = {
+        "",
+        "  ",
+        "    ",
+        "      ",
+        "        ",
+        "          ",
+        "            ",
+        "              ",
+        "                ",
+        "                  "};
 
-    if (!directory.is_directory) {
-        printer.format("% is not a directory\n", path);
-        return;
-    }
-    printer.format("%:\n", path);
-    print_dir_tree(v, directory, 1);
+using OnTreeEntryFound = std::function<bool(const SimpleDentryFat32&, u8)>;
+void traverse_tree(VolumeFat32& v, const SimpleDentryFat32& entry, u8 level, const OnTreeEntryFound& user_on_entry) {
+    OnEntryFound on_entry = [&](const SimpleDentryFat32& e) -> bool {
+        user_on_entry(e, level);
+        if (e.is_directory && e.name != "." && e.name != "..")
+            traverse_tree(v, e, level+1, user_on_entry);
+
+        return true;
+    };
+
+    v.enumerate_directory_entry(entry, on_entry);
 }
 
+void print_tree_(VolumeFat32& v, const SimpleDentryFat32& e) {
+
+
+}
+
+void print_tree(VolumeFat32& v, string path) {
+    SimpleDentryFat32 directory;
+    v.get_entry(path, directory);
+
+    auto on_entry = [&](const SimpleDentryFat32& e, u8 level) -> bool {
+         if (e.name == "." || e.name == "..")
+             return true;
+
+         if (e.is_directory) {
+             printer.format("%[%]\n", INDENTS[level], e.name);
+         } else {
+             if (e.size == 0)
+                 printer.format("%% - %B\n", INDENTS[level], e.name, e.size);
+             else
+             {
+                 const u32 SIZE = 33;
+                 char buff[SIZE];
+                 u32 count = v.read_file_entry(e, buff, SIZE-1);
+                 buff[count-1] = '\0';
+                 printer.format("%% - %B, %\n", INDENTS[level], e.name, e.size, buff);
+             }
+         }
+         return true;
+     };
+    printer.format("%:\n", path);
+    traverse_tree(v, directory, 1, on_entry);
+}
+
+
+void delete_tree_but(VolumeFat32& v, string root, string but) {
+    SimpleDentryFat32 directory;
+    v.get_entry(root, directory);
+
+    auto on_entry = [&](const SimpleDentryFat32& e, u8 level) -> bool {
+        v.delete_entry(e.name);
+        return true;
+    };
+
+    traverse_tree(v, directory, 1, on_entry);
+}
 
 void print_hdd_info(AtaDevice& hdd) {
     if (!MassStorageMsDos::verify(hdd)) {
@@ -123,10 +138,14 @@ void print_hdd_info(AtaDevice& hdd) {
             name.push_back(char('0' + i));
             v.delete_entry(name);
         }
-        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
-        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
-        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
-        v.delete_entry("/LEVEL1/LEVEL2");
+//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
+//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
+//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
+//        v.delete_entry("/LEVEL1/LEVEL2");
+//        v.delete_entry("/LEVEL1/LEVEL1.TXT");
+        v.delete_entry("/TMP/TMP1.TXT");
+        v.delete_entry("/TMP/TMP2.TXT");
+        v.delete_entry("/TMP");
         print_volume_info(v);
         print_tree(v, "/");
    // }
