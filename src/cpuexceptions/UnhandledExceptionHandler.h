@@ -21,6 +21,7 @@ public:
 
 private:
     u8 exception_no;
+    static const char* EXCEPTION_NAMES[];
 };
 
 } /* namespace cpuexceptions */
