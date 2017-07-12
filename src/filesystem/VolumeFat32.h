@@ -33,7 +33,8 @@ public:
     bool get_entry(const kstd::string& unix_path, SimpleDentryFat32& e) const;
     u32 read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const;
     EnumerateResult enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
-    bool delete_entry(const kstd::string& filename) const;
+    bool create_entry(const kstd::string& unix_path, bool directory) const;
+    bool delete_entry(const kstd::string& unix_path) const;
 
 private:
     SimpleDentryFat32 get_root_dentry() const;
@@ -41,6 +42,7 @@ private:
 
     // delete_file stuff
     void remove_dir_cluster_if_empty(const SimpleDentryFat32& dentry, u32 cluster) const;
+    bool alloc_entry_in_directory(const SimpleDentryFat32& dir, SimpleDentryFat32 &e) const;
     bool is_directory_empty(const SimpleDentryFat32& e) const;
 
 

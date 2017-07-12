@@ -16,7 +16,24 @@
 #include "types.h"
 
 
+extern "C" void * memcpy(void * destination, const void * source, size_t num);
+
 namespace kstd {
+
+template <class T>
+class Optional : public T {
+public:
+    Optional(const T& t) : T(t), valid(true) {}
+    Optional(T&& t) : T(std::move(t)), valid(true) {}
+    T& operator=(const T& t) = delete;
+    T&& operator=(T&& t) = delete;
+    Optional() : valid(false) {}
+    virtual ~Optional() {};
+    bool is_valid() { return valid; }
+
+private:
+    bool valid;
+};
 
 template <class T>
 class Allocator {
@@ -72,29 +89,16 @@ public :
 
 template <class T>
 using vector = std::vector<T, Allocator<T>>;
-
 using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;
 
-template <class T>
-class Optional : public T {
-public:
-    Optional(const T& t) : T(t), valid(true) {}
-    Optional(T&& t) : T(std::move(t)), valid(true) {}
-    T& operator=(const T& t) = delete;
-    T&& operator=(T&& t) = delete;
-    Optional() : valid(false) {}
-    virtual ~Optional() {};
-    bool is_valid() { return valid; }
-
-private:
-    bool valid;
-};
-
-void split_key_value(const string &kv, string &key, string &value);
+string to_upper_case(string s);
+void split_key_value(const string &kv, string &key, string &value, char separator);
 unsigned long long hex_to_long(const char* str);
 string rtrim(const u8 *in, u16 len);
 string extract_file_name(const string& filename);
 string extract_file_directory(const string& filename);
+void make_8_3_space_padded_filename(const string& filename, string& name, string& ext);
+
 /**
     @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");
                 > READ WRITE
@@ -106,7 +110,7 @@ inline string flags_to_str(unsigned long long flags) {
 template <class H, class ...T>
 string flags_to_str(unsigned long long flags, H head, T... tail) {
     string k, v;
-    split_key_value(head, k, v);
+    split_key_value(head, k, v, '=');
     unsigned long long val = hex_to_long(v.c_str());
     if ((flags & val) == val)
         return string(k) + " " + flags_to_str(flags, tail...);
@@ -126,7 +130,7 @@ inline string enum_to_str(unsigned long long enumval) {
 template <class H, class ...T>
 string enum_to_str(unsigned long long enumval, H head, T... tail) {
     string k, v;
-    split_key_value(head, k, v);
+    split_key_value(head, k, v, '=');
     unsigned long long val = hex_to_long(v.c_str());
     if (val == enumval)
         return string(k);

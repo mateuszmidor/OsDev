@@ -27,7 +27,7 @@ bool Fat32Data::read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 
     return hdd.read28(DATA_START_IN_SECTORS + SECTORS_PER_CLUSTER * (cluster - 2) + sector_offset, data, size);
 }
 
-bool Fat32Data::write_fat_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const {
+bool Fat32Data::write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const {
     // (cluster - 2) because data clusters are indexed from 2
     return hdd.write28(DATA_START_IN_SECTORS + SECTORS_PER_CLUSTER * (cluster - 2) + sector_offset, data, size);
 }
@@ -61,11 +61,22 @@ EnumerateResult Fat32Data::enumerate_directory_cluster(u32 cluster, const OnEntr
     return EnumerateResult::ENUMERATION_CONTINUE; // continue reading the entries in next cluster
 }
 
-void Fat32Data::mark_entry_unused(const SimpleDentryFat32& e) const {
+void Fat32Data::alloc_entry(const SimpleDentryFat32& parent_dir, const kstd::string& name, bool directory) const {
+
+}
+
+void Fat32Data::write_entry(const SimpleDentryFat32 &e) const {
+    array<DirectoryEntryFat32, 16> entries;
+    read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    entries[e.entry_index] = make_directory_entry_fat32(e);
+    write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+}
+
+void Fat32Data::release_entry(const SimpleDentryFat32& e) const {
     array<DirectoryEntryFat32, 16> entries;
     read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
     entries[e.entry_index].name[0] = DIR_ENTRY_UNUSED; // mark entry as deleted
-    write_fat_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
 }
 
 void Fat32Data::set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_cluster) const {
@@ -74,7 +85,7 @@ void Fat32Data::set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_clu
     read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
     entries[e.entry_index].first_cluster_lo = first_cluster & 0xFFFF;
     entries[e.entry_index].first_cluster_hi = first_cluster >> 16;
-    write_fat_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
 }
 
 bool Fat32Data::is_directory_cluster_empty(u32 cluster) const {
@@ -102,4 +113,27 @@ SimpleDentryFat32 Fat32Data::make_simple_dentry(const DirectoryEntryFat32& dentr
             );
 
 }
+
+DirectoryEntryFat32 Fat32Data::make_directory_entry_fat32(const SimpleDentryFat32& e) const {
+    DirectoryEntryFat32 result;
+    string name, ext;
+
+    kstd::make_8_3_space_padded_filename(e.name, name, ext);
+    memcpy(result.name, name.data(), 8);
+    memcpy(result.ext, ext.data(), 3);
+    result.a_time = 0;
+    result.w_date = 0;
+    result.w_time = 0;
+    result.c_date = 0;
+    result.c_time = 0;
+    result.c_time_tenth = 0;
+    result.attributes = e.is_directory ? DirectoryEntryFat32Attrib::DIRECTORY : 0;
+    result.first_cluster_hi = e.data_cluster & 0xFF00;
+    result.first_cluster_lo = e.data_cluster & 0x00FF;
+    result.reserved = 0;
+    result.size = e.size;
+
+    return result;
+}
+
 } /* namespace filesystem */

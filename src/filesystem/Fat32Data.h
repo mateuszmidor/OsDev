@@ -61,12 +61,15 @@ public:
     void setup(u32 data_start, u8 sectors_per_cluster);
 
     bool read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
-    bool write_fat_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
+    bool write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry) const;
-    void mark_entry_unused(const SimpleDentryFat32& e) const;
+    void alloc_entry(const SimpleDentryFat32& parent_dir, const kstd::string& name, bool directory) const;
+    void write_entry(const SimpleDentryFat32 &e) const;
+    void release_entry(const SimpleDentryFat32& e) const;
     void set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_cluster) const;
     bool is_directory_cluster_empty(u32 cluster) const;
     SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const;
+    DirectoryEntryFat32 make_directory_entry_fat32(const SimpleDentryFat32& e) const;
 
 private:
     static const u8 DIR_ENTRY_NO_MORE = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir

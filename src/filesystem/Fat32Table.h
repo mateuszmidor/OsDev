@@ -22,6 +22,7 @@ public:
     u32 get_prev_cluster(u32 first_cluster, u32 cluster) const;
     bool set_next_cluster(u32 cluster, u32 next_cluster) const;
     bool is_allocated_cluster(u32 cluster) const;
+    u32 alloc_cluster_for_directory() const;
     void free_cluster_chain(u32 e_cluster) const;
 
     static const u32 CLUSTER_UNUSED             = 0;            // In Fat32 table, unused clusters are marked as 0
@@ -29,6 +30,7 @@ public:
     static const u32 CLUSTER_END_OF_FILE        = 0x0FFFFFF8;   // Such entry in Fat32 table indicates we've reached last cluster in file chain
     static const u32 CLUSTER_END_OF_DIRECTORY   = 0x0FFFFFFF;   // Such entry in Fat32 table indicates we've reached the last cluster in dir chain
     static const u32 FAT32_CLUSTER_28BIT_MASK   = 0x0FFFFFFF;   // Fat32 table cluster index actually use 28 bits, highest 4 bits should be ignored
+
 private:
     using FatTableEntry = u32;  // FatEntry represents cluster index which is 32 bit (28 actually used)
 
