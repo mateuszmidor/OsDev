@@ -129,8 +129,8 @@ DirectoryEntryFat32 Fat32Data::make_directory_entry_fat32(const SimpleDentryFat3
     result.c_time = 0;
     result.c_time_tenth = 0;
     result.attributes = e.is_directory ? DirectoryEntryFat32Attrib::DIRECTORY : 0;
-    result.first_cluster_hi = e.data_cluster & 0xFF00;
-    result.first_cluster_lo = e.data_cluster & 0x00FF;
+    result.first_cluster_hi = e.data_cluster >> 16;
+    result.first_cluster_lo = e.data_cluster & 0xFFFF;
     result.reserved = 0;
     result.size = e.size;
 
