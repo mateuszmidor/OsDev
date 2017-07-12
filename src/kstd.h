@@ -97,7 +97,6 @@ unsigned long long hex_to_long(const char* str);
 string rtrim(const u8 *in, u16 len);
 string extract_file_name(const string& filename);
 string extract_file_directory(const string& filename);
-void make_8_3_space_padded_filename(const string& filename, string& name, string& ext);
 
 /**
     @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");

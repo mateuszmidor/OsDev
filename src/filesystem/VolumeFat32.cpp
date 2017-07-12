@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include "VolumeFat32.h"
+#include "Fat32Utils.h"
 #include "ScreenPrinter.h"
 #include "kstd.h"
 
@@ -151,12 +152,13 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) co
     if (!get_entry(extract_file_directory(unix_path), parent_dir))
         return false;
 
-//     check if entry already exists
-//    make_8_3_filename
+    // check if entry already exists
+    string name_8_3 = Fat32Utils::make_8_3_filename(extract_file_name(unix_path));
     SimpleDentryFat32 tmp;
-    string name_8_3;
-    if (get_entry_for_name(parent_dir, name_8_3, tmp))
+    if (get_entry_for_name(parent_dir, name_8_3, tmp)) {
+        printer.format("Entry exists: %\n", name_8_3);
         return false;   // entry exists
+    }
 
     SimpleDentryFat32 e;
     e.name = extract_file_name(unix_path);
@@ -289,5 +291,6 @@ bool VolumeFat32::alloc_entry_in_directory(const SimpleDentryFat32& dir, SimpleD
 bool VolumeFat32::is_directory_empty(const SimpleDentryFat32& e) const {
     return e.data_cluster == Fat32Table::CLUSTER_UNUSED;
 }
+
 
 } /* namespace filesystem */

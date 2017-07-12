@@ -158,41 +158,4 @@ string extract_file_directory(const string& filename) {
     return filename.substr(0, pivot+1);
 }
 
-string make_8_filename(const string& fullname) {
-    return "";
-}
-
-string make_3_fileext(const string& fullext) {
-    return "";
-}
-
-void make_8_3_space_padded_filename(const string& filename, string& name, string& ext) {
-    // split filename -> name:ext on '.', or use empty ext
-    if (filename.rfind('.') == string::npos) {
-        name = filename;
-        ext = "";
-    } else {
-        split_key_value(filename, name, ext, '.');
-    }
-
-    // reduce name length to 8 and extension length to 3, pad them with spaces to have exactly that length
-    if (name.length() > 8) {
-        name.resize(7);
-        name.push_back('~');
-    } else {
-        for (int i = name.length(); i < 8; i++)
-         name.push_back(' ');
-    }
-
-    if (ext.length() > 3) {
-        ext.resize(3);
-    } else {
-         for (int i = ext.length(); i < 3; i++)
-             ext.push_back(' ');
-    }
-
-    // make the name and ext upper case
-    name = to_upper_case(name);
-    ext = to_upper_case(ext);
-}
 } // namespace kstd

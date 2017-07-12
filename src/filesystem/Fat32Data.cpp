@@ -7,6 +7,7 @@
 
 #include <array>
 #include "Fat32Data.h"
+#include "Fat32Utils.h"
 
 using std::array;
 using kstd::string;
@@ -118,7 +119,7 @@ DirectoryEntryFat32 Fat32Data::make_directory_entry_fat32(const SimpleDentryFat3
     DirectoryEntryFat32 result;
     string name, ext;
 
-    kstd::make_8_3_space_padded_filename(e.name, name, ext);
+    Fat32Utils::make_8_3_space_padded_filename(e.name, name, ext);
     memcpy(result.name, name.data(), 8);
     memcpy(result.ext, ext.data(), 3);
     result.a_time = 0;

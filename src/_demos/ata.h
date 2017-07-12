@@ -147,9 +147,9 @@ void print_hdd_info(AtaDevice& hdd) {
         v.delete_entry("/TMP/TMP2.TXT");
         //v.delete_entry("/TMP");
 
-        if (!v.create_entry("/TMP/first.txt", false))
+        if (!v.create_entry("/TMP/first_file.txt", false))
             printer.format("Creating file failed\n");
-        if (!v.create_entry("/TMP/second.txt", false))
+        if (!v.create_entry("/TMP/first_file.txt", false))
             printer.format("Creating file failed\n");
         print_volume_info(v);
         print_tree(v, "/");
