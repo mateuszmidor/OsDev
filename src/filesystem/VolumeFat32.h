@@ -6,6 +6,45 @@
  *    @see: https://www.pjrc.com/tech/8051/ide/fat32.html
  */
 
+
+
+
+/*
+FAT32 partition is essentially made of 3 structures:
+-FAT header, which says how big is the partition, where the fat table starts, where the file data starts.
+-FAT table, which is a big array of 32-bit numbers. These numbers are cluster numbers.
+-FAT data, which is a huge array of 4KB clusters (cluster can be other size, we read this info from the header).
+
+In Fat32, any data is stored in form of linked clusters. Linked just like in LinkedList of char[4096].
+In clusters we store data and 1 cluster in the smallest unit of allocation.
+Need store 4KB data? Use single cluster. Need 8KB? use 2 linked clusters. Need 12KB? use 3 linked clusters. And so on.
+
+Now how to read the root directory in Fat32?
+Well, root position (actually root cluster number, as all data in Fat32 is allocated in form of clusters)
+can be read from the FAT header. I will most likely be cluster number 2.
+Clusters 0 and 1 are reserved, so cluster 2 is the first usable one, perfect match for the root.
+The formula for byte address is:
+    data_start_in_bytes + (cluster_number -2) * cluster_size_in_bytes. -2 since 2 reserved clusters.
+
+But of course the disk is allocated in form of sectors(512 bytes), so more useful formula is:
+    data_start_in_sectors + (cluster_number -2) * cluster_size_in_sectors. -2 since 2 reserved clusters.
+
+And what can we find at cluster 2? An array of 32 byte long DirectoryEntry structures. Each one holding entry name,
+file/directory flag, and number of cluster that holds its data (for file - file contents, for dir - array of entries).
+Now as we have 4096 byte cluster and 32 bytes DirectoryEntry, its easy to tell that single dir can only hold 128 entries.
+But if we need to create more entries, we can always link another cluster...and another...and another...
+
+How the cluster linking works?
+Cluster itself doesnt hold the "next_cluster_no" information. This information is stored in Fat table. How it works?
+Imagine you have your root dir at cluster 2 and you want to know what is its next linked cluster. What you do is:
+next_cluster_number = fat_table[2] & 0x0FFFFFFF. Mind we use only 28 bits, as Fat32 use actually only 28 bit
+That's it! Fat table addressed with cluster number returns the next linked cluster number.
+0x00000000 - cluster is unused
+0x00000002 - 0x0FFFFFF7 - data cluster
+0x0FFFFFF8 - 0x0FFFFFFF - last cluster in chain
+*/
+
+
 #ifndef SRC_FILESYSTEM_VOLUMEFAT32_H_
 #define SRC_FILESYSTEM_VOLUMEFAT32_H_
 
