@@ -87,7 +87,7 @@ bool Fat32Table::set_next_cluster(u32 cluster, u32 next_cluster) const {
 }
 
 bool Fat32Table::is_allocated_cluster(u32 cluster) const {
-    return cluster >= CLUSTER_FIRST_VALID && cluster < CLUSTER_END_OF_DIRECTORY;
+    return cluster >= CLUSTER_FIRST_VALID && cluster < CLUSTER_END_OF_FILE;
 }
 
 bool Fat32Table::read_fat_table_sector(u32 sector, void* data, u32 size) const {

@@ -34,7 +34,7 @@ VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_o
     fat_table.setup(vbr.bytes_per_sector, fat_start, vbr.fat_table_size_in_sectors);
 
     data_start = fat_start + vbr.fat_table_size_in_sectors * vbr.fat_table_copies;
-    fat_data.setup(data_start, vbr.sectors_per_cluster);
+    fat_data.setup(data_start, vbr.bytes_per_sector, vbr.sectors_per_cluster);
 }
 
 string VolumeFat32::get_label() const {
@@ -149,14 +149,16 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) co
 
     // check if parent_dir exists
     SimpleDentryFat32 parent_dir;
-    if (!get_entry(extract_file_directory(unix_path), parent_dir))
+    if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
+        printer.format("Parent not exists: %\n", extract_file_directory(unix_path));
         return false;
+    }
 
     // check if entry already exists
     string name_8_3 = Fat32Utils::make_8_3_filename(extract_file_name(unix_path));
     SimpleDentryFat32 tmp;
     if (get_entry_for_name(parent_dir, name_8_3, tmp)) {
-        printer.format("Entry exists: %\n", name_8_3);
+        printer.format("Entry exists: %                             \n", name_8_3);
         return false;   // entry exists
     }
 
@@ -196,7 +198,10 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
             return false;
 
         // 2. mark dir entry as UNUSED
-        fat_data.release_entry(e);
+//        if (fat_data.is_last_entry_in_cluster(e) && !fat_table.is_allocated_cluster(fat_table.get_next_cluster(e.entry_cluster)))
+//            fat_data.write_entry_nomore(e);
+//        else
+            fat_data.release_entry(e);
 
         // 3. if cluster contains no more files - remove it from the chain
         remove_dir_cluster_if_empty(parent_dir, e.entry_cluster);
@@ -206,7 +211,10 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
         fat_table.free_cluster_chain(e.data_cluster);
 
         // 2. mark dir entry as UNUSED
-        fat_data.release_entry(e);
+//        if (fat_data.is_last_entry_in_cluster(e) && !fat_table.is_allocated_cluster(fat_table.get_next_cluster(e.entry_cluster)))
+//            fat_data.write_entry_nomore(e);
+//        else
+            fat_data.release_entry(e);
 
         // 3. if cluster contains no more files - remove it from the chain
         remove_dir_cluster_if_empty(parent_dir, e.entry_cluster);
@@ -243,6 +251,7 @@ void VolumeFat32::remove_dir_cluster_if_empty(const SimpleDentryFat32& parent_di
     if (!fat_data.is_directory_cluster_empty(cluster))
         return; // cluster has files; dont touch it
 
+    printer.format("Cluster % empty                     \n", cluster);
     // first, remember next cluster no in the chain
     u32 next_cluster = fat_table.get_next_cluster(cluster);
 
@@ -263,29 +272,97 @@ void VolumeFat32::remove_dir_cluster_if_empty(const SimpleDentryFat32& parent_di
 }
 
 bool VolumeFat32::alloc_entry_in_directory(const SimpleDentryFat32& dir, SimpleDentryFat32 &e) const {
+    // 0. if dir has no data cluster:
     if (dir.data_cluster == Fat32Table::CLUSTER_UNUSED) {
+        printer.format("Allocating data cluster for first entry\n");
+
+        // try alloc data cluster
         u32 cluster = fat_table.alloc_cluster_for_directory();
         if (cluster == Fat32Table::CLUSTER_UNUSED)
             return false; // cluster allocation failed
 
-
-        // TODO: first make sure entry with such name doesnt exist
+        // clear data cluster
+        fat_data.clear_data_cluster(cluster);
 
         // attach data cluster to directory
         fat_data.set_entry_data_cluster(dir, cluster);
 
-        // setup
+        // setup file entry
         e.data_cluster = Fat32Table::CLUSTER_UNUSED;
         e.entry_cluster = cluster;
         e.entry_sector = 0;
         e.entry_index = 0;
         e.size = 0;
+        fat_data.write_entry(e);
 
+        // setting NO_MORE marker not needed as fresh cluster has been cleared
+
+        return true;
+    }
+
+
+    // find free entry
+    u32 last_cluster, cluster = dir.data_cluster;
+    u8 entry_type = Fat32Data::DIR_ENTRY_NOT_FOUND;
+    while (fat_table.is_allocated_cluster(cluster)) { // iterate cluster chain
+        entry_type = fat_data.get_free_entry_in_cluster(cluster, e);
+        if (entry_type != Fat32Data::DIR_ENTRY_NOT_FOUND)
+            break; // free entry found
+
+        last_cluster =cluster;
+        cluster = fat_table.get_next_cluster(cluster);
+        printer.format("Next Cluster: %\n", cluster);
+    }
+
+    // 1. if there is UNUSED entry:
+    if (entry_type == Fat32Data::DIR_ENTRY_UNUSED) {
+        printer.format("Unused entry found. Cluster: %\n", e.entry_cluster);
+        e.data_cluster = Fat32Table::CLUSTER_UNUSED;
+        e.size = 0;
         fat_data.write_entry(e);
         return true;
     }
 
-    return false;
+    // 2. if there is NO_MORE entry:
+    if (entry_type == Fat32Data::DIR_ENTRY_NO_MORE) {
+        printer.format("NO MORE entry found. Cluster: %\n", e.entry_cluster);
+
+        e.data_cluster = Fat32Table::CLUSTER_UNUSED;
+        e.size = 0;
+        fat_data.write_entry(e);
+        fat_data.write_entry_nomore_after(e);
+
+        return true;
+
+    }
+
+    // 3. if no UNUSED/NO_MORE entry found (all entries in all clusters are in use):
+    printer.format("No free entry in directory clusters found. attaching new cluster\n");
+
+    // try alloc data cluster
+    cluster = fat_table.alloc_cluster_for_directory();
+    if (cluster == Fat32Table::CLUSTER_UNUSED)
+        return false; // cluster allocation failed
+
+    printer.format("Allocated cluster %\n", cluster);
+
+    // clear data cluster
+    fat_data.clear_data_cluster(cluster);
+
+    // attach data cluster to the end of chain
+    fat_table.set_next_cluster(last_cluster, cluster);
+
+    // setup file entry
+    e.data_cluster = Fat32Table::CLUSTER_UNUSED;
+    e.entry_cluster = cluster;
+    e.entry_sector = 0;
+    e.entry_index = 0;
+    e.size = 0;
+    fat_data.write_entry(e);
+
+    // setting NO_MORE marker not needed as fresh cluster has been cleared
+
+    return true;
 }
 
 bool VolumeFat32::is_directory_empty(const SimpleDentryFat32& e) const {

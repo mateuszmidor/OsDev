@@ -133,27 +133,33 @@ void print_hdd_info(AtaDevice& hdd) {
     auto &v = ms.get_volumes()[1];
     //for (auto& v : volumes) {
         print_volume_info(v);
-        for (int i = 1; i < 10; i++) {
-            string name = "/FILE_";
-            name.push_back(char('0' + i));
-            v.delete_entry(name);
+        for (u16 i = 1; i <= 16; i++) {
+              string name = string("/FILE_") +kstd::to_str(i);
+              v.delete_entry(name);
         }
-//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
-//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
-//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
-//        v.delete_entry("/LEVEL1/LEVEL2");
-//        v.delete_entry("/LEVEL1/LEVEL1.TXT");
+
+        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
+        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
+        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
+        v.delete_entry("/LEVEL1/LEVEL2");
+        v.delete_entry("/LEVEL1/LEVEL1.TXT");
         v.delete_entry("/TMP/TMP1.TXT");
         v.delete_entry("/TMP/TMP2.TXT");
-        //v.delete_entry("/TMP");
+        v.delete_entry("/TMP");
+        print_volume_info(v);
 
-        if (!v.create_entry("/TMP/first_file.txt", false))
-            printer.format("Creating file failed\n");
-        if (!v.create_entry("/TMP/first_file.txt", false))
-            printer.format("Creating file failed\n");
+
+        for (int i = 1; i <= 3; i++) {
+            string dir = "/DIR_" + kstd::to_str(i);
+            v.create_entry(dir, true);
+            for (int j = 1; j <= 5; j++)
+                v.create_entry(dir + "/FILE_" + kstd::to_str(j), false);
+        }
+
+        printer.clearscreen();
         print_volume_info(v);
         print_tree(v, "/");
-   // }
+//    }
 }
 
 void ata_demo(std::shared_ptr<AtaPrimaryBusDriver> ata_primary_bus) {

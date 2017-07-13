@@ -36,7 +36,7 @@ string Fat32Utils::make_8_3_filename(const string& filename) {
     name = to_upper_case(name);
     ext = to_upper_case(ext);
 
-    return ext.empty() ? ext : name + "." + ext;
+    return ext.empty() ? name : name + "." + ext;
 }
 
 void Fat32Utils::make_8_3_space_padded_filename(const string& filename, string& name, string& ext)  {

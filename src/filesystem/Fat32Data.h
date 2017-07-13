@@ -58,25 +58,31 @@ using OnEntryFound = std::function<bool(const SimpleDentryFat32& e)>;
 class Fat32Data {
 public:
     Fat32Data(drivers::AtaDevice& hdd);
-    void setup(u32 data_start, u8 sectors_per_cluster);
+    void setup(u32 data_start, u16 bytes_per_sector, u8 sectors_per_cluster);
 
     bool read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
     bool write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
-    EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry) const;
-    void alloc_entry(const SimpleDentryFat32& parent_dir, const kstd::string& name, bool directory) const;
+    void clear_data_cluster(u32 cluster) const;
+    EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
+    u8 get_free_entry_in_cluster(u32 cluster, SimpleDentryFat32& out) const;
     void write_entry(const SimpleDentryFat32 &e) const;
+    void write_entry_nomore(const SimpleDentryFat32 &e) const;
+    void write_entry_nomore_after(const SimpleDentryFat32 &e) const;
     void release_entry(const SimpleDentryFat32& e) const;
     void set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_cluster) const;
     bool is_directory_cluster_empty(u32 cluster) const;
+    bool is_last_entry_in_cluster(const SimpleDentryFat32& e) const;
     SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const;
     DirectoryEntryFat32 make_directory_entry_fat32(const SimpleDentryFat32& e) const;
 
-private:
-    static const u8 DIR_ENTRY_NO_MORE = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir
-    static const u8 DIR_ENTRY_UNUSED  = 0xE5;   // Unused entry means the file was deleted
+    static const u8 DIR_ENTRY_NO_MORE   = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir
+    static const u8 DIR_ENTRY_UNUSED    = 0xE5;   // Unused entry means the file was deleted
+    static const u8 DIR_ENTRY_NOT_FOUND = 0xFF;   // No dir entry found
 
+private:
     drivers::AtaDevice& hdd;
     u32 DATA_START_IN_SECTORS   = 0;
+    u16 BYTES_PER_SECTOR        = 0;
     u8 SECTORS_PER_CLUSTER      = 0;
 };
 

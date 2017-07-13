@@ -65,12 +65,12 @@ bool AtaDevice::read28(u32 sector, void* data, u32 count) {
     u8* dst = (u8*)data;
 
     if (sector >= (1 << 28)) {
-        printer.format("Cant read from sector that far: %", sector);
+        printer.format("Cant read from sector that far: %\n", sector);
         return false;
     }
 
     if (count > 512) {
-        printer.format("Cant write across 512 bytes sectors: sector %, count %", sector, count);
+        printer.format("Cant write across 512 bytes sectors: sector %, count %\n", sector, count);
         return false;
     }
 
@@ -107,12 +107,12 @@ bool AtaDevice::write28(u32 sector, void const* data, u32 count) {
     u8 const* dst = (u8*)data;
 
     if (sector >= (1 << 28)) {
-        printer.format("Cant write to sector that far: %", sector);
+        printer.format("Cant write to sector that far: %\n", sector);
         return false;
     }
 
     if (count > BYTES_PER_SECTOR) {
-        printer.format("Cant write across % bytes sectors: sector %, count %", BYTES_PER_SECTOR, sector, count);
+        printer.format("Cant write across % bytes sectors: sector %, count %\n", BYTES_PER_SECTOR, sector, count);
         return false;
     }
 
