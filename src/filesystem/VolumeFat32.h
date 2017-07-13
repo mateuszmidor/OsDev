@@ -42,6 +42,32 @@ That's it! Fat table addressed with cluster number returns the next linked clust
 0x00000000 - cluster is unused
 0x00000002 - 0x0FFFFFF7 - data cluster
 0x0FFFFFF8 - 0x0FFFFFFF - last cluster in chain
+
+
+CREATE ENTRY (FILE OR DIR)
+    read parent_dir entry for provided path, if not exists -> return
+    prepare new_entry
+    find slot for writing our entry in parent_dir data:
+        if parent dir has no data cluster allocated:        // parent_dir.data == 0
+            allocate new_cluster                            // fat_table.allocate
+            zero the new_cluster                            // fat_data.zero
+            set the new_cluster as parent_dir data          // parent_dir.data = new_cluster, fat_data.write(parent_dir)
+            write our new_entry at pos 0 of new_cluster     // fat_data.write(cluster, 0, new_entry)
+            write NO_MORE entry at pos 1 of new_cluster     // fat_data.write(cluster, 1, NO_MORE_ENTRY)
+
+        if parent_dir has UNUSED entry:
+            write our new_entry at position of UNUSED       // fat_data.write(unused.cluster, unused.index, new_entry)
+
+        if parent_dir has NO_MORE entry
+            write our new_entry at position of NO MORE      // fat_data.write(nomore.cluster, nomore.index, new_entry)
+            if there is next entry - write NO MORE          // fat_data.write(nomore.cluster, nomore.index=1, NO_MORE_ENTRY)
+                                                            // if index >= max_entries_per_cluster -> fail silently
+        otherwise (all entries are used):
+            allocate new_cluster
+            zero the new_cluster
+            set the new_cluster as parent_dir last cluster
+            write our new_entry at pos 0 of new_cluster
+            write NO_MORE entry at pos 1 of new_cluster
 */
 
 
