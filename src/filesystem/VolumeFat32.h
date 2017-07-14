@@ -46,28 +46,50 @@ That's it! Fat table addressed with cluster number returns the next linked clust
 
 CREATE ENTRY (FILE OR DIR)
     read parent_dir entry for provided path, if not exists -> return
+    check if entry with such name already exists, if true -> return
     prepare new_entry
     find slot for writing our entry in parent_dir data:
         if parent dir has no data cluster allocated:        // parent_dir.data == 0
             allocate new_cluster                            // fat_table.allocate
             zero the new_cluster                            // fat_data.zero
             set the new_cluster as parent_dir data          // parent_dir.data = new_cluster, fat_data.write(parent_dir)
-            write our new_entry at pos 0 of new_cluster     // fat_data.write(cluster, 0, new_entry)
-            write NO_MORE entry at pos 1 of new_cluster     // fat_data.write(cluster, 1, NO_MORE_ENTRY)
+            write our new_entry at pos 0 of new_cluster     // new_entry.cluster = new_cluster, new_entry.index = 0, fat_data.write(new_entry)
+            write NO_MORE entry at pos 1 of new_cluster     // no_more.cluster = new_cluster, no_more.index = 1, fat_data.write(no_more)
 
         if parent_dir has UNUSED entry:
-            write our new_entry at position of UNUSED       // fat_data.write(unused.cluster, unused.index, new_entry)
+            write our new_entry at position of UNUSED       // new_entry.cluster = unused.cluster, new_entry.index = unused.index, fat_data.write(new_entry)
 
-        if parent_dir has NO_MORE entry
-            write our new_entry at position of NO MORE      // fat_data.write(nomore.cluster, nomore.index, new_entry)
-            if there is next entry - write NO MORE          // fat_data.write(nomore.cluster, nomore.index=1, NO_MORE_ENTRY)
-                                                            // if index >= max_entries_per_cluster -> fail silently
+        if parent_dir has NO_MORE entry:
+            write our new_entry at position of NO MORE      // new_entry.cluster = no_more.cluster, new_entry.index = no_more.index, fat_data.write(new_entry)
+            if there is next entry - write NO MORE          // no_more.index++, fat_data.write(no_more)
+                                                            // if no_more.index >= max_entries_per_cluster -> fail silently
         otherwise (all entries are used):
-            allocate new_cluster
+            allocate new_cluster                            // see above
             zero the new_cluster
             set the new_cluster as parent_dir last cluster
             write our new_entry at pos 0 of new_cluster
             write NO_MORE entry at pos 1 of new_cluster
+
+
+DELETE ENTRY (FILE OR DIR)
+    read parent_dir entry for provided path, if not exists -> return
+    read entry itself for provided path, if not exists -> return
+
+    if entry is FILE:
+        free entry.data                                 // fat_table.free_cluster_chain(entry.data)         # entry.free_data()
+
+    if entry is DIR and entry is not empty:
+        return
+
+    if entry is the last one in parent_dir:             // fat_data.is_last_entry_in_dir(parent_dir, entry) # parent_dir.is_last_entry(entry)
+        mark entry as NO_MORE                           // fat_data.mark_as_no_more(parent_dir, entry)      # parent_dir.mark_as_no_more(entry)
+    else
+        mark entry as UNUSED                            // fat_data.mark_as_unused(parent_dir, entry)       # parent_dir.mark_as_unused(entry)
+    if cluster where entry was is now empty:            // fat_data.is_directory_cluster_empty(entry.cluster)
+        detach cluster from parent_dir                  // parent_dir.data = detach_cluster(parent_dir.data, entry.cluster), fat_data.write(parent_dir)
+
+cluster detach_cluster(first_cluster, cluster)
+    ...
 */
 
 

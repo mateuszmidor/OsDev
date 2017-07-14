@@ -27,8 +27,9 @@ public:
 
     static const u32 CLUSTER_UNUSED             = 0;            // In Fat32 table, unused clusters are marked as 0
     static const u32 CLUSTER_FIRST_VALID        = 2;            // Clusters 0 and 1 are reserved, 2 usually is the cluster of root dir
-    static const u32 CLUSTER_END_OF_FILE        = 0x0FFFFFF8;   // Such entry in Fat32 table indicates we've reached last cluster in file chain
-    static const u32 CLUSTER_END_OF_DIRECTORY   = 0x0FFFFFFF;   // Such entry in Fat32 table indicates we've reached the last cluster in dir chain
+    static const u32 CLUSTER_LAST_VALID         = 0x0FFFFFF7;
+    static const u32 CLUSTER_END_OF_CHAIN       = 0x0FFFFFF8;   // Such entry in Fat32 table indicates we've reached last cluster in the chain
+//    static const u32 CLUSTER_END_OF_DIRECTORY   = 0x0FFFFFFF;   // Such entry in Fat32 table indicates we've reached the last cluster in dir chain
     static const u32 FAT32_CLUSTER_28BIT_MASK   = 0x0FFFFFFF;   // Fat32 table cluster index actually use 28 bits, highest 4 bits should be ignored
 
 private:

@@ -87,7 +87,7 @@ bool Fat32Table::set_next_cluster(u32 cluster, u32 next_cluster) const {
 }
 
 bool Fat32Table::is_allocated_cluster(u32 cluster) const {
-    return cluster >= CLUSTER_FIRST_VALID && cluster < CLUSTER_END_OF_FILE;
+    return cluster >= CLUSTER_FIRST_VALID && cluster <= CLUSTER_LAST_VALID;
 }
 
 bool Fat32Table::read_fat_table_sector(u32 sector, void* data, u32 size) const {
@@ -108,9 +108,9 @@ u32 Fat32Table::alloc_cluster_for_directory() const {
                 continue; // first two entries in FAT are reserved just as first two data clusters and so are not accounted here
 
             u32 cluster = table[entry_no] & FAT32_CLUSTER_28BIT_MASK;
-            if (cluster == CLUSTER_UNUSED) {    // free sector found
+            if (cluster == CLUSTER_UNUSED) {    // free cluster found
                 // alloc directory end cluster in fat table
-                table[entry_no] = CLUSTER_END_OF_DIRECTORY;
+                table[entry_no] = CLUSTER_END_OF_CHAIN;
                 write_fat_table_sector(sector, table, sizeof(table));
 
                 // return allocated cluster number

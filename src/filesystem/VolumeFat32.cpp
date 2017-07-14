@@ -257,7 +257,7 @@ void VolumeFat32::remove_dir_cluster_if_empty(const SimpleDentryFat32& parent_di
 
     // removing first cluster? update head
     if (cluster == parent_dir.data_cluster) {
-        u32 directory_first_cluster = (next_cluster == Fat32Table::CLUSTER_END_OF_DIRECTORY) ? Fat32Table::CLUSTER_UNUSED : next_cluster;
+        u32 directory_first_cluster = fat_table.is_allocated_cluster(next_cluster) ? next_cluster : Fat32Table::CLUSTER_UNUSED;
 
         // update head
         fat_data.set_entry_data_cluster(parent_dir, directory_first_cluster);
