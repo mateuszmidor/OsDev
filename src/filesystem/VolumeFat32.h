@@ -75,21 +75,20 @@ DELETE ENTRY (FILE OR DIR)
     read parent_dir entry for provided path, if not exists -> return
     read entry itself for provided path, if not exists -> return
 
-    if entry is FILE:
-        free entry.data                                 // fat_table.free_cluster_chain(entry.data)         # entry.free_data()
-
     if entry is DIR and entry is not empty:
         return
 
-    if entry is the last one in parent_dir:             // fat_data.is_last_entry_in_dir(parent_dir, entry) # parent_dir.is_last_entry(entry)
-        mark entry as NO_MORE                           // fat_data.mark_as_no_more(parent_dir, entry)      # parent_dir.mark_as_no_more(entry)
-    else
-        mark entry as UNUSED                            // fat_data.mark_as_unused(parent_dir, entry)       # parent_dir.mark_as_unused(entry)
-    if cluster where entry was is now empty:            // fat_data.is_directory_cluster_empty(entry.cluster)
-        detach cluster from parent_dir                  // parent_dir.data = detach_cluster(parent_dir.data, entry.cluster), fat_data.write(parent_dir)
+    if entry is FILE:
+        free entry.data                                 // fat_table.free_cluster_chain(entry.data)
 
-cluster detach_cluster(first_cluster, cluster)
-    ...
+    if entry is the last one in parent_dir:             // no_more_entires_after(parent_dir, entry)
+        mark entry as NO_MORE                           // fat_data.mark_as_no_more(parent_dir, entry)
+    else
+        mark entry as UNUSED                            // fat_data.mark_as_unused(parent_dir, entry)
+
+    if cluster where entry was is now empty:            // fat_data.is_directory_cluster_empty(entry.cluster)
+        detach cluster from parent_dir                  // detach_directory_cluster(parent_dir, entry.cluster)
+
 */
 
 
@@ -125,13 +124,15 @@ public:
 
 private:
     SimpleDentryFat32 get_root_dentry() const;
-    bool get_entry_for_name(const SimpleDentryFat32& dentry, const kstd::string& filename, SimpleDentryFat32& out) const;
-
-    // delete_file stuff
-    void remove_dir_cluster_if_empty(const SimpleDentryFat32& dentry, u32 cluster) const;
-    bool alloc_entry_in_directory(const SimpleDentryFat32& dir, SimpleDentryFat32 &e) const;
+    bool get_entry_for_name(const SimpleDentryFat32& parent_dir, const kstd::string& filename, SimpleDentryFat32& out) const;
+    bool alloc_first_dir_cluster_and_alloc_entry(SimpleDentryFat32& parent_dir, SimpleDentryFat32& e) const;
+    bool alloc_last_dir_cluster_and_alloc_entry(SimpleDentryFat32& parent_dir, SimpleDentryFat32& e) const;
+    bool try_alloc_entry_in_free_dir_slot(const SimpleDentryFat32& parent_dir, SimpleDentryFat32 &e) const;
+    u32 attach_new_directory_cluster(SimpleDentryFat32& parent_dir) const;
+    void detach_directory_cluster(const SimpleDentryFat32& dentry, u32 cluster) const;
+    bool alloc_entry_in_directory(SimpleDentryFat32& parent_dir, SimpleDentryFat32 &e) const;
     bool is_directory_empty(const SimpleDentryFat32& e) const;
-
+    bool is_no_more_entires_after(const SimpleDentryFat32& parent_dir, const SimpleDentryFat32& entry) const;
 
     drivers::AtaDevice& hdd;
     VolumeBootRecordFat32 vbr;

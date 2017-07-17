@@ -14,18 +14,18 @@ Fat32Table::Fat32Table(drivers::AtaDevice& hdd) :
 }
 
 void Fat32Table::setup(u32 fat_start_in_sectors, u16 sector_size, u32 fat_size_in_sectors) {
-    FAT_START_IN_SECTORS = fat_start_in_sectors;
-    FAT_ENTRIES_PER_SECTOR = sector_size / sizeof(FatTableEntry);
-    FAT_SIZE_IN_SECTORS = fat_size_in_sectors;
+    this->fat_start_in_sectors = fat_start_in_sectors;
+    this->fat_entries_per_sector = sector_size / sizeof(FatTableEntry);
+    this->fat_size_in_sectors = fat_size_in_sectors;
 }
 
 u32 Fat32Table::get_used_space_in_clusters() const {
-    FatTableEntry table[FAT_ENTRIES_PER_SECTOR];
+    FatTableEntry table[fat_entries_per_sector];
     u32 used_clusters = 0;
 
-    for (u32 sector = 0; sector < FAT_SIZE_IN_SECTORS; sector++) {
+    for (u32 sector = 0; sector < fat_size_in_sectors; sector++) {
         read_fat_table_sector(sector, table, sizeof(table));
-        for (u32 entry_no = 0; entry_no < FAT_ENTRIES_PER_SECTOR; entry_no++) {
+        for (u32 entry_no = 0; entry_no < fat_entries_per_sector; entry_no++) {
             if (sector == 0 && entry_no < CLUSTER_FIRST_VALID)
                 continue; // first two entries in FAT are reserved just as first two data clusters and so are not accounted here
 
@@ -39,11 +39,11 @@ u32 Fat32Table::get_used_space_in_clusters() const {
 }
 
 u32 Fat32Table::get_next_cluster(u32 cluster) const {
-    FatTableEntry fat_buffer[FAT_ENTRIES_PER_SECTOR];
+    FatTableEntry fat_buffer[fat_entries_per_sector];
 
-    u32 fat_sector_for_current_cluster = cluster / FAT_ENTRIES_PER_SECTOR;
+    u32 fat_sector_for_current_cluster = cluster / fat_entries_per_sector;
     read_fat_table_sector(fat_sector_for_current_cluster, fat_buffer, sizeof(fat_buffer));
-    u32 fat_offset_in_sector_for_current_cluster = cluster % FAT_ENTRIES_PER_SECTOR;
+    u32 fat_offset_in_sector_for_current_cluster = cluster % fat_entries_per_sector;
 
     return fat_buffer[fat_offset_in_sector_for_current_cluster] & FAT32_CLUSTER_28BIT_MASK;
 }
@@ -55,7 +55,7 @@ u32 Fat32Table::get_next_cluster(u32 cluster) const {
  * @return  Previous cluster if exists, CLUSTER_UNUSED otherwise
  */
 u32 Fat32Table::get_prev_cluster(u32 first_cluster, u32 cluster) const {
-    u32 prev_cluster;
+    u32 prev_cluster = CLUSTER_END_OF_CHAIN;
     u32 curr_cluster = first_cluster;
     while (curr_cluster != cluster)  {
         if (!is_allocated_cluster(curr_cluster))
@@ -68,16 +68,29 @@ u32 Fat32Table::get_prev_cluster(u32 first_cluster, u32 cluster) const {
 }
 
 /**
+ * @brief   Get last cluster no in chain
+ */
+u32 Fat32Table::get_last_cluster(u32 cluster) const {
+    u32 prev_cluster = CLUSTER_END_OF_CHAIN;
+    u32 curr_cluster = cluster;
+    while (is_allocated_cluster(curr_cluster))  {
+        prev_cluster = curr_cluster;
+        curr_cluster = get_next_cluster(curr_cluster);
+    }
+    return prev_cluster;
+}
+
+/**
  * @brief   Set cluster.next
  */
 bool Fat32Table::set_next_cluster(u32 cluster, u32 next_cluster) const {
-    FatTableEntry fat_buffer[FAT_ENTRIES_PER_SECTOR];
+    FatTableEntry fat_buffer[fat_entries_per_sector];
 
-    u32 fat_sector_for_cluster = cluster / FAT_ENTRIES_PER_SECTOR;
+    u32 fat_sector_for_cluster = cluster / fat_entries_per_sector;
     if (!read_fat_table_sector(fat_sector_for_cluster, fat_buffer, sizeof(fat_buffer)))
         return false;
 
-    u32 fat_offset_in_sector_for_current_cluster = cluster % FAT_ENTRIES_PER_SECTOR;
+    u32 fat_offset_in_sector_for_current_cluster = cluster % fat_entries_per_sector;
 
     fat_buffer[fat_offset_in_sector_for_current_cluster] = next_cluster;
     if (!write_fat_table_sector(fat_sector_for_cluster, fat_buffer, sizeof(fat_buffer)))
@@ -91,19 +104,19 @@ bool Fat32Table::is_allocated_cluster(u32 cluster) const {
 }
 
 bool Fat32Table::read_fat_table_sector(u32 sector, void* data, u32 size) const {
-    return hdd.read28(FAT_START_IN_SECTORS + sector, data, size);
+    return hdd.read28(fat_start_in_sectors + sector, data, size);
 }
 
 bool Fat32Table::write_fat_table_sector(u32 sector, void const* data, u32 size) const {
-    return hdd.write28(FAT_START_IN_SECTORS + sector, data, size);
+    return hdd.write28(fat_start_in_sectors + sector, data, size);
 }
 
 u32 Fat32Table::alloc_cluster_for_directory() const {
-    FatTableEntry table[FAT_ENTRIES_PER_SECTOR];
+    FatTableEntry table[fat_entries_per_sector];
 
-    for (u32 sector = 0; sector < FAT_SIZE_IN_SECTORS; sector++) {
+    for (u32 sector = 0; sector < fat_size_in_sectors; sector++) {
         read_fat_table_sector(sector, table, sizeof(table));
-        for (u32 entry_no = 0; entry_no < FAT_ENTRIES_PER_SECTOR; entry_no++) {
+        for (u32 entry_no = 0; entry_no < fat_entries_per_sector; entry_no++) {
             if (sector == 0 && entry_no < CLUSTER_FIRST_VALID)
                 continue; // first two entries in FAT are reserved just as first two data clusters and so are not accounted here
 
@@ -114,12 +127,12 @@ u32 Fat32Table::alloc_cluster_for_directory() const {
                 write_fat_table_sector(sector, table, sizeof(table));
 
                 // return allocated cluster number
-                return sector * FAT_ENTRIES_PER_SECTOR + entry_no;
+                return sector * fat_entries_per_sector + entry_no;
             }
         }
     }
 
-    return CLUSTER_UNUSED; // no free cluster found
+    return CLUSTER_END_OF_CHAIN; // no free cluster found
 }
 
 /**
@@ -127,11 +140,11 @@ u32 Fat32Table::alloc_cluster_for_directory() const {
  * @param   cluster First cluster in the list to be freed
  */
 void Fat32Table::free_cluster_chain(u32 cluster) const {
-    FatTableEntry fat_buffer[FAT_ENTRIES_PER_SECTOR];
+    FatTableEntry fat_buffer[fat_entries_per_sector];
     while (is_allocated_cluster(cluster)) {
-        u32 fat_sector = cluster / FAT_ENTRIES_PER_SECTOR;
+        u32 fat_sector = cluster / fat_entries_per_sector;
         read_fat_table_sector(fat_sector, fat_buffer, sizeof(fat_buffer));
-        u32 fat_offset = cluster % FAT_ENTRIES_PER_SECTOR;
+        u32 fat_offset = cluster % fat_entries_per_sector;
 
         u32 next_cluster = fat_buffer[fat_offset] & FAT32_CLUSTER_28BIT_MASK;
         fat_buffer[fat_offset] = CLUSTER_UNUSED; // free cluster in fat table
@@ -139,6 +152,31 @@ void Fat32Table::free_cluster_chain(u32 cluster) const {
         write_fat_table_sector(fat_sector, fat_buffer, sizeof(fat_buffer));
         cluster = next_cluster;
     }
+}
+
+/**
+ * @brief   Detach cluster from cluster chain; this works the same as deleting element from a single linked list
+ * @param   first_cluster List head
+ * @param   cluster List element to be deleted
+ * @return  New list head or CLUSTER_UNUSED if cluster was the only list element
+ */
+u32 Fat32Table::detach_cluster(u32 first_cluster, u32 cluster) const {
+    // first, remember next cluster in the chain
+    u32 next_cluster = get_next_cluster(cluster);
+
+    // removing first cluster? update head
+    if (cluster == first_cluster) {
+        first_cluster = is_allocated_cluster(next_cluster) ? next_cluster : Fat32Table::CLUSTER_UNUSED;
+    }
+    // removing not first cluster? update previous cluster to point to the next cluster effectively removing current link
+    else {
+        // find one cluster before "cluster" and link it with next_cluster, detaching cluster
+        u32 prev_cluster = get_prev_cluster(first_cluster, cluster);
+        set_next_cluster(prev_cluster, next_cluster);
+    }
+
+    set_next_cluster(cluster, Fat32Table::CLUSTER_UNUSED);    // this cluster is free now
+    return first_cluster;
 }
 
 } /* namespace filesystem */

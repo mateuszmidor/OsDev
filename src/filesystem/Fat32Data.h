@@ -36,6 +36,12 @@ struct SimpleDentryFat32 {
         entry_sector(entry_sector),
         entry_index(entry_index_no) {}
 
+    void set_first_in_cluster(u32 cluster) {
+        entry_cluster = cluster;
+        entry_sector = 0;
+        entry_index = 0;
+    }
+
     // useful data
     kstd::string    name;
     u32             size;
@@ -64,14 +70,13 @@ public:
     bool write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
     void clear_data_cluster(u32 cluster) const;
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
-    u8 get_free_entry_in_cluster(u32 cluster, SimpleDentryFat32& out) const;
-    void write_entry(const SimpleDentryFat32 &e) const;
-    void write_entry_nomore(const SimpleDentryFat32 &e) const;
-    void write_entry_nomore_after(const SimpleDentryFat32 &e) const;
-    void release_entry(const SimpleDentryFat32& e) const;
+    u8 get_free_entry_in_dir_cluster(u32 cluster, SimpleDentryFat32& out) const;
+    void write_entry(const SimpleDentryFat32& e) const;
+    void mark_entry_as_nomore(const SimpleDentryFat32& e) const;
+    void mark_next_entry_as_nomore(const SimpleDentryFat32& e) const;
+    void mark_entry_as_unused(const SimpleDentryFat32& e) const;
     void set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_cluster) const;
     bool is_directory_cluster_empty(u32 cluster) const;
-    bool is_last_entry_in_cluster(const SimpleDentryFat32& e) const;
     SimpleDentryFat32 make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const;
     DirectoryEntryFat32 make_directory_entry_fat32(const SimpleDentryFat32& e) const;
 
@@ -81,9 +86,10 @@ public:
 
 private:
     drivers::AtaDevice& hdd;
-    u32 DATA_START_IN_SECTORS   = 0;
-    u16 BYTES_PER_SECTOR        = 0;
-    u8 SECTORS_PER_CLUSTER      = 0;
+    u32 data_start_in_sectors   = 0;
+    u16 bytes_per_sector        = 0;
+    u8 sectors_per_cluster      = 0;
+    static constexpr u8 FAT32ENTRIES_PER_SECTOR = 16; // BYTES_PER_SECTOR / sizeof(DirectoryEntryFat32);
 };
 
 } /* namespace filesystem */

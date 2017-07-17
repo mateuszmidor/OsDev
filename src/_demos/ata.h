@@ -143,10 +143,24 @@ void print_hdd_info(AtaDevice& hdd) {
         v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
         v.delete_entry("/LEVEL1/LEVEL2");
         v.delete_entry("/LEVEL1/LEVEL1.TXT");
+        v.delete_entry("/LEVEL1");
         v.delete_entry("/TMP/TMP1.TXT");
         v.delete_entry("/TMP/TMP2.TXT");
         v.delete_entry("/TMP");
         print_volume_info(v);
+
+
+
+        // create then delete lots of files
+        const u16 NUM_ENTRIES = 256;
+        for (u16 i = 1; i <= NUM_ENTRIES; i++) {
+              string name = string("/F_") +kstd::to_str(i);
+              v.create_entry(name, true);
+        }
+        for (u16 i = 1; i <= NUM_ENTRIES; i++) {
+              string name = string("/F_") +kstd::to_str(i);
+              v.delete_entry(name);
+        }
 
 
         for (int i = 1; i <= 3; i++) {

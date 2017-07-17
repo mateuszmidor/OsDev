@@ -20,10 +20,12 @@ public:
     u32 get_used_space_in_clusters() const;
     u32 get_next_cluster(u32 cluster) const;
     u32 get_prev_cluster(u32 first_cluster, u32 cluster) const;
+    u32 get_last_cluster(u32 cluster) const;
     bool set_next_cluster(u32 cluster, u32 next_cluster) const;
     bool is_allocated_cluster(u32 cluster) const;
     u32 alloc_cluster_for_directory() const;
     void free_cluster_chain(u32 e_cluster) const;
+    u32 detach_cluster(u32 first_cluster, u32 cluster) const;
 
     static const u32 CLUSTER_UNUSED             = 0;            // In Fat32 table, unused clusters are marked as 0
     static const u32 CLUSTER_FIRST_VALID        = 2;            // Clusters 0 and 1 are reserved, 2 usually is the cluster of root dir
@@ -36,9 +38,9 @@ private:
     using FatTableEntry = u32;  // FatEntry represents cluster index which is 32 bit (28 actually used)
 
     drivers::AtaDevice& hdd;
-    u16 FAT_ENTRIES_PER_SECTOR  = 0;
-    u32 FAT_START_IN_SECTORS    = 0;
-    u32 FAT_SIZE_IN_SECTORS     = 0;
+    u16 fat_entries_per_sector  = 0;
+    u32 fat_start_in_sectors    = 0;
+    u32 fat_size_in_sectors     = 0;
 
 
     bool read_fat_table_sector(u32 sector, void* data, u32 size) const;
