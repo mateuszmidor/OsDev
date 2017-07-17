@@ -36,11 +36,6 @@ struct SimpleDentryFat32 {
         entry_sector(entry_sector),
         entry_index(entry_index_no) {}
 
-    void set_first_in_cluster(u32 cluster) {
-        entry_cluster = cluster;
-        entry_sector = 0;
-        entry_index = 0;
-    }
 
     // useful data
     kstd::string    name;

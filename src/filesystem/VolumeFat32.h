@@ -89,6 +89,15 @@ DELETE ENTRY (FILE OR DIR)
     if cluster where entry was is now empty:            // fat_data.is_directory_cluster_empty(entry.cluster)
         detach cluster from parent_dir                  // detach_directory_cluster(parent_dir, entry.cluster)
 
+
+WRITE FILE ENTRY
+    read entry for provided path, if not exists -> return
+    free file data
+    allocate new cluster for data
+
+
+
+u32 read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const;
 */
 
 
@@ -118,6 +127,7 @@ public:
 
     bool get_entry(const kstd::string& unix_path, SimpleDentryFat32& e) const;
     u32 read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const;
+    u32 write_file_entry(SimpleDentryFat32& file, void const * data, u32 count) const;
     EnumerateResult enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
     bool create_entry(const kstd::string& unix_path, bool directory) const;
     bool delete_entry(const kstd::string& unix_path) const;

@@ -147,28 +147,38 @@ void print_hdd_info(AtaDevice& hdd) {
         v.delete_entry("/TMP/TMP1.TXT");
         v.delete_entry("/TMP/TMP2.TXT");
         v.delete_entry("/TMP");
+        //v.delete_entry("/TO_BE_~1");
         print_volume_info(v);
 
 
 
         // create then delete lots of files
-        const u16 NUM_ENTRIES = 256;
-        for (u16 i = 1; i <= NUM_ENTRIES; i++) {
-              string name = string("/F_") +kstd::to_str(i);
-              v.create_entry(name, true);
-        }
-        for (u16 i = 1; i <= NUM_ENTRIES; i++) {
-              string name = string("/F_") +kstd::to_str(i);
-              v.delete_entry(name);
-        }
+//        const u16 NUM_ENTRIES = 256;
+//        for (u16 i = 1; i <= NUM_ENTRIES; i++) {
+//              string name = string("/F_") +kstd::to_str(i);
+//              v.create_entry(name, true);
+//        }
+//        for (u16 i = 1; i <= NUM_ENTRIES; i++) {
+//              string name = string("/F_") +kstd::to_str(i);
+//              v.delete_entry(name);
+//        }
+//
+//
+//        for (int i = 1; i <= 3; i++) {
+//            string dir = "/DIR_" + kstd::to_str(i);
+//            v.create_entry(dir, true);
+//            for (int j = 1; j <= 5; j++)
+//                v.create_entry(dir + "/FILE_" + kstd::to_str(j), false);
+//        }
 
+        v.create_entry("/ODA.TXT", false);
+        SimpleDentryFat32 oda;
+        v.get_entry("/ODA.TXT", oda);
+        string ODA_TEXT;// = "Litwo, ojczyzno moja, Ty jestes jak zdrowie!";
+        for (u32 i = 0; i < 4096; i++)
+            ODA_TEXT += kstd::to_str(i) + " ";
 
-        for (int i = 1; i <= 3; i++) {
-            string dir = "/DIR_" + kstd::to_str(i);
-            v.create_entry(dir, true);
-            for (int j = 1; j <= 5; j++)
-                v.create_entry(dir + "/FILE_" + kstd::to_str(j), false);
-        }
+        v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
 
         printer.clearscreen();
         print_volume_info(v);

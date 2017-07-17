@@ -119,6 +119,43 @@ u32 VolumeFat32::read_file_entry(const SimpleDentryFat32& file, void* data, u32 
     return total_bytes_read;
 }
 
+u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32 count) const {
+    if (file.is_directory)
+        return 0;
+
+    const u16 SECTOR_SIZE = vbr.bytes_per_sector;
+    u32 total_bytes_written = 0;
+    u32 remaining_size = count;
+
+    u32 cluster = fat_table.alloc_cluster_for_file();
+    if (cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
+        return 0;
+
+    fat_table.free_cluster_chain(file.data_cluster);
+    file.data_cluster = cluster;
+    u8 const* src = (u8 const*)data;
+
+    while (fat_table.is_allocated_cluster(cluster) &&  remaining_size > 0) {
+        for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) {
+            u16 written_count = remaining_size >= SECTOR_SIZE ? SECTOR_SIZE : remaining_size;
+            fat_data.write_data_sector(cluster, sector_offset, src, written_count);
+            remaining_size -= written_count;
+            total_bytes_written += written_count;
+            src += written_count;
+            if (remaining_size == 0)
+                break;
+        }
+
+        u32 prev_cluster = cluster;
+        cluster = fat_table.alloc_cluster_for_file();
+        fat_table.set_next_cluster(prev_cluster, cluster);
+    }
+
+    file.size = total_bytes_written;
+    fat_data.write_entry(file);
+    return total_bytes_written;
+}
+
 /**
  * @brief   Enumerate directory contents
  * @param   dentry Directory entry for which we want to enumerate elements

@@ -135,6 +135,30 @@ u32 Fat32Table::alloc_cluster_for_directory() const {
     return CLUSTER_END_OF_CHAIN; // no free cluster found
 }
 
+u32 Fat32Table::alloc_cluster_for_file() const {
+    FatTableEntry table[fat_entries_per_sector];
+
+    for (u32 sector = 0; sector < fat_size_in_sectors; sector++) {
+        read_fat_table_sector(sector, table, sizeof(table));
+        for (u32 entry_no = 0; entry_no < fat_entries_per_sector; entry_no++) {
+            if (sector == 0 && entry_no < CLUSTER_FIRST_VALID)
+                continue; // first two entries in FAT are reserved just as first two data clusters and so are not accounted here
+
+            u32 cluster = table[entry_no] & FAT32_CLUSTER_28BIT_MASK;
+            if (cluster == CLUSTER_UNUSED) {    // free cluster found
+                // alloc directory end cluster in fat table
+                table[entry_no] = CLUSTER_END_OF_CHAIN;
+                write_fat_table_sector(sector, table, sizeof(table));
+
+                // return allocated cluster number
+                return sector * fat_entries_per_sector + entry_no;
+            }
+        }
+    }
+
+    return CLUSTER_END_OF_CHAIN; // no free cluster found
+}
+
 /**
  * FAT table is a linked list of subsequent clusters in use. Set the pointers to 0 so the clusters are free to be used again
  * @param   cluster First cluster in the list to be freed

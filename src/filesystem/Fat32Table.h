@@ -24,6 +24,7 @@ public:
     bool set_next_cluster(u32 cluster, u32 next_cluster) const;
     bool is_allocated_cluster(u32 cluster) const;
     u32 alloc_cluster_for_directory() const;
+    u32 alloc_cluster_for_file() const;
     void free_cluster_chain(u32 e_cluster) const;
     u32 detach_cluster(u32 first_cluster, u32 cluster) const;
 
