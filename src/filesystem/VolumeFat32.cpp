@@ -127,7 +127,7 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
     u32 total_bytes_written = 0;
     u32 remaining_size = count;
 
-    u32 cluster = fat_table.alloc_cluster_for_file();
+    u32 cluster = fat_table.alloc_cluster();
     if (cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
         return 0;
 
@@ -135,7 +135,7 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
     file.data_cluster = cluster;
     u8 const* src = (u8 const*)data;
 
-    while (fat_table.is_allocated_cluster(cluster) &&  remaining_size > 0) {
+    while (fat_table.is_allocated_cluster(cluster)) {
         for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) {
             u16 written_count = remaining_size >= SECTOR_SIZE ? SECTOR_SIZE : remaining_size;
             fat_data.write_data_sector(cluster, sector_offset, src, written_count);
@@ -146,8 +146,11 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
                 break;
         }
 
+        if (remaining_size == 0)
+            break;
+
         u32 prev_cluster = cluster;
-        cluster = fat_table.alloc_cluster_for_file();
+        cluster = fat_table.alloc_cluster();
         fat_table.set_next_cluster(prev_cluster, cluster);
     }
 
@@ -250,8 +253,9 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
     else
         fat_data.mark_entry_as_unused(e);
 
-    // if cluster where our entry was allocated contains no more files - remove it from the chain
-    if (fat_data.is_directory_cluster_empty(e.entry_cluster))
+    // if cluster where our entry was allocated contains no more files - remove it from the chain.
+    // but dont remove root first cluster!
+    if (e.entry_cluster != vbr.root_cluster && fat_data.is_directory_cluster_empty(e.entry_cluster))
         detach_directory_cluster(parent_dir, e.entry_cluster);
 
     return true;
@@ -374,7 +378,7 @@ u32 VolumeFat32::attach_new_directory_cluster(SimpleDentryFat32& dir) const {
     printer.format("attach_new_directory_cluster\n");
 
     // try alloc new cluster
-    u32 new_cluster = fat_table.alloc_cluster_for_directory();
+    u32 new_cluster = fat_table.alloc_cluster();
     if (new_cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
         return Fat32Table::CLUSTER_END_OF_CHAIN; // new cluster allocation failed
 

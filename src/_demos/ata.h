@@ -147,7 +147,7 @@ void print_hdd_info(AtaDevice& hdd) {
         v.delete_entry("/TMP/TMP1.TXT");
         v.delete_entry("/TMP/TMP2.TXT");
         v.delete_entry("/TMP");
-        //v.delete_entry("/TO_BE_~1");
+        v.delete_entry("/TO_BE_~1");
         print_volume_info(v);
 
 
@@ -174,12 +174,12 @@ void print_hdd_info(AtaDevice& hdd) {
         v.create_entry("/ODA.TXT", false);
         SimpleDentryFat32 oda;
         v.get_entry("/ODA.TXT", oda);
-        string ODA_TEXT;// = "Litwo, ojczyzno moja, Ty jestes jak zdrowie!";
-        for (u32 i = 0; i < 4096; i++)
-            ODA_TEXT += kstd::to_str(i) + " ";
+        string ODA_TEXT;
+        for (u32 i = 0; i < 1024; i++)
+            ODA_TEXT += kstd::to_str(1000 + i) + " ";
 
         v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
-
+//
         printer.clearscreen();
         print_volume_info(v);
         print_tree(v, "/");
