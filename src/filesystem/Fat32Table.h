@@ -15,7 +15,7 @@ namespace filesystem {
 class Fat32Table {
 public:
     Fat32Table(drivers::AtaDevice& hdd);
-    void setup(u16 sector_size, u32 fat_start_in_sectors, u32 fat_size_in_sectors);
+    void setup(u32 fat_start_in_sectors, u16 sector_size, u32 fat_size_in_sectors);
 
     u32 get_used_space_in_clusters() const;
     u32 get_next_cluster(u32 cluster) const;

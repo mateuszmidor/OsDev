@@ -31,7 +31,7 @@ VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_o
     hdd.read28(partition_offset_in_sectors, &vbr, sizeof(vbr));
 
     fat_start = partition_offset_in_sectors + vbr.reserved_sectors;
-    fat_table.setup(vbr.bytes_per_sector, fat_start, vbr.fat_table_size_in_sectors);
+    fat_table.setup(fat_start, vbr.bytes_per_sector, vbr.fat_table_size_in_sectors);
 
     data_start = fat_start + vbr.fat_table_size_in_sectors * vbr.fat_table_copies;
     fat_data.setup(data_start, vbr.bytes_per_sector, vbr.sectors_per_cluster);

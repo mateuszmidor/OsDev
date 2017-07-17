@@ -13,9 +13,9 @@ Fat32Table::Fat32Table(drivers::AtaDevice& hdd) :
     hdd(hdd) {
 }
 
-void Fat32Table::setup(u16 sector_size, u32 fat_start_in_sectors, u32 fat_size_in_sectors) {
-    FAT_ENTRIES_PER_SECTOR = sector_size / sizeof(FatTableEntry);
+void Fat32Table::setup(u32 fat_start_in_sectors, u16 sector_size, u32 fat_size_in_sectors) {
     FAT_START_IN_SECTORS = fat_start_in_sectors;
+    FAT_ENTRIES_PER_SECTOR = sector_size / sizeof(FatTableEntry);
     FAT_SIZE_IN_SECTORS = fat_size_in_sectors;
 }
 
