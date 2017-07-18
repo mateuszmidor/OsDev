@@ -35,55 +35,7 @@ public:
 
 
     void format(s64 num) {
-        u8 base = 10;
-        char str[12];
-
-            u8 i = 0;
-            bool isNegative = false;
-
-            /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-            if (num == 0)
-            {
-                format("0");
-                return ;
-            }
-
-            // In standard itoa(), negative numbers are handled only with
-            // base 10. Otherwise numbers are considered unsigned.
-            if (num < 0 && base == 10)
-            {
-                isNegative = true;
-                num = -num;
-            }
-
-            // Process individual digits
-            while (num != 0)
-            {
-                int rem = num % base;
-                str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-                num = num/base;
-            }
-
-            // If number is negative, append '-'
-            if (isNegative)
-                str[i++] = '-';
-
-            str[i] = '\0'; // Append string terminator
-
-            // Reverse the string
-            u8 start = 0;
-            u8 end = i -1;
-            while (start < end)
-            {
-
-                auto tmp = *(str+start);
-                *(str+start) = *(str+end);
-                *(str+end) = tmp;
-                start++;
-                end--;
-            }
-
-        format(str);
+        format(kstd::to_str(num));
     }
 
     void format(const kstd::string& fmt) {
