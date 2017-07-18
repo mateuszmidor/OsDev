@@ -70,16 +70,22 @@ void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
 }
 
 void ScrollableScreenPrinter::putc(const char c) {
-    if (c == '\n') {
-        lines.push_back("");
-        putc_into_vga('\n');
-    }
-    else {
-        lines.back() += c;
-        putc_into_vga(c);
-    }
 
-    if (lines.size() - top_line > vga_height) // eg 30 - 0 > 30
+    // put in text buffer
+    if (c == '\n')
+        lines.push_back("");
+    else
+        lines.back() += c;
+
+    // put on screen
+    putc_into_vga(c);
+
+    // enforce text buffer word wrap
+    if (lines.back().length() == right - left +1)
+        lines.push_back("");
+
+    // scroll if writing below bottom of the screen
+    if (lines.size() - top_line > vga_height)
         scroll_to_end();
 }
 
