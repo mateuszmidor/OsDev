@@ -13,6 +13,8 @@
 class KernelLog {
 public:
     static KernelLog& instance();
+    ScrollableScreenPrinter printer;
+
     /**
      * @name    format
      * @example format("CPU: %", cpu_vendor_cstr);
@@ -25,7 +27,7 @@ public:
 private:
     KernelLog();
     static KernelLog _instance;
-    BoundedAreaScreenPrinter printer;
+
 };
 
 #endif /* SRC_KERNELLOG_H_ */

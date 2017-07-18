@@ -95,7 +95,7 @@ void print_tree(VolumeFat32& v, string path) {
                  klog.format("%% - %B\n", INDENTS[level], e.name, e.size);
              else
              {
-                 const u32 SIZE = 33;
+                 const u32 SIZE = 2049;
                  char buff[SIZE];
                  u32 count = v.read_file_entry(e, buff, SIZE-1);
                  buff[count-1] = '\0';
@@ -132,23 +132,23 @@ void print_hdd_info(AtaDevice& hdd) {
     //auto& volumes = ms.get_volumes();
     auto &v = ms.get_volumes()[1];
     //for (auto& v : volumes) {
-        print_volume_info(v);
-        for (u16 i = 1; i <= 16; i++) {
-              string name = string("/FILE_") +kstd::to_str(i);
-              v.delete_entry(name);
-        }
+//        print_volume_info(v);
+//        for (u16 i = 1; i <= 16; i++) {
+//              string name = string("/FILE_") +kstd::to_str(i);
+//              v.delete_entry(name);
+//        }
 
-        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
-        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
-        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
-        v.delete_entry("/LEVEL1/LEVEL2");
-        v.delete_entry("/LEVEL1/LEVEL1.TXT");
-        v.delete_entry("/LEVEL1");
-        v.delete_entry("/TMP/TMP1.TXT");
-        v.delete_entry("/TMP/TMP2.TXT");
-        v.delete_entry("/TMP");
-        v.delete_entry("/TO_BE_~1");
-        print_volume_info(v);
+//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
+//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
+//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
+//        v.delete_entry("/LEVEL1/LEVEL2");
+//        v.delete_entry("/LEVEL1/LEVEL1.TXT");
+//        v.delete_entry("/LEVEL1");
+//        v.delete_entry("/TMP/TMP1.TXT");
+//        v.delete_entry("/TMP/TMP2.TXT");
+//        v.delete_entry("/TMP");
+//        v.delete_entry("/TO_BE_~1");
+//        print_volume_info(v);
 
 
 
@@ -171,14 +171,14 @@ void print_hdd_info(AtaDevice& hdd) {
 //                v.create_entry(dir + "/FILE_" + kstd::to_str(j), false);
 //        }
 
-        v.create_entry("/ODA.TXT", false);
-        SimpleDentryFat32 oda;
-        v.get_entry("/ODA.TXT", oda);
-        string ODA_TEXT;
-        for (u32 i = 0; i < 1024; i++)
-            ODA_TEXT += kstd::to_str(1000 + i) + " ";
-
-        v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
+//        v.create_entry("/ODA.TXT", false);
+//        SimpleDentryFat32 oda;
+//        v.get_entry("/ODA.TXT", oda);
+//        string ODA_TEXT;
+//        for (u32 i = 0; i < 1024; i++)
+//            ODA_TEXT += kstd::to_str(1000 + i) + " ";
+//
+//        v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
 //
         print_volume_info(v);
         print_tree(v, "/");

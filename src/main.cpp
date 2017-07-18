@@ -111,8 +111,15 @@ void on_mouse_down_graphics(u8 button) {
 }
 
 void on_key_press(s8 key) {
-    char s[2] = {key, '\0'};
-    printer.format("%", s);
+    if (key == '-')
+        klog.printer.scroll_up(1);
+    else
+    if (key == '+')
+        klog.printer.scroll_down(1);
+    else {
+        char s[2] = {key, '\0'};
+        printer.format("%", s);
+    }
 }
 
 CpuState* on_timer_tick(CpuState* cpu_state) {
@@ -206,12 +213,12 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     cpu_info.print_to_klog();
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
-//    Multiboot2 mb2(multiboot2_info_ptr);
-//    mb2.print(printer);
+    Multiboot2 mb2(multiboot2_info_ptr);
+    mb2.print_to_klog();
 
     // print PCI devics
-//    PCIController pcic;
-//    pcic.select_drivers();
+    PCIController pcic;
+    pcic.select_drivers();
 
     // inform setup done
     klog.format("KERNEL SETUP DONE.\n");

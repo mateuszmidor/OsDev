@@ -25,6 +25,7 @@ struct VgaCharacter {
 class BoundedAreaScreenPrinter {
 public:
     BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom, u16 vga_width, u16 vga_height);
+    virtual ~BoundedAreaScreenPrinter() {}
 
     void format(s64 num) {
         format(kstd::to_str(num));
@@ -64,10 +65,29 @@ protected:
     drivers::EgaColor foreground = drivers::EgaColor::White;
     drivers::EgaColor background = drivers::EgaColor::Brown;
 
-    void newline();
+    virtual void putc(const char c);
+    virtual void newline();
     void tab();
     void backspace();
-    void putc(const char c);
+};
+
+class ScrollableScreenPrinter : public BoundedAreaScreenPrinter {
+public:
+    ScrollableScreenPrinter(u16 vga_width, u16 vga_height);
+    virtual ~ScrollableScreenPrinter() {}
+
+    void scroll_up(u16 lines);
+    void scroll_down(u16 lines);
+
+protected:
+    void putc(const char c) override;
+    void newline() override;
+    void putc_into_vga(const char c);
+    void scroll_to_end();
+    void redraw();
+    void put_line(const kstd::string& line);
+    kstd::vector<kstd::string> lines;
+    u16 top_line    = 0;
 };
 
 class ScreenPrinter {

@@ -50,6 +50,103 @@ void BoundedAreaScreenPrinter::tab() {
 void BoundedAreaScreenPrinter::backspace() {
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+ScrollableScreenPrinter::ScrollableScreenPrinter(u16 vga_width, u16 vga_height) :
+        BoundedAreaScreenPrinter(0, 0, vga_width-1, vga_height-1, vga_width, vga_height) {
+    lines.push_back("");
+}
+
+void ScrollableScreenPrinter::scroll_up(u16 num_lines) {
+    const u16 FIRST_LINE = 0;
+    top_line = (top_line - num_lines <= FIRST_LINE) ? FIRST_LINE : top_line - num_lines;
+    redraw();
+}
+
+void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
+    const u16 LAST_LINE = lines.size() - 1;
+    top_line = (top_line + num_lines  >= LAST_LINE) ? LAST_LINE : top_line + num_lines;
+    redraw();
+}
+
+void ScrollableScreenPrinter::putc(const char c) {
+    if (c == '\n') {
+        lines.push_back("");
+        putc_into_vga('\n');
+    }
+    else {
+        lines.back() += c;
+        putc_into_vga(c);
+    }
+
+    if (lines.size() - top_line > vga_height) // eg 30 - 0 > 30
+        scroll_to_end();
+}
+
+void ScrollableScreenPrinter::putc_into_vga(const char c) {
+    if (c == '\n')
+        newline();
+    else if (c == '\t')
+        tab();
+    else if (c == '\x08')
+        backspace();
+    else {
+        u32 cursor_pos = cursor_y * vga_width + cursor_x;
+        vga[cursor_pos] = VgaCharacter { .character = c, .fg_color = foreground, .bg_color = background };
+
+        // advance cursor pos within destination area with horizontal and vertical wrapping
+        if (cursor_x == right) {
+            cursor_x = left;
+            if (cursor_y == bottom)
+                cursor_y = top;
+            else
+                cursor_y++;
+        } else
+            cursor_x++;
+    }
+}
+
+void ScrollableScreenPrinter::scroll_to_end() {
+    top_line = (lines.size() - vga_height <= 0) ? 0 : lines.size() - vga_height; // 31 - 30 ? 1
+    redraw();
+}
+
+void ScrollableScreenPrinter::redraw() {
+    cursor_x = left;
+    cursor_y = top;
+    u16 lines_to_draw = (lines.size() - top_line < bottom - top) ? lines.size() - top_line : bottom - top;
+
+    for (u16 i = 0; i < lines_to_draw; i++)
+        put_line(lines[top_line + i]);
+
+    for (u16 y = cursor_y+1; y <= bottom; y++)
+        for (u16 x = 0; x <= right; x++)
+            putc_into_vga(' ');
+}
+
+void ScrollableScreenPrinter::put_line(const kstd::string& line) {
+    // print line
+    cursor_x = left;
+    for (char c : line)
+        putc_into_vga(c);
+
+    // clear remaining part of the line
+    for (u16 x = cursor_x; x <= right; x++)
+        putc_into_vga(' ');
+}
+
+
+void ScrollableScreenPrinter::newline() {
+    cursor_x = left;
+    if (cursor_y == bottom)
+        cursor_y = top;
+    else
+        cursor_y++;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 
 ScreenPrinter ScreenPrinter::_instance;
 
