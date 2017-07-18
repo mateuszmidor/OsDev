@@ -96,11 +96,7 @@ void ScrollableScreenPrinter::putc_into_vga(const char c) {
 
         // advance cursor pos within destination area with horizontal and vertical wrapping
         if (cursor_x == right) {
-            cursor_x = left;
-            if (cursor_y == bottom)
-                cursor_y = top;
-            else
-                cursor_y++;
+            newline();
         } else
             cursor_x++;
     }
@@ -112,21 +108,21 @@ void ScrollableScreenPrinter::scroll_to_end() {
 }
 
 void ScrollableScreenPrinter::redraw() {
+    const u16 MAX_LINES = bottom - top + 1;  // +1 because bottom 1 - top 0 gives 1, and they actual
     cursor_x = left;
     cursor_y = top;
-    u16 lines_to_draw = (lines.size() - top_line < bottom - top) ? lines.size() - top_line : bottom - top;
+    u16 lines_to_draw = (lines.size() - top_line > MAX_LINES) ? MAX_LINES : lines.size() - top_line;
+    lines_to_draw = lines.size();
+    if (lines_to_draw > 30)
+        lines_to_draw = 30;
+
 
     for (u16 i = 0; i < lines_to_draw; i++)
         put_line(lines[top_line + i]);
-
-    for (u16 y = cursor_y+1; y <= bottom; y++)
-        for (u16 x = 0; x <= right; x++)
-            putc_into_vga(' ');
 }
 
 void ScrollableScreenPrinter::put_line(const kstd::string& line) {
     // print line
-    cursor_x = left;
     for (char c : line)
         putc_into_vga(c);
 
@@ -138,9 +134,7 @@ void ScrollableScreenPrinter::put_line(const kstd::string& line) {
 
 void ScrollableScreenPrinter::newline() {
     cursor_x = left;
-    if (cursor_y == bottom)
-        cursor_y = top;
-    else
+    if (cursor_y < bottom)
         cursor_y++;
 }
 
