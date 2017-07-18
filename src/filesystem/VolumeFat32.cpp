@@ -7,9 +7,9 @@
 
 
 #include <algorithm>
+#include "KernelLog.h"
 #include "VolumeFat32.h"
 #include "Fat32Utils.h"
-#include "ScreenPrinter.h"
 #include "kstd.h"
 
 using kstd::vector;
@@ -18,7 +18,7 @@ using kstd::rtrim;
 
 namespace filesystem {
 
-static ScreenPrinter& printer = ScreenPrinter::instance();
+static KernelLog& klog = KernelLog::instance();
 
 VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors) :
         hdd(hdd),
@@ -196,7 +196,7 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) co
     // check if parent_dir exists
     SimpleDentryFat32 parent_dir;
     if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
-        printer.format("Parent not exists: %\n", extract_file_directory(unix_path));
+        klog.format("Parent not exists: %\n", extract_file_directory(unix_path));
         return false;
     }
 
@@ -205,7 +205,7 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) co
     string name_8_3 = Fat32Utils::make_8_3_filename(name);
     SimpleDentryFat32 tmp;
     if (get_entry_for_name(parent_dir, name_8_3, tmp)) {
-        printer.format("Entry exists: %                             \n", name_8_3);
+        klog.format("Entry exists: %\n", name_8_3);
         return false;   // entry exists
     }
 
@@ -213,7 +213,7 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) co
     SimpleDentryFat32 e;
     e.name = name;
     e.is_directory = directory;
-    printer.format("Creating entry. Name: %\n", e.name);
+    klog.format("Creating entry. Name: %\n", e.name);
     return alloc_entry_in_directory(parent_dir, e);
 }
 
@@ -349,19 +349,19 @@ bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const SimpleDentryFat32& pare
             break; // free entry found
 
         cluster = fat_table.get_next_cluster(cluster);
-        printer.format("Next Cluster: %\n", cluster);
+        klog.format("Next Cluster: %\n", cluster);
     }
 
     // UNUSED entry found - just reuse it
     if (entry_type == Fat32Data::DIR_ENTRY_UNUSED) {
-        printer.format("Unused entry found. Cluster: %\n", e.entry_cluster);
+        klog.format("Unused entry found. Cluster: %\n", e.entry_cluster);
         fat_data.write_entry(e);
         return true;
     }
 
     // NO_MORE entry found - reuse it and mark the next one as NO_MORE
     if (entry_type == Fat32Data::DIR_ENTRY_NO_MORE) {
-        printer.format("NO MORE entry found. Cluster: %\n", e.entry_cluster);
+        klog.format("NO MORE entry found. Cluster: %\n", e.entry_cluster);
         fat_data.write_entry(e);
         fat_data.mark_next_entry_as_nomore(e);
         return true;
@@ -375,14 +375,14 @@ bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const SimpleDentryFat32& pare
  * @return  Cluster number if success, Fat32Table::CLUSTER_END_OF_CHAIN otherwise
  */
 u32 VolumeFat32::attach_new_directory_cluster(SimpleDentryFat32& dir) const {
-    printer.format("attach_new_directory_cluster\n");
+    klog.format("attach_new_directory_cluster\n");
 
     // try alloc new cluster
     u32 new_cluster = fat_table.alloc_cluster();
     if (new_cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
         return Fat32Table::CLUSTER_END_OF_CHAIN; // new cluster allocation failed
 
-    printer.format("Allocated new_cluster %\n", new_cluster);
+    klog.format("Allocated new_cluster %\n", new_cluster);
 
     // clear data cluster
     fat_data.clear_data_cluster(new_cluster);

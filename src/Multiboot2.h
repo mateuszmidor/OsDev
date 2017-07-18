@@ -7,8 +7,9 @@
 
 #ifndef SRC_MULTIBOOT2_H_
 #define SRC_MULTIBOOT2_H_
+
 #include <cstdint>
-#include "ScreenPrinter.h"
+
 
 struct GlobalTag {
     unsigned int total_size;
@@ -98,7 +99,7 @@ struct Elf64Sections {
 class Multiboot2 {
 public:
     Multiboot2(void *multiboot2_info_ptr);
-    void print(ScreenPrinter &p);
+    void print_to_klog() const;
 
 private:
     unsigned long long multiboot2_info_addr;

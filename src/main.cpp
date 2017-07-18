@@ -6,6 +6,7 @@
  */
 
 #include "GlobalConstructorsRunner.h"
+#include "KernelLog.h"
 #include "ScreenPrinter.h"
 #include "Multiboot2.h"
 #include "CpuInfo.h"
@@ -34,7 +35,8 @@ using namespace cpuexceptions;
 using namespace cpu;
 using namespace filesystem;
 
-ScreenPrinter &printer = ScreenPrinter::instance();
+KernelLog& klog = KernelLog::instance();
+ScreenPrinter& printer = ScreenPrinter::instance();
 TaskManager& task_manager = TaskManager::instance();
 ExceptionManager& exception_manager = ExceptionManager::instance();
 InterruptManager& interrupt_manager = InterruptManager::instance();
@@ -139,14 +141,14 @@ void task_idle() {
 
 void task_print_A() {
     for (int i = 0 ; i < 100; i++) {
-        printer.format("A");
+        klog.format("A");
         asm("hlt");
     }
 }
 
 void task_print_b() {
     for (int i = 0 ; i < 50; i++) {
-        printer.format("B");
+        klog.format("B");
         asm("hlt");
     }
 
@@ -201,7 +203,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // print CPU info
     CpuInfo cpu_info;
-    cpu_info.print(printer);
+    cpu_info.print_to_klog();
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
 //    Multiboot2 mb2(multiboot2_info_ptr);
@@ -212,7 +214,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 //    pcic.select_drivers();
 
     // inform setup done
-    printer.format("KERNEL SETUP DONE.\n");
+    klog.format("KERNEL SETUP DONE.\n");
 
 
     // start multitasking

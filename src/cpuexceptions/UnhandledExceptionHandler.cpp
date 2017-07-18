@@ -6,7 +6,7 @@
  */
 
 #include "UnhandledExceptionHandler.h"
-#include "ScreenPrinter.h"
+#include "KernelLog.h"
 #include "TaskManager.h"
 
 using cpu::CpuState;
@@ -58,11 +58,11 @@ s16 UnhandledExceptionHandler::handled_exception_no() {
 }
 
 CpuState* UnhandledExceptionHandler::on_exception(CpuState* cpu_state) {
-    ScreenPrinter &printer = ScreenPrinter::instance();
+    KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     auto current = mngr.get_current_task();
-    printer.format("\nUNHANDLED CPU EXCEPTION: %(%) by \"%\", error code %. KILLING\n",
-            EXCEPTION_NAMES[exception_no], exception_no, current->name.c_str(), cpu_state->error_code);
+    klog.format("\nUNHANDLED CPU EXCEPTION: %(%) by \"%\", error code %. KILLING\n",
+                EXCEPTION_NAMES[exception_no], exception_no, current->name.c_str(), cpu_state->error_code);
 
     return mngr.kill_current_task();
 }

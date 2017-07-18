@@ -8,9 +8,9 @@
 #include <algorithm>
 #include "kstd.h"
 #include "types.h"
-#include "ScreenPrinter.h"
+#include "KernelLog.h"
 
-static ScreenPrinter &printer = ScreenPrinter::instance();
+static KernelLog& klog = KernelLog::instance();
 
 // allocation should be done using memory manager
 void* bump_alloc(size_t size) {
@@ -18,7 +18,10 @@ void* bump_alloc(size_t size) {
 
     size_t old = addr;
     addr += size;
-   // printer.format("Allocated % bytes of mem\n", size);
+   // klog.format("Allocated % bytes of mem\n", size);
+    if (addr > 1024 * 1024 * 16)
+        klog.format("bump_alloc: exceeded 16MB of allocated memory");
+
     return (void*)old;
 }
 
@@ -71,31 +74,31 @@ extern "C" void* memset( void* dest, int ch, size_t count ) {
 }
 
 extern "C" void __cxa_pure_virtual() {
-    printer.format("pure virtual function called\n");
+    klog.format("pure virtual function called\n");
 }
 
 void std::__throw_length_error(char const* s) {
-    printer.format("__throw_length_error: %\n", s);
+    klog.format("__throw_length_error: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_logic_error(char const* s) {
-    printer.format("__throw_logic_error: %\n", s);
+    klog.format("__throw_logic_error: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_bad_alloc() {
-    printer.format("__throw_bad_alloc\n");
+    klog.format("__throw_bad_alloc\n");
     __builtin_unreachable();
 }
 
 void std::__throw_out_of_range_fmt(char const* s, ...) {
-    printer.format("__throw_out_of_range_fmt: %\n", s);
+    klog.format("__throw_out_of_range_fmt: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_bad_function_call() {
-    printer.format("__throw_bad_function_call\n");
+    klog.format("__throw_bad_function_call\n");
     __builtin_unreachable();
 }
 

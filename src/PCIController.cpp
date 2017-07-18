@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "KernelLog.h"
 #include "PCIController.h"
 
 PCIController::PCIController() {
@@ -30,10 +31,9 @@ bool PCIController::device_has_functions(u16 bus, u16 device) {
     return read(bus, device, 0, 0x0E) & (1 << 7);
 }
 
-#include "ScreenPrinter.h"
-
 void PCIController::select_drivers() {
-    ScreenPrinter &printer = ScreenPrinter::instance();
+    KernelLog &klog = KernelLog::instance();
+
     for (u8 bus = 0; bus < 8; bus++)
         for (u8 device = 0; device < 32; device++) {
             u8 num_functions = device_has_functions(bus, device) ? 8 : 1;
@@ -49,11 +49,11 @@ void PCIController::select_drivers() {
                         dev.port_base = (u32)(u64)bar.address; // for IO registers, address is port number
                 }
 
-                printer.format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
-                printer.format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
-                printer.format("DEVICE_NO % % ", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
+                klog.format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
+                klog.format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
+                klog.format("DEVICE_NO % % ", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
                 /* DeviceDriver drv = */ get_driver(dev);
-                printer.format("\n");
+                klog.format("\n");
             }
         }
 }
@@ -106,12 +106,13 @@ BaseAddressRegister PCIController::get_base_address_register(u16 bus, u16 device
 }
 
 void PCIController::get_driver(PCIDeviceDescriptor &dev) {
-    ScreenPrinter &printer = ScreenPrinter::instance();
+    KernelLog& klog = KernelLog::instance();
+
     switch (dev.vendor_id) {
     case 0x1022:    // AMD
         switch (dev.device_id) {
         case 0x2000:    // am79c973 network chip
-            printer.format("[AMD am79c973]");
+            klog.format("[AMD am79c973]");
             break;
         }
         break;
@@ -124,7 +125,7 @@ void PCIController::get_driver(PCIDeviceDescriptor &dev) {
     case 0x03:  // graphics
         switch (dev.subclass_id) {
         case 0x00:  // vga
-            printer.format("[Generic VGA]");
+            klog.format("[Generic VGA]");
             break;
         }
     }

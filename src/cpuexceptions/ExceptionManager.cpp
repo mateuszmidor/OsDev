@@ -7,7 +7,6 @@
 
 #include "ExceptionManager.h"
 #include "UnhandledExceptionHandler.h"
-#include "ScreenPrinter.h"
 #include "TaskManager.h"
 
 using namespace cpu;

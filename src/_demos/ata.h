@@ -10,7 +10,7 @@
 
 #include <memory>
 #include "kstd.h"
-#include "ScreenPrinter.h"
+#include "KernelLog.h"
 #include "AtaDriver.h"
 #include "MassStorageMsDos.h"
 
@@ -20,25 +20,25 @@ using namespace kstd;
 using namespace drivers;
 using namespace filesystem;
 
-static ScreenPrinter& printer = ScreenPrinter::instance();
+static KernelLog& klog = KernelLog::instance();
 
 void print_volume_info(VolumeFat32& v) {
-    printer.format("Label: %, Type: %, Size: %MB, Used: % clusters\n",
-            v.get_label(),
-            v.get_type(),
-            v.get_size_in_bytes() / 1024 / 1024,
-            v.get_used_space_in_clusters());
+    klog.format("Label: %, Type: %, Size: %MB, Used: % clusters\n",
+                v.get_label(),
+                v.get_type(),
+                v.get_size_in_bytes() / 1024 / 1024,
+                v.get_used_space_in_clusters());
 }
 
 void print_file(VolumeFat32& v, string filename) {
     SimpleDentryFat32 file;
     if (!v.get_entry(filename, file)) {
-        printer.format("File % not found\n", filename);
+        klog.format("File % not found\n", filename);
         return;
     }
 
     if (file.is_directory) {
-        printer.format("% is a directory\n", filename);
+        klog.format("% is a directory\n", filename);
         return;
     }
 
@@ -46,8 +46,8 @@ void print_file(VolumeFat32& v, string filename) {
     char buff[SIZE];
     u32 count = v.read_file_entry(file, buff, SIZE-1);
     buff[count] = '\0';
-    printer.format("%:\n", filename);
-    printer.format("%\n", buff);
+    klog.format("%:\n", filename);
+    klog.format("%\n", buff);
 }
 
 static const char* INDENTS[] = {
@@ -89,22 +89,22 @@ void print_tree(VolumeFat32& v, string path) {
              return true;
 
          if (e.is_directory) {
-             printer.format("%[%]\n", INDENTS[level], e.name);
+             klog.format("%[%]\n", INDENTS[level], e.name);
          } else {
              if (e.size == 0)
-                 printer.format("%% - %B\n", INDENTS[level], e.name, e.size);
+                 klog.format("%% - %B\n", INDENTS[level], e.name, e.size);
              else
              {
                  const u32 SIZE = 33;
                  char buff[SIZE];
                  u32 count = v.read_file_entry(e, buff, SIZE-1);
                  buff[count-1] = '\0';
-                 printer.format("%% - %B, %\n", INDENTS[level], e.name, e.size, buff);
+                 klog.format("%% - %B, %\n", INDENTS[level], e.name, e.size, buff);
              }
          }
          return true;
      };
-    printer.format("%:\n", path);
+    klog.format("%:\n", path);
     traverse_tree(v, directory, 1, on_entry);
 }
 
@@ -123,7 +123,7 @@ void delete_tree_but(VolumeFat32& v, string root, string but) {
 
 void print_hdd_info(AtaDevice& hdd) {
     if (!MassStorageMsDos::verify(hdd)) {
-        printer.format("Not MBR formatted device\n");
+        klog.format("Not MBR formatted device\n");
         return;
     }
 
@@ -180,7 +180,6 @@ void print_hdd_info(AtaDevice& hdd) {
 
         v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
 //
-        printer.clearscreen();
         print_volume_info(v);
         print_tree(v, "/");
 //    }
@@ -188,16 +187,16 @@ void print_hdd_info(AtaDevice& hdd) {
 
 void ata_demo(std::shared_ptr<AtaPrimaryBusDriver> ata_primary_bus) {
     if (ata_primary_bus->master_hdd.is_present()) {
-        printer.format("ATA Primary Master: present\n");
+        klog.format("ATA Primary Master: present\n");
         print_hdd_info(ata_primary_bus->master_hdd);
     } else
-        printer.format("ATA Primary Master: not present\n");
+        klog.format("ATA Primary Master: not present\n");
 
     if (ata_primary_bus->slave_hdd.is_present()) {
-        printer.format("ATA Primary Slave: present\n");
+        klog.format("ATA Primary Slave: present\n");
         print_hdd_info(ata_primary_bus->slave_hdd);
     } else
-        printer.format("ATA Primary Slave: not present\n");
+        klog.format("ATA Primary Slave: not present\n");
 }
 
 }

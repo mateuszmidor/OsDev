@@ -6,7 +6,7 @@
  */
 
 #include "UnhandledDeviceDriver.h"
-#include "ScreenPrinter.h"
+#include "KernelLog.h"
 
 namespace drivers {
 
@@ -22,10 +22,10 @@ s16 UnhandledDeviceDriver::handled_interrupt_no() {
 }
 
 cpu::CpuState* UnhandledDeviceDriver::on_interrupt(cpu::CpuState* cpu_state) {
-    ScreenPrinter& printer = ScreenPrinter::instance();
+    KernelLog& klog = KernelLog::instance();
     // print warning msg that UnhandledDeviceDriver interrupt has been raised
     // WARNING: unhandled interrupt may stop PIC from sending any further interrupts so this is error
-    printer.format("\nUNHANDLED INTERRUPT %\n", interrupt_no);
+    klog.format("\nUNHANDLED INTERRUPT %\n", interrupt_no);
     return cpu_state;
 }
 

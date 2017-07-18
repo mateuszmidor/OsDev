@@ -6,7 +6,7 @@
  */
 
 #include "AtaDriver.h"
-#include "ScreenPrinter.h"
+#include "KernelLog.h"
 
 namespace drivers {
 
@@ -29,8 +29,6 @@ cpu::CpuState* AtaDevice::on_interrupt(cpu::CpuState* cpu_state) {
 }
 
 bool AtaDevice::is_present() {
-//    ScreenPrinter& printer = ScreenPrinter::instance();
-
     device_port.write(is_master ? 0xA0 : 0xB0);
     sector_count_port.write(0);
     lba_lo_port.write(0);
@@ -43,7 +41,6 @@ bool AtaDevice::is_present() {
         return false;
 
     if (status & STATUS_ERROR) {
-//        printer.format("ATA ERROR");
         return false;
     }
 
@@ -53,24 +50,22 @@ bool AtaDevice::is_present() {
         char s[3] {"xx"};
         s[0] = (data & 0xFF);
         s[1] = (data >> 8) & 0xFF;
-//        printer.format("%", s);
     }
 
     return true;
 }
 
 bool AtaDevice::read28(u32 sector, void* data, u32 count) {
-    
-    ScreenPrinter& printer = ScreenPrinter::instance();
+    KernelLog& klog = KernelLog::instance();
     u8* dst = (u8*)data;
 
     if (sector >= (1 << 28)) {
-        printer.format("Cant read from sector that far: %\n", sector);
+        klog.format("Cant read from sector that far: %\n", sector);
         return false;
     }
 
     if (count > 512) {
-        printer.format("Cant write across 512 bytes sectors: sector %, count %\n", sector, count);
+        klog.format("Cant write across 512 bytes sectors: sector %, count %\n", sector, count);
         return false;
     }
 
@@ -103,16 +98,16 @@ bool AtaDevice::read28(u32 sector, void* data, u32 count) {
 }
 
 bool AtaDevice::write28(u32 sector, void const* data, u32 count) {
-    ScreenPrinter& printer = ScreenPrinter::instance();
+    KernelLog& klog = KernelLog::instance();
     u8 const* dst = (u8*)data;
 
     if (sector >= (1 << 28)) {
-        printer.format("Cant write to sector that far: %\n", sector);
+        klog.format("Cant write to sector that far: %\n", sector);
         return false;
     }
 
     if (count > BYTES_PER_SECTOR) {
-        printer.format("Cant write across % bytes sectors: sector %, count %\n", BYTES_PER_SECTOR, sector, count);
+        klog.format("Cant write across % bytes sectors: sector %, count %\n", BYTES_PER_SECTOR, sector, count);
         return false;
     }
 
@@ -144,7 +139,7 @@ bool AtaDevice::write28(u32 sector, void const* data, u32 count) {
 }
 
 bool AtaDevice::flush_cache() {
-    ScreenPrinter& printer = ScreenPrinter::instance();
+    KernelLog& klog = KernelLog::instance();
 
     device_port.write(is_master ? 0xE0 : 0xF0);
     cmd_status_port.write(CMD_FLUSH_CACHE);
@@ -156,7 +151,7 @@ bool AtaDevice::flush_cache() {
 
     if (status & STATUS_ERROR)
     {
-        printer.format("ATA flush cache ERROR");
+        klog.format("ATA flush cache ERROR");
         return false;
     }
 

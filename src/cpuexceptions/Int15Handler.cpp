@@ -6,7 +6,7 @@
  */
 
 #include "Int15Handler.h"
-#include "ScreenPrinter.h"
+#include "KernelLog.h"
 #include "TaskManager.h"
 
 using cpu::CpuState;
@@ -20,10 +20,10 @@ s16 Int15Handler::handled_exception_no() {
  * cpu exception 15 is temporarily used to signal that current task exits
  */
 CpuState* Int15Handler::on_exception(CpuState* cpu_state) {
-    ScreenPrinter& printer = ScreenPrinter::instance();
+    KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     auto current = mngr.get_current_task();
-    printer.format(" [Task \"%\" exits] ", current->name.c_str());
+    klog.format(" [Task \"%\" exits] ", current->name.c_str());
 
     return mngr.kill_current_task();
 }

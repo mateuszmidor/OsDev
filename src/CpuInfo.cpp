@@ -5,14 +5,16 @@
  * @author: mateusz
  */
 
+#include "KernelLog.h"
 #include "CpuInfo.h"
 
 CpuInfo::CpuInfo() {
     getCpuVendor(vendor);
 }
 
-void CpuInfo::print(ScreenPrinter &p) {
-    p.format("CPU: %\n", vendor);
+void CpuInfo::print_to_klog() const {
+    KernelLog& klog = KernelLog::instance();
+    klog.format("CPU: %\n", vendor);
 }
 
 void CpuInfo::getCpuVendor(char buff[13]) {

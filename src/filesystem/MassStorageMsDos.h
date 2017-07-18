@@ -11,7 +11,6 @@
 #include "kstd.h"
 #include "AtaDriver.h"
 #include "VolumeFat32.h"
-#include "ScreenPrinter.h"
 
 namespace filesystem {
 

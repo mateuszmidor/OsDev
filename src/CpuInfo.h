@@ -5,7 +5,6 @@
  * @author: mateusz
  */
 
-#include "ScreenPrinter.h"
 
 #ifndef SRC_CPUINFO_H_
 #define SRC_CPUINFO_H_
@@ -13,7 +12,7 @@
 class CpuInfo {
 public:
     CpuInfo();
-    void print(ScreenPrinter &p);
+    void print_to_klog() const;
 
 private:
     char vendor[13];
