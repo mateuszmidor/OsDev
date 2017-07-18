@@ -22,6 +22,54 @@ struct VgaCharacter {
     u8      bg_color    : 4;
 };
 
+class BoundedAreaScreenPrinter {
+public:
+    BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom, u16 vga_width, u16 vga_height);
+
+    void format(s64 num) {
+        format(kstd::to_str(num));
+    }
+
+    void format(const kstd::string& fmt) {
+        format(fmt.c_str());
+    }
+
+    void format(char const *fmt) {
+        while (*fmt)
+            putc(*fmt++);
+    }
+
+    /**
+     * @name    format
+     * @example format("CPU: %", cpu_vendor_cstr);
+     */
+    template<typename Head, typename ... Tail>
+    void format(char const *fmt, Head head, Tail ... tail) {
+        while (*fmt) {
+            if (*fmt == '%') {
+                format(head);
+                format(++fmt, tail...);
+                break;
+            } else
+                putc(*fmt++);
+        }
+    }
+
+protected:
+    VgaCharacter* const vga = (VgaCharacter*)0xb8000;
+
+    u16 left, top, right, bottom;   // printable area description
+    u16 vga_width, vga_height;      // actual vga buffer dimension eg. 90x30
+    u16 cursor_x, cursor_y;         // current cursor position in vga dimmension space
+    drivers::EgaColor foreground = drivers::EgaColor::White;
+    drivers::EgaColor background = drivers::EgaColor::Brown;
+
+    void newline();
+    void tab();
+    void backspace();
+    void putc(const char c);
+};
+
 class ScreenPrinter {
 public:
     static ScreenPrinter& instance();

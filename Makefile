@@ -47,9 +47,9 @@ $(iso): $(kernel) $(grub_cfg)
 	@rm -r build/isofiles
 
 # copy beforehand-prepared hdd drive image
+# to prepare hdd.vdi: qemu-img create -f vdi hdd.vdi 64M, then create DOS partition table and 2 FAT32 partitions
 $(hdd):
 	@cp media/hdd.vdi $(hdd)
-	#@qemu-img create -f vdi $(hdd) 64M, then create DOS partition table and 2 FAT32 partitions
 	
 # bulid kernel binary
 $(kernel): $(assembly_object_files) $(c_object_files) $(linker_script)

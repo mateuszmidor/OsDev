@@ -7,6 +7,50 @@
 
 #include "ScreenPrinter.h"
 
+BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom, u16 vga_width, u16 vga_height) :
+    left(left), top(top), right(right), bottom(bottom), vga_width(vga_width), vga_height(vga_height), cursor_x(left), cursor_y(top) {
+}
+
+void BoundedAreaScreenPrinter::putc(const char c) {
+    if (c == '\n')
+        newline();
+    else if (c == '\t')
+        tab();
+    else if (c == '\x08')
+        backspace();
+    else {
+        u32 cursor_pos = cursor_y * vga_width + cursor_x;
+        vga[cursor_pos] = VgaCharacter { .character = c, .fg_color = foreground, .bg_color = background };
+
+        // advance cursor pos within destination area with horizontal and vertical wrapping
+        if (cursor_x == right) {
+            cursor_x = left;
+            if (cursor_y == bottom)
+                cursor_y = top;
+            else
+                cursor_y++;
+        } else
+            cursor_x++;
+    }
+}
+
+void BoundedAreaScreenPrinter::newline() {
+    cursor_x = left;
+    if (cursor_y == bottom)
+        cursor_y = top;
+    else
+        cursor_y++;
+}
+
+void BoundedAreaScreenPrinter::tab() {
+    putc(' ');
+    putc(' ');
+}
+
+void BoundedAreaScreenPrinter::backspace() {
+}
+
+
 ScreenPrinter ScreenPrinter::_instance;
 
 ScreenPrinter& ScreenPrinter::instance() {

@@ -19,12 +19,13 @@ public:
      */
     template<typename ... Args>
     void format(char const *fmt, Args ... args) {
-        ScreenPrinter& printer = ScreenPrinter::instance();
         printer.format(fmt, args...);
     }
 
 private:
+    KernelLog();
     static KernelLog _instance;
+    BoundedAreaScreenPrinter printer;
 };
 
 #endif /* SRC_KERNELLOG_H_ */
