@@ -30,6 +30,8 @@ public:
     BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom, u16 vga_width, u16 vga_height);
     virtual ~BoundedAreaScreenPrinter() {}
 
+    VgaCharacter& at(u16 x, u16 y);
+
     void format(s64 num) {
         format(kstd::to_str(num));
     }
@@ -83,6 +85,7 @@ public:
 
     void scroll_up(u16 lines);
     void scroll_down(u16 lines);
+    void scroll_to_begin();
     void scroll_to_end();
     void clear_screen();
 

@@ -13,6 +13,13 @@ BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right,
     printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
 }
 
+VgaCharacter& BoundedAreaScreenPrinter::at(u16 x, u16 y) {
+    if ((x >= vga_width) || (y >= vga_height))
+        return vga[0];
+
+    return vga[y * vga_width + x];
+}
+
 void BoundedAreaScreenPrinter::putc(const char c) {
     putc_into_vga(c);
 }
@@ -25,8 +32,7 @@ void BoundedAreaScreenPrinter::putc_into_vga(const char c) {
     else if (c == '\x08')
         backspace();
     else {
-        u32 cursor_pos = cursor_y * vga_width + cursor_x;
-        vga[cursor_pos] = VgaCharacter { .character = c, .fg_color = foreground, .bg_color = background };
+        at(cursor_x, cursor_y) = VgaCharacter { .character = c, .fg_color = foreground, .bg_color = background };
 
         // advance cursor pos within destination area
         if (cursor_x == right)
@@ -58,8 +64,7 @@ void BoundedAreaScreenPrinter::backspace() {
             cursor_y--;
 
     // clear character under cursor
-    u32 cursor_pos = cursor_y * vga_width + cursor_x;
-    vga[cursor_pos] = VgaCharacter { .character = ' ', .fg_color = foreground, .bg_color = background };
+    at(cursor_x, cursor_y) = VgaCharacter { .character = ' ', .fg_color = foreground, .bg_color = background };
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -72,20 +77,37 @@ ScrollableScreenPrinter::ScrollableScreenPrinter(u16 vga_width, u16 vga_height) 
 }
 
 void ScrollableScreenPrinter::scroll_up(u16 num_lines) {
+    if (lines.size() <= printable_area_height)
+        return;
+
     const u16 FIRST_LINE = 0;
     top_line = (top_line - num_lines <= FIRST_LINE) ? FIRST_LINE : top_line - num_lines;
     redraw();
 }
 
 void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
-    const u16 LAST_LINE = lines.size() - 1;
+    if (lines.size() <= printable_area_height)
+        return;
+
+    const s16 LAST_LINE = lines.size() - printable_area_height;
     top_line = (top_line + num_lines  >= LAST_LINE) ? LAST_LINE : top_line + num_lines;
     redraw();
 }
 
+void ScrollableScreenPrinter::scroll_to_begin() {
+    if (lines.size() < printable_area_height)
+        return;
+
+    top_line = 0;
+    redraw();
+}
+
 void ScrollableScreenPrinter::scroll_to_end() {
-    const u16 NUM_LINES = lines.size();
-    top_line = (NUM_LINES - printable_area_height <= 0) ? 0 : NUM_LINES - printable_area_height;
+    if (lines.size() < printable_area_height)
+        return;
+
+    const s16 LAST_LINE = lines.size() - printable_area_height;
+    top_line = (LAST_LINE <= 0) ? 0 : LAST_LINE;
     redraw();
 }
 
@@ -103,6 +125,8 @@ void ScrollableScreenPrinter::putc(const char c) {
 void ScrollableScreenPrinter::putc_into_buffer(const char c) {
     if (c == '\n')
         lines.push_back("");
+    else if (c == '\x08')
+        lines.back().pop_back();
     else
         lines.back() += c;
 
@@ -153,28 +177,24 @@ void ScrollableScreenPrinter::clear_screen() {
 }
 
 void ScrollableScreenPrinter::draw_scroll_bar() {
-    const u16 X = right+1;
-    for (u16 y = top; y <= bottom; y++) {
-        u32 cursor_pos = y * vga_width + X;
-        vga[cursor_pos] = VgaCharacter { .character = BG_CHAR, .fg_color = foreground, .bg_color = background };
-    }
+    const u16 BAR_X = right + 1;
 
-    u16 size = (printable_area_height > lines.size()) ? printable_area_height * 1 : printable_area_height * printable_area_height / lines.size();
-    if (size == 0)
-        size = 1;
+    // draw scroll bar dotted background
+    for (u16 y = top; y <= bottom; y++)
+        at(BAR_X, y) = VgaCharacter { .character = BG_CHAR, .fg_color = foreground, .bg_color = background };
 
-    s16 max_top = lines.size() - printable_area_height;
-    s16 Y = (max_top <= 0) ? 0 : (printable_area_height - size) * top_line / max_top;
-            //(lines.size() > printable_area_height)? printable_area_height * top_line / (lines.size() - printable_area_height) : 0;
+    // draw actual scrollbar
+    u16 bar_size = (printable_area_height > lines.size()) ? printable_area_height : printable_area_height * printable_area_height / lines.size();
+    if (bar_size == 0)
+        bar_size = 1;
 
-    Y += top;
+    s16 max_top_line = lines.size() - printable_area_height;
 
-    for (u16 i = 0; i < size; i++) {
-        if (Y+i > bottom)
-            break;
-        u32 cursor_pos = (Y+i) * vga_width + X;
-        vga[cursor_pos] = VgaCharacter { .character = BG_SCROLLER, .fg_color = foreground, .bg_color = background };
-    }
+    u16 move_space = printable_area_height - bar_size;
+    u16 bar_y = top + move_space * top_line / max_top_line;
+
+    for (u16 y = bar_y; y < bar_y + bar_size; y++)
+        at(BAR_X, y) = VgaCharacter { .character = BG_SCROLLER, .fg_color = foreground, .bg_color = background };
 }
 
 void ScrollableScreenPrinter::put_line(const kstd::string& line) {
