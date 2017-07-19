@@ -212,14 +212,17 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // print CPU info
     CpuInfo cpu_info;
     cpu_info.print_to_klog();
+    klog.format("\n");
 
     // print Multiboot2 info related to framebuffer config, available memory and kernel ELF sections
     Multiboot2 mb2(multiboot2_info_ptr);
     mb2.print_to_klog();
+    klog.format("\n");
 
     // print PCI devics
     PCIController pcic;
     pcic.select_drivers();
+    klog.format("\n");
 
     // inform setup done
     klog.format("KERNEL SETUP DONE.\n");

@@ -71,6 +71,7 @@ protected:
 
     virtual void putc(const char c);
     virtual void newline();
+    void putc_into_vga(const char c);
     void tab();
     void backspace();
 };
@@ -87,7 +88,8 @@ public:
 protected:
     void putc(const char c) override;
     void newline() override;
-    void putc_into_vga(const char c);
+    void putc_into_buffer(const char c);
+    void scroll_down_if_needed();
     void redraw();
     void put_line(const kstd::string& line);
     kstd::vector<kstd::string> lines;

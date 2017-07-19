@@ -14,6 +14,10 @@ BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right,
 }
 
 void BoundedAreaScreenPrinter::putc(const char c) {
+    putc_into_vga(c);
+}
+
+void BoundedAreaScreenPrinter::putc_into_vga(const char c) {
     if (c == '\n')
         newline();
     else if (c == '\t')
@@ -24,14 +28,10 @@ void BoundedAreaScreenPrinter::putc(const char c) {
         u32 cursor_pos = cursor_y * vga_width + cursor_x;
         vga[cursor_pos] = VgaCharacter { .character = c, .fg_color = foreground, .bg_color = background };
 
-        // advance cursor pos within destination area with horizontal and vertical wrapping
-        if (cursor_x == right) {
-            cursor_x = left;
-            if (cursor_y == bottom)
-                cursor_y = top;
-            else
-                cursor_y++;
-        } else
+        // advance cursor pos within destination area
+        if (cursor_x == right)
+            newline();
+        else
             cursor_x++;
     }
 }
@@ -50,12 +50,23 @@ void BoundedAreaScreenPrinter::tab() {
 }
 
 void BoundedAreaScreenPrinter::backspace() {
+    // back cursor by 1 char
+    if (cursor_x > left)
+        cursor_x--;
+    else
+        if (cursor_y > top)
+            cursor_y--;
+
+    // clear character under cursor
+    u32 cursor_pos = cursor_y * vga_width + cursor_x;
+    vga[cursor_pos] = VgaCharacter { .character = ' ', .fg_color = foreground, .bg_color = background };
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 vga_width, u16 vga_height) :
         BoundedAreaScreenPrinter(4, 2, vga_width-5, vga_height-3, vga_width, vga_height) {
+    // add first, empty line to the buffer
     lines.push_back("");
 }
 
@@ -71,58 +82,50 @@ void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
     redraw();
 }
 
-void ScrollableScreenPrinter::putc(const char c) {
-    const u16 NUM_LINES = lines.size();
-
-    // put in text buffer
-    if (c == '\n')
-        lines.push_back("");
-    else
-        lines.back() += c;
-
-    // put on screen
-    putc_into_vga(c);
-
-    // enforce text buffer word wrap
-//    if (lines.back().length() == printable_area_width)
-//        lines.push_back("");
-
-    // scroll if writing below bottom of the screen
-    if (NUM_LINES - top_line > printable_area_height)
-        scroll_down(1);
-}
-
-void ScrollableScreenPrinter::putc_into_vga(const char c) {
-    if (c == '\n')
-        newline();
-    else if (c == '\t')
-        tab();
-    else if (c == '\x08')
-        backspace();
-    else {
-        u32 cursor_pos = cursor_y * vga_width + cursor_x;
-        vga[cursor_pos] = VgaCharacter { .character = c, .fg_color = foreground, .bg_color = background };
-
-        // advance cursor pos within destination area with horizontal and vertical wrapping
-        if (cursor_x == right) {
-            newline();
-        } else
-            cursor_x++;
-    }
-}
-
 void ScrollableScreenPrinter::scroll_to_end() {
     const u16 NUM_LINES = lines.size();
     top_line = (NUM_LINES - printable_area_height <= 0) ? 0 : NUM_LINES - printable_area_height;
     redraw();
 }
 
-void ScrollableScreenPrinter::redraw() {
+void ScrollableScreenPrinter::putc(const char c) {
+    // put on screen
+    putc_into_vga(c);
+
+    // put in text buffer
+    putc_into_buffer(c);
+
+    // scroll if writing below bottom of the screen
+    scroll_down_if_needed();
+}
+
+void ScrollableScreenPrinter::putc_into_buffer(const char c) {
+    if (c == '\n')
+        lines.push_back("");
+    else
+        lines.back() += c;
+
+    // enforce text buffer "word" wrap
+    if (lines.back().length() == printable_area_width)
+        lines.push_back("");
+}
+
+void ScrollableScreenPrinter::scroll_down_if_needed() {
+    // scroll if writing below bottom of the screen
     const u16 NUM_LINES = lines.size();
+    if (NUM_LINES - top_line > printable_area_height)
+        scroll_down(1);
+}
+
+/**
+ * @brief   Redraw entire printing are. Used when scrolling the text
+ */
+void ScrollableScreenPrinter::redraw() {
     cursor_x = left;
     cursor_y = top;
 
     // calc number of buffer lines to  draw
+    const u16 NUM_LINES = lines.size();
     u16 lines_to_draw = NUM_LINES - top_line;
     if (lines_to_draw > printable_area_height)
         lines_to_draw = printable_area_height;
@@ -137,15 +140,17 @@ void ScrollableScreenPrinter::redraw() {
 }
 
 void ScrollableScreenPrinter::put_line(const kstd::string& line) {
-    // print line
-    for (char c : line)
-        putc_into_vga(c);
+    u16 num_characters = line.size();
 
-    // clear remaining part of the line
-    for (u16 x = cursor_x; x <= right; x++)
+    // print the line
+    for (u16 i = 0; i < num_characters; i++) {
+        putc_into_vga(line[i]);
+    }
+
+    // clear remaining space of the printable area row
+    for (u16 i = num_characters; i < printable_area_width; i++)
         putc_into_vga(' ');
 }
-
 
 void ScrollableScreenPrinter::newline() {
     cursor_x = left;
