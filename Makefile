@@ -15,8 +15,9 @@ assembly_object_files := $(patsubst src/arch/$(arch)/%.S, \
 c_source_files :=  $(wildcard src/*.cpp) \
                    $(wildcard src/cpu/*.cpp) \
                    $(wildcard src/drivers/*.cpp) \
-                   $(wildcard src/cpuexceptions/*.cpp)\
-                   $(wildcard src/filesystem/*.cpp)
+                   $(wildcard src/cpuexceptions/*.cpp) \
+                   $(wildcard src/filesystem/*.cpp) \
+                   $(wildcard src/_demos/*.cpp)
 c_object_files := $(patsubst src/%.cpp, \
 	build/%.o, $(c_source_files))
 

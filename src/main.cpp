@@ -25,15 +25,14 @@
 #include "Int15Handler.h"
 #include "PageFaultHandler.h"
 
-
-#include "_demos/ata.h"
+#include "_demos/ata_demo.h"
 
 using std::make_shared;
 using namespace kstd;
 using namespace drivers;
 using namespace cpuexceptions;
 using namespace cpu;
-using namespace filesystem;
+
 
 KernelLog& klog = KernelLog::instance();
 ScreenPrinter& printer = ScreenPrinter::instance();

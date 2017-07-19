@@ -1,24 +1,21 @@
 /**
- *   @file: ata.h
+ *   @file: ata_demo.cpp
  *
- *   @date: Jul 5, 2017
+ *   @date: Jul 19, 2017
  * @author: Mateusz Midor
  */
 
-#ifndef SRC__DEMOS_ATA_H_
-#define SRC__DEMOS_ATA_H_
 
-#include <memory>
+#include "ata_demo.h"
 #include "kstd.h"
 #include "KernelLog.h"
-#include "AtaDriver.h"
 #include "MassStorageMsDos.h"
-
-namespace demos {
 
 using namespace kstd;
 using namespace drivers;
 using namespace filesystem;
+
+namespace demos {
 
 static KernelLog& klog = KernelLog::instance();
 
@@ -199,6 +196,4 @@ void ata_demo(std::shared_ptr<AtaPrimaryBusDriver> ata_primary_bus) {
         klog.format("ATA Primary Slave: not present\n");
 }
 
-}
-
-#endif /* SRC__DEMOS_ATA_H_ */
+} // namespace demos
