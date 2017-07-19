@@ -9,6 +9,8 @@
 
 BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom, u16 vga_width, u16 vga_height) :
     left(left), top(top), right(right), bottom(bottom), vga_width(vga_width), vga_height(vga_height), cursor_x(left), cursor_y(top) {
+    printable_area_width = right - left + 1;  // +1 because if right=1 and left=0 it makes 2 columns
+    printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
 }
 
 void BoundedAreaScreenPrinter::putc(const char c) {
@@ -53,7 +55,7 @@ void BoundedAreaScreenPrinter::backspace() {
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 vga_width, u16 vga_height) :
-        BoundedAreaScreenPrinter(0, 0, vga_width-1, vga_height-1, vga_width, vga_height) {
+        BoundedAreaScreenPrinter(4, 2, vga_width-5, vga_height-3, vga_width, vga_height) {
     lines.push_back("");
 }
 
@@ -70,6 +72,7 @@ void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
 }
 
 void ScrollableScreenPrinter::putc(const char c) {
+    const u16 NUM_LINES = lines.size();
 
     // put in text buffer
     if (c == '\n')
@@ -81,12 +84,12 @@ void ScrollableScreenPrinter::putc(const char c) {
     putc_into_vga(c);
 
     // enforce text buffer word wrap
-    if (lines.back().length() == right - left +1)
-        lines.push_back("");
+//    if (lines.back().length() == printable_area_width)
+//        lines.push_back("");
 
     // scroll if writing below bottom of the screen
-    if (lines.size() - top_line > vga_height)
-        scroll_to_end();
+    if (NUM_LINES - top_line > printable_area_height)
+        scroll_down(1);
 }
 
 void ScrollableScreenPrinter::putc_into_vga(const char c) {
@@ -109,22 +112,28 @@ void ScrollableScreenPrinter::putc_into_vga(const char c) {
 }
 
 void ScrollableScreenPrinter::scroll_to_end() {
-    top_line = (lines.size() - vga_height <= 0) ? 0 : lines.size() - vga_height; // 31 - 30 ? 1
+    const u16 NUM_LINES = lines.size();
+    top_line = (NUM_LINES - printable_area_height <= 0) ? 0 : NUM_LINES - printable_area_height;
     redraw();
 }
 
 void ScrollableScreenPrinter::redraw() {
-    const u16 MAX_LINES = bottom - top + 1;  // +1 because bottom 1 - top 0 gives 1, and they actual
+    const u16 NUM_LINES = lines.size();
     cursor_x = left;
     cursor_y = top;
-    u16 lines_to_draw = (lines.size() - top_line > MAX_LINES) ? MAX_LINES : lines.size() - top_line;
-    lines_to_draw = lines.size();
-    if (lines_to_draw > 30)
-        lines_to_draw = 30;
 
+    // calc number of buffer lines to  draw
+    u16 lines_to_draw = NUM_LINES - top_line;
+    if (lines_to_draw > printable_area_height)
+        lines_to_draw = printable_area_height;
 
+    // draw the lines
     for (u16 i = 0; i < lines_to_draw; i++)
         put_line(lines[top_line + i]);
+
+    // clear remaining lines
+    for (u16 i = lines_to_draw; i < printable_area_height; i++)
+        put_line("");
 }
 
 void ScrollableScreenPrinter::put_line(const kstd::string& line) {

@@ -22,6 +22,9 @@ struct VgaCharacter {
     u8      bg_color    : 4;
 };
 
+/**
+ * This printer prints in given sub area of the VGA buffer
+ */
 class BoundedAreaScreenPrinter {
 public:
     BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom, u16 vga_width, u16 vga_height);
@@ -60,8 +63,9 @@ protected:
     VgaCharacter* const vga = (VgaCharacter*)0xb8000;
 
     u16 left, top, right, bottom;   // printable area description
+    u16 printable_area_width, printable_area_height;    // printable area dimension
     u16 vga_width, vga_height;      // actual vga buffer dimension eg. 90x30
-    u16 cursor_x, cursor_y;         // current cursor position in vga dimmension space
+    u16 cursor_x, cursor_y;         // current cursor position in vga dimension space
     drivers::EgaColor foreground = drivers::EgaColor::White;
     drivers::EgaColor background = drivers::EgaColor::Brown;
 
@@ -78,12 +82,12 @@ public:
 
     void scroll_up(u16 lines);
     void scroll_down(u16 lines);
+    void scroll_to_end();
 
 protected:
     void putc(const char c) override;
     void newline() override;
     void putc_into_vga(const char c);
-    void scroll_to_end();
     void redraw();
     void put_line(const kstd::string& line);
     kstd::vector<kstd::string> lines;

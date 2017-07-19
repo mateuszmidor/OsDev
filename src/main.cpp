@@ -115,7 +115,9 @@ void on_key_press(s8 key) {
     else
     if (key == '+')
         klog.printer.scroll_down(1);
-    else {
+    else if (key == '*')
+        klog.printer.scroll_to_end();
+    else{
         char s[2] = {key, '\0'};
         printer.format("%", s);
     }

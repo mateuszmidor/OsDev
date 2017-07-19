@@ -168,14 +168,13 @@ void print_hdd_info(AtaDevice& hdd) {
 //                v.create_entry(dir + "/FILE_" + kstd::to_str(j), false);
 //        }
 
-        v.create_entry("/NUMBERS.TXT", false);
-        SimpleDentryFat32 oda;
-        v.get_entry("/NUMBERS.TXT", oda);
-        string ODA_TEXT;
-        for (u32 i = 0; i < 1024; i++)
-            ODA_TEXT += kstd::to_str(1000 + i) + " ";
-
-        v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
+//        v.create_entry("/NUMBERS.TXT", false);
+//        SimpleDentryFat32 oda;
+//        v.get_entry("/NUMBERS.TXT", oda);
+//        string ODA_TEXT;
+//        for (u32 i = 0; i < 1024; i++)
+//            ODA_TEXT += kstd::to_str(1000 + i) + " ";
+//        v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
 
         print_volume_info(v);
         print_tree(v, "/");
