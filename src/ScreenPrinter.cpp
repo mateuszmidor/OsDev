@@ -65,7 +65,8 @@ void BoundedAreaScreenPrinter::backspace() {
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 vga_width, u16 vga_height) :
-        BoundedAreaScreenPrinter(4, 2, vga_width-5, vga_height-3, vga_width, vga_height) {
+        BoundedAreaScreenPrinter(0, 0, vga_width-2, vga_height-1, vga_width, vga_height) {
+
     // add first, empty line to the buffer
     lines.push_back("");
 }
@@ -137,6 +138,43 @@ void ScrollableScreenPrinter::redraw() {
     // clear remaining lines
     for (u16 i = lines_to_draw; i < printable_area_height; i++)
         put_line("");
+
+    draw_scroll_bar();
+}
+
+void ScrollableScreenPrinter::clear_screen() {
+    for (u16 i = 0; i < printable_area_height; i++)
+        put_line("");
+
+    cursor_x = left;
+    cursor_y = top;
+
+    draw_scroll_bar();
+}
+
+void ScrollableScreenPrinter::draw_scroll_bar() {
+    const u16 X = right+1;
+    for (u16 y = top; y <= bottom; y++) {
+        u32 cursor_pos = y * vga_width + X;
+        vga[cursor_pos] = VgaCharacter { .character = BG_CHAR, .fg_color = foreground, .bg_color = background };
+    }
+
+    u16 size = (printable_area_height > lines.size()) ? printable_area_height * 1 : printable_area_height * printable_area_height / lines.size();
+    if (size == 0)
+        size = 1;
+
+    s16 max_top = lines.size() - printable_area_height;
+    s16 Y = (max_top <= 0) ? 0 : (printable_area_height - size) * top_line / max_top;
+            //(lines.size() > printable_area_height)? printable_area_height * top_line / (lines.size() - printable_area_height) : 0;
+
+    Y += top;
+
+    for (u16 i = 0; i < size; i++) {
+        if (Y+i > bottom)
+            break;
+        u32 cursor_pos = (Y+i) * vga_width + X;
+        vga[cursor_pos] = VgaCharacter { .character = BG_SCROLLER, .fg_color = foreground, .bg_color = background };
+    }
 }
 
 void ScrollableScreenPrinter::put_line(const kstd::string& line) {

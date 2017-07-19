@@ -84,6 +84,7 @@ public:
     void scroll_up(u16 lines);
     void scroll_down(u16 lines);
     void scroll_to_end();
+    void clear_screen();
 
 protected:
     void putc(const char c) override;
@@ -91,9 +92,14 @@ protected:
     void putc_into_buffer(const char c);
     void scroll_down_if_needed();
     void redraw();
+    void draw_scroll_bar();
     void put_line(const kstd::string& line);
+
     kstd::vector<kstd::string> lines;
     u16 top_line    = 0;
+
+    const char BG_CHAR = 176;
+    const char BG_SCROLLER = 219;
 };
 
 class ScreenPrinter {

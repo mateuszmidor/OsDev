@@ -207,7 +207,11 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // prepare the text  mode
     vga.set_text_mode_90_30();
     printer.clearscreen();
+    klog.printer.clear_screen();
+
     printer.set_bg_color(EgaColor::Blue);
+
+
 
     // print CPU info
     CpuInfo cpu_info;
