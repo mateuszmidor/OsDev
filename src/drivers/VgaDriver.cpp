@@ -7,8 +7,16 @@
 
 #include "VgaDriver.h"
 
+using namespace cpu;
 namespace drivers {
 
+s16 VgaDriver::handled_interrupt_no() {
+    return Interrupts::Vga;
+}
+
+CpuState* VgaDriver::on_interrupt(CpuState* cpu_state) {
+    return cpu_state;
+}
 
 void VgaDriver::set_text_mode_90_30() {
     // http://files.osdev.org/mirrors/geezer/osd/graphics/modes.c

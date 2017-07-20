@@ -13,6 +13,7 @@
 #include "types.h"
 #include "Port.h"
 #include "CpuState.h"
+#include "InterruptNumbers.h"
 
 /**
  * Interrupt Descriptor Table Entry Options
@@ -73,7 +74,6 @@ public:
     void set_exception_handler(const ExceptionHandler &h);
 
 private:
-    static constexpr int MAX_INTERRUPT_COUNT = 256;
     static InterruptManager _instance;
     Port8bitSlow pic_master_cmd  {0x20};
     Port8bitSlow pic_slave_cmd   {0xA0};
@@ -87,9 +87,11 @@ private:
     void setup_programmable_interrupt_controllers();
     void install_interrupt_descriptor_table();
 
-    std::array<IdtEntry, MAX_INTERRUPT_COUNT> idt;
+    std::array<IdtEntry, Interrupts::IRQ_MAX> idt;
     InterruptHandler interrupt_handler = [](u8, cpu::CpuState* state) { return state; };
     ExceptionHandler exception_handler = [](u8, cpu::CpuState* state) { return state; };
+
+    static const u8 SLAVE_PIC_IRQ_OFFSET = 8;
 };
 
 #endif /* SRC_INTERRUPTMANAGER_H_ */

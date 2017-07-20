@@ -8,6 +8,7 @@
 #ifndef SRC_DRIVERS_VGADRIVER_H_
 #define SRC_DRIVERS_VGADRIVER_H_
 
+#include "DeviceDriver.h"
 #include "Port.h"
 
 namespace drivers {
@@ -32,8 +33,11 @@ enum EgaColor : u8 {
     White      = 15
 };
 
-class VgaDriver {
+class VgaDriver : public DeviceDriver {
 public:
+    s16 handled_interrupt_no() override;
+    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
+
     void set_text_mode_90_30();
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;

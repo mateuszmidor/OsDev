@@ -19,7 +19,7 @@ MouseDriver::~MouseDriver() {
 }
 
 s16 MouseDriver::handled_interrupt_no() {
-    return 44;
+    return Interrupts::Mouse;
 }
 
 CpuState* MouseDriver::on_interrupt(CpuState* cpu_state) {

@@ -54,7 +54,7 @@ HandleException 0x13
 HandleException 0x14
 HandleExceptionWithErrorCode 0x1E
 
-# generate handlers for interrupts, shifted by IRQ_BASE
+# generate handlers for PIC interrupts, their numbers are shifted by Interrupts::IRQ_BASE so they dont mix with CPU exceptions
 HandleInterrupt 0x20    # timer
 HandleInterrupt 0x21    # keyboard
 HandleInterrupt 0x2C    # mouse
@@ -111,14 +111,6 @@ ignore_interrupt:
     # return from interrupt handler
     iretq
 
-
-
-# read only data section
-.section .rodata
-    # IRQ_BASE will be added to the interrupt number coming from PIC so we dont mix it with CPU exceptions
-    # It is used from cpp code so we make it global symbol
-    .global IRQ_BASE
-    IRQ_BASE: .byte 0x20
 
 # data section
 .section .data

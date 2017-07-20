@@ -12,7 +12,7 @@ using namespace cpu;
 namespace drivers {
 
 s16 TimerDriver::handled_interrupt_no() {
-    return 32;
+    return Interrupts::Timer;
 }
 
 cpu::CpuState* TimerDriver::on_interrupt(cpu::CpuState* cpu_state) {

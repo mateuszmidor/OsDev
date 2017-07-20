@@ -7,9 +7,6 @@
 
 #include "InterruptManager.h"
 
-// defined in interrupts.S
-extern u8 IRQ_BASE;
-
 // CPU exceptions
 extern "C" void handle_exception_no_0x00();
 extern "C" void handle_exception_no_0x01();
@@ -68,7 +65,7 @@ cpu::CpuState* InterruptManager::on_interrupt(u8 interrupt_no, cpu::CpuState* cp
     cpu::CpuState* new_cpu_state;
 
     // if its PIC interrupt
-    if (interrupt_no >= IRQ_BASE) {
+    if (interrupt_no >= Interrupts::IRQ_BASE) {
         new_cpu_state = mngr.interrupt_handler(interrupt_no, cpu_state);
         mngr.ack_interrupt_handled(interrupt_no);
     }
@@ -81,7 +78,7 @@ cpu::CpuState* InterruptManager::on_interrupt(u8 interrupt_no, cpu::CpuState* cp
 
 void InterruptManager::ack_interrupt_handled(u8 interrupt_no) {
     // send End Of Interrupt (confirm to PIC that interrupt has been handled)
-    if (interrupt_no >= IRQ_BASE + 8)
+    if (interrupt_no >= Interrupts::IRQ_BASE + SLAVE_PIC_IRQ_OFFSET)
         pic_slave_cmd.write(0x20);
     pic_master_cmd.write(0x20);
 }
@@ -125,16 +122,16 @@ void InterruptManager::setup_interrupt_descriptor_table() {
     idt[0x1E] = make_entry((u64) (handle_exception_no_0x1E));
 
     // PIC interrupts, they start at IRQ_BASE = 0x20, defined in interrupts.S
-    // first setupe idt to ignore all interrupts
-    for (u32 i = IRQ_BASE; i < MAX_INTERRUPT_COUNT; i++)
+    // first setup idt to ignore all interrupts
+    for (u32 i = Interrupts::IRQ_BASE; i < Interrupts::IRQ_MAX; i++)
         idt[i] = make_entry((u64) (ignore_interrupt));
 
     // then handle just the interrupts of interest
-    idt[0x20] = make_entry((u64) (handle_interrupt_no_0x20));   // timer
-    idt[0x21] = make_entry((u64) (handle_interrupt_no_0x21));   // keyboard
-    idt[0x2C] = make_entry((u64) (handle_interrupt_no_0x2C));   // mouse
-    idt[0x2E] = make_entry((u64) (handle_interrupt_no_0x2E));   // primary ata bus
-    idt[0x2F] = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata bus
+    idt[Interrupts::Timer]          = make_entry((u64) (handle_interrupt_no_0x20));   // timer
+    idt[Interrupts::Keyboard]       = make_entry((u64) (handle_interrupt_no_0x21));   // keyboard
+    idt[Interrupts::Mouse]          = make_entry((u64) (handle_interrupt_no_0x2C));   // mouse
+    idt[Interrupts::PrimaryAta]     = make_entry((u64) (handle_interrupt_no_0x2E));   // primary ata bus
+    idt[Interrupts::SecondaryAta]   = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata bus
 }
 
 IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {
@@ -164,8 +161,8 @@ void InterruptManager::setup_programmable_interrupt_controllers() {
     pic_slave_cmd.write(0x11);
 
     // setup IRQ BASE
-    pic_master_data.write(IRQ_BASE);
-    pic_slave_data.write(IRQ_BASE + 8);
+    pic_master_data.write(Interrupts::IRQ_BASE);
+    pic_slave_data.write(Interrupts::IRQ_BASE + SLAVE_PIC_IRQ_OFFSET);
 
     // tell master PIC that there is slave PIC at IRQ2 (0000 0100)
     pic_master_data.write(0x04);

@@ -9,6 +9,7 @@
 #define SRC_DRIVERS_DEVICEDRIVER_H_
 
 #include "Port.h"
+#include "InterruptNumbers.h"
 #include "CpuState.h"
 
 namespace drivers {

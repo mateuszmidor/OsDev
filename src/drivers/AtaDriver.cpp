@@ -181,7 +181,7 @@ AtaPrimaryBusDriver::AtaPrimaryBusDriver() :
 }
 
 s16 AtaPrimaryBusDriver::handled_interrupt_no() {
-    return 0x20 + 14; // IRQ_BASE + ...
+    return Interrupts::PrimaryAta;
 }
 
 cpu::CpuState* AtaPrimaryBusDriver::on_interrupt(cpu::CpuState* cpu_state) {
@@ -196,7 +196,7 @@ AtaSecondaryBusDriver::AtaSecondaryBusDriver() :
 }
 
 s16 AtaSecondaryBusDriver::handled_interrupt_no() {
-    return 0x20 + 15; // IRQ_BASE + ...
+    return Interrupts::SecondaryAta;
 }
 
 cpu::CpuState* AtaSecondaryBusDriver::on_interrupt(cpu::CpuState* cpu_state) {

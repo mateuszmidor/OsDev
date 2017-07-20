@@ -26,7 +26,7 @@ void KeyboardDriver::set_on_key_press(const KeyEvent &event) {
 }
 
 s16 KeyboardDriver::handled_interrupt_no() {
-    return 33; // 0x20 offset + 1 (keyboard)
+    return Interrupts::Keyboard;
 }
 
 CpuState* KeyboardDriver::on_interrupt(CpuState* cpu_state) {
