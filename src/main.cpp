@@ -45,7 +45,6 @@ KeyboardScanCodeSet1 scs1;
 auto keyboard = make_shared<KeyboardDriver> (scs1);
 auto mouse = make_shared<MouseDriver>();
 auto timer = make_shared<TimerDriver>();
-auto vga = VgaDriver();
 auto ata_primary_bus = make_shared<AtaPrimaryBusDriver>();
 s16 mouse_x = 360;
 s16 mouse_y = 200;
@@ -75,8 +74,9 @@ void test_kstd(ScreenPrinter &p) {
 }
 
 void on_mouse_move_text(s8 dx, s8 dy) {
-    const u8 CHAR_WIDTH = 720 / vga.screen_width();
-    const u8 CHAR_HEIGHT = 400 / vga.screen_height();
+    auto vga = driver_manager.get_driver<VgaDriver>();
+    const u8 CHAR_WIDTH = 720 / vga->screen_width();
+    const u8 CHAR_HEIGHT = 400 / vga->screen_height();
     printer.swap_fg_bg_at(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
     mouse_x += dx ;
     mouse_y += dy;
@@ -86,17 +86,19 @@ void on_mouse_move_text(s8 dx, s8 dy) {
 
 EgaColor pen_color = EgaColor::LightRed;
 void on_mouse_move_graphics(s8 dx, s8 dy) {
+    auto vga = driver_manager.get_driver<VgaDriver>();
     mouse_x += dx ;
     mouse_y += dy;
     if (mouse_x < 0) mouse_x = 0; if (mouse_y < 0) mouse_y = 0;
-    if (mouse_x > vga.screen_width()) mouse_x = vga.screen_width(); if (mouse_y > vga.screen_height()) mouse_y = vga.screen_height();
+    if (mouse_x > vga->screen_width()) mouse_x = vga->screen_width(); if (mouse_y > vga->screen_height()) mouse_y = vga->screen_height();
 
-    vga.put_pixel(mouse_x, mouse_y, pen_color);
+    vga->put_pixel(mouse_x, mouse_y, pen_color);
 }
 
 void on_mouse_down_text(u8 button) {
-    const u8 CHAR_WIDTH = 720 / vga.screen_width();
-    const u8 CHAR_HEIGHT = 400 / vga.screen_height();
+    auto vga = driver_manager.get_driver<VgaDriver>();
+    const u8 CHAR_WIDTH = 720 / vga->screen_width();
+    const u8 CHAR_HEIGHT = 400 / vga->screen_height();
     printer.move_to(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
 }
 
@@ -155,14 +157,15 @@ CpuState* on_timer_tick(CpuState* cpu_state) {
 
 void vga_demo() {
     // vga demo
+    auto vga = driver_manager.get_driver<VgaDriver>();
     mouse->set_on_move(on_mouse_move_graphics);
     mouse->set_on_down(on_mouse_down_graphics);
-    vga.set_graphics_mode_320_200_256();
+    vga->set_graphics_mode_320_200_256();
     mouse_x = 320 / 2;
     mouse_y = 200 / 2;
-    for (u16 x = 0; x < vga.screen_width(); x++)
-        for (u16 y = 0; y < vga.screen_height(); y++)
-            vga.put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
+    for (u16 x = 0; x < vga->screen_width(); x++)
+        for (u16 y = 0; y < vga->screen_height(); y++)
+            vga->put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
 }
 
 
@@ -216,6 +219,8 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     timer->set_on_tick(on_timer_tick);
 
     // install drivers
+    PCIController pcic;
+    pcic.install_drivers_into(driver_manager);
     driver_manager.install_driver(keyboard);
     driver_manager.install_driver(mouse);
     driver_manager.install_driver(timer);
@@ -232,7 +237,9 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
 
     // prepare the text  mode
-    vga.set_text_mode_90_30();
+    if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
+        vga_drv->set_text_mode_90_30();
+
     printer.clearscreen();
     klog.printer.clear_screen();
 
@@ -251,14 +258,14 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     klog.format("\n");
 
     // print PCI devics
-    PCIController pcic;
-    pcic.select_drivers();
+
+    pcic.drivers_to_klog();
     klog.format("\n");
 
     // inform setup done
     klog.format("KERNEL SETUP DONE.\n");
 
-    auto vga = driver_manager.get_driver<VgaDriver>();
+
 
     // start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));

@@ -33,9 +33,9 @@ public:
     }
 
     template <class DrvType>
-    DeviceDriverPtr get_driver() {
+    std::shared_ptr<DrvType> get_driver() {
         auto interrupt_no = DrvType::handled_interrupt_no();
-        return drivers[interrupt_no];
+        return std::static_pointer_cast<DrvType>(drivers[interrupt_no]);
     }
 
     cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state) const;

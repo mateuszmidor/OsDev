@@ -7,6 +7,7 @@
 
 #include "KernelLog.h"
 #include "PCIController.h"
+#include "VgaDriver.h"
 
 PCIController::PCIController() {
 }
@@ -31,7 +32,7 @@ bool PCIController::device_has_functions(u16 bus, u16 device) {
     return read(bus, device, 0, 0x0E) & (1 << 7);
 }
 
-void PCIController::select_drivers() {
+void PCIController::drivers_to_klog() {
     KernelLog &klog = KernelLog::instance();
 
     for (u8 bus = 0; bus < 8; bus++)
@@ -52,8 +53,52 @@ void PCIController::select_drivers() {
                 klog.format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
                 klog.format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
                 klog.format("DEVICE_NO % % ", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
-                /* DeviceDriver drv = */ get_driver(dev);
+                /* DeviceDriver drv = */ //get_driver(dev);
                 klog.format("\n");
+            }
+        }
+}
+
+void PCIController::enumerate_device_drivers(OnDeviceDriver on_driver) {
+    for (u8 bus = 0; bus < 8; bus++)
+        for (u8 device = 0; device < 32; device++) {
+            u8 num_functions = device_has_functions(bus, device) ? 8 : 1;
+            for (u8 function = 0; function < num_functions; function++) {
+                PCIDeviceDescriptor dev = get_device_descriptor(bus, device, function);
+
+                if (dev.vendor_id == 0x0000 || dev.vendor_id == 0xFFFF) // this means no function
+                    continue;
+
+                for (u8 bar_num = 0; bar_num < 6; bar_num++) {
+                    BaseAddressRegister bar = get_base_address_register(bus, device, function, bar_num);
+                    if (bar.address && (bar.type == BaseAddressRegisterType::InputOutput))
+                        dev.port_base = (u32)(u64)bar.address; // for IO registers, address is port number
+                }
+
+//                if (auto drv = get_driver(dev))
+//                    on_driver(drv);
+            }
+        }
+}
+
+void PCIController::install_drivers_into(drivers::DriverManager& driver_manager) {
+    for (u8 bus = 0; bus < 8; bus++)
+        for (u8 device = 0; device < 32; device++) {
+            u8 num_functions = device_has_functions(bus, device) ? 8 : 1;
+            for (u8 function = 0; function < num_functions; function++) {
+                PCIDeviceDescriptor dev = get_device_descriptor(bus, device, function);
+
+                if (dev.vendor_id == 0x0000 || dev.vendor_id == 0xFFFF) // this means no function
+                    continue;
+
+                for (u8 bar_num = 0; bar_num < 6; bar_num++) {
+                    BaseAddressRegister bar = get_base_address_register(bus, device, function, bar_num);
+                    if (bar.address && (bar.type == BaseAddressRegisterType::InputOutput))
+                        dev.port_base = (u32)(u64)bar.address; // for IO registers, address is port number
+                }
+
+                get_driver(dev, driver_manager);
+
             }
         }
 }
@@ -105,7 +150,7 @@ BaseAddressRegister PCIController::get_base_address_register(u16 bus, u16 device
     return result;
 }
 
-void PCIController::get_driver(PCIDeviceDescriptor &dev) {
+DeviceDriverPtr PCIController::get_driver(PCIDeviceDescriptor &dev, drivers::DriverManager& driver_manager) {
     KernelLog& klog = KernelLog::instance();
 
     switch (dev.vendor_id) {
@@ -126,10 +171,11 @@ void PCIController::get_driver(PCIDeviceDescriptor &dev) {
         switch (dev.subclass_id) {
         case 0x00:  // vga
             klog.format("[Generic VGA]");
+            driver_manager.install_driver(std::make_shared<drivers::VgaDriver>());
             break;
         }
     }
-
+    return {};
 }
 
 u32 PCIController::make_id(u16 bus, u16 device, u16 function, u32 register_offset) {
