@@ -15,7 +15,7 @@
 
 namespace drivers {
 
-using KeyEvent = std::function<void(s8)>;
+using KeyEvent = std::function<void(Key)>;
 
 class KeyboardDriver : public DeviceDriver {
 public:

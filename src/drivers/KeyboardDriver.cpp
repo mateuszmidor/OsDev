@@ -26,7 +26,7 @@ void KeyboardDriver::set_on_key_press(const KeyEvent &event) {
 }
 
 s16 KeyboardDriver::handled_interrupt_no() {
-    return 33;
+    return 33; // 0x20 offset + 1 (keyboard)
 }
 
 CpuState* KeyboardDriver::on_interrupt(CpuState* cpu_state) {
@@ -36,8 +36,9 @@ CpuState* KeyboardDriver::on_interrupt(CpuState* cpu_state) {
 
 void KeyboardDriver::handle_keyboard_interrupt() {
     u8 key_code = keyboard_data_port.read();
-    s8 ascii_key = scan_code_set.code_to_ascii(key_code).c_str()[0];
-    on_key_press(ascii_key);
+    Key key = scan_code_set.push_code(key_code);
+    if (key != Key::INVALID)
+        on_key_press(key);
 }
 
 } /* namespace drivers */

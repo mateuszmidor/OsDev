@@ -92,7 +92,7 @@ template <class T>
 using vector = std::vector<T, Allocator<T>>;
 using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;
 
-string to_str(s64 num);
+string to_str(s64 num, u8 base = 10);
 string to_upper_case(string s);
 void split_key_value(const string &kv, string &key, string &value, char separator);
 unsigned long long hex_to_long(const char* str);

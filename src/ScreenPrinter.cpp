@@ -167,6 +167,9 @@ void ScrollableScreenPrinter::redraw() {
 }
 
 void ScrollableScreenPrinter::clear_screen() {
+    cursor_x = left;
+    cursor_y = top;
+
     for (u16 i = 0; i < printable_area_height; i++)
         put_line("");
 

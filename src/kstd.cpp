@@ -105,8 +105,7 @@ void std::__throw_bad_function_call() {
 namespace kstd {
 
 
-string to_str(s64 num) {
-    u8 base = 10;
+string to_str(s64 num, u8 base) {
     char str[12];
 
     u8 i = 0;
@@ -128,7 +127,7 @@ string to_str(s64 num) {
     while (num != 0)
     {
         int rem = num % base;
-        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+        str[i++] = (rem > 9)? (rem-10) + 'A' : rem + '0';
         num = num/base;
     }
 

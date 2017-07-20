@@ -109,16 +109,42 @@ void on_mouse_down_graphics(u8 button) {
     }
 }
 
-void on_key_press(s8 key) {
-    if (key == '-')
-        klog.printer.scroll_up(1);
-    else
-    if (key == '+')
-        klog.printer.scroll_down(1);
-    else if (key == '*')
-        klog.printer.scroll_to_end();
-    else{
-        char s[2] = {key, '\0'};
+void on_key_press(Key key) {
+    if (key & Key::FUNCTIONAL) {
+        switch (key) {
+        case Key::Up:
+            klog.printer.scroll_up(1);
+            break;
+
+        case Key::Down:
+            klog.printer.scroll_down(1);
+            break;
+
+        case Key::PgUp:
+            klog.printer.scroll_up(4);
+            break;
+
+        case Key::PgDown:
+            klog.printer.scroll_down(4);
+            break;
+
+        case Key::Home:
+            klog.printer.scroll_to_begin();
+            break;
+
+        case Key::End:
+            klog.printer.scroll_to_end();
+            break;
+
+        case Key::Esc:
+            klog.printer.clear_screen();
+            break;
+
+        default:;
+        }
+    }
+    else {
+        char s[2] = {(char)key, '\0'};
         printer.format("%", s);
     }
 }
