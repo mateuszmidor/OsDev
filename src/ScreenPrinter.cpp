@@ -125,9 +125,13 @@ void ScrollableScreenPrinter::putc(const char c) {
 void ScrollableScreenPrinter::putc_into_buffer(const char c) {
     if (c == '\n')
         lines.push_back("");
-    else if (c == '\x08')
-        lines.back().pop_back();
     else
+    if (c == '\x08') {
+        if (!lines.back().empty())
+            lines.back().pop_back();
+        else if (!lines.empty())
+            lines.pop_back();
+    } else
         lines.back() += c;
 
     // enforce text buffer "word" wrap

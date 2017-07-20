@@ -9,12 +9,6 @@
 #include "PCIController.h"
 #include "VgaDriver.h"
 
-PCIController::PCIController() {
-}
-
-PCIController::~PCIController() {
-}
-
 u32 PCIController::read(u16 bus, u16 device, u16 function, u32 register_offset) {
     u32 id = make_id(bus, device, function, register_offset);
     cmd_port.write(id);

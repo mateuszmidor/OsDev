@@ -25,8 +25,9 @@
 #include "PageFaultHandler.h"
 #include "TaskExitHandler.h"
 
-#include "_demos/ata_demo.h"
 #include "_demos/VgaDemo.h"
+#include "_demos/Fat32Demo.h"
+#include "_demos/TerminalDemo.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -93,47 +94,6 @@ void on_mouse_down_text(u8 button) {
     printer.move_to(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
 }
 
-
-void on_key_press(Key key) {
-    if (key & Key::FUNCTIONAL) {
-        switch (key) {
-        case Key::Up:
-            klog.printer.scroll_up(1);
-            break;
-
-        case Key::Down:
-            klog.printer.scroll_down(1);
-            break;
-
-        case Key::PgUp:
-            klog.printer.scroll_up(4);
-            break;
-
-        case Key::PgDown:
-            klog.printer.scroll_down(4);
-            break;
-
-        case Key::Home:
-            klog.printer.scroll_to_begin();
-            break;
-
-        case Key::End:
-            klog.printer.scroll_to_end();
-            break;
-
-        case Key::Esc:
-            klog.printer.clear_screen();
-            break;
-
-        default:;
-        }
-    }
-    else {
-        char s[2] = {(char)key, '\0'};
-        printer.format("%", s);
-    }
-}
-
 CpuState* on_timer_tick(CpuState* cpu_state) {
     return task_manager.schedule(cpu_state);
 }
@@ -164,13 +124,24 @@ void task_print_b() {
     asm("movb $1, (1024*1024*1024)"); // simulate page fault; we only have 1GB mapped
 }
 
-void ata_demo() {
-    demos::ata_demo(ata_primary_bus);
+
+template <class T>
+void make_demo_() {
+    T demo;
+    demo.run();
+    while (true)
+        asm("hlt");
+}
+
+template <class T>
+std::shared_ptr<Task> make_demo(string name) {
+    return make_shared<Task>(make_demo_<T>, name);
 }
 
 void task_init() {
     task_manager.add_task(make_shared<Task>(task_idle, "idle"));
-    task_manager.add_task(make_shared<Task>(ata_demo, "ata_demo"));
+    task_manager.add_task(make_demo<demos::Fat32Demo>("fat32_demo"));
+    task_manager.add_task(make_demo<demos::TerminalDemo>("terminal_demo"));
 //    task_manager.add_task(make_shared<Task>(vga_demo, "vga_demo"));
 //    task_manager.add_task(make_shared<Task>(task_print_A, "A printer"));
 //    task_manager.add_task(make_shared<Task>(task_print_b, "B printer"));
@@ -185,7 +156,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     // configure drivers
-    keyboard->set_on_key_press(on_key_press);
     mouse->set_on_move(on_mouse_move_text);
     mouse->set_on_down(on_mouse_down_text);
     timer->set_on_tick(on_timer_tick);
@@ -213,10 +183,8 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
         vga_drv->set_text_mode_90_30();
 
     printer.clearscreen();
-    klog.printer.clear_screen();
-
     printer.set_bg_color(EgaColor::Blue);
-
+    klog.printer.clear_screen();
 
 
     // print CPU info
@@ -230,7 +198,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     klog.format("\n");
 
     // print PCI devics
-
     pcic.drivers_to_klog();
     klog.format("\n");
 
@@ -238,12 +205,9 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     klog.format("KERNEL SETUP DONE.\n");
 
 
-
     // start multitasking
-    //task_manager.add_task(make_shared<Task>(task_init, "init"));
+    task_manager.add_task(make_shared<Task>(task_init, "init"));
 
-    demos::VgaDemo vga_demo;
-    vga_demo.run();
     
     // wait until timer interrupt switches execution to init task
     while (true)

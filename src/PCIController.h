@@ -49,9 +49,6 @@ using OnDeviceDriver = std::function<void(DeviceDriverPtr)>;
 
 class PCIController {
 public:
-    PCIController();
-    virtual ~PCIController();
-
     u32 read(u16 bus, u16 device, u16 function, u32 register_offset);
     void write(u16 bus, u16 device, u16 function, u32 register_offset, u32 value);
     bool device_has_functions(u16 bus, u16 device);

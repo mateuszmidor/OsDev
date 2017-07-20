@@ -1,15 +1,15 @@
-/**
- *   @file: ata_demo.cpp
+/*
+ * Fat32Demo.cpp
  *
- *   @date: Jul 19, 2017
- * @author: Mateusz Midor
+ *  Created on: Jul 20, 2017
+ *      Author: mateusz
  */
 
-
-#include "ata_demo.h"
-#include "kstd.h"
-#include "KernelLog.h"
+#include "Fat32Demo.h"
+#include "VolumeFat32.h"
 #include "MassStorageMsDos.h"
+#include "KernelLog.h"
+#include "DriverManager.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -17,9 +17,31 @@ using namespace filesystem;
 
 namespace demos {
 
-static KernelLog& klog = KernelLog::instance();
+Fat32Demo::Fat32Demo() : klog(KernelLog::instance()) {
+}
 
-void print_volume_info(VolumeFat32& v) {
+void Fat32Demo::run() {
+    auto& driver_manager = DriverManager::instance();
+    auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
+    if (!ata_primary_bus) {
+        klog.format("Fat32Demo::run: no AtaPrimaryBusDriver\n");
+        return;
+    }
+
+    if (ata_primary_bus->master_hdd.is_present()) {
+        klog.format("ATA Primary Master: present\n");
+        print_hdd_info(ata_primary_bus->master_hdd);
+    } else
+        klog.format("ATA Primary Master: not present\n");
+
+    if (ata_primary_bus->slave_hdd.is_present()) {
+        klog.format("ATA Primary Slave: present\n");
+        print_hdd_info(ata_primary_bus->slave_hdd);
+    } else
+        klog.format("ATA Primary Slave: not present\n");
+}
+
+void Fat32Demo::print_volume_info(VolumeFat32& v) {
     klog.format("Label: %, Type: %, Size: %MB, Used: % clusters\n",
                 v.get_label(),
                 v.get_type(),
@@ -27,7 +49,7 @@ void print_volume_info(VolumeFat32& v) {
                 v.get_used_space_in_clusters());
 }
 
-void print_file(VolumeFat32& v, string filename) {
+void Fat32Demo::print_file(VolumeFat32& v, string filename) {
     SimpleDentryFat32 file;
     if (!v.get_entry(filename, file)) {
         klog.format("File % not found\n", filename);
@@ -59,8 +81,7 @@ static const char* INDENTS[] = {
         "                ",
         "                  "};
 
-using OnTreeEntryFound = std::function<bool(const SimpleDentryFat32&, u8)>;
-void traverse_tree(VolumeFat32& v, const SimpleDentryFat32& entry, u8 level, const OnTreeEntryFound& user_on_entry) {
+void Fat32Demo::traverse_tree(VolumeFat32& v, const SimpleDentryFat32& entry, u8 level, const OnTreeEntryFound& user_on_entry) {
     OnEntryFound on_entry = [&](const SimpleDentryFat32& e) -> bool {
         user_on_entry(e, level);
         if (e.is_directory && e.name != "." && e.name != "..")
@@ -72,12 +93,7 @@ void traverse_tree(VolumeFat32& v, const SimpleDentryFat32& entry, u8 level, con
     v.enumerate_directory_entry(entry, on_entry);
 }
 
-void print_tree_(VolumeFat32& v, const SimpleDentryFat32& e) {
-
-
-}
-
-void print_tree(VolumeFat32& v, string path) {
+void Fat32Demo::print_tree(VolumeFat32& v, string path) {
     SimpleDentryFat32 directory;
     v.get_entry(path, directory);
 
@@ -106,19 +122,19 @@ void print_tree(VolumeFat32& v, string path) {
 }
 
 
-void delete_tree_but(VolumeFat32& v, string root, string but) {
-    SimpleDentryFat32 directory;
-    v.get_entry(root, directory);
+//void delete_tree_but(VolumeFat32& v, string root, string but) {
+//    SimpleDentryFat32 directory;
+//    v.get_entry(root, directory);
+//
+//    auto on_entry = [&](const SimpleDentryFat32& e, u8 level) -> bool {
+//        v.delete_entry(e.name);
+//        return true;
+//    };
+//
+//    traverse_tree(v, directory, 1, on_entry);
+//}
 
-    auto on_entry = [&](const SimpleDentryFat32& e, u8 level) -> bool {
-        v.delete_entry(e.name);
-        return true;
-    };
-
-    traverse_tree(v, directory, 1, on_entry);
-}
-
-void print_hdd_info(AtaDevice& hdd) {
+void Fat32Demo::print_hdd_info(AtaDevice& hdd) {
     if (!MassStorageMsDos::verify(hdd)) {
         klog.format("Not MBR formatted device\n");
         return;
@@ -182,18 +198,4 @@ void print_hdd_info(AtaDevice& hdd) {
 //    }
 }
 
-void ata_demo(std::shared_ptr<AtaPrimaryBusDriver> ata_primary_bus) {
-    if (ata_primary_bus->master_hdd.is_present()) {
-        klog.format("ATA Primary Master: present\n");
-        print_hdd_info(ata_primary_bus->master_hdd);
-    } else
-        klog.format("ATA Primary Master: not present\n");
-
-    if (ata_primary_bus->slave_hdd.is_present()) {
-        klog.format("ATA Primary Slave: present\n");
-        print_hdd_info(ata_primary_bus->slave_hdd);
-    } else
-        klog.format("ATA Primary Slave: not present\n");
-}
-
-} // namespace demos
+} /* namespace demos */
