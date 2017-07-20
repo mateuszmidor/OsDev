@@ -9,10 +9,4 @@
 
 namespace drivers {
 
-DeviceDriver::DeviceDriver() {
-}
-
-DeviceDriver::~DeviceDriver() {
-}
-
 } /* namespace drivers */

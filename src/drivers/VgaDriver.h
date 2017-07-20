@@ -35,7 +35,7 @@ enum EgaColor : u8 {
 
 class VgaDriver : public DeviceDriver {
 public:
-    s16 handled_interrupt_no() override;
+    static s16 handled_interrupt_no();
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
 
     void set_text_mode_90_30();

@@ -23,7 +23,7 @@ public:
     virtual ~KeyboardDriver();
     void set_on_key_press(const KeyEvent &event);
 
-    s16 handled_interrupt_no() override;
+    static s16 handled_interrupt_no();
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
 
 private:

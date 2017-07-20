@@ -221,6 +221,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(timer);
     driver_manager.install_driver(ata_primary_bus);
 
+
     // install exceptions
     exception_manager.install_handler(make_shared<TaskExitHandler>());
     exception_manager.install_handler(make_shared<PageFaultHandler>());
@@ -257,6 +258,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // inform setup done
     klog.format("KERNEL SETUP DONE.\n");
 
+    auto vga = driver_manager.get_driver<VgaDriver>();
 
     // start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));

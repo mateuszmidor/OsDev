@@ -18,7 +18,7 @@ UnhandledDeviceDriver::UnhandledDeviceDriver(u8 interrupt_no) : interrupt_no(int
 }
 
 s16 UnhandledDeviceDriver::handled_interrupt_no() {
-    return interrupt_no;
+    return Interrupts::IRQ_MAX; // invalid interrupt no
 }
 
 cpu::CpuState* UnhandledDeviceDriver::on_interrupt(cpu::CpuState* cpu_state) {

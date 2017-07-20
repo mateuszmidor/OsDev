@@ -27,7 +27,7 @@ public:
     MouseDriver();
     virtual ~MouseDriver();
 
-    s16 handled_interrupt_no() override;
+    static s16 handled_interrupt_no();
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
 
     void set_on_move(const MouseMoveEvent &event);

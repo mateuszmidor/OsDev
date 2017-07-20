@@ -56,7 +56,7 @@ private:
 class AtaPrimaryBusDriver : public DeviceDriver {
 public:
     AtaPrimaryBusDriver();
-    s16 handled_interrupt_no() override;
+    static s16 handled_interrupt_no();
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
     AtaDevice master_hdd;
     AtaDevice slave_hdd;
@@ -65,7 +65,7 @@ public:
 class AtaSecondaryBusDriver : public DeviceDriver {
 public:
     AtaSecondaryBusDriver();
-    s16 handled_interrupt_no() override;
+    static s16 handled_interrupt_no();
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
     AtaDevice master_hdd;
     AtaDevice slave_hdd;

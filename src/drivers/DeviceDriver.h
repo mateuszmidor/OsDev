@@ -16,11 +16,11 @@ namespace drivers {
 
 class DeviceDriver {
 public:
-    DeviceDriver();
-    virtual ~DeviceDriver();
+    DeviceDriver() {}
+    virtual ~DeviceDriver() {}
 
-    // number of interrupt in idt that this driver handles
-    virtual s16 handled_interrupt_no() = 0;
+    // DeviceDriver descendants must implement following static function:
+    // static s16 handled_interrupt_no();
 
     // if no task switching to be done, we should just return cpu_state
     virtual cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) = 0;

@@ -20,7 +20,7 @@ using TimerEvent = std::function<cpu::CpuState*(cpu::CpuState* cpu_state)>;
  */
 class TimerDriver: public DeviceDriver {
 public:
-    s16 handled_interrupt_no() override;
+    static s16 handled_interrupt_no();
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
     void set_on_tick(const TimerEvent &event);
 

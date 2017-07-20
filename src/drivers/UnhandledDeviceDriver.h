@@ -16,7 +16,7 @@ class UnhandledDeviceDriver: public DeviceDriver {
 public:
     UnhandledDeviceDriver(u8 interrupt_no);
     ~UnhandledDeviceDriver() override {}
-    s16 handled_interrupt_no() override;
+    static s16 handled_interrupt_no();
     cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
 
 private:

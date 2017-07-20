@@ -26,11 +26,6 @@ DriverManager::DriverManager() {
         drivers[i] = std::make_shared<UnhandledDeviceDriver>(i);
 }
 
-void DriverManager::install_driver(DeviceDriverPtr drv) {
-    auto interrupt_no = drv->handled_interrupt_no();
-    drivers[interrupt_no] = drv;
-}
-
 CpuState* DriverManager::on_interrupt(u8 interrupt_no, CpuState* cpu_state) const {
     return drivers[interrupt_no]->on_interrupt(cpu_state);
 }

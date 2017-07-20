@@ -25,7 +25,19 @@ public:
     DriverManager operator=(DriverManager&&) = delete;
 
     virtual ~DriverManager();
-    void install_driver(DeviceDriverPtr drv);
+
+    template <class DrvType>
+    void install_driver(std::shared_ptr<DrvType> drv) {
+        auto interrupt_no = DrvType::handled_interrupt_no();
+        drivers[interrupt_no] = drv;
+    }
+
+    template <class DrvType>
+    DeviceDriverPtr get_driver() {
+        auto interrupt_no = DrvType::handled_interrupt_no();
+        return drivers[interrupt_no];
+    }
+
     cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state) const;
 
 private:
