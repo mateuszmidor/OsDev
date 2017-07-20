@@ -26,6 +26,7 @@
 #include "TaskExitHandler.h"
 
 #include "_demos/ata_demo.h"
+#include "_demos/VgaDemo.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -84,16 +85,6 @@ void on_mouse_move_text(s8 dx, s8 dy) {
     printer.swap_fg_bg_at(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
 }
 
-EgaColor pen_color = EgaColor::LightRed;
-void on_mouse_move_graphics(s8 dx, s8 dy) {
-    auto vga = driver_manager.get_driver<VgaDriver>();
-    mouse_x += dx ;
-    mouse_y += dy;
-    if (mouse_x < 0) mouse_x = 0; if (mouse_y < 0) mouse_y = 0;
-    if (mouse_x > vga->screen_width()) mouse_x = vga->screen_width(); if (mouse_y > vga->screen_height()) mouse_y = vga->screen_height();
-
-    vga->put_pixel(mouse_x, mouse_y, pen_color);
-}
 
 void on_mouse_down_text(u8 button) {
     auto vga = driver_manager.get_driver<VgaDriver>();
@@ -102,14 +93,6 @@ void on_mouse_down_text(u8 button) {
     printer.move_to(mouse_x / CHAR_WIDTH, mouse_y / CHAR_HEIGHT);
 }
 
-void on_mouse_down_graphics(u8 button) {
-    switch (button) {
-    default:
-    case MouseButton::LEFT:    pen_color = EgaColor::LightRed; break;
-    case MouseButton::RIGHT:   pen_color = EgaColor::LightGreen; break;
-    case MouseButton::MIDDLE:  pen_color = EgaColor::LightBlue; break;
-    }
-}
 
 void on_key_press(Key key) {
     if (key & Key::FUNCTIONAL) {
@@ -155,18 +138,7 @@ CpuState* on_timer_tick(CpuState* cpu_state) {
     return task_manager.schedule(cpu_state);
 }
 
-void vga_demo() {
-    // vga demo
-    auto vga = driver_manager.get_driver<VgaDriver>();
-    mouse->set_on_move(on_mouse_move_graphics);
-    mouse->set_on_down(on_mouse_down_graphics);
-    vga->set_graphics_mode_320_200_256();
-    mouse_x = 320 / 2;
-    mouse_y = 200 / 2;
-    for (u16 x = 0; x < vga->screen_width(); x++)
-        for (u16 y = 0; y < vga->screen_height(); y++)
-            vga->put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
-}
+
 
 
 
@@ -268,7 +240,10 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
 
     // start multitasking
-    task_manager.add_task(make_shared<Task>(task_init, "init"));
+    //task_manager.add_task(make_shared<Task>(task_init, "init"));
+
+    demos::VgaDemo vga_demo;
+    vga_demo.run();
     
     // wait until timer interrupt switches execution to init task
     while (true)
