@@ -12,6 +12,8 @@
 
 enum Interrupts : u16 {
     EXC_BASE        = 0x00,             // cpu exceptions start here
+    PageFault       = EXC_BASE + 14,
+    TaskExit        = EXC_BASE + 15,    // exception 15 is reserved, but we temporarily use it for signaling task exit
     EXC_MAX         = 0x20,             // cpu exception count
 
     IRQ_BASE        = 0x20,             // hw interrupts start here; IRQ_BASE is defined in interrupts.S

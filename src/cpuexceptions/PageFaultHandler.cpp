@@ -13,7 +13,7 @@ using cpu::CpuState;
 namespace cpuexceptions {
 
 s16 PageFaultHandler::handled_exception_no() {
-    return 14;
+    return Interrupts::PageFault;
 }
 
 /**

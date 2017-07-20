@@ -9,6 +9,7 @@
 #define SRC_CPUEXCEPTIONS_EXCEPTIONHANDLER_H_
 
 #include "CpuState.h"
+#include "InterruptNumbers.h"
 
 namespace cpuexceptions {
 

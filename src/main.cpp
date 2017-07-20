@@ -22,8 +22,8 @@
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
 #include "TaskManager.h"
-#include "Int15Handler.h"
 #include "PageFaultHandler.h"
+#include "TaskExitHandler.h"
 
 #include "_demos/ata_demo.h"
 
@@ -222,7 +222,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(ata_primary_bus);
 
     // install exceptions
-    exception_manager.install_handler(make_shared<Int15Handler>());
+    exception_manager.install_handler(make_shared<TaskExitHandler>());
     exception_manager.install_handler(make_shared<PageFaultHandler>());
 
     // configure Interrupt Descriptor Table
