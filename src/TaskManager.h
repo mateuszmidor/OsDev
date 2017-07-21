@@ -17,6 +17,7 @@ using TaskEntryPoint = void (*)();
 struct Task {
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask");
     static void idle();
+    static void yield();
     static void exit();
 
     kstd::string name;

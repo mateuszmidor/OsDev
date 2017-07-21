@@ -37,7 +37,11 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name) : name(name) {
 
 void Task::idle() {
     while (true)
-        asm("hlt");
+        yield();
+}
+
+void Task::yield() {
+    asm("hlt");
 }
 
 void Task::exit() {
