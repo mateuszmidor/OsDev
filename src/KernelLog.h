@@ -8,12 +8,12 @@
 #ifndef SRC_KERNELLOG_H_
 #define SRC_KERNELLOG_H_
 
-#include "ScreenPrinter.h"
+#include "kstd.h"
 
 class KernelLog {
 public:
     static KernelLog& instance();
-    ScrollableScreenPrinter printer;
+    const kstd::string& get_text() const;
 
     /**
      * @name    format
@@ -21,13 +21,13 @@ public:
      */
     template<typename ... Args>
     void format(char const *fmt, Args ... args) {
-        printer.format(fmt, args...);
+        log_str += kstd::format(fmt, args...);
     }
 
 private:
     KernelLog();
     static KernelLog _instance;
-
+    kstd::string log_str;
 };
 
 #endif /* SRC_KERNELLOG_H_ */

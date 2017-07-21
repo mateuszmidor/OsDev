@@ -210,4 +210,16 @@ string extract_file_directory(const string& filename) {
     return filename.substr(0, pivot+1);
 }
 
+string format(const string& fmt) {
+    return fmt;
+}
+
+string format(s64 num) {
+    return format(kstd::to_str(num));
+}
+
+string format(char const *fmt) {
+    return string(fmt);
+}
+
 } // namespace kstd

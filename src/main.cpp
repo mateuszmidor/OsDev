@@ -98,7 +98,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 6. ready to run custom code
 
     // inform kernel is ready
-    klog.printer.clear_screen();
     klog.format("KERNEL SETUP DONE.\n");
 
     // print CPU info
@@ -114,7 +113,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // print PCI devics
     pcic.drivers_to_klog();
     klog.format("\n");
-
 
     // start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));

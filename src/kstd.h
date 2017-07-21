@@ -174,6 +174,31 @@ C split_string(const string& s, char delimiter)
     return result;
 }
 
+
+
+string format(const string& fmt);
+
+string format(s64 num);
+
+string format(char const *fmt);
+
+template<typename Head, typename ... Tail>
+string format(char const *fmt, Head head, Tail ... tail) {
+
+    string result;
+    while (*fmt) {
+        if (*fmt == '%') {
+            result += format(head);
+            result += format(++fmt, tail...);
+            break;
+        } else
+            result += (*fmt++);
+    }
+
+    return result;
+}
+
+
 }; // namespace kstd
 
 #endif /* SRC_KSTD_H_ */
