@@ -9,8 +9,7 @@
 
 KernelLog KernelLog::_instance;
 
-KernelLog::KernelLog() :
-        printer(90, 30) {
+KernelLog::KernelLog() {
 }
 
 KernelLog& KernelLog::instance() {

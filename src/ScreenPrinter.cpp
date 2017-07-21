@@ -6,18 +6,31 @@
  */
 
 #include "ScreenPrinter.h"
+#include "KernelLog.h"
+#include "DriverManager.h"
 
-BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom, u16 vga_width, u16 vga_height) :
-    left(left), top(top), right(right), bottom(bottom), vga_width(vga_width), vga_height(vga_height), cursor_x(left), cursor_y(top) {
+using namespace drivers;
+
+
+BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
+    left(left), top(top), right(right), bottom(bottom), cursor_x(left), cursor_y(top) {
+
     printable_area_width = right - left + 1;  // +1 because if right=1 and left=0 it makes 2 columns
     printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
 }
 
 VgaCharacter& BoundedAreaScreenPrinter::at(u16 x, u16 y) {
-    if ((x >= vga_width) || (y >= vga_height))
-        return vga[0];
+    static VgaCharacter null;
 
-    return vga[y * vga_width + x];
+    if (!vga) {
+        auto& driver_manager = DriverManager::instance();
+        vga = driver_manager.get_driver<VgaDriver>();
+    }
+
+    if (vga)
+        return vga->at(x, y);
+    else
+        return null;
 }
 
 void BoundedAreaScreenPrinter::putc(const char c) {
@@ -69,8 +82,8 @@ void BoundedAreaScreenPrinter::backspace() {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-ScrollableScreenPrinter::ScrollableScreenPrinter(u16 vga_width, u16 vga_height) :
-        BoundedAreaScreenPrinter(0, 0, vga_width-2, vga_height-1, vga_width, vga_height) {
+ScrollableScreenPrinter::ScrollableScreenPrinter() :
+        BoundedAreaScreenPrinter(0, 0, 88, 29) {
 
     // add first, empty line to the buffer
     lines.push_back("");

@@ -29,7 +29,6 @@ void TerminalDemo::run() {
         return;
     }
 
-    printer = std::unique_ptr<ScrollableScreenPrinter>(new ScrollableScreenPrinter(vga->screen_width(), vga->screen_height()));
     keyboard->set_on_key_press([&](Key key) { on_key_press(key); });
 }
 
@@ -37,31 +36,31 @@ void TerminalDemo::on_key_press(Key key) {
     if (key & Key::FUNCTIONAL) {
         switch (key) {
         case Key::Up:
-            printer->scroll_up(1);
+            printer.scroll_up(1);
             break;
 
         case Key::Down:
-            printer->scroll_down(1);
+            printer.scroll_down(1);
             break;
 
         case Key::PgUp:
-            printer->scroll_up(4);
+            printer.scroll_up(4);
             break;
 
         case Key::PgDown:
-            printer->scroll_down(4);
+            printer.scroll_down(4);
             break;
 
         case Key::Home:
-            printer->scroll_to_begin();
+            printer.scroll_to_begin();
             break;
 
         case Key::End:
-            printer->scroll_to_end();
+            printer.scroll_to_end();
             break;
 
         case Key::Esc:
-            printer->clear_screen();
+            printer.clear_screen();
             break;
 
         default:;
@@ -69,7 +68,7 @@ void TerminalDemo::on_key_press(Key key) {
     }
     else {
         char s[2] = {(char)key, '\0'};
-        printer->format("%", s);
+        printer.format("%", s);
     }
 }
 } /* namespace demos */

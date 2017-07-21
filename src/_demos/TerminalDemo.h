@@ -8,7 +8,6 @@
 #ifndef SRC__DEMOS_TERMINALDEMO_H_
 #define SRC__DEMOS_TERMINALDEMO_H_
 
-#include <memory>
 #include "ScreenPrinter.h"
 #include "KeyboardDriver.h"
 
@@ -20,7 +19,7 @@ public:
 
 private:
     void on_key_press(drivers::Key key);
-    std::unique_ptr<ScrollableScreenPrinter> printer;
+    ScrollableScreenPrinter printer;
 };
 
 } /* namespace demos */

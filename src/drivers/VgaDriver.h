@@ -33,6 +33,15 @@ enum EgaColor : u8 {
     White      = 15
 };
 
+/**
+ * This is the structure describing single character in VGA buffer
+ */
+struct VgaCharacter {
+    s8      character;
+    u8      fg_color    : 4;
+    u8      bg_color    : 4;
+};
+
 class VgaDriver : public DeviceDriver {
 public:
     static s16 handled_interrupt_no();
@@ -41,6 +50,7 @@ public:
     void set_text_mode_90_30();
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
+    VgaCharacter& at(u16 x, u16 y) const;
     u16 screen_width() const;
     u16 screen_height() const;
 
@@ -48,8 +58,9 @@ private:
     void write_registers(u8* registers) const;
     u8* get_framebuffer_segment() const;
 
-    u16 width   {80};  // in characters (text mode)
-    u16 height  {25};  // in characters (text mode)
+    VgaCharacter* const vga                     {(VgaCharacter*)0xb8000};
+    u16 width                                   {80};  // in characters (text mode)
+    u16 height                                  {25};  // in characters (text mode)
     Port8bit misc_port                          {0x3C2};
     Port8bit crtc_index_port                    {0x3D4};
     Port8bit crtc_data_port                     {0x3D5};

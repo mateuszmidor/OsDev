@@ -151,7 +151,7 @@ DeviceDriverPtr PCIController::get_driver(PCIDeviceDescriptor &dev, drivers::Dri
     case 0x1022:    // AMD
         switch (dev.device_id) {
         case 0x2000:    // am79c973 network chip
-            klog.format("[AMD am79c973]");
+            //klog.format("[AMD am79c973]");
             break;
         }
         break;
@@ -164,7 +164,7 @@ DeviceDriverPtr PCIController::get_driver(PCIDeviceDescriptor &dev, drivers::Dri
     case 0x03:  // graphics
         switch (dev.subclass_id) {
         case 0x00:  // vga
-            klog.format("[Generic VGA]");
+            //klog.format("[Generic VGA]");
             driver_manager.install_driver(std::make_shared<drivers::VgaDriver>());
             break;
         }

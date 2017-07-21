@@ -80,6 +80,13 @@ void VgaDriver::put_pixel(u16 x, u16 y, u8 color_index) const {
     *ptr = color_index;
 }
 
+VgaCharacter& VgaDriver::at(u16 x, u16 y) const {
+    if ((x >= width) || (y >= height))
+        return vga[0];
+
+    return vga[y * width + x];
+}
+
 /**
  * screen_width
  * @return  Num columns (text mode), num pixels (graphics mode)
