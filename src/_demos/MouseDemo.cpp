@@ -31,6 +31,10 @@ void MouseDemo::run() {
 
     mouse->set_on_move([&](s8 dx, s8 dy) { on_mouse_move(dx, dy); });
     mouse->set_on_down([&](u8 button) { on_mouse_down(button); });
+
+    // keep task alive
+    while (true)
+        asm("hlt");
 }
 
 void MouseDemo::on_mouse_down(u8 button) {

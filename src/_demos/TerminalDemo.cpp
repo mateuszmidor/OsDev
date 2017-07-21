@@ -30,6 +30,10 @@ void TerminalDemo::run() {
     }
 
     keyboard->set_on_key_press([&](Key key) { on_key_press(key); });
+
+    // keep task alive
+    while (true)
+        asm("hlt");
 }
 
 void TerminalDemo::on_key_press(Key key) {

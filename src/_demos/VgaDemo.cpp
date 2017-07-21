@@ -39,6 +39,10 @@ void VgaDemo::run() {
     for (u16 x = 0; x < vga->screen_width(); x++)
         for (u16 y = 0; y < vga->screen_height(); y++)
             vga->put_pixel(x, y, (x > 315 || x < 4 || y > 195 || y < 4) ? EgaColor::LightGreen : EgaColor::Black); // 4 pixels thick frame around the screen
+
+    // keep task alive
+    while (true)
+        asm("hlt");
 }
 
 void VgaDemo::on_mouse_down(u8 button) {
