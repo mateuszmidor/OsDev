@@ -41,7 +41,7 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     basic_code_key[0x19] = (Key)'p';
     basic_code_key[0x1A] = (Key)'[';
     basic_code_key[0x1B] = (Key)']';
-    basic_code_key[0x1C] = (Key)'\n';
+    basic_code_key[0x1C] = Key::Enter;
     basic_code_key[0x1D] = Key::LCtrl;
     basic_code_key[0x1E] = (Key)'a';
     basic_code_key[0x1F] = (Key)'s';
@@ -131,7 +131,7 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     basic_shift_code_key[0x19] = (Key)'P';
     basic_shift_code_key[0x1A] = (Key)'{';
     basic_shift_code_key[0x1B] = (Key)'}';
-    basic_shift_code_key[0x1C] = (Key)'\n';
+    basic_shift_code_key[0x1C] = Key::Enter;
     basic_shift_code_key[0x1D] = Key::LCtrl;
     basic_shift_code_key[0x1E] = (Key)'A';
     basic_shift_code_key[0x1F] = (Key)'S';
@@ -194,7 +194,7 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     for (auto& e : extended_code_key)
         e = Key::INVALID;
 
-    extended_code_key[0x1C] = (Key)'\n';
+    extended_code_key[0x1C] = Key::Enter;
     extended_code_key[0x35] = (Key)'/';
     extended_code_key[0x47] = Key::Home;
     extended_code_key[0x4F] = Key::End;
