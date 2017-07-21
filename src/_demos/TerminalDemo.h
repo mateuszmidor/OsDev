@@ -18,8 +18,17 @@ public:
     void run();
 
 private:
+    bool init();
     void on_key_press(drivers::Key key);
+    void process_key(drivers::Key key);
+    kstd::string get_line();
+    drivers::Key get_key();
+
+    void process_cmd(const kstd::string& cmd);
+    void print_klog();
+
     ScrollableScreenPrinter printer;
+    drivers::Key last_key = drivers::Key::INVALID;
 };
 
 } /* namespace demos */
