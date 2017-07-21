@@ -16,6 +16,9 @@
 using TaskEntryPoint = void (*)();
 struct Task {
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask");
+    static void idle();
+    static void exit();
+
     kstd::string name;
     u8  stack[2*4096];
     cpu::CpuState* cpu_state;
@@ -32,7 +35,7 @@ public:
     TaskManager operator=(const TaskManager&) = delete;
     TaskManager operator=(TaskManager&&) = delete;
 
-    static void on_task_exit();
+    static void on_task_finished();
     bool add_task(TaskPtr task);
     TaskPtr get_current_task() const;
     cpu::CpuState* schedule(cpu::CpuState* cpu_state);

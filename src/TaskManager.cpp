@@ -28,16 +28,25 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name) : name(name) {
 
     // prepare task epilogue ie. where to return from task function
     TaskEpilogue* task_epilogue = (TaskEpilogue*)(STACK_END - sizeof(TaskEpilogue));
-    new (task_epilogue) TaskEpilogue {(u64)TaskManager::on_task_exit};
+    new (task_epilogue) TaskEpilogue {(u64)TaskManager::on_task_finished};
 
     // prepare task cpu state to setup cpu register with
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
     new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue};
 }
 
-void TaskManager::on_task_exit() {
-    // int 15 is handled by Int15Handler that simply calls TaskManager::kill_current_task()
+void Task::idle() {
+    while (true)
+        asm("hlt");
+}
+
+void Task::exit() {
+    // int 15 is handled by TaskExitHandler that simply calls TaskManager::kill_current_task()
     asm("int $15");
+}
+
+void TaskManager::on_task_finished() {
+    Task::exit();
 }
 
 bool TaskManager::add_task(TaskPtr task) {
