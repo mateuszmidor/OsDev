@@ -30,6 +30,7 @@
 #include "_demos/Fat32Demo.h"
 #include "_demos/MouseDemo.h"
 #include "_demos/TerminalDemo.h"
+#include "_demos/MultitaskingDemo.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -46,10 +47,10 @@ ExceptionManager& exception_manager = ExceptionManager::instance();
 InterruptManager& interrupt_manager = InterruptManager::instance();
 
 KeyboardScanCodeSet1 scs1;
-auto keyboard = make_shared<KeyboardDriver> (scs1);
-auto mouse = make_shared<MouseDriver>();
-auto timer = make_shared<TimerDriver>();
-auto ata_primary_bus = make_shared<AtaPrimaryBusDriver>();
+auto keyboard           = make_shared<KeyboardDriver> (scs1);
+auto mouse              = make_shared<MouseDriver>();
+auto timer              = make_shared<TimerDriver>();
+auto ata_primary_bus    = make_shared<AtaPrimaryBusDriver>();
 
 
 /**
@@ -57,9 +58,11 @@ auto ata_primary_bus = make_shared<AtaPrimaryBusDriver>();
  */
 void task_init() {
     task_manager.add_task(make_shared<Task>(Task::idle, "idle"));
-    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(Demo::make_demo<TerminalDemo>("terminal_demo"));
-    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));
+    task_manager.add_task(Demo::make_demo<MultitaskingDemoA>("multitasking_a_demo"));
+    task_manager.add_task(Demo::make_demo<MultitaskingDemoB>("multitasking_b_demo"));
+//    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
+//    task_manager.add_task(Demo::make_demo<TerminalDemo>("terminal_demo"));
+//    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
 }
 
@@ -72,6 +75,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     // 1. prepare drivers
+    timer->set_hz(100);
     timer->set_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
 
     // 2. install drivers
