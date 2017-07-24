@@ -7,7 +7,7 @@
 
 #include "VgaDriver.h"
 
-using namespace cpu;
+using namespace hardware;
 namespace drivers {
 
 s16 VgaDriver::handled_interrupt_no() {

@@ -15,6 +15,8 @@
 #include "CpuState.h"
 #include "InterruptNumbers.h"
 
+namespace hardware {
+
 /**
  * Interrupt Descriptor Table Entry Options
  */
@@ -60,8 +62,8 @@ struct IdtSizeAddress {
     u64 address;
 } __attribute__((packed)) ;
 
-using InterruptHandler = std::function<cpu::CpuState*(u8 interrupt_no, cpu::CpuState* cpu_state)>;
-using ExceptionHandler = std::function<cpu::CpuState*(u8 exception_no, cpu::CpuState* cpu_state)>;
+using InterruptHandler = std::function<hardware::CpuState*(u8 interrupt_no, hardware::CpuState* cpu_state)>;
+using ExceptionHandler = std::function<hardware::CpuState*(u8 exception_no, hardware::CpuState* cpu_state)>;
 
 class InterruptManager {
 public:
@@ -75,11 +77,11 @@ public:
 
 private:
     static InterruptManager _instance;
-    Port8bitSlow pic_master_cmd  {0x20};
-    Port8bitSlow pic_slave_cmd   {0xA0};
+    hardware::Port8bitSlow pic_master_cmd  {0x20};
+    hardware::Port8bitSlow pic_slave_cmd   {0xA0};
 
     InterruptManager() {}
-    static cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state);
+    static hardware::CpuState* on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state);
     void ack_interrupt_handled(u8 interrupt_no);
     void config_interrupts();
     void setup_interrupt_descriptor_table();
@@ -88,10 +90,10 @@ private:
     void install_interrupt_descriptor_table();
 
     std::array<IdtEntry, Interrupts::IRQ_MAX> idt;
-    InterruptHandler interrupt_handler = [](u8, cpu::CpuState* state) { return state; };
-    ExceptionHandler exception_handler = [](u8, cpu::CpuState* state) { return state; };
+    InterruptHandler interrupt_handler = [](u8, hardware::CpuState* state) { return state; };
+    ExceptionHandler exception_handler = [](u8, hardware::CpuState* state) { return state; };
 
     static const u8 SLAVE_PIC_IRQ_OFFSET = 8;
 };
-
+}   // namespace hardware
 #endif /* SRC_INTERRUPTMANAGER_H_ */

@@ -8,6 +8,8 @@
 #include "AtaDriver.h"
 #include "KernelLog.h"
 
+using utils::KernelLog;
+
 namespace drivers {
 
 AtaDevice::AtaDevice(u16 port_base, bool is_master) :
@@ -23,7 +25,7 @@ AtaDevice::AtaDevice(u16 port_base, bool is_master) :
         control_port(port_base + 0x206) {
 }
 
-cpu::CpuState* AtaDevice::on_interrupt(cpu::CpuState* cpu_state) {
+hardware::CpuState* AtaDevice::on_interrupt(hardware::CpuState* cpu_state) {
     // TODO: implement irq driven operation instead of polling
     return cpu_state;
 }
@@ -181,10 +183,10 @@ AtaPrimaryBusDriver::AtaPrimaryBusDriver() :
 }
 
 s16 AtaPrimaryBusDriver::handled_interrupt_no() {
-    return Interrupts::PrimaryAta;
+    return hardware::Interrupts::PrimaryAta;
 }
 
-cpu::CpuState* AtaPrimaryBusDriver::on_interrupt(cpu::CpuState* cpu_state) {
+hardware::CpuState* AtaPrimaryBusDriver::on_interrupt(hardware::CpuState* cpu_state) {
     master_hdd.on_interrupt(cpu_state);
     slave_hdd.on_interrupt(cpu_state);
     return cpu_state; // no task switching here
@@ -196,10 +198,10 @@ AtaSecondaryBusDriver::AtaSecondaryBusDriver() :
 }
 
 s16 AtaSecondaryBusDriver::handled_interrupt_no() {
-    return Interrupts::SecondaryAta;
+    return hardware::Interrupts::SecondaryAta;
 }
 
-cpu::CpuState* AtaSecondaryBusDriver::on_interrupt(cpu::CpuState* cpu_state) {
+hardware::CpuState* AtaSecondaryBusDriver::on_interrupt(hardware::CpuState* cpu_state) {
     master_hdd.on_interrupt(cpu_state);
     slave_hdd.on_interrupt(cpu_state);
     return cpu_state; // no task switching here

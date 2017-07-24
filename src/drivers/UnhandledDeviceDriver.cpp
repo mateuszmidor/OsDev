@@ -8,6 +8,8 @@
 #include "UnhandledDeviceDriver.h"
 #include "KernelLog.h"
 
+using utils::KernelLog;
+
 namespace drivers {
 
 /**
@@ -18,10 +20,10 @@ UnhandledDeviceDriver::UnhandledDeviceDriver(u8 interrupt_no) : interrupt_no(int
 }
 
 s16 UnhandledDeviceDriver::handled_interrupt_no() {
-    return Interrupts::IRQ_MAX; // invalid interrupt no
+    return hardware::Interrupts::IRQ_MAX; // invalid interrupt no
 }
 
-cpu::CpuState* UnhandledDeviceDriver::on_interrupt(cpu::CpuState* cpu_state) {
+hardware::CpuState* UnhandledDeviceDriver::on_interrupt(hardware::CpuState* cpu_state) {
     KernelLog& klog = KernelLog::instance();
     // print warning msg that UnhandledDeviceDriver interrupt has been raised
     // WARNING: unhandled interrupt may stop PIC from sending any further interrupts so this is error

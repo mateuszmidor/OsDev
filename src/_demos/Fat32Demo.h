@@ -29,7 +29,7 @@ private:
     void print_hdd_info(drivers::AtaDevice& hdd);
     void traverse_tree(filesystem::VolumeFat32& v, const filesystem::SimpleDentryFat32& entry, u8 level, const OnTreeEntryFound& user_on_entry);
 
-    KernelLog& klog;
+    utils::KernelLog& klog;
 };
 
 } /* namespace demos */

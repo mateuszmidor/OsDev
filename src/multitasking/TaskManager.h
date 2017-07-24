@@ -13,6 +13,8 @@
 #include "CpuState.h"
 #include "kstd.h"
 
+namespace multitasking {
+
 using TaskEntryPoint = void (*)();
 struct Task {
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask");
@@ -22,7 +24,7 @@ struct Task {
 
     kstd::string name;
     u8  stack[2*4096];
-    cpu::CpuState* cpu_state;
+    hardware::CpuState* cpu_state;
 };
 
 struct TaskEpilogue {
@@ -40,8 +42,8 @@ public:
     bool add_task(TaskPtr task);
     TaskPtr get_current_task() const;
     u16 get_num_tasks() const;
-    cpu::CpuState* schedule(cpu::CpuState* cpu_state);
-    cpu::CpuState* kill_current_task();
+    hardware::CpuState* schedule(hardware::CpuState* cpu_state);
+    hardware::CpuState* kill_current_task();
 
 private:
     TaskManager() {}
@@ -51,5 +53,7 @@ private:
     u16 num_tasks       =  0;
     s16 current_task    = -1;
 };
+
+}
 
 #endif /* SRC_TASKMANAGER_H_ */

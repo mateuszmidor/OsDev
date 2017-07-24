@@ -11,6 +11,8 @@
 #include "MouseDriver.h"
 
 using namespace drivers;
+using utils::KernelLog;
+
 namespace demos {
 
 void VgaDemo::run() {

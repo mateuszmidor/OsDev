@@ -13,6 +13,8 @@
 
 using namespace kstd;
 using namespace drivers;
+using namespace multitasking;
+using utils::KernelLog;
 
 namespace demos {
 

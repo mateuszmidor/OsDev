@@ -39,6 +39,8 @@ extern "C" void handle_interrupt_no_0x2C();
 extern "C" void handle_interrupt_no_0x2E();
 extern "C" void handle_interrupt_no_0x2F();
 
+namespace hardware {
+
 InterruptManager InterruptManager::_instance;
 
 
@@ -60,9 +62,9 @@ void InterruptManager::config_interrupts() {
  * @return  Pointer to stack pointer holding destination cpu::CpuState struct (for task switching)
  * @note    STATIC FUNCTION
  */
-cpu::CpuState* InterruptManager::on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state) {
+hardware::CpuState* InterruptManager::on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state) {
     InterruptManager &mngr = InterruptManager::instance();
-    cpu::CpuState* new_cpu_state;
+    hardware::CpuState* new_cpu_state;
 
     // if its PIC interrupt
     if (interrupt_no >= Interrupts::IRQ_BASE) {
@@ -187,3 +189,4 @@ void InterruptManager::install_interrupt_descriptor_table() {
     asm("lidt %0" : : "m" (idt_size_address));
 }
 
+} // namespace hardware

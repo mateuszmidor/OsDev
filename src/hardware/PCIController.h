@@ -14,6 +14,8 @@
 #include "DeviceDriver.h"
 #include "DriverManager.h"
 
+namespace hardware {
+
 enum BaseAddressRegisterType {
     MemoryMapping   = 0,
     InputOutput     = 1
@@ -60,10 +62,11 @@ public:
     DeviceDriverPtr get_driver(PCIDeviceDescriptor &dev, drivers::DriverManager& driver_manager);
 
 private:
-    Port32bit data_port { 0xCFC };
-    Port32bit cmd_port { 0xCF8 };
+    hardware::Port32bit data_port { 0xCFC };
+    hardware::Port32bit cmd_port { 0xCF8 };
 
     u32 make_id(u16 bus, u16 device, u16 function, u32 register_offset);
 };
 
+} // namespace hardware
 #endif /* SRC_PCICONTROLLER_H_ */

@@ -23,7 +23,7 @@ public:
     // static s16 handled_interrupt_no();
 
     // if no task switching to be done, we should just return cpu_state
-    virtual cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) = 0;
+    virtual hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) = 0;
 };
 
 } /* namespace drivers */

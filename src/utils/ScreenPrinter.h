@@ -14,7 +14,7 @@
 #include "VgaDriver.h"
 
 
-
+namespace utils {
 
 /**
  * This printer prints in given sub area of the VGA buffer
@@ -155,5 +155,7 @@ private:
     void backspace();
     void putc(const char c);
 };
+
+} // namespace utils
 
 #endif /* SRC_SCREENPRINTER_H_ */

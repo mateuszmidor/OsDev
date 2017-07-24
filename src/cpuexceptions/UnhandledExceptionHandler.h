@@ -17,7 +17,7 @@ public:
     UnhandledExceptionHandler(u8 exception_no);
     ~UnhandledExceptionHandler() override {}
     s16 handled_exception_no() override;
-    cpu::CpuState* on_exception(cpu::CpuState* cpu_state) override;
+    hardware::CpuState* on_exception(hardware::CpuState* cpu_state) override;
 
 private:
     u8 exception_no;

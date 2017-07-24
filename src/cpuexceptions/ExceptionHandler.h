@@ -22,7 +22,7 @@ public:
     virtual s16 handled_exception_no() = 0;
 
     // if no task switching to be done, we should just return cpu_state
-    virtual cpu::CpuState* on_exception(cpu::CpuState* cpu_state) = 0;
+    virtual hardware::CpuState* on_exception(hardware::CpuState* cpu_state) = 0;
 };
 
 } /* namespace cpuexceptions */

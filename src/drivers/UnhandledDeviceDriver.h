@@ -17,7 +17,7 @@ public:
     UnhandledDeviceDriver(u8 interrupt_no);
     ~UnhandledDeviceDriver() override {}
     static s16 handled_interrupt_no();
-    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
+    hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
 private:
     u8 interrupt_no;

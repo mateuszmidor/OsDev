@@ -9,7 +9,7 @@
 #include "UnhandledExceptionHandler.h"
 #include "TaskManager.h"
 
-using namespace cpu;
+using namespace hardware;
 
 namespace cpuexceptions {
 

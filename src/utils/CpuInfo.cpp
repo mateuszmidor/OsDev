@@ -8,6 +8,8 @@
 #include "KernelLog.h"
 #include "CpuInfo.h"
 
+namespace utils {
+
 CpuInfo::CpuInfo() {
     getCpuVendor(vendor);
 }
@@ -32,3 +34,5 @@ void CpuInfo::getCpuVendor(char buff[13]) {
         : "memory", "%eax", "%ebx", "%ecx", "%edx", "%rdi"
     );
 }
+
+} // namespace utils

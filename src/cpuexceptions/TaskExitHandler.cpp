@@ -10,11 +10,14 @@
 #include "KernelLog.h"
 #include "TaskManager.h"
 
-using cpu::CpuState;
+using multitasking::TaskManager;
+using hardware::CpuState;
+using utils::KernelLog;
+
 namespace cpuexceptions {
 
 s16 TaskExitHandler::handled_exception_no() {
-    return Interrupts::TaskExit;
+    return hardware::Interrupts::TaskExit;
 }
 
 /**

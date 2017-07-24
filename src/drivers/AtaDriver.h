@@ -20,7 +20,7 @@ namespace drivers {
 class AtaDevice {
 public:
     AtaDevice(u16 port_base, bool is_master);
-    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state);
+    hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state);
 
     bool is_present();
     bool read28(u32 sector, void* data, u32 count);
@@ -34,15 +34,15 @@ public:
 private:
     u8 poll_ata_device();
 
-    Port16bit   data_port;
-    Port8bit    error_port;
-    Port8bit    sector_count_port;
-    Port8bit    lba_lo_port;
-    Port8bit    lba_mi_port;
-    Port8bit    lba_hi_port;
-    Port8bit    device_port;
-    Port8bit    cmd_status_port;
-    Port8bit    control_port;
+    hardware::Port16bit   data_port;
+    hardware::Port8bit    error_port;
+    hardware::Port8bit    sector_count_port;
+    hardware::Port8bit    lba_lo_port;
+    hardware::Port8bit    lba_mi_port;
+    hardware::Port8bit    lba_hi_port;
+    hardware::Port8bit    device_port;
+    hardware::Port8bit    cmd_status_port;
+    hardware::Port8bit    control_port;
     bool        is_master;  // master/slave drive
 
     const u8    CMD_IDENTIFY        = 0xEC;
@@ -57,7 +57,7 @@ class AtaPrimaryBusDriver : public DeviceDriver {
 public:
     AtaPrimaryBusDriver();
     static s16 handled_interrupt_no();
-    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
+    hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
     AtaDevice master_hdd;
     AtaDevice slave_hdd;
 };
@@ -66,7 +66,7 @@ class AtaSecondaryBusDriver : public DeviceDriver {
 public:
     AtaSecondaryBusDriver();
     static s16 handled_interrupt_no();
-    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
+    hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
     AtaDevice master_hdd;
     AtaDevice slave_hdd;
 };

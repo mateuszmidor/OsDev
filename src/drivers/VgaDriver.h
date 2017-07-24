@@ -45,7 +45,7 @@ struct VgaCharacter {
 class VgaDriver : public DeviceDriver {
 public:
     static s16 handled_interrupt_no();
-    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
+    hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
     void set_text_mode_90_30();
     void set_graphics_mode_320_200_256();
@@ -58,20 +58,20 @@ private:
     void write_registers(u8* registers) const;
     u8* get_framebuffer_segment() const;
 
-    VgaCharacter* const vga                     {(VgaCharacter*)0xb8000};
-    u16 width                                   {80};  // in characters (text mode)
-    u16 height                                  {25};  // in characters (text mode)
-    Port8bit misc_port                          {0x3C2};
-    Port8bit crtc_index_port                    {0x3D4};
-    Port8bit crtc_data_port                     {0x3D5};
-    Port8bit sequence_index_port                {0x3C4};
-    Port8bit sequence_data_port                 {0x3C5};
-    Port8bit graphics_controller_index_port     {0x3CE};
-    Port8bit graphics_controller_data_port      {0x3CF};
-    Port8bit attribute_controller_index_port    {0x3C0};
-    Port8bit attribute_controller_read_port     {0x3C1};
-    Port8bit attribute_controller_write_port    {0x3C0};
-    Port8bit attribute_controller_reset_port    {0x3DA};
+    VgaCharacter* const vga                             {(VgaCharacter*)0xb8000};
+    u16 width                                           {80};  // in characters (text mode)
+    u16 height                                          {25};  // in characters (text mode)
+    hardware::Port8bit misc_port                        {0x3C2};
+    hardware::Port8bit crtc_index_port                  {0x3D4};
+    hardware::Port8bit crtc_data_port                   {0x3D5};
+    hardware::Port8bit sequence_index_port              {0x3C4};
+    hardware::Port8bit sequence_data_port               {0x3C5};
+    hardware::Port8bit graphics_controller_index_port   {0x3CE};
+    hardware::Port8bit graphics_controller_data_port    {0x3CF};
+    hardware::Port8bit attribute_controller_index_port  {0x3C0};
+    hardware::Port8bit attribute_controller_read_port   {0x3C1};
+    hardware::Port8bit attribute_controller_write_port  {0x3C0};
+    hardware::Port8bit attribute_controller_reset_port  {0x3DA};
 };
 
 } /* namespace drivers */

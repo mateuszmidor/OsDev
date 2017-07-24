@@ -61,7 +61,7 @@ HandleInterrupt 0x2C    # mouse
 HandleInterrupt 0x2E    # primary ata hdd
 HandleInterrupt 0x2F    # secondary ata hdd
 
-.extern _ZN16InterruptManager12on_interruptEhPN3cpu8CpuStateE
+.extern _ZN8hardware16InterruptManager12on_interruptEhPNS_8CpuStateE
 handle_interrupt:
     # save registers to CpuState struct, in the right order that reflects CpuState struct fields
     # CpuState::error_code is already pushed in HandleInterrupt/HandleException/HandleExceptionWithErrorCode
@@ -84,7 +84,7 @@ handle_interrupt:
     # handle interrupt/exception
     mov (interrupt_number), %rdi    # interrupt number as first param
     mov %rsp, %rsi                  # stack pointer (holding CpuState struct) as second param
-    call _ZN16InterruptManager12on_interruptEhPN3cpu8CpuStateE
+    call _ZN8hardware16InterruptManager12on_interruptEhPNS_8CpuStateE
     mov %rax, %rsp  # set stack pointer to the one returned from on_interrupt
 
     # restore scratch registers from CpuState struct

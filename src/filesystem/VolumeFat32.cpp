@@ -15,6 +15,7 @@
 using kstd::vector;
 using kstd::string;
 using kstd::rtrim;
+using utils::KernelLog;
 
 namespace filesystem {
 

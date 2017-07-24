@@ -38,7 +38,7 @@ public:
         return std::static_pointer_cast<DrvType>(drivers[interrupt_no]);
     }
 
-    cpu::CpuState* on_interrupt(u8 interrupt_no, cpu::CpuState* cpu_state) const;
+    hardware::CpuState* on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state) const;
 
 private:
     static DriverManager _instance;

@@ -13,7 +13,7 @@
 
 namespace drivers {
 
-using TimerEvent = std::function<cpu::CpuState*(cpu::CpuState* cpu_state)>;
+using TimerEvent = std::function<hardware::CpuState*(hardware::CpuState* cpu_state)>;
 
 /**
  * @brief   This is a driver for Programmable Interval Timer (PIT) that is normally used for scheduling processes
@@ -21,18 +21,18 @@ using TimerEvent = std::function<cpu::CpuState*(cpu::CpuState* cpu_state)>;
 class PitDriver: public DeviceDriver {
 public:
     static s16 handled_interrupt_no();
-    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
+    hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
     void set_on_tick(const TimerEvent &event);
     void set_hz(u16 hz);
     u16 get_hz() const;
 
 private:
-    TimerEvent on_tick = [](cpu::CpuState* cpu_state) { return cpu_state; };
+    TimerEvent on_tick = [](hardware::CpuState* cpu_state) { return cpu_state; };
     u16 hz                  {18};   // default Programmable Interval Timer frequency in Hz
-    Port8bit pit_channel_0  {0x40};
-    Port8bit pit_channel_1  {0x41};
-    Port8bit pit_channel_2  {0x42};
-    Port8bit pit_cmd        {0x43};
+    hardware::Port8bit pit_channel_0  {0x40};
+    hardware::Port8bit pit_channel_1  {0x41};
+    hardware::Port8bit pit_channel_2  {0x42};
+    hardware::Port8bit pit_cmd        {0x43};
 };
 
 } /* namespace drivers */

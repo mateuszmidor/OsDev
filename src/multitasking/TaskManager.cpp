@@ -7,7 +7,9 @@
 
 #include "TaskManager.h"
 
-using namespace cpu;
+using namespace hardware;
+
+namespace multitasking {
 
 
 TaskManager TaskManager::_instance;
@@ -80,7 +82,7 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
     return tasks[current_task]->cpu_state;
 }
 
-cpu::CpuState* TaskManager::kill_current_task() {
+hardware::CpuState* TaskManager::kill_current_task() {
     // remove current task from the list
     for (u16 i = current_task; i < num_tasks -1; i++)
         tasks[i] = tasks[i+1];
@@ -90,3 +92,4 @@ cpu::CpuState* TaskManager::kill_current_task() {
     current_task = (current_task) % num_tasks;
     return tasks[current_task]->cpu_state;
 }
+} // namespace multitasking {

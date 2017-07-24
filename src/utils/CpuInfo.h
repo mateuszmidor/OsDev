@@ -9,6 +9,8 @@
 #ifndef SRC_CPUINFO_H_
 #define SRC_CPUINFO_H_
 
+namespace utils {
+
 class CpuInfo {
 public:
     CpuInfo();
@@ -19,4 +21,5 @@ private:
     void getCpuVendor(char buff[13]);
 };
 
+} // namespace utils
 #endif /* SRC_CPUINFO_H_ */

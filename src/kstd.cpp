@@ -10,6 +10,8 @@
 #include "types.h"
 #include "KernelLog.h"
 
+using utils::KernelLog;
+
 static KernelLog& klog = KernelLog::instance();
 
 // allocation should be done using memory manager

@@ -10,6 +10,8 @@
 
 #include "types.h"
 
+namespace hardware {
+
 enum Interrupts : u16 {
     EXC_BASE        = 0x00,             // cpu exceptions start here
     PageFault       = EXC_BASE + 14,
@@ -26,6 +28,7 @@ enum Interrupts : u16 {
     IRQ_MAX         = 0x100
 };
 
+} // namespace hardware
 
 
 #endif /* SRC_INTERRUPTNUMBERS_H_ */

@@ -9,6 +9,10 @@
 #include "PCIController.h"
 #include "VgaDriver.h"
 
+using utils::KernelLog;
+
+namespace hardware {
+
 u32 PCIController::read(u16 bus, u16 device, u16 function, u32 register_offset) {
     u32 id = make_id(bus, device, function, register_offset);
     cmd_port.write(id);
@@ -175,3 +179,5 @@ DeviceDriverPtr PCIController::get_driver(PCIDeviceDescriptor &dev, drivers::Dri
 u32 PCIController::make_id(u16 bus, u16 device, u16 function, u32 register_offset) {
     return (0x1 << 31) | ((bus & 0xFF) << 16) | ((device & 0x1F) << 11) | ((function & 0x07) << 8) | ((register_offset & 0xFC));
 }
+
+} // namespace hardware {

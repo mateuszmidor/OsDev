@@ -24,10 +24,10 @@ public:
     void set_on_key_press(const KeyEvent &event);
 
     static s16 handled_interrupt_no();
-    cpu::CpuState* on_interrupt(cpu::CpuState* cpu_state) override;
+    hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
 private:
-    Port8bit keyboard_data_port;
+    hardware::Port8bit keyboard_data_port;
     KeyboardScanCodeSet& scan_code_set;
     KeyEvent on_key_press = [](u8) { /* do nothing */ };
 

@@ -27,7 +27,7 @@ private:
     void process_cmd(const kstd::string& cmd);
     void print_klog();
 
-    ScrollableScreenPrinter printer;
+    utils::ScrollableScreenPrinter printer;
     drivers::Key last_key = drivers::Key::INVALID;
 };
 

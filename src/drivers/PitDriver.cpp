@@ -7,7 +7,7 @@
 
 #include "PitDriver.h"
 
-using namespace cpu;
+using namespace hardware;
 
 namespace drivers {
 
@@ -15,7 +15,7 @@ s16 PitDriver::handled_interrupt_no() {
     return Interrupts::Timer;
 }
 
-cpu::CpuState* PitDriver::on_interrupt(cpu::CpuState* cpu_state) {
+hardware::CpuState* PitDriver::on_interrupt(hardware::CpuState* cpu_state) {
     return on_tick(cpu_state);
 }
 

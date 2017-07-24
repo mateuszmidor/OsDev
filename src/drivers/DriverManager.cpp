@@ -8,7 +8,7 @@
 #include "DriverManager.h"
 #include "UnhandledDeviceDriver.h"
 
-using namespace cpu;
+using namespace hardware;
 
 namespace drivers {
 

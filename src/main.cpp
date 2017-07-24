@@ -37,7 +37,9 @@ using std::make_shared;
 using namespace kstd;
 using namespace drivers;
 using namespace cpuexceptions;
-using namespace cpu;
+using namespace hardware;
+using namespace multitasking;
+using namespace utils;
 using namespace demos;
 
 

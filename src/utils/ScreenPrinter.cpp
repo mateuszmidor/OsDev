@@ -10,7 +10,7 @@
 #include "DriverManager.h"
 
 using namespace drivers;
-
+namespace utils {
 
 BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
     left(left), top(top), right(right), bottom(bottom), cursor_x(left), cursor_y(top) {
@@ -305,3 +305,5 @@ void ScreenPrinter::backspace() {
     cursor_pos = (cursor_pos + NUM_COLS * NUM_ROWS - 1) % (NUM_COLS * NUM_ROWS);
     vga[cursor_pos] = VgaCharacter { .character = ' ', .fg_color = drivers::EgaColor::Black, .bg_color = drivers::EgaColor::Black };
 }
+
+} // namespace utils

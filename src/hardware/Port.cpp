@@ -7,6 +7,7 @@
 
 #include "Port.h"
 
+namespace hardware {
 
 Port::Port(u16 port_number) : port_number(port_number) {
 }
@@ -67,3 +68,5 @@ u32 Port32bit::read() const {
     __asm__ volatile("inl %1, %0" : "=a" (result) : "Nd" (port_number));
     return result;
 }
+
+} // namespace hardware

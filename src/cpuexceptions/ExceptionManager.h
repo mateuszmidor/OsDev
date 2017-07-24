@@ -23,12 +23,12 @@ public:
     ExceptionManager operator=(ExceptionManager&&) = delete;
 
     void install_handler(ExceptionHandlerPtr handler);
-    cpu::CpuState* on_exception(u8 exception_no, cpu::CpuState* cpu_state) const;
+    hardware::CpuState* on_exception(u8 exception_no, hardware::CpuState* cpu_state) const;
 
 private:
     ExceptionManager();
     static ExceptionManager _instance;
-    std::array<ExceptionHandlerPtr, Interrupts::EXC_MAX> handlers; // this array maps exception_no to handler
+    std::array<ExceptionHandlerPtr, hardware::Interrupts::EXC_MAX> handlers; // this array maps exception_no to handler
 };
 
 } /* namespace cpuexceptions */

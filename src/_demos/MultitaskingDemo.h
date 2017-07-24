@@ -19,7 +19,7 @@ public:
 
 private:
     char c_to_print;
-    static BoundedAreaScreenPrinter printer;
+    static utils::BoundedAreaScreenPrinter printer;
 };
 
 class MultitaskingDemoA : public MultitaskingDemo {

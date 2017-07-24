@@ -7,7 +7,7 @@
 
 #include "KeyboardDriver.h"
 
-using namespace cpu;
+using namespace hardware;
 
 namespace drivers {
 

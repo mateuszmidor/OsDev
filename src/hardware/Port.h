@@ -10,6 +10,8 @@
 
 #include "types.h"
 
+namespace hardware {
+
 /**
  * @class   Port
  * @brief   Just a base class for Port8bit, Port8bitSlow, Port16bit and Port32bit
@@ -47,4 +49,5 @@ public:
     u32 read() const;
 };
 
+} // namespace hardware
 #endif /* SRC_PORT_H_ */

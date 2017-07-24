@@ -7,7 +7,7 @@
 
 #include "CpuState.h"
 
-namespace cpu {
+namespace hardware {
 
 /**
  * Constructor

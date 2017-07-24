@@ -10,7 +10,7 @@
 
 #include "types.h"
 
-namespace cpu {
+namespace hardware {
 
 /**
  * On CPU exception/PIC interrupt, following structure is layed on top of the stack before InterruptManager::on_interrupt is called

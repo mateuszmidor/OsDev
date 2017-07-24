@@ -10,6 +10,7 @@
 
 #include <cstdint>
 
+namespace utils {
 
 struct GlobalTag {
     unsigned int total_size;
@@ -116,5 +117,6 @@ private:
     unsigned int esh_count;
 };
 
+} // namespace utils
 
 #endif /* SRC_MULTIBOOT2_H_ */

@@ -10,11 +10,12 @@
 #include "DriverManager.h"
 #include "VgaDriver.h"
 
+using namespace utils;
 using namespace drivers;
 
 namespace demos {
 
-BoundedAreaScreenPrinter MultitaskingDemo::printer(0, 0, 89, 29);
+utils::BoundedAreaScreenPrinter MultitaskingDemo::printer(0, 0, 89, 29);
 
 MultitaskingDemo::MultitaskingDemo(char c_to_print) : c_to_print(c_to_print) {
     auto& klog = KernelLog::instance();

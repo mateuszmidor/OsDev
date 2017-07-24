@@ -9,6 +9,8 @@
 #include "kstd.h"
 #include "Multiboot2.h"
 
+namespace utils {
+
 Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
     multiboot2_info_addr = (unsigned long long)multiboot2_info_ptr;
     char *tag_ptr = (char*)multiboot2_info_ptr;
@@ -163,3 +165,5 @@ void Multiboot2::print_to_klog() const {
 
     klog.format("multiboot: addr: %, len: %\n", multiboot2_info_addr, multiboot2_info_totalsize);
 }
+
+} // namespace utils

@@ -9,11 +9,14 @@
 #include "KernelLog.h"
 #include "TaskManager.h"
 
-using cpu::CpuState;
+using utils::KernelLog;
+using hardware::CpuState;
+using multitasking::TaskManager;
+
 namespace cpuexceptions {
 
 s16 PageFaultHandler::handled_exception_no() {
-    return Interrupts::PageFault;
+    return hardware::Interrupts::PageFault;
 }
 
 /**

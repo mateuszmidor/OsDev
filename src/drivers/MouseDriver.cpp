@@ -7,7 +7,7 @@
 
 #include "MouseDriver.h"
 
-using namespace cpu;
+using namespace hardware;
 
 namespace drivers {
 
