@@ -39,6 +39,7 @@ public:
     static void on_task_finished();
     bool add_task(TaskPtr task);
     TaskPtr get_current_task() const;
+    u16 get_num_tasks() const;
     cpu::CpuState* schedule(cpu::CpuState* cpu_state);
     cpu::CpuState* kill_current_task();
 

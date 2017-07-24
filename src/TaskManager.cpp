@@ -65,6 +65,10 @@ TaskPtr TaskManager::get_current_task() const {
     return tasks[current_task];
 }
 
+u16 TaskManager::get_num_tasks() const {
+    return num_tasks;
+}
+
 CpuState* TaskManager::schedule(CpuState* cpu_state) {
     if (num_tasks == 0)
         return cpu_state;
