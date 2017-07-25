@@ -92,68 +92,10 @@ protected:
     void put_line(const kstd::string& line);
 
     kstd::vector<kstd::string> lines;
-    u16 top_line    = 0;
+    u16 top_line            = 0;
 
-    const char BG_CHAR = 176;
-    const char BG_SCROLLER = 219;
-};
-
-class ScreenPrinter {
-public:
-    static ScreenPrinter& instance();
-
-    drivers::VgaCharacter& at(u16 x, u16 y);
-    void move_to(u16 x, u16 y);
-    void swap_fg_bg_at(u16 x, u16 y);
-    void set_fg_color(const drivers::EgaColor value);
-    void set_bg_color(const drivers::EgaColor value);
-    void clearscreen();
-
-
-    void format(s64 num) {
-        format(kstd::to_str(num));
-    }
-
-    void format(const kstd::string& fmt) {
-        format(fmt.c_str());
-    }
-
-    void format(char const *fmt) {
-        while (*fmt)
-            putc(*fmt++);
-    }
-
-    /**
-     * @name    format
-     * @example format("CPU: %", cpu_vendor_cstr);
-     */
-    template<typename Head, typename ... Tail>
-    void format(char const *fmt, Head head, Tail ... tail) {
-        while (*fmt) {
-            if (*fmt == '%') {
-                format(head);
-                format(++fmt, tail...);
-                break;
-            } else
-                putc(*fmt++);
-        }
-    }
-
-private:
-    const u16 NUM_COLS = 90u;
-    const u16 NUM_ROWS = 30u;
-    drivers::VgaCharacter* const vga = (drivers::VgaCharacter*)0xb8000;
-
-    static ScreenPrinter _instance;
-    u32 cursor_pos = 0;
-    drivers::EgaColor foreground = drivers::EgaColor::White;
-    drivers::EgaColor background = drivers::EgaColor::Black;
-
-
-    void newline();
-    void tab();
-    void backspace();
-    void putc(const char c);
+    const char BG_CHAR      = 176;
+    const char BG_SCROLLER  = 219;
 };
 
 } // namespace utils
