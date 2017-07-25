@@ -18,6 +18,8 @@ public:
 
 private:
     u64 rtdsc();
+    void no_interrupt_method();
+    void interrupt_method();
 };
 
 } /* namespace demos */
