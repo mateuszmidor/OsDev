@@ -75,10 +75,15 @@ public:
     void set_interrupt_handler(const InterruptHandler &h);
     void set_exception_handler(const ExceptionHandler &h);
 
+    u16 disable_interrupts();
+    void enable_interrupts(u16 mask);
+
 private:
     static InterruptManager _instance;
-    hardware::Port8bitSlow pic_master_cmd  {0x20};
-    hardware::Port8bitSlow pic_slave_cmd   {0xA0};
+    hardware::Port8bitSlow pic_master_cmd   {0x20};
+    hardware::Port8bitSlow pic_slave_cmd    {0xA0};
+    hardware::Port8bitSlow pic_master_data  {0x21};
+    hardware::Port8bitSlow pic_slave_data   {0xA1};
 
     InterruptManager() {}
     static hardware::CpuState* on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state);

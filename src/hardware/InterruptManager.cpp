@@ -150,10 +150,6 @@ IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {
 }
 
 void InterruptManager::setup_programmable_interrupt_controllers() {
-    // define data ports for master/slave PIC
-    Port8bitSlow pic_master_data(0x21);
-    Port8bitSlow pic_slave_data(0xA1);
-
     // save master and slave masks
     u8 master_mask = pic_master_data.read();
     u8 slave_mask = pic_slave_data.read();
@@ -187,6 +183,29 @@ void InterruptManager::install_interrupt_descriptor_table() {
     idt_size_address.address = (u64) (idt.data());
 
     asm("lidt %0" : : "m" (idt_size_address));
+}
+
+/**
+ * @brief   Disable all interrupts
+ * @return  What interrupts were enabled before
+ */
+u16 InterruptManager::disable_interrupts() {
+    u8 master_mask = pic_master_data.read();
+    u8 slave_mask = pic_slave_data.read();
+    pic_master_data.write(0xFF);
+    pic_slave_data.write(0xFF);
+    return (master_mask << 8) | slave_mask;
+}
+
+/**
+ * @brief   Enable interrupts
+ * @param   mask What interrupts to enable
+ */
+void InterruptManager::enable_interrupts(u16 mask) {
+    u8 master_mask = mask >> 8;
+    u8 slave_mask = mask & 0xFF;
+    pic_master_data.write(master_mask);
+    pic_slave_data.write(slave_mask);
 }
 
 } // namespace hardware
