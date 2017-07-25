@@ -87,6 +87,17 @@ VgaCharacter& VgaDriver::at(u16 x, u16 y) const {
     return vga[y * width + x];
 }
 
+void VgaDriver::set_cursor_pos(u8 x, u8 y)
+{
+   u16 position = y * width + x;
+
+   // cursor LOW port to vga INDEX register
+   cursor_cmd_port.write(0x0F);
+   cursor_data_port.write(position & 0xFF);
+   // cursor HIGH port to vga INDEX register
+   cursor_cmd_port.write(0x0E);
+   cursor_data_port.write(position >> 8);
+}
 /**
  * screen_width
  * @return  Num columns (text mode), num pixels (graphics mode)

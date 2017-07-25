@@ -51,6 +51,7 @@ public:
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
     VgaCharacter& at(u16 x, u16 y) const;
+    void set_cursor_pos(u8 x, u8 y);
     u16 screen_width() const;
     u16 screen_height() const;
 
@@ -61,6 +62,10 @@ private:
     VgaCharacter* const vga                             {(VgaCharacter*)0xb8000};
     u16 width                                           {80};  // in characters (text mode)
     u16 height                                          {25};  // in characters (text mode)
+    // text mode
+    hardware::Port8bit cursor_cmd_port                  {0x3D4};
+    hardware::Port8bit cursor_data_port                 {0x3D5};
+    // graphics mode
     hardware::Port8bit misc_port                        {0x3C2};
     hardware::Port8bit crtc_index_port                  {0x3D4};
     hardware::Port8bit crtc_data_port                   {0x3D5};

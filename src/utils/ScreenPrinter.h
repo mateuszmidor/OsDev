@@ -23,7 +23,7 @@ class BoundedAreaScreenPrinter {
 public:
     BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom);
     virtual ~BoundedAreaScreenPrinter() {}
-
+    void set_cursor_pos(u8 x, u8 y);
 
     void format(s64 num) {
         format(kstd::to_str(num));

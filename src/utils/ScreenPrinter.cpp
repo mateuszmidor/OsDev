@@ -19,6 +19,10 @@ BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right,
     printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
 }
 
+void BoundedAreaScreenPrinter::set_cursor_pos(u8 x, u8 y) {
+    vga->set_cursor_pos(x, y);
+}
+
 VgaCharacter& BoundedAreaScreenPrinter::at(u16 x, u16 y) {
     static VgaCharacter null;
 
@@ -53,6 +57,8 @@ void BoundedAreaScreenPrinter::putc_into_vga(const char c) {
         else
             cursor_x++;
     }
+
+    set_cursor_pos(cursor_x, cursor_y);
 }
 
 void BoundedAreaScreenPrinter::newline() {
