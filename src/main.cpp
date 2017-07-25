@@ -64,7 +64,7 @@ void task_init() {
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemoA>("multitasking_a_demo"));
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemoB>("multitasking_b_demo"));
     task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
-    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
+//    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
     task_manager.add_task(Demo::make_demo<TerminalDemo>("terminal_demo"));
 //    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
@@ -79,8 +79,8 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     // 1. prepare drivers
-    pit->set_hz(100);
-    pit->set_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
+    pit->set_channel0_hz(100);
+    pit->set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
 
     // 2. install drivers
     PCIController pcic;

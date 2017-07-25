@@ -27,20 +27,24 @@ void CpuSpeedDemo::run() {
  * @ref http://wiki.osdev.org/Detecting_CPU_Speed#Without_Interrupts
  */
 void CpuSpeedDemo::no_interrupt_method() {
+    const u32 COUNTER_MAX = 0x10000;
+
     auto& klog = KernelLog::instance();
     auto& driver_manager = DriverManager::instance();
     auto& task_manager = TaskManager::instance();
+    auto pit = driver_manager.get_driver<PitDriver>();
+
+    if (!pit) {
+        klog.format("CpuSpeedDemo::run: no PitDriver\n");
+        return;
+    }
 
     // disable interrupts
     auto& interrupt_manager = hardware::InterruptManager::instance();
     u16 interrupt_mask = interrupt_manager.disable_interrupts();
 
     // set PIT countdown counter to maximum (0x10000)
-    hardware::Port8bit pit_channel_2    { 0x42 };
-    hardware::Port8bit pit_cmd          { 0x43 };
-    pit_cmd.write(0xB4);    // binary mode + rate generator + access mode lobyte/hibyte + channel 2
-    pit_channel_2.write(0);
-    pit_channel_2.write(0);
+    pit->set_channel2_count(COUNTER_MAX);
 
     // do busy loop and count number of CPU cycles used
     u64 start_cycles = rtdsc();
@@ -49,13 +53,10 @@ void CpuSpeedDemo::no_interrupt_method() {
     u64 stop_cycles = rtdsc();
 
     // read PIT countdown counter current value
-    u8 lo = pit_channel_2.read();
-    u8 hi = pit_channel_2.read();
-    u64 ticks = (0x10000 - (hi * 256 + lo));
+    u64 ticks = COUNTER_MAX - pit->get_channel2_count();
 
     // cpu hz = cpu_cycles / time
-    const u32 PIT_OSCILLATOR_HZ = 1193180;
-    u64 cpu_hz = (stop_cycles - start_cycles) * PIT_OSCILLATOR_HZ / ticks;
+    u64 cpu_hz = (stop_cycles - start_cycles) * PitDriver::PIT_OSCILLATOR_HZ / ticks;
 
     // restore interrupts
     interrupt_manager.enable_interrupts(interrupt_mask);
@@ -74,7 +75,7 @@ void CpuSpeedDemo::interrupt_method() {
         return;
     }
 
-    u32 num_loops = pit->get_hz();
+    u32 num_loops = pit->get_channel0_hz();
     u32 num_tasks = 0;
 
     u64 start_in_cycles = rtdsc();
