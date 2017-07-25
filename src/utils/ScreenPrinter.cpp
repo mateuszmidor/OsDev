@@ -116,7 +116,7 @@ void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
 }
 
 void ScrollableScreenPrinter::scroll_to_begin() {
-    if (lines.size() < printable_area_height)
+    if (lines.size() <= printable_area_height)
         return;
 
     top_line = 0;
@@ -124,11 +124,11 @@ void ScrollableScreenPrinter::scroll_to_begin() {
 }
 
 void ScrollableScreenPrinter::scroll_to_end() {
-    if (lines.size() < printable_area_height)
+    if (lines.size() <= printable_area_height)
         return;
 
     const s16 LAST_LINE = lines.size() - printable_area_height;
-    top_line = (LAST_LINE <= 0) ? 0 : LAST_LINE;
+    top_line = LAST_LINE;
     redraw();
 }
 
@@ -148,10 +148,11 @@ void ScrollableScreenPrinter::putc_into_buffer(const char c) {
         lines.push_back("");
     else
     if (c == '\x08') {
-        if (!lines.back().empty())
-            lines.back().pop_back();
-        else if (!lines.empty())
-            lines.pop_back();
+        if (!lines.empty())                 // if there are any lines
+            if (!lines.back().empty())      // if the last line not empty
+                lines.back().pop_back();    // remove last character from the line
+            else
+                lines.pop_back();           // remove the last line
     } else
         lines.back() += c;
 
@@ -162,8 +163,7 @@ void ScrollableScreenPrinter::putc_into_buffer(const char c) {
 
 void ScrollableScreenPrinter::scroll_down_if_needed() {
     // scroll if writing below bottom of the screen
-    const u16 NUM_LINES = lines.size();
-    if (NUM_LINES - top_line > printable_area_height)
+    if (lines.size() - top_line > printable_area_height)
         scroll_down(1);
 }
 
