@@ -60,7 +60,7 @@ void CpuSpeedDemo::no_interrupt_method() {
     // restore interrupts
     interrupt_manager.enable_interrupts(interrupt_mask);
 
-    klog.format("\nCPU speed: %MHz\n", cpu_hz  / 1000 / 1000);
+    klog.format("CPU speed: %MHz\n", cpu_hz  / 1000 / 1000);
 }
 
 void CpuSpeedDemo::interrupt_method() {
@@ -85,7 +85,7 @@ void CpuSpeedDemo::interrupt_method() {
 
     u64 stop_in_cycles = rtdsc();
     u64 cycles = stop_in_cycles - start_in_cycles;
-    klog.format("\nCPU speed: %MHz\n", cycles * num_loops / num_tasks / 1000 / 1000);
+    klog.format("CPU speed: %MHz\n", cycles * num_loops / num_tasks / 1000 / 1000);
 }
 
 u64 CpuSpeedDemo::rtdsc() {

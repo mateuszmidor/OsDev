@@ -120,7 +120,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // print PCI devics
     pcic.drivers_to_klog();
-    klog.format("\n");
+
 
     // start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));

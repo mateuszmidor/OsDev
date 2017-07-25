@@ -27,7 +27,7 @@ CpuState* TaskExitHandler::on_exception(CpuState* cpu_state) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     auto current = mngr.get_current_task();
-    klog.format(" [Task \"%\" exits] ", current->name.c_str());
+    klog.format("[Task \"%\" exits]\n\n", current->name.c_str());
 
     return mngr.kill_current_task();
 }
