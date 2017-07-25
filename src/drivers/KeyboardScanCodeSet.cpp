@@ -27,7 +27,7 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     basic_code_key[0x0B] = (Key)'0';
     basic_code_key[0x0C] = (Key)'-';
     basic_code_key[0x0D] = (Key)'=';
-    basic_code_key[0x0E] = (Key)'\x08';
+    basic_code_key[0x0E] = Key::Backspace;
     basic_code_key[0x0F] = (Key)'\t';
     basic_code_key[0x10] = (Key)'q';
     basic_code_key[0x11] = (Key)'w';
@@ -117,7 +117,7 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     basic_shift_code_key[0x0B] = (Key)')';
     basic_shift_code_key[0x0C] = (Key)'_';
     basic_shift_code_key[0x0D] = (Key)'+';
-    basic_shift_code_key[0x0E] = (Key)'\x08';
+    basic_shift_code_key[0x0E] = Key::Backspace;
     basic_shift_code_key[0x0F] = (Key)'\t';
     basic_shift_code_key[0x10] = (Key)'Q';
     basic_shift_code_key[0x11] = (Key)'W';
@@ -219,7 +219,7 @@ const Key KeyboardScanCodeSet1::push_code(u8 key_code) {
     Key result;
 
     // extended key; some keys are made of sequences of key codes;
-    // usually only 2 key codes: 0x0E and then the actual extended key code
+    // usually only 2 key codes: 0xE0 and then the actual extended key code
     if (extended_key_incoming) {
         result = extended_code_key[key_code];
         extended_key_incoming = false;
