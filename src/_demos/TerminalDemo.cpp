@@ -48,18 +48,15 @@ bool TerminalDemo::init() {
 
     keyboard->set_on_key_press([&](Key key) { on_key_press(key); });
     printer.clear_screen();
-
+    cmd_history.push_back("");
     return true;
 }
 
 string TerminalDemo::get_line() {
-    string line;
     Key key;
     do  {
         key = get_key();
-        process_key(key);
-        if (!(key & Key::FUNCTIONAL))
-            line += (char)key;
+        process_key(key, line);
     } while (key != Key::Enter);
 
     return line;
@@ -75,15 +72,31 @@ Key TerminalDemo::get_key() {
     return key;
 }
 
-void TerminalDemo::process_key(Key key) {
+void TerminalDemo::suggest_cmd(const kstd::string& cmd) {
+    if (!line.empty())
+        for (u8 i = 0; i < line.length(); i++)
+            printer.format("\x08");
+
+    line = cmd;
+    printer.format("%", cmd);
+}
+
+void TerminalDemo::process_key(Key key, string& current_line) {
     if (key & Key::FUNCTIONAL) {
         switch (key) {
         case Key::Up:
-            printer.scroll_up(1);
+           // if (cmd_history_index < cmd_history.size())
+            if (cmd_history_index > 0)
+                cmd_history_index--;
+            suggest_cmd(cmd_history[cmd_history_index]);
             break;
 
         case Key::Down:
-            printer.scroll_down(1);
+            if (cmd_history_index < cmd_history.size() -1) {
+                cmd_history_index++;
+            } else
+                cmd_history_index = cmd_history.size() -1;
+            suggest_cmd(cmd_history[cmd_history_index]);
             break;
 
         case Key::PgUp:
@@ -110,12 +123,21 @@ void TerminalDemo::process_key(Key key) {
             printer.format("\n");
             break;
 
+        case Key::Backspace:
+            if (!current_line.empty()) {
+                printer.format("\x08");
+                current_line.pop_back();
+            }
+            break;
+
         default:;
         }
     }
     else {
         char s[2] = {(char)key, '\0'};
         printer.format("%", s);
+        current_line += (char)key;
+        //printer.scroll_to_end();
     }
 }
 
@@ -130,6 +152,12 @@ void TerminalDemo::process_cmd(const kstd::string& cmd) {
         printer.format("Unknown command: %", cmd);
     else
         printer.scroll_to_end();
+
+    if (!cmd.empty() && cmd != cmd_history.back()) {
+        cmd_history.push_back(cmd);
+        cmd_history_index = cmd_history.size();
+    }
+    line.clear();
 }
 
 void TerminalDemo::print_klog() {
