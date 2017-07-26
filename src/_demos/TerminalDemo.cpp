@@ -127,7 +127,7 @@ void TerminalDemo::process_key(Key key) {
             break;
 
         case Key::Enter:
-            printer.format("\n");
+            printer.newline();
             cmd_history.set_to_latest();
             break;
 
@@ -162,10 +162,8 @@ void TerminalDemo::process_key(Key key) {
         }
     }
     else {
-        char s[2] = {(char)key, '\0'};
-        printer.format("%", s);
+        printer.putc(key);
         edit_line.push_back(key);
-        printer.scroll_to_end();
     }
 }
 

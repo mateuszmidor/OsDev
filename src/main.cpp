@@ -7,7 +7,6 @@
 
 #include "GlobalConstructorsRunner.h"
 #include "KernelLog.h"
-#include "ScreenPrinter.h"
 #include "Multiboot2.h"
 #include "CpuInfo.h"
 #include "KeyboardScanCodeSet.h"

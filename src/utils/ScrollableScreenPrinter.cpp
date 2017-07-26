@@ -1,149 +1,27 @@
 /**
- *   @file: ScreenPrinter.cpp
+ *   @file: ScrollableScreenPrinter.cpp
  *
  *   @date: Jun 5, 2017
- * @author: mateusz
+ * @author: Mateusz Midor
  */
 
-#include "ScreenPrinter.h"
-#include "KernelLog.h"
-#include "DriverManager.h"
+#include "ScrollableScreenPrinter.h"
+
 
 using namespace drivers;
 namespace utils {
 
-BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
-    left(left), top(top), right(right), bottom(bottom), cursor_x(left), cursor_y(top) {
-
-    printable_area_width = right - left + 1;  // +1 because if right=1 and left=0 it makes 2 columns
-    printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
-}
-
-void BoundedAreaScreenPrinter::set_cursor_visible(bool visible) {
-    if (auto vga = get_vga())
-        vga->set_cursor_visible(visible);
-}
-
-void BoundedAreaScreenPrinter::set_cursor_pos(u8 x, u8 y) {
-    if (auto vga = get_vga())
-        vga->set_cursor_pos(x, y);
-}
-
-std::shared_ptr<VgaDriver> BoundedAreaScreenPrinter::get_vga() {
-    if (vga)
-        return vga;
-
-    auto& driver_manager = DriverManager::instance();
-    vga = driver_manager.get_driver<VgaDriver>();
-    return vga;
-}
-
-VgaCharacter& BoundedAreaScreenPrinter::at(u16 x, u16 y) {
-    static VgaCharacter null;
-
-    if (auto vga = get_vga())
-        return vga->at(x, y);
-    else
-        return null;
-}
-
-void BoundedAreaScreenPrinter::putc(const char c) {
-    putc_into_vga(c);
-}
-
-void BoundedAreaScreenPrinter::putc_into_vga(const char c) {
-    if (c == '\n')
-        newline();
-    else if (c == '\t')
-        tab();
-    else if (c == '\x08')
-        backspace();
-    else {
-        at(cursor_x, cursor_y) = VgaCharacter { .character = c, .fg_color = foreground, .bg_color = background };
-
-        // advance cursor pos within destination area
-        if (cursor_x == right)
-            newline();
-        else
-            cursor_x++;
-    }
-
-    set_cursor_pos(cursor_x, cursor_y);
-}
-
-void BoundedAreaScreenPrinter::newline() {
-    cursor_x = left;
-    if (cursor_y == bottom)
-        cursor_y = top;
-    else
-        cursor_y++;
-}
-
-void BoundedAreaScreenPrinter::tab() {
-    putc(' ');
-    putc(' ');
-}
-
-void BoundedAreaScreenPrinter::backspace() {
-    // back cursor by 1 char
-    if (cursor_x > left)
-        cursor_x--;
-    else
-        if (cursor_y > top) {
-            cursor_y--;
-            cursor_x = right;
-        }
-
-    // clear character under cursor
-    at(cursor_x, cursor_y) = VgaCharacter { .character = ' ', .fg_color = foreground, .bg_color = background };
-    set_cursor_pos(cursor_x, cursor_y);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-LineBuffer::LineBuffer() {
-    // add first, empty line to the buffer
-    lines.push_back("");
-}
-
-u32 LineBuffer::count() const {
-    return lines.size();
-}
-
-void LineBuffer::push_back(const kstd::string& line) {
-    lines.push_back(line);
-}
-
-void LineBuffer::putc(char c) {
-    lines.back().push_back(c);
-}
-
-void LineBuffer::backspace() {
-    if (lines.back().empty() && (lines.size() > 1)) // if the bottom line is empty and it is not the only one line in the buffer
-        lines.pop_back();                           // remove the line
-
-    if (!lines.back().empty())      // if the bottom line is not empty
-        lines.back().pop_back();    // remove last character from the line
-}
-
-void LineBuffer:: newline() {
-    lines.push_back("");
-}
-
-const kstd::string& LineBuffer::back() const {
-    return lines.back();
-}
-
-const kstd::string& LineBuffer::operator[](u32 index) const {
-    return lines[index];
-}
-
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
-        BoundedAreaScreenPrinter(left, top, right - 1, bottom) { // right -1 for right scroll bar
+        LimitedAreaScreenPrinter(left, top, right - 1, bottom) { // right -1 for right scroll bar
+}
+
+void ScrollableScreenPrinter::newline() {
+    LimitedAreaScreenPrinter::newline();
+    lines.newline();
 }
 
 void ScrollableScreenPrinter::backspace() {
-    BoundedAreaScreenPrinter::backspace();
+    LimitedAreaScreenPrinter::backspace();
     lines.backspace();
 }
 

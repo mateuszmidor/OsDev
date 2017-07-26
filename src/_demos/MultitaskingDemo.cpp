@@ -15,7 +15,7 @@ using namespace drivers;
 
 namespace demos {
 
-utils::BoundedAreaScreenPrinter MultitaskingDemo::printer(0, 0, 89, 29);
+utils::LimitedAreaScreenPrinter MultitaskingDemo::printer(0, 0, 89, 29);
 
 MultitaskingDemo::MultitaskingDemo(char c_to_print) : c_to_print(c_to_print) {
     auto& klog = KernelLog::instance();

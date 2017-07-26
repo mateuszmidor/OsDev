@@ -8,7 +8,7 @@
 #ifndef SRC__DEMOS_MULTITASKINGDEMO_H_
 #define SRC__DEMOS_MULTITASKINGDEMO_H_
 
-#include "ScreenPrinter.h"
+#include "ScrollableScreenPrinter.h"
 
 namespace demos {
 
@@ -19,7 +19,7 @@ public:
 
 private:
     char c_to_print;
-    static utils::BoundedAreaScreenPrinter printer;
+    static utils::LimitedAreaScreenPrinter printer;
 };
 
 class MultitaskingDemoA : public MultitaskingDemo {

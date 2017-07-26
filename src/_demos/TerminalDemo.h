@@ -8,7 +8,7 @@
 #ifndef SRC__DEMOS_TERMINALDEMO_H_
 #define SRC__DEMOS_TERMINALDEMO_H_
 
-#include "ScreenPrinter.h"
+#include "ScrollableScreenPrinter.h"
 #include "KeyboardDriver.h"
 #include "kstd.h"
 
