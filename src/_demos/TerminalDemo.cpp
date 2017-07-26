@@ -111,7 +111,6 @@ void TerminalDemo::suggest_cmd(const kstd::string& cmd) {
         printer.backspace();
 
     printer.format("%", cmd);
-    printer.scroll_to_end();
     edit_line = cmd;
 }
 
@@ -136,7 +135,6 @@ void TerminalDemo::process_key(Key key) {
                 edit_line.pop_back();
                 printer.backspace();
             }
-            printer.scroll_to_end();
             break;
 
         case Key::PgUp:
@@ -170,7 +168,6 @@ void TerminalDemo::process_key(Key key) {
 void TerminalDemo::process_cmd(const kstd::string& cmd) {
     if (cmd == "exit") {
         printer.format("Terminal exit.");
-        printer.set_cursor_visible(false);
         Task::exit();
     }
     else if (cmd == "log")
@@ -180,7 +177,6 @@ void TerminalDemo::process_cmd(const kstd::string& cmd) {
 
     cmd_history.append(cmd);
     edit_line.clear();
-    printer.scroll_to_end();
 }
 
 void TerminalDemo::print_klog() {

@@ -12,6 +12,7 @@
 #include "types.h"
 #include "kstd.h"
 #include "VgaDriver.h"
+#include "Cursor.h"
 
 namespace utils {
 
@@ -22,9 +23,8 @@ class LimitedAreaScreenPrinter {
 public:
     LimitedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom);
     virtual ~LimitedAreaScreenPrinter() {}
-    void set_cursor_visible(bool visible);
-    void set_cursor_pos(u8 x, u8 y);
     void newline();
+    void tab();
     void backspace();
 
     /**
@@ -39,16 +39,16 @@ public:
     }
 
 protected:
+    Cursor cursor;
     u16 left, top, right, bottom;   // printable area description
     u16 printable_area_width, printable_area_height;    // printable area dimension
-    u16 cursor_x, cursor_y;         // current cursor position in vga dimension space
     drivers::EgaColor foreground = drivers::EgaColor::White;
     drivers::EgaColor background = drivers::EgaColor::Brown;
 
+    drivers::VgaCharacter& at(const Cursor& cursor);
     drivers::VgaCharacter& at(u16 x, u16 y);
     void putc(const char c);
     void putc_into_vga(const char c);
-    void tab();
     std::shared_ptr<drivers::VgaDriver> get_vga();
 
 private:

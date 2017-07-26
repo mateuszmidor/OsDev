@@ -41,19 +41,16 @@ public:
 
 protected:
     void putc_into_buffer(const char c);
-    void scroll_down_if_needed();
     void redraw();
     void draw_scroll_bar();
     void put_line_and_clear_remaining_space_at(u8 y, const kstd::string& line);
+    bool is_edit_line_visible();
 
     LineBuffer lines;
     u16 top_line            = 0;
 
     const char BG_CHAR      = 176;
     const char BG_SCROLLER  = 219;
-
-private:
-    bool is_edit_line_visible();
 };
 
 } // namespace utils
