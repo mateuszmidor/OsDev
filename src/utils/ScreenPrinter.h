@@ -25,15 +25,16 @@ public:
     virtual ~BoundedAreaScreenPrinter() {}
     void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
+    void newline();
     virtual void backspace();
 
     /**
      * @name    format
      * @example format("CPU: %", cpu_vendor_cstr);
      */
-    template<typename Head, typename ... Tail>
-    void format(char const *fmt, Head head, Tail ... tail) {
-        const kstd::string& str = kstd::format(fmt, head, tail);
+    template<typename ... Args>
+    void format(char const *fmt, Args ... args) {
+        const kstd::string& str = kstd::format(fmt, args...);
         for (const char& c : str)
             putc(c);
     }
@@ -47,7 +48,6 @@ protected:
 
     drivers::VgaCharacter& at(u16 x, u16 y);
     virtual void putc(const char c);
-    virtual void newline();
     void putc_into_vga(const char c);
     void tab();
     std::shared_ptr<drivers::VgaDriver> get_vga();
@@ -73,7 +73,7 @@ private:
 
 class ScrollableScreenPrinter : public BoundedAreaScreenPrinter {
 public:
-    ScrollableScreenPrinter();
+    ScrollableScreenPrinter(u16 left, u16 top, u16 right, u16 bottom);
     virtual ~ScrollableScreenPrinter() {}
 
     void backspace() override;

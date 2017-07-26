@@ -138,8 +138,8 @@ const kstd::string& LineBuffer::operator[](u32 index) const {
     return lines[index];
 }
 
-ScrollableScreenPrinter::ScrollableScreenPrinter() :
-        BoundedAreaScreenPrinter(0, 0, 88, 29) {
+ScrollableScreenPrinter::ScrollableScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
+        BoundedAreaScreenPrinter(left, top, right - 1, bottom) { // right -1 for right scroll bar
 }
 
 void ScrollableScreenPrinter::backspace() {

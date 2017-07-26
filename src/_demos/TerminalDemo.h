@@ -29,6 +29,7 @@ private:
 
 class TerminalDemo {
 public:
+    TerminalDemo();
     void run();
 
 private:

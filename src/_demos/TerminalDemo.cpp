@@ -49,6 +49,10 @@ const kstd::string& CommandHistory::get_next() {
     return history[index];
 }
 
+TerminalDemo::TerminalDemo() :
+        printer(0, 0, 89, 29) {
+}
+
 void TerminalDemo::run() {
     if (!init())
         return;
@@ -127,6 +131,14 @@ void TerminalDemo::process_key(Key key) {
             cmd_history.set_to_latest();
             break;
 
+        case Key::Backspace:
+            if (!edit_line.empty()) {
+                edit_line.pop_back();
+                printer.backspace();
+            }
+            printer.scroll_to_end();
+            break;
+
         case Key::PgUp:
             printer.scroll_up(4);
             break;
@@ -144,14 +156,6 @@ void TerminalDemo::process_key(Key key) {
             break;
 
         case Key::Esc:
-            break;
-
-        case Key::Backspace:
-            if (!edit_line.empty()) {
-                edit_line.pop_back();
-                printer.backspace();
-            }
-            printer.scroll_to_end();
             break;
 
         default:;
