@@ -14,23 +14,13 @@ namespace demos {
 
 class MultitaskingDemo {
 public:
-    MultitaskingDemo(char c_to_print);
-    void run();
+    MultitaskingDemo();
+    void run(u64 arg);
 
 private:
-    char c_to_print;
     static utils::LimitedAreaScreenPrinter printer;
 };
 
-class MultitaskingDemoA : public MultitaskingDemo {
-public:
-    MultitaskingDemoA() : MultitaskingDemo('A') {}
-};
-
-class MultitaskingDemoB : public MultitaskingDemo {
-public:
-    MultitaskingDemoB() : MultitaskingDemo('B') {}
-};
 
 } /* namespace demos */
 

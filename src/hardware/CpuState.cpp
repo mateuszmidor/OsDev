@@ -13,14 +13,14 @@ namespace hardware {
  * Constructor
  * @param rip   Return address for iretq in interrupts.S
  */
-CpuState::CpuState(u64 rip = 0, u64 rsp = 0) {
+CpuState::CpuState(u64 rip, u64 rsp, u64 task_arg) {
     rax = 0;
     rbx = 0;
     rcx = 0;
     rdx = 0;
 
     rsi = 0;
-    rdi = 0;
+    rdi = task_arg;         // argument passed to the task function in RDI according to SYSTEM V x64 ABI
     rbp = 0;
 
     r8 = 0;

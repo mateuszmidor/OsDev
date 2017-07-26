@@ -15,7 +15,7 @@ namespace demos {
 
 class VgaDemo {
 public:
-    void run();
+    void run(u64 arg);
 
 private:
     void on_mouse_down(u8 button);

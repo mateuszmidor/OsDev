@@ -53,7 +53,7 @@ TerminalDemo::TerminalDemo() :
         printer(0, 0, 89, 29) {
 }
 
-void TerminalDemo::run() {
+void TerminalDemo::run(u64 arg) {
     if (!init())
         return;
 

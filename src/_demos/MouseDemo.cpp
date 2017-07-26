@@ -15,7 +15,7 @@ using utils::KernelLog;
 
 namespace demos {
 
-void MouseDemo::run() {
+void MouseDemo::run(u64 arg) {
     auto& klog = KernelLog::instance();
     auto& driver_manager = DriverManager::instance();
 

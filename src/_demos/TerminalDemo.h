@@ -30,7 +30,7 @@ private:
 class TerminalDemo {
 public:
     TerminalDemo();
-    void run();
+    void run(u64 arg);
 
 private:
     bool init();

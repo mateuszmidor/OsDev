@@ -25,7 +25,7 @@ TaskManager& TaskManager::instance() {
                         ^
                   here is rsp when first time jumping from interrupt to task function
 */
-Task::Task(TaskEntryPoint entrypoint, kstd::string name) : name(name) {
+Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg) : name(name) {
     const u64 STACK_END = (u64)stack + sizeof(stack);
 
     // prepare task epilogue ie. where to return from task function
@@ -34,10 +34,10 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name) : name(name) {
 
     // prepare task cpu state to setup cpu register with
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
-    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue};
+    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg};
 }
 
-void Task::idle() {
+void Task::idle(u64 arg) {
     while (true)
         yield();
 }

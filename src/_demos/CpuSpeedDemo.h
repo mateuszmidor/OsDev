@@ -14,7 +14,7 @@ namespace demos {
 
 class CpuSpeedDemo {
 public:
-    void run();
+    void run(u64 arg);
 
 private:
     u64 rtdsc();

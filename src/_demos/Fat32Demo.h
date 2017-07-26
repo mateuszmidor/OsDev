@@ -18,7 +18,7 @@ namespace demos {
 class Fat32Demo {
 public:
     Fat32Demo();
-    void run();
+    void run(u64 arg);
 
 private:
     using OnTreeEntryFound = std::function<bool(const filesystem::SimpleDentryFat32&, u8)>;

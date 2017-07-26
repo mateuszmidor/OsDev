@@ -15,10 +15,10 @@
 
 namespace multitasking {
 
-using TaskEntryPoint = void (*)();
+using TaskEntryPoint = void (*)(u64 arg);
 struct Task {
-    Task(TaskEntryPoint entrypoint, kstd::string name = "ktask");
-    static void idle();
+    Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0);
+    static void idle(u64 arg = 0);
     static void yield();
     static void exit();
 

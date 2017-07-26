@@ -21,7 +21,7 @@ namespace demos {
 Fat32Demo::Fat32Demo() : klog(KernelLog::instance()) {
 }
 
-void Fat32Demo::run() {
+void Fat32Demo::run(u64 arg) {
     auto& driver_manager = DriverManager::instance();
     auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
     if (!ata_primary_bus) {

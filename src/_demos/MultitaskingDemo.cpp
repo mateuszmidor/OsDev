@@ -17,7 +17,7 @@ namespace demos {
 
 utils::LimitedAreaScreenPrinter MultitaskingDemo::printer(0, 0, 89, 29);
 
-MultitaskingDemo::MultitaskingDemo(char c_to_print) : c_to_print(c_to_print) {
+MultitaskingDemo::MultitaskingDemo()  {
     auto& klog = KernelLog::instance();
     auto& driver_manager = DriverManager::instance();
     auto vga = driver_manager.get_driver<VgaDriver>();
@@ -28,8 +28,8 @@ MultitaskingDemo::MultitaskingDemo(char c_to_print) : c_to_print(c_to_print) {
     }
 }
 
-void MultitaskingDemo::run() {
-    char buff[] = {c_to_print, '\0'};
+void MultitaskingDemo::run(u64 arg) {
+    char buff[] = {(char)arg, '\0'};
     while (true) {
         printer.format("%", buff);
         asm("hlt");

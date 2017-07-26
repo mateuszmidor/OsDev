@@ -18,7 +18,7 @@ using utils::KernelLog;
 
 namespace demos {
 
-void CpuSpeedDemo::run() {
+void CpuSpeedDemo::run(u64 arg) {
     no_interrupt_method();
 //    interrupt_method();
 }
