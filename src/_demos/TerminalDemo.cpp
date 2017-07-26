@@ -18,21 +18,51 @@ using utils::KernelLog;
 
 namespace demos {
 
+CommandHistory::CommandHistory() {
+    history.push_back("");
+}
+
+void CommandHistory::append(const kstd::string& cmd) {
+    if (!cmd.empty() && cmd != history.back()) {
+        history.push_back(cmd);
+        set_to_latest();
+    }
+}
+
+void CommandHistory::set_to_latest() {
+    index = history.size();
+}
+
+const kstd::string& CommandHistory::get_prev() {
+    if (index > 0)
+        index--;
+
+    return history[index];
+}
+
+const kstd::string& CommandHistory::get_next() {
+    if (index < history.size() -1) {
+        index++;
+    } else
+        index = history.size() -1;
+
+    return history[index];
+}
+
 void TerminalDemo::run() {
     if (!init())
         return;
 
     // task main loop
     while(true) {
-        // get command
+        // print prompt
         printer.format("> ");
+
+        // get command
         string cmd = get_line();
 
         // process command
         process_cmd(cmd);
-
-        // move to next line
-        printer.format("\n");
     };
 }
 
@@ -48,7 +78,7 @@ bool TerminalDemo::init() {
 
     keyboard->set_on_key_press([&](Key key) { on_key_press(key); });
     printer.clear_screen();
-    cmd_history.push_back("");
+
     return true;
 }
 
@@ -56,10 +86,10 @@ string TerminalDemo::get_line() {
     Key key;
     do  {
         key = get_key();
-        process_key(key, line);
+        process_key(key);
     } while (key != Key::Enter);
 
-    return line;
+    return edit_line;
 }
 
 Key TerminalDemo::get_key() {
@@ -73,30 +103,28 @@ Key TerminalDemo::get_key() {
 }
 
 void TerminalDemo::suggest_cmd(const kstd::string& cmd) {
-    if (!line.empty())
-        for (u8 i = 0; i < line.length(); i++)
-            printer.format("\x08");
+    for (u16 i = 0; i < edit_line.length(); i++)
+        printer.backspace();
 
-    line = cmd;
     printer.format("%", cmd);
+    printer.scroll_to_end();
+    edit_line = cmd;
 }
 
-void TerminalDemo::process_key(Key key, string& current_line) {
+void TerminalDemo::process_key(Key key) {
     if (key & Key::FUNCTIONAL) {
         switch (key) {
         case Key::Up:
-           // if (cmd_history_index < cmd_history.size())
-            if (cmd_history_index > 0)
-                cmd_history_index--;
-            suggest_cmd(cmd_history[cmd_history_index]);
+            suggest_cmd(cmd_history.get_prev());
             break;
 
         case Key::Down:
-            if (cmd_history_index < cmd_history.size() -1) {
-                cmd_history_index++;
-            } else
-                cmd_history_index = cmd_history.size() -1;
-            suggest_cmd(cmd_history[cmd_history_index]);
+            suggest_cmd(cmd_history.get_next());
+            break;
+
+        case Key::Enter:
+            printer.format("\n");
+            cmd_history.set_to_latest();
             break;
 
         case Key::PgUp:
@@ -116,18 +144,14 @@ void TerminalDemo::process_key(Key key, string& current_line) {
             break;
 
         case Key::Esc:
-            printer.clear_screen();
-            break;
-
-        case Key::Enter:
-            printer.format("\n");
             break;
 
         case Key::Backspace:
-            if (!current_line.empty()) {
-                printer.format("\x08");
-                current_line.pop_back();
+            if (!edit_line.empty()) {
+                edit_line.pop_back();
+                printer.backspace();
             }
+            printer.scroll_to_end();
             break;
 
         default:;
@@ -136,33 +160,30 @@ void TerminalDemo::process_key(Key key, string& current_line) {
     else {
         char s[2] = {(char)key, '\0'};
         printer.format("%", s);
-        current_line += (char)key;
-        //printer.scroll_to_end();
+        edit_line.push_back(key);
+        printer.scroll_to_end();
     }
 }
 
 void TerminalDemo::process_cmd(const kstd::string& cmd) {
     if (cmd == "exit") {
         printer.format("Terminal exit.");
+        printer.set_cursor_visible(false);
         Task::exit();
     }
     else if (cmd == "log")
         print_klog();
     else if (!cmd.empty())
-        printer.format("Unknown command: %", cmd);
-    else
-        printer.scroll_to_end();
+        printer.format("Unknown command: %\n", cmd);
 
-    if (!cmd.empty() && cmd != cmd_history.back()) {
-        cmd_history.push_back(cmd);
-        cmd_history_index = cmd_history.size();
-    }
-    line.clear();
+    cmd_history.append(cmd);
+    edit_line.clear();
+    printer.scroll_to_end();
 }
 
 void TerminalDemo::print_klog() {
     auto& klog = KernelLog::instance();
-    printer.format("%", klog.get_text());
+    printer.format("%\n", klog.get_text());
 }
 
 /**

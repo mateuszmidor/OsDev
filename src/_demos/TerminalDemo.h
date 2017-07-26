@@ -14,6 +14,19 @@
 
 namespace demos {
 
+class CommandHistory {
+public:
+    CommandHistory();
+    void append(const kstd::string& cmd);
+    void set_to_latest();
+    const kstd::string& get_prev();
+    const kstd::string& get_next();
+
+private:
+    kstd::vector<kstd::string> history;
+    u16 index   {0};
+};
+
 class TerminalDemo {
 public:
     void run();
@@ -21,7 +34,7 @@ public:
 private:
     bool init();
     void on_key_press(drivers::Key key);
-    void process_key(drivers::Key key, kstd::string& line);
+    void process_key(drivers::Key key);
     kstd::string get_line();
     drivers::Key get_key();
     void suggest_cmd(const kstd::string& cmd);
@@ -29,11 +42,10 @@ private:
     void process_cmd(const kstd::string& cmd);
     void print_klog();
 
-    kstd::string line;
+    kstd::string edit_line;
     utils::ScrollableScreenPrinter printer;
     drivers::Key last_key = drivers::Key::INVALID;
-    kstd::vector<kstd::string> cmd_history;
-    u16 cmd_history_index {0};
+    CommandHistory cmd_history;
 };
 
 } /* namespace demos */
