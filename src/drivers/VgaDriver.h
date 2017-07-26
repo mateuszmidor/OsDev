@@ -51,6 +51,7 @@ public:
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
     VgaCharacter& at(u16 x, u16 y) const;
+    void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
     u16 screen_width() const;
     u16 screen_height() const;

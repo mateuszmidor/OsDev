@@ -87,8 +87,25 @@ VgaCharacter& VgaDriver::at(u16 x, u16 y) const {
     return vga[y * width + x];
 }
 
-void VgaDriver::set_cursor_pos(u8 x, u8 y)
-{
+/**
+ * @ref http://wiki.osdev.org/Text_Mode_Cursor#Source_in_C_2
+ */
+void VgaDriver::set_cursor_visible(bool visible) {
+    const u8 CURSOR_HIDDEN = 32; // bit5
+
+    cursor_cmd_port.write(0x0A);
+    u8 cursor_state = cursor_data_port.read();
+    if (visible)
+        cursor_state &= ~CURSOR_HIDDEN;
+    else
+        cursor_state |= CURSOR_HIDDEN;
+    cursor_data_port.write(cursor_state);
+}
+
+/**
+ * @ref http://wiki.osdev.org/Text_Mode_Cursor#Source_in_C
+ */
+void VgaDriver::set_cursor_pos(u8 x, u8 y) {
    u16 position = y * width + x;
 
    // cursor LOW port to vga INDEX register
