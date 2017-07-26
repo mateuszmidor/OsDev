@@ -23,6 +23,7 @@ class BoundedAreaScreenPrinter {
 public:
     BoundedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom);
     virtual ~BoundedAreaScreenPrinter() {}
+    void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
 
     void format(s64 num) {
@@ -55,8 +56,6 @@ public:
     }
 
 protected:
-    std::shared_ptr<drivers::VgaDriver> vga;
-
     u16 left, top, right, bottom;   // printable area description
     u16 printable_area_width, printable_area_height;    // printable area dimension
     u16 cursor_x, cursor_y;         // current cursor position in vga dimension space
@@ -69,6 +68,10 @@ protected:
     void putc_into_vga(const char c);
     void tab();
     void backspace();
+    std::shared_ptr<drivers::VgaDriver> get_vga();
+
+private:
+    std::shared_ptr<drivers::VgaDriver> vga;
 };
 
 class ScrollableScreenPrinter : public BoundedAreaScreenPrinter {
@@ -84,18 +87,20 @@ public:
 
 protected:
     void putc(const char c) override;
-    void newline() override;
     void putc_into_buffer(const char c);
     void scroll_down_if_needed();
     void redraw();
     void draw_scroll_bar();
-    void put_line(const kstd::string& line);
+    void put_line_and_clear_remaining_space_at(u8 y, const kstd::string& line);
 
     kstd::vector<kstd::string> lines;
     u16 top_line            = 0;
 
     const char BG_CHAR      = 176;
     const char BG_SCROLLER  = 219;
+
+private:
+    bool is_edit_line_visible();
 };
 
 } // namespace utils

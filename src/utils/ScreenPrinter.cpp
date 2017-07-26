@@ -19,19 +19,29 @@ BoundedAreaScreenPrinter::BoundedAreaScreenPrinter(u16 left, u16 top, u16 right,
     printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
 }
 
+void BoundedAreaScreenPrinter::set_cursor_visible(bool visible) {
+    if (auto vga = get_vga())
+        vga->set_cursor_visible(visible);
+}
+
 void BoundedAreaScreenPrinter::set_cursor_pos(u8 x, u8 y) {
-    vga->set_cursor_pos(x, y);
+    if (auto vga = get_vga())
+        vga->set_cursor_pos(x, y);
+}
+
+std::shared_ptr<VgaDriver> BoundedAreaScreenPrinter::get_vga() {
+    if (vga)
+        return vga;
+
+    auto& driver_manager = DriverManager::instance();
+    vga = driver_manager.get_driver<VgaDriver>();
+    return vga;
 }
 
 VgaCharacter& BoundedAreaScreenPrinter::at(u16 x, u16 y) {
     static VgaCharacter null;
 
-    if (!vga) {
-        auto& driver_manager = DriverManager::instance();
-        vga = driver_manager.get_driver<VgaDriver>();
-    }
-
-    if (vga)
+    if (auto vga = get_vga())
         return vga->at(x, y);
     else
         return null;
@@ -148,11 +158,8 @@ void ScrollableScreenPrinter::putc_into_buffer(const char c) {
         lines.push_back("");
     else
     if (c == '\x08') {
-        if (!lines.empty())                 // if there are any lines
-            if (!lines.back().empty())      // if the last line not empty
-                lines.back().pop_back();    // remove last character from the line
-            else
-                lines.pop_back();           // remove the last line
+        if (!lines.back().empty())      // if the last line not empty
+            lines.back().pop_back();    // remove last character from the line
     } else
         lines.back() += c;
 
@@ -163,45 +170,43 @@ void ScrollableScreenPrinter::putc_into_buffer(const char c) {
 
 void ScrollableScreenPrinter::scroll_down_if_needed() {
     // scroll if writing below bottom of the screen
-    if (lines.size() - top_line > printable_area_height)
+    if (!is_edit_line_visible())
         scroll_down(1);
+}
+
+bool ScrollableScreenPrinter::is_edit_line_visible() {
+    return (s16)lines.size() - printable_area_height <= top_line;
 }
 
 /**
  * @brief   Redraw entire printing are. Used when scrolling the text
  */
 void ScrollableScreenPrinter::redraw() {
-    cursor_x = left;
-    cursor_y = top;
-
     // calc number of buffer lines to  draw
-    const u16 NUM_LINES = lines.size();
-    u16 lines_to_draw = NUM_LINES - top_line;
+    u16 lines_to_draw = lines.size() - top_line;
     if (lines_to_draw > printable_area_height)
         lines_to_draw = printable_area_height;
 
     // draw the lines
-    for (u16 i = 0; i < lines_to_draw; i++)
-        put_line(lines[top_line + i]);
+    for (u16 y = 0; y < lines_to_draw; y++) 
+        put_line_and_clear_remaining_space_at(y, lines[top_line + y]);
+   
 
     // clear remaining lines
-    for (u16 i = lines_to_draw; i < printable_area_height; i++)
-        put_line("");
+    for (u16 y = lines_to_draw; y < printable_area_height; y++) 
+        put_line_and_clear_remaining_space_at(y, "");
 
     draw_scroll_bar();
+
+    set_cursor_visible(is_edit_line_visible());
+
+    cursor_x = left + lines.back().length();
+    cursor_y = top + lines_to_draw -1;
+    set_cursor_pos(cursor_x, cursor_y);
 }
 
 void ScrollableScreenPrinter::clear_screen() {
-    cursor_x = left;
-    cursor_y = top;
-
-    for (u16 i = 0; i < printable_area_height; i++)
-        put_line("");
-
-    cursor_x = left;
-    cursor_y = top;
-
-    draw_scroll_bar();
+    redraw();
 }
 
 void ScrollableScreenPrinter::draw_scroll_bar() {
@@ -225,23 +230,18 @@ void ScrollableScreenPrinter::draw_scroll_bar() {
         at(BAR_X, y) = VgaCharacter { .character = BG_SCROLLER, .fg_color = foreground, .bg_color = background };
 }
 
-void ScrollableScreenPrinter::put_line(const kstd::string& line) {
+void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u8 y, const kstd::string& line) {
     u16 num_characters = line.size();
 
     // print the line
     for (u16 i = 0; i < num_characters; i++) {
-        putc_into_vga(line[i]);
+        at(i, y) = VgaCharacter { .character = line[i], .fg_color = foreground, .bg_color = background };
     }
 
-    // clear remaining space of the printable area row
+    // clear remaining space of the row
     for (u16 i = num_characters; i < printable_area_width; i++)
-        putc_into_vga(' ');
+        at(i, y) = VgaCharacter { .character = ' ', .fg_color = foreground, .bg_color = background };
 }
 
-void ScrollableScreenPrinter::newline() {
-    cursor_x = left;
-    if (cursor_y < bottom)
-        cursor_y++;
-}
 
 } // namespace utils
