@@ -96,19 +96,59 @@ void BoundedAreaScreenPrinter::backspace() {
 
     // clear character under cursor
     at(cursor_x, cursor_y) = VgaCharacter { .character = ' ', .fg_color = foreground, .bg_color = background };
+    set_cursor_pos(cursor_x, cursor_y);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-ScrollableScreenPrinter::ScrollableScreenPrinter() :
-        BoundedAreaScreenPrinter(0, 0, 88, 29) {
-
+LineBuffer::LineBuffer() {
     // add first, empty line to the buffer
     lines.push_back("");
 }
 
+u32 LineBuffer::count() const {
+    return lines.size();
+}
+
+void LineBuffer::push_back(const kstd::string& line) {
+    lines.push_back(line);
+}
+
+void LineBuffer::putc(char c) {
+    lines.back().push_back(c);
+}
+
+void LineBuffer::backspace() {
+    if (lines.back().empty() && (lines.size() > 1)) // if the bottom line is empty and it is not the only one line in the buffer
+        lines.pop_back();                           // remove the line
+
+    if (!lines.back().empty())      // if the bottom line is not empty
+        lines.back().pop_back();    // remove last character from the line
+}
+
+void LineBuffer:: newline() {
+    lines.push_back("");
+}
+
+const kstd::string& LineBuffer::back() const {
+    return lines.back();
+}
+
+const kstd::string& LineBuffer::operator[](u32 index) const {
+    return lines[index];
+}
+
+ScrollableScreenPrinter::ScrollableScreenPrinter() :
+        BoundedAreaScreenPrinter(0, 0, 88, 29) {
+}
+
+void ScrollableScreenPrinter::backspace() {
+    BoundedAreaScreenPrinter::backspace();
+    lines.backspace();
+}
+
 void ScrollableScreenPrinter::scroll_up(u16 num_lines) {
-    if (lines.size() <= printable_area_height)
+    if (lines.count() <= printable_area_height)
         return;
 
     const u16 FIRST_LINE = 0;
@@ -117,16 +157,16 @@ void ScrollableScreenPrinter::scroll_up(u16 num_lines) {
 }
 
 void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
-    if (lines.size() <= printable_area_height)
+    if (lines.count() <= printable_area_height)
         return;
 
-    const s16 LAST_LINE = lines.size() - printable_area_height;
+    const s16 LAST_LINE = lines.count() - printable_area_height;
     top_line = (top_line + num_lines  >= LAST_LINE) ? LAST_LINE : top_line + num_lines;
     redraw();
 }
 
 void ScrollableScreenPrinter::scroll_to_begin() {
-    if (lines.size() <= printable_area_height)
+    if (lines.count() <= printable_area_height)
         return;
 
     top_line = 0;
@@ -134,10 +174,10 @@ void ScrollableScreenPrinter::scroll_to_begin() {
 }
 
 void ScrollableScreenPrinter::scroll_to_end() {
-    if (lines.size() <= printable_area_height)
+    if (lines.count() <= printable_area_height)
         return;
 
-    const s16 LAST_LINE = lines.size() - printable_area_height;
+    const s16 LAST_LINE = lines.count() - printable_area_height;
     top_line = LAST_LINE;
     redraw();
 }
@@ -155,17 +195,16 @@ void ScrollableScreenPrinter::putc(const char c) {
 
 void ScrollableScreenPrinter::putc_into_buffer(const char c) {
     if (c == '\n')
-        lines.push_back("");
+        lines.newline();
     else
     if (c == '\x08') {
-        if (!lines.back().empty())      // if the last line not empty
-            lines.back().pop_back();    // remove last character from the line
+        lines.backspace();
     } else
-        lines.back() += c;
+        lines.putc(c);
 
     // enforce text buffer "word" wrap
     if (lines.back().length() == printable_area_width)
-        lines.push_back("");
+        lines.newline();
 }
 
 void ScrollableScreenPrinter::scroll_down_if_needed() {
@@ -175,7 +214,7 @@ void ScrollableScreenPrinter::scroll_down_if_needed() {
 }
 
 bool ScrollableScreenPrinter::is_edit_line_visible() {
-    return (s16)lines.size() - printable_area_height <= top_line;
+    return (s16)lines.count() - printable_area_height <= top_line;
 }
 
 /**
@@ -183,7 +222,7 @@ bool ScrollableScreenPrinter::is_edit_line_visible() {
  */
 void ScrollableScreenPrinter::redraw() {
     // calc number of buffer lines to  draw
-    u16 lines_to_draw = lines.size() - top_line;
+    u16 lines_to_draw = lines.count() - top_line;
     if (lines_to_draw > printable_area_height)
         lines_to_draw = printable_area_height;
 
@@ -217,11 +256,11 @@ void ScrollableScreenPrinter::draw_scroll_bar() {
         at(BAR_X, y) = VgaCharacter { .character = BG_CHAR, .fg_color = foreground, .bg_color = background };
 
     // draw actual scrollbar
-    u16 bar_size = (printable_area_height > lines.size()) ? printable_area_height : printable_area_height * printable_area_height / lines.size();
+    u16 bar_size = (printable_area_height > lines.count()) ? printable_area_height : printable_area_height * printable_area_height / lines.count();
     if (bar_size == 0)
         bar_size = 1;
 
-    s16 max_top_line = lines.size() - printable_area_height;
+    s16 max_top_line = lines.count() - printable_area_height;
 
     u16 move_space = printable_area_height - bar_size;
     u16 bar_y = top + move_space * top_line / max_top_line;

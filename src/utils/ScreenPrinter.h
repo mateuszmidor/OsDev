@@ -25,7 +25,7 @@ public:
     virtual ~BoundedAreaScreenPrinter() {}
     void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
-
+    virtual void backspace();
     void format(s64 num) {
         format(kstd::to_str(num));
     }
@@ -67,11 +67,25 @@ protected:
     virtual void newline();
     void putc_into_vga(const char c);
     void tab();
-    void backspace();
     std::shared_ptr<drivers::VgaDriver> get_vga();
 
 private:
     std::shared_ptr<drivers::VgaDriver> vga;
+};
+
+class LineBuffer {
+public:
+    LineBuffer();
+    u32 count() const;
+    void push_back(const kstd::string& line);
+    void putc(char c);
+    void backspace();
+    void newline();
+    const kstd::string& back() const;
+    const kstd::string& operator[](u32 index) const;
+
+private:
+    kstd::vector<kstd::string> lines;
 };
 
 class ScrollableScreenPrinter : public BoundedAreaScreenPrinter {
@@ -79,6 +93,7 @@ public:
     ScrollableScreenPrinter();
     virtual ~ScrollableScreenPrinter() {}
 
+    void backspace() override;
     void scroll_up(u16 lines);
     void scroll_down(u16 lines);
     void scroll_to_begin();
@@ -93,7 +108,7 @@ protected:
     void draw_scroll_bar();
     void put_line_and_clear_remaining_space_at(u8 y, const kstd::string& line);
 
-    kstd::vector<kstd::string> lines;
+    LineBuffer lines;
     u16 top_line            = 0;
 
     const char BG_CHAR      = 176;
