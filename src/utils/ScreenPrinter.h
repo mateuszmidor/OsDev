@@ -26,18 +26,6 @@ public:
     void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
     virtual void backspace();
-    void format(s64 num) {
-        format(kstd::to_str(num));
-    }
-
-    void format(const kstd::string& fmt) {
-        format(fmt.c_str());
-    }
-
-    void format(char const *fmt) {
-        while (*fmt)
-            putc(*fmt++);
-    }
 
     /**
      * @name    format
@@ -45,14 +33,9 @@ public:
      */
     template<typename Head, typename ... Tail>
     void format(char const *fmt, Head head, Tail ... tail) {
-        while (*fmt) {
-            if (*fmt == '%') {
-                format(head);
-                format(++fmt, tail...);
-                break;
-            } else
-                putc(*fmt++);
-        }
+        const kstd::string& str = kstd::format(fmt, head, tail);
+        for (const char& c : str)
+            putc(c);
     }
 
 protected:
