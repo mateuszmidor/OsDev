@@ -11,7 +11,11 @@
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
 #include "TaskManager.h"
+#include "TaskFactory.h"
 #include "CpuInfo.h"
+
+#include "cmds/df.h"
+
 #include <algorithm>
 #include <memory>
 
@@ -34,17 +38,12 @@ static void cmd_cpuinfo(u64 arg) {
     p->format("CPU: % @ %MHz\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz());
 }
 
-static void cmd_df(u64 arg) {
-    ScrollableScreenPrinter* p = (ScrollableScreenPrinter*)arg;
-//    p->format("CPU: % @ %MHz\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz());
-}
-
 const string Terminal::PROMPT {"> "};
 Terminal::Terminal() :
         printer(0, 0, 89, 29) {
     cmd_collection.install("log", std::make_shared<Task>(cmd_log, "log", (u64)&printer));
     cmd_collection.install("cpuinfo", std::make_shared<Task>(cmd_cpuinfo, "cpuinfo", (u64)&printer));
-    cmd_collection.install("df", std::make_shared<Task>(cmd_df, "df", (u64)&printer));
+    cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&printer));
 }
 
 void Terminal::run(u64 arg) {

@@ -22,6 +22,7 @@ c_source_files :=  $(wildcard src/*.cpp) \
                    $(wildcard src/multitasking/*.cpp) \
                    $(wildcard src/utils/*.cpp) \
                    $(wildcard src/utils/terminal/*.cpp) \
+                   $(wildcard src/utils/terminal/cmds/*.cpp) \
                    $(wildcard src/_demos/*.cpp)
                    
 c_object_files := $(patsubst src/%.cpp, \
