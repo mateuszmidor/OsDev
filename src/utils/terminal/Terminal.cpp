@@ -20,6 +20,7 @@
 #include "cmds/lscpu.h"
 #include "cmds/ls.h"
 #include "cmds/cat.h"
+#include "cmds/ps.h"
 
 #include <algorithm>
 #include <memory>
@@ -45,6 +46,7 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&env));
     cmd_collection.install("ls", TaskFactory::make<cmds::ls>("ls", (u64)&env));
     cmd_collection.install("cat", TaskFactory::make<cmds::cat>("cat", (u64)&env));
+    cmd_collection.install("ps", TaskFactory::make<cmds::ps>("ps", (u64)&env));
 }
 
 void Terminal::run() {

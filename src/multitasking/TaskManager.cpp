@@ -36,6 +36,10 @@ TaskPtr TaskManager::get_current_task() const {
     return tasks[current_task];
 }
 
+const std::array<TaskPtr, 256>& TaskManager::get_tasks() const {
+    return tasks;
+}
+
 u16 TaskManager::get_num_tasks() const {
     return num_tasks;
 }

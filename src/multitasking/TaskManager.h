@@ -24,6 +24,7 @@ public:
     static void on_task_finished();
     bool add_task(TaskPtr task);
     TaskPtr get_current_task() const;
+    const std::array<TaskPtr, 256>& get_tasks() const;
     u16 get_num_tasks() const;
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
