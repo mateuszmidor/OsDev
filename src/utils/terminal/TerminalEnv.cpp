@@ -35,7 +35,7 @@ TerminalEnv::TerminalEnv() :
 
     if (!volumes.empty()) {
         cwd = "/";
-        volume = &volumes[0];
+        volume = &volumes.back();
     }
     else {
         cwd = "[NO VOLUMES]";

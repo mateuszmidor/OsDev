@@ -18,6 +18,7 @@
 #include "cmds/pwd.h"
 #include "cmds/log.h"
 #include "cmds/lscpu.h"
+#include "cmds/ls.h"
 
 #include <algorithm>
 #include <memory>
@@ -41,6 +42,7 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("klog", TaskFactory::make<cmds::log>("klog", (u64)&env));
     cmd_collection.install("lscpu", TaskFactory::make<cmds::lscpu>("lscpu", (u64)&env));
     cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&env));
+    cmd_collection.install("ls", TaskFactory::make<cmds::ls>("ls", (u64)&env));
 }
 
 void Terminal::run() {
