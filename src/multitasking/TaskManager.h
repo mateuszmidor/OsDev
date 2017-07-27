@@ -19,10 +19,12 @@ using TaskEntryPoint = void (*)(u64 arg);
 struct Task {
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0);
     void reset();
+    void wait_until_finished();
     static void idle(u64 arg = 0);
     static void yield();
     static void exit();
 
+    volatile bool is_terminated;
     TaskEntryPoint entrypoint;
     kstd::string name;
     u64 arg;

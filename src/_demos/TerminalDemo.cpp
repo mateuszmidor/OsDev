@@ -245,6 +245,7 @@ void TerminalDemo::process_cmd(const string& cmd) {
     if (auto task = cmd_collection.get(cmd)) {
         TaskManager& task_manager = TaskManager::instance();
         task_manager.add_task(task);
+        task->wait_until_finished();
         cmd_history.append(cmd);
     }
     else

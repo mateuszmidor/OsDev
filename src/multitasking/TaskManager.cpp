@@ -43,6 +43,16 @@ void Task::reset() {
     // prepare task cpu state to setup cpu register with
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
     new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg};
+
+    is_terminated = false;
+}
+
+/**
+ * is_terminated is set by TaskManager::kill_current_task
+ */
+void Task::wait_until_finished() {
+    while (!is_terminated)
+        Task::yield();
 }
 
 void Task::idle(u64 arg) {
@@ -93,6 +103,9 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
 }
 
 hardware::CpuState* TaskManager::kill_current_task() {
+    // mark task as terminated
+    tasks[current_task]->is_terminated = true;
+
     // remove current task from the list
     for (u16 i = current_task; i < num_tasks -1; i++)
         tasks[i] = tasks[i+1];
