@@ -10,6 +10,9 @@
 
 #include "ScrollableScreenPrinter.h"
 #include "KeyboardDriver.h"
+#include "TaskManager.h"
+#include <memory>
+#include <tuple>
 #include "kstd.h"
 
 namespace demos {
@@ -25,6 +28,21 @@ public:
 private:
     kstd::vector<kstd::string> history;
     u16 index   {0};
+};
+
+struct Command {
+    kstd::string            name;
+    multitasking::TaskPtr   task;
+};
+
+class CommandCollection {
+public:
+    CommandCollection();
+    std::tuple<bool, kstd::string> filter(const kstd::string& pattern);
+    void install(const kstd::string name, multitasking::TaskPtr task);
+
+private:
+    kstd::vector<Command> commands;
 };
 
 class TerminalDemo {
@@ -43,10 +61,13 @@ private:
     void process_cmd(const kstd::string& cmd);
     void print_klog();
 
+    static const kstd::string PROMPT;
+
     kstd::string edit_line;
     utils::ScrollableScreenPrinter printer;
     drivers::Key last_key = drivers::Key::INVALID;
     CommandHistory cmd_history;
+    CommandCollection cmd_collection;
 };
 
 } /* namespace demos */

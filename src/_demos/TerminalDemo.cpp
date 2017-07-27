@@ -10,6 +10,7 @@
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
 #include "TaskManager.h"
+#include <algorithm>
 
 using namespace kstd;
 using namespace drivers;
@@ -22,7 +23,7 @@ CommandHistory::CommandHistory() {
     history.push_back("");
 }
 
-void CommandHistory::append(const kstd::string& cmd) {
+void CommandHistory::append(const string& cmd) {
     if (!cmd.empty() && cmd != history.back()) {
         history.push_back(cmd);
         set_to_latest();
@@ -33,14 +34,14 @@ void CommandHistory::set_to_latest() {
     index = history.size();
 }
 
-const kstd::string& CommandHistory::get_prev() {
+const string& CommandHistory::get_prev() {
     if (index > 0)
         index--;
 
     return history[index];
 }
 
-const kstd::string& CommandHistory::get_next() {
+const string& CommandHistory::get_next() {
     if (index < history.size() -1) {
         index++;
     } else
@@ -49,6 +50,41 @@ const kstd::string& CommandHistory::get_next() {
     return history[index];
 }
 
+CommandCollection::CommandCollection() {
+    install("log", multitasking::TaskPtr());
+    install("mount", multitasking::TaskPtr());
+    install("grep", multitasking::TaskPtr());
+    install("gcc", multitasking::TaskPtr());
+    install("filt", multitasking::TaskPtr());
+}
+
+/**
+ * @brief   Match known commands against name patter
+ * @param   pattern Command name beginning
+ * @return  {false, name} if single command found
+ *          {true, name_list} if multiple commands found
+ */
+std::tuple<bool, string> CommandCollection::filter(const string& pattern) {
+    kstd::vector<string> found;
+    auto filt = [&pattern](const Command& c) { return c.name.find(pattern) != string::npos; };
+    for (const Command& c : commands)
+        if (c.name.find(pattern) == 0)
+            found.push_back(c.name);
+
+    if (found.empty())
+        return std::make_tuple(false, pattern);
+    else if (found.size() == 1)
+        return std::make_tuple(false, found.back());
+    else
+        return std::make_tuple(true, kstd::join_string(" ", found));
+}
+
+void CommandCollection::install(const string name, multitasking::TaskPtr task) {
+    commands.push_back(Command{name, task});
+}
+
+
+const string TerminalDemo::PROMPT {"> "};
 TerminalDemo::TerminalDemo() :
         printer(0, 0, 89, 29) {
 }
@@ -60,7 +96,7 @@ void TerminalDemo::run(u64 arg) {
     // task main loop
     while(true) {
         // print prompt
-        printer.format("> ");
+        printer.format(PROMPT);
 
         // get command
         string cmd = get_line();
@@ -106,52 +142,71 @@ Key TerminalDemo::get_key() {
     return key;
 }
 
-void TerminalDemo::suggest_cmd(const kstd::string& cmd) {
+void TerminalDemo::suggest_cmd(const string& cmd) {
     for (u16 i = 0; i < edit_line.length(); i++)
         printer.backspace();
 
-    printer.format("%", cmd);
+    printer.format(cmd);
     edit_line = cmd;
 }
 
 void TerminalDemo::process_key(Key key) {
     if (key & Key::FUNCTIONAL) {
         switch (key) {
-        case Key::Up:
+        case Key::Up: {
             suggest_cmd(cmd_history.get_prev());
             break;
+        }
 
-        case Key::Down:
+        case Key::Down: {
             suggest_cmd(cmd_history.get_next());
             break;
+        }
 
-        case Key::Enter:
+        case Key::Tab: {
+            bool multiple_results;
+            string filter_result;
+            std::tie(multiple_results, filter_result) = cmd_collection.filter(edit_line);
+            if (multiple_results)
+                printer.format("\n  %\n%%", filter_result, PROMPT, edit_line);
+            else
+                suggest_cmd(filter_result);
+            break;
+        }
+
+        case Key::Enter: {
             printer.newline();
             cmd_history.set_to_latest();
             break;
+        }
 
-        case Key::Backspace:
+        case Key::Backspace: {
             if (!edit_line.empty()) {
                 edit_line.pop_back();
                 printer.backspace();
             }
             break;
+        }
 
-        case Key::PgUp:
+        case Key::PgUp: {
             printer.scroll_up(4);
             break;
+        }
 
-        case Key::PgDown:
+        case Key::PgDown: {
             printer.scroll_down(4);
             break;
+        }
 
-        case Key::Home:
+        case Key::Home: {
             printer.scroll_to_begin();
             break;
+        }
 
-        case Key::End:
+        case Key::End: {
             printer.scroll_to_end();
             break;
+        }
 
         case Key::Esc:
             break;
@@ -165,7 +220,7 @@ void TerminalDemo::process_key(Key key) {
     }
 }
 
-void TerminalDemo::process_cmd(const kstd::string& cmd) {
+void TerminalDemo::process_cmd(const string& cmd) {
     if (cmd == "exit") {
         printer.format("Terminal exit.");
         Task::exit();
