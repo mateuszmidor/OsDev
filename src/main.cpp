@@ -21,14 +21,14 @@
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
 #include "TaskManager.h"
+#include "TaskFactory.h"
 #include "PageFaultHandler.h"
 #include "TaskExitHandler.h"
-
+#include "Terminal.h"
 #include "_demos/Demo.h"
 #include "_demos/VgaDemo.h"
 #include "_demos/Fat32Demo.h"
 #include "_demos/MouseDemo.h"
-#include "_demos/TerminalDemo.h"
 #include "_demos/MultitaskingDemo.h"
 #include "_demos/CpuSpeedDemo.h"
 
@@ -64,7 +64,7 @@ void task_init(u64 unused) {
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
 //    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(Demo::make_demo<TerminalDemo>("terminal_demo"));
+    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal"));
 //    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
 }
