@@ -62,7 +62,7 @@ void task_init(u64 unused) {
     task_manager.add_task(make_shared<Task>(Task::idle, "idle"));
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_a_demo", 'A'));
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
-    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
+//    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
     task_manager.add_task(Demo::make_demo<TerminalDemo>("terminal_demo"));
 //    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));

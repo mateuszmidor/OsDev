@@ -10,12 +10,13 @@
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
 #include "TaskManager.h"
+#include "CpuInfo.h"
 #include <algorithm>
 
 using namespace kstd;
 using namespace drivers;
 using namespace multitasking;
-using utils::KernelLog;
+using namespace utils;
 
 namespace demos {
 
@@ -51,11 +52,15 @@ const string& CommandHistory::get_next() {
 }
 
 CommandCollection::CommandCollection() {
-    install("log", multitasking::TaskPtr());
-    install("mount", multitasking::TaskPtr());
-    install("grep", multitasking::TaskPtr());
-    install("gcc", multitasking::TaskPtr());
-    install("filt", multitasking::TaskPtr());
+}
+
+multitasking::TaskPtr CommandCollection::get(const kstd::string& cmd_name) {
+    auto filt = [&cmd_name](const Command& cmd) { return cmd.name == cmd_name; };
+    auto found = std::find_if(commands.begin(), commands.end(), filt);
+    if (found != commands.end())
+        return found->task;
+    else
+        return TaskPtr();
 }
 
 /**
@@ -83,10 +88,23 @@ void CommandCollection::install(const string name, multitasking::TaskPtr task) {
     commands.push_back(Command{name, task});
 }
 
+static void cmd_log(u64 arg) {
+    ScrollableScreenPrinter* p = (ScrollableScreenPrinter*)arg;
+    KernelLog& klog = KernelLog::instance();
+    p->format("%\n", klog.get_text());
+}
+
+static void cmd_cpuinfo(u64 arg) {
+    ScrollableScreenPrinter* p = (ScrollableScreenPrinter*)arg;
+    CpuInfo cpu_info;
+    p->format("CPU: % @ %MHz\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz());
+}
 
 const string TerminalDemo::PROMPT {"> "};
 TerminalDemo::TerminalDemo() :
         printer(0, 0, 89, 29) {
+    cmd_collection.install("log", std::make_shared<Task>(cmd_log, "log", (u64)&printer));
+    cmd_collection.install("cpuinfo", std::make_shared<Task>(cmd_cpuinfo, "cpuinfo", (u64)&printer));
 }
 
 void TerminalDemo::run(u64 arg) {
@@ -221,16 +239,17 @@ void TerminalDemo::process_key(Key key) {
 }
 
 void TerminalDemo::process_cmd(const string& cmd) {
-    if (cmd == "exit") {
-        printer.format("Terminal exit.");
-        Task::exit();
+    if (cmd.empty())
+        return;
+
+    if (auto task = cmd_collection.get(cmd)) {
+        TaskManager& task_manager = TaskManager::instance();
+        task_manager.add_task(task);
+        cmd_history.append(cmd);
     }
-    else if (cmd == "log")
-        print_klog();
-    else if (!cmd.empty())
+    else
         printer.format("Unknown command: %\n", cmd);
 
-    cmd_history.append(cmd);
     edit_line.clear();
 }
 

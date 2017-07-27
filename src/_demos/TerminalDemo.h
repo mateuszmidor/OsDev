@@ -38,6 +38,7 @@ struct Command {
 class CommandCollection {
 public:
     CommandCollection();
+    multitasking::TaskPtr get(const kstd::string& cmd_name);
     std::tuple<bool, kstd::string> filter(const kstd::string& pattern);
     void install(const kstd::string name, multitasking::TaskPtr task);
 
