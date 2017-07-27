@@ -21,8 +21,8 @@ namespace terminal {
 
 class Terminal {
 public:
-    Terminal();
-    void run(u64 arg);
+    Terminal(u64 arg);
+    void run();
 
 private:
     bool init();
@@ -38,11 +38,12 @@ private:
     static const kstd::string PROMPT;
 
     kstd::string edit_line;
-    utils::ScrollableScreenPrinter printer;
     drivers::Key last_key = drivers::Key::INVALID;
     CommandHistory cmd_history;
     CommandCollection cmd_collection;
 
+    utils::KernelLog& klog;
+    utils::ScrollableScreenPrinter printer;
     TerminalEnv env;
 };
 

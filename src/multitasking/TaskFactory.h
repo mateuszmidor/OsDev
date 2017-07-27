@@ -16,7 +16,7 @@ namespace multitasking {
 class TaskFactory {
 public:
     /**
-     * @brief   Makes a shared_ptr<Task> object from a class that exposes void run(u64 arg)
+     * @brief   Makes a shared_ptr<Task> object from a class that exposes Constructor(u64 arg) and void run()
      */
     template <class T>
     static std::shared_ptr<multitasking::Task> make(const kstd::string& name, u64 arg = 0) {
@@ -26,8 +26,8 @@ public:
 private:
     template <class T>
     static void make_(u64 arg) {
-        T task;
-        task.run(arg);
+        T task(arg);
+        task.run();
     }
 };
 

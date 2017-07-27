@@ -18,9 +18,7 @@ using namespace filesystem;
 
 namespace cmds {
 
-void df::run(u64 arg) {
-    env = (terminal::TerminalEnv*)arg;
-
+void df::run() {
     auto& driver_manager = DriverManager::instance();
     auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
     if (!ata_primary_bus)

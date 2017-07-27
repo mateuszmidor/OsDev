@@ -15,6 +15,9 @@
 #include "CpuInfo.h"
 
 #include "cmds/df.h"
+#include "cmds/pwd.h"
+#include "cmds/log.h"
+#include "cmds/lscpu.h"
 
 #include <algorithm>
 #include <memory>
@@ -26,32 +29,21 @@ using namespace multitasking;
 
 namespace terminal {
 
-static void cmd_log(u64 arg) {
-    TerminalEnv* env = (TerminalEnv*)arg;
-    KernelLog& klog = KernelLog::instance();
-    env->printer->format("%\n", klog.get_text());
-}
-
-static void cmd_cpuinfo(u64 arg) {
-    TerminalEnv* env = (TerminalEnv*)arg;
-    CpuInfo cpu_info;
-    env->printer->format("CPU: % @ %MHz\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz());
-}
-
 const string Terminal::PROMPT {"> "};
-Terminal::Terminal() :
-        printer(0, 0, 89, 29) {
+Terminal::Terminal(u64 arg) :
+        printer(0, 0, 89, 29),
+        klog(KernelLog::instance()) {
 
-    env.cwd = "/";
-//    env.volume = select_first_volume();
     env.printer = &printer;
+    env.klog = &klog;
 
-    cmd_collection.install("log", std::make_shared<Task>(cmd_log, "log", (u64)&env));
-    cmd_collection.install("cpuinfo", std::make_shared<Task>(cmd_cpuinfo, "cpuinfo", (u64)&env));
+    cmd_collection.install("pwd", TaskFactory::make<cmds::pwd>("pwd", (u64)&env));
+    cmd_collection.install("klog", TaskFactory::make<cmds::log>("klog", (u64)&env));
+    cmd_collection.install("lscpu", TaskFactory::make<cmds::lscpu>("lscpu", (u64)&env));
     cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&env));
 }
 
-void Terminal::run(u64 arg) {
+void Terminal::run() {
     if (!init())
         return;
 

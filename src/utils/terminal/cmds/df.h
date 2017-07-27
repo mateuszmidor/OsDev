@@ -12,16 +12,17 @@
 #include "AtaDriver.h"
 #include "TerminalEnv.h"
 
+#include "CmdBase.h"
+
 namespace cmds {
 
-class df {
+class df: public CmdBase {
 public:
-    void run(u64 arg);
+    using CmdBase::CmdBase;
+    void run() override;
 
 private:
     void print_hdd_info(drivers::AtaDevice& hdd);
-
-    terminal::TerminalEnv* env;
 };
 
 } /* namespace cmds */
