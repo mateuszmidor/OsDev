@@ -19,6 +19,7 @@
 #include "cmds/log.h"
 #include "cmds/lscpu.h"
 #include "cmds/ls.h"
+#include "cmds/cat.h"
 
 #include <algorithm>
 #include <memory>
@@ -43,6 +44,7 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("lscpu", TaskFactory::make<cmds::lscpu>("lscpu", (u64)&env));
     cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&env));
     cmd_collection.install("ls", TaskFactory::make<cmds::ls>("ls", (u64)&env));
+    cmd_collection.install("cat", TaskFactory::make<cmds::cat>("cat", (u64)&env));
 }
 
 void Terminal::run() {
@@ -180,7 +182,14 @@ void Terminal::process_cmd(const string& cmd) {
     if (cmd.empty())
         return;
 
-    if (auto task = cmd_collection.get(cmd)) {
+    auto cmds = kstd::split_string<vector<string>>(cmd, ' ');
+    if (auto task = cmd_collection.get(cmds[0])) {
+
+        if (cmds.size() > 1)
+            env.command_line = cmds[1];
+        else
+            env.command_line.clear();
+
         TaskManager& task_manager = TaskManager::instance();
         task_manager.add_task(task);
         task->wait_until_finished();
