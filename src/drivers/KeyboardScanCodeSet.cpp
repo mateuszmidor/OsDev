@@ -28,7 +28,7 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     basic_code_key[0x0C] = (Key)'-';
     basic_code_key[0x0D] = (Key)'=';
     basic_code_key[0x0E] = Key::Backspace;
-    basic_code_key[0x0F] = (Key)'\t';
+    basic_code_key[0x0F] = Key::Tab;
     basic_code_key[0x10] = (Key)'q';
     basic_code_key[0x11] = (Key)'w';
     basic_code_key[0x12] = (Key)'e';
@@ -118,7 +118,7 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     basic_shift_code_key[0x0C] = (Key)'_';
     basic_shift_code_key[0x0D] = (Key)'+';
     basic_shift_code_key[0x0E] = Key::Backspace;
-    basic_shift_code_key[0x0F] = (Key)'\t';
+    basic_shift_code_key[0x0F] = Key::Tab;
     basic_shift_code_key[0x10] = (Key)'Q';
     basic_shift_code_key[0x11] = (Key)'W';
     basic_shift_code_key[0x12] = (Key)'E';

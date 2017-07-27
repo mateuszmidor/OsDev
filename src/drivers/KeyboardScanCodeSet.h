@@ -26,6 +26,7 @@ enum Key : u16 {
 
     // function keys
     Esc     = 256,
+    Tab,
     Enter,
     Backspace,
     PgUp, PgDown,
