@@ -8,18 +8,13 @@
 #ifndef SRC__DEMOS_CPUSPEEDDEMO_H_
 #define SRC__DEMOS_CPUSPEEDDEMO_H_
 
-#include "TaskManager.h"
+#include "types.h"
 
 namespace demos {
 
 class CpuSpeedDemo {
 public:
     void run(u64 arg);
-
-private:
-    u64 rtdsc();
-    void no_interrupt_method();
-    void interrupt_method();
 };
 
 } /* namespace demos */

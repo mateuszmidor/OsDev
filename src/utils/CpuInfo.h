@@ -9,16 +9,18 @@
 #ifndef SRC_CPUINFO_H_
 #define SRC_CPUINFO_H_
 
+#include "kstd.h"
+
 namespace utils {
 
 class CpuInfo {
 public:
-    CpuInfo();
+    u32 get_peak_mhz() const;
+    kstd::string get_vendor() const;
     void print_to_klog() const;
 
 private:
-    char vendor[13];
-    void getCpuVendor(char buff[13]);
+    u64 rtdsc() const;
 };
 
 } // namespace utils
