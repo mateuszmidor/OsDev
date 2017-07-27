@@ -7,7 +7,7 @@
 
 #include "ExceptionManager.h"
 #include "UnhandledExceptionHandler.h"
-#include "TaskManager.h"
+#include "CpuState.h"
 
 using namespace hardware;
 

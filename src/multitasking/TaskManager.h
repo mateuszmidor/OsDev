@@ -10,33 +10,11 @@
 
 #include <array>
 #include <memory>
-#include "CpuState.h"
 #include "kstd.h"
+#include "Task.h"
 
 namespace multitasking {
 
-using TaskEntryPoint = void (*)(u64 arg);
-struct Task {
-    Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0);
-    void reset();
-    void wait_until_finished();
-    static void idle(u64 arg = 0);
-    static void yield();
-    static void exit();
-
-    volatile bool is_terminated;
-    TaskEntryPoint entrypoint;
-    kstd::string name;
-    u64 arg;
-    u8  stack[2*4096];
-    hardware::CpuState* cpu_state;
-};
-
-struct TaskEpilogue {
-    u64 rip;    // rip cpu register value for retq instruction on task function exit
-} __attribute__((packed));
-
-using TaskPtr = std::shared_ptr<Task>;
 class TaskManager {
 public:
     static TaskManager& instance();
