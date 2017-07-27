@@ -32,7 +32,7 @@ public:
      * @example format("CPU: %", cpu_vendor_cstr);
      */
     template<typename ... Args>
-    void format(char const *fmt, Args ... args) {
+    void format(const kstd::string& fmt, Args ... args) {
         const kstd::string& str = kstd::format(fmt, args...);
         for (const char& c : str)
             putc(c);

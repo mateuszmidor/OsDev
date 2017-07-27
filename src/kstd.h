@@ -174,7 +174,22 @@ C split_string(const string& s, char delimiter)
     return result;
 }
 
+template <typename C>
+string join_string(string separator, const C& elements) {
+    u32 len = 0;
+    for (const string& s : elements)
+        len += s.length();
 
+    len += (elements.size() - 1) * separator.length();
+    string result;
+    result.reserve(len);
+
+    for (u32 i = 0; i < elements.size() - 1; i++)
+        result += elements[i] + separator;
+    result += elements.back();
+
+    return result;
+}
 
 string format(const string& fmt);
 
@@ -198,6 +213,10 @@ string format(char const *fmt, Head head, Tail ... tail) {
     return result;
 }
 
+template<typename ... Args>
+string format(const string& fmt, Args ... args) {
+    return format(fmt.c_str(), args...);
+}
 
 }; // namespace kstd
 

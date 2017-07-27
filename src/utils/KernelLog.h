@@ -22,7 +22,7 @@ public:
      * @example format("CPU: %", cpu_vendor_cstr);
      */
     template<typename ... Args>
-    void format(char const *fmt, Args ... args) {
+    void format(const kstd::string& fmt, Args ... args) {
         log_str += kstd::format(fmt, args...);
     }
 
