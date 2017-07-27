@@ -15,13 +15,12 @@ using utils::KernelLog;
 static KernelLog& klog = KernelLog::instance();
 
 // allocation should be done using memory manager
+size_t bump_addr = 2 * 1024 * 1024;
 void* bump_alloc(size_t size) {
-    static size_t addr = 2 * 1024 * 1024;
-
-    size_t old = addr;
-    addr += size;
+    size_t old = bump_addr;
+    bump_addr += size;
    // klog.format("Allocated % bytes of mem\n", size);
-    if (addr > 1024 * 1024 * 16)
+    if (bump_addr > 1024 * 1024 * 16)
         klog.format("bump_alloc: exceeded 16MB of allocated memory");
 
     return (void*)old;
