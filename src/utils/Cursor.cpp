@@ -51,11 +51,11 @@ void Cursor::operator--(int) {
 }
 
 void Cursor::newline() {
-    cursor_x = left;
+    set_x(left);
     if (cursor_y == bottom)
-        cursor_y = top;
+        set_y(top);
     else
-        cursor_y++;
+        set_y(cursor_y + 1);
 }
 
 void Cursor::set_visible(bool visible) {
