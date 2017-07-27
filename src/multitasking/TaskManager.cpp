@@ -25,7 +25,15 @@ TaskManager& TaskManager::instance() {
                         ^
                   here is rsp when first time jumping from interrupt to task function
 */
-Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg) : name(name) {
+Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg) :
+        entrypoint(entrypoint), name(name), arg(arg) {
+    reset();
+}
+
+/**
+ * @brief   Setup cpu state and return address on the task stack befor running the task
+ */
+void Task::reset() {
     const u64 STACK_END = (u64)stack + sizeof(stack);
 
     // prepare task epilogue ie. where to return from task function
@@ -58,6 +66,8 @@ void TaskManager::on_task_finished() {
 bool TaskManager::add_task(TaskPtr task) {
     if (num_tasks == tasks.size())
         return false;
+
+    task->reset();
 
     tasks[num_tasks++] = task;
     return true;
