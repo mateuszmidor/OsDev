@@ -19,7 +19,7 @@ using namespace filesystem;
 namespace cmds {
 
 void df::run(u64 arg) {
-    p = (ScrollableScreenPrinter*)arg;
+    env = (terminal::TerminalEnv*)arg;
 
     auto& driver_manager = DriverManager::instance();
     auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
@@ -27,25 +27,28 @@ void df::run(u64 arg) {
         return;
 
     if (ata_primary_bus->master_hdd.is_present()) {
-        p->format("ATA Primary Master:\n");
+        env->printer->format("ATA Primary Master:\n");
         print_hdd_info(ata_primary_bus->master_hdd);
     }
 
     if (ata_primary_bus->slave_hdd.is_present()) {
-        p->format("ATA Primary Slave:\n");
+        env->printer->format("ATA Primary Slave:\n");
         print_hdd_info(ata_primary_bus->slave_hdd);
     }
 }
 
 void df::print_hdd_info(drivers::AtaDevice& hdd) {
     if (!MassStorageMsDos::verify(hdd)) {
-        p->format("Not MBR formatted device\n");
+        env->printer->format("Not MBR formatted device\n");
         return;
     }
 
     MassStorageMsDos ms(hdd);
     for (auto& v : ms.get_volumes()) {
-        p->format("  %, size: %MB, used: %KB\n", v.get_label(), v.get_size_in_bytes() / 1024 / 1024, v.get_used_space_in_bytes() / 1024);
+        env->printer->format("  %, size: %MB, used: %KB\n",
+                v.get_label(),
+                v.get_size_in_bytes() / 1024 / 1024,
+                v.get_used_space_in_bytes() / 1024);
     }
 }
 } /* namespace cmds */

@@ -27,23 +27,28 @@ using namespace multitasking;
 namespace terminal {
 
 static void cmd_log(u64 arg) {
-    ScrollableScreenPrinter* p = (ScrollableScreenPrinter*)arg;
+    TerminalEnv* env = (TerminalEnv*)arg;
     KernelLog& klog = KernelLog::instance();
-    p->format("%\n", klog.get_text());
+    env->printer->format("%\n", klog.get_text());
 }
 
 static void cmd_cpuinfo(u64 arg) {
-    ScrollableScreenPrinter* p = (ScrollableScreenPrinter*)arg;
+    TerminalEnv* env = (TerminalEnv*)arg;
     CpuInfo cpu_info;
-    p->format("CPU: % @ %MHz\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz());
+    env->printer->format("CPU: % @ %MHz\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz());
 }
 
 const string Terminal::PROMPT {"> "};
 Terminal::Terminal() :
         printer(0, 0, 89, 29) {
-    cmd_collection.install("log", std::make_shared<Task>(cmd_log, "log", (u64)&printer));
-    cmd_collection.install("cpuinfo", std::make_shared<Task>(cmd_cpuinfo, "cpuinfo", (u64)&printer));
-    cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&printer));
+
+    env.cwd = "/";
+//    env.volume = select_first_volume();
+    env.printer = &printer;
+
+    cmd_collection.install("log", std::make_shared<Task>(cmd_log, "log", (u64)&env));
+    cmd_collection.install("cpuinfo", std::make_shared<Task>(cmd_cpuinfo, "cpuinfo", (u64)&env));
+    cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&env));
 }
 
 void Terminal::run(u64 arg) {

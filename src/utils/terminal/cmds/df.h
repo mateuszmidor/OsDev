@@ -10,7 +10,7 @@
 
 #include "types.h"
 #include "AtaDriver.h"
-#include "ScrollableScreenPrinter.h"
+#include "TerminalEnv.h"
 
 namespace cmds {
 
@@ -21,7 +21,7 @@ public:
 private:
     void print_hdd_info(drivers::AtaDevice& hdd);
 
-    utils::ScrollableScreenPrinter* p;
+    terminal::TerminalEnv* env;
 };
 
 } /* namespace cmds */

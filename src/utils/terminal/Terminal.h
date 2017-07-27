@@ -8,7 +8,8 @@
 #ifndef SRC_UTILS_TERMINAL_TERMINAL_H_
 #define SRC_UTILS_TERMINAL_TERMINAL_H_
 
-#include "ScrollableScreenPrinter.h"
+
+#include "TerminalEnv.h"
 #include "KeyboardDriver.h"
 #include "CommandHistory.h"
 #include "CommandCollection.h"
@@ -41,6 +42,8 @@ private:
     drivers::Key last_key = drivers::Key::INVALID;
     CommandHistory cmd_history;
     CommandCollection cmd_collection;
+
+    TerminalEnv env;
 };
 
 } /* namespace terminal */
