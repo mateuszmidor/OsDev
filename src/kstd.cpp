@@ -74,6 +74,23 @@ extern "C" void* memset( void* dest, int ch, size_t count ) {
     return dest;
 }
 
+extern "C" const void* memchr(const void* ptr, int ch, std::size_t count) {
+    const char* data = (const char*)ptr;
+    const char c = (char)c;
+
+    for (;count > 0; count--) {
+        if (*data == c)
+            return data;
+        data++;
+    }
+
+    return nullptr;
+}
+
+//extern "C" void* memchr(void* ptr, int ch, std::size_t count) {
+//    return memchr((const void*)ptr, ch, count);
+//}
+
 extern "C" void __cxa_pure_virtual() {
     klog.format("pure virtual function called\n");
 }

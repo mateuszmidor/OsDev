@@ -18,6 +18,9 @@
 
 extern "C" void * memcpy(void * destination, const void * source, size_t num);
 extern "C" void* memset(void* dest, int ch, size_t count);
+extern "C" const void* memchr(const void* ptr, int ch, std::size_t count);
+//extern "C" void* memchr(void* ptr, int ch, std::size_t count);
+
 
 namespace kstd {
 
@@ -176,6 +179,9 @@ C split_string(const string& s, char delimiter)
 
 template <typename C>
 string join_string(string separator, const C& elements) {
+    if (elements.empty())
+        return "";
+
     u32 len = 0;
     for (const string& s : elements)
         len += s.length();
