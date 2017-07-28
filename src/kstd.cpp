@@ -76,7 +76,7 @@ extern "C" void* memset( void* dest, int ch, size_t count ) {
 
 extern "C" const void* memchr(const void* ptr, int ch, std::size_t count) {
     const char* data = (const char*)ptr;
-    const char c = (char)c;
+    const char c = (char)ch;
 
     for (;count > 0; count--) {
         if (*data == c)
