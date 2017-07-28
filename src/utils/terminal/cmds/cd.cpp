@@ -18,9 +18,127 @@ using namespace filesystem;
 
 namespace cmds {
 
-void cd::run(u64 arg) {
-    env = (terminal::TerminalEnv*)arg;
-    auto cmds = split_string<vector<string>>(env->command_line, ' ');
+filesystem::VolumeFat32* cd::prev_volume = nullptr;
+kstd::string cd::prev_cwd = "";
+
+
+void cd::run() {
+    string path = env->command_line;
+
+    if (path[0] == '-')
+        navigate_back();
+    else
+        navigate_path(path);
+}
+
+void cd::navigate_back() {
+    // first check if there is a known previous location
+    if (prev_volume) {
+        std::swap(env->volume, prev_volume);
+        std::swap(env->cwd, prev_cwd);
+    }
+}
+
+void cd::navigate_path(const string& path) {
+    // first store the location
+    store_last_location();
+
+    // then navigate onward
+    if (path.empty())
+        cd_root();
+    else if (path[0] == '/')
+        cd_volume_directory(path);
+    else
+        cd_directory(path);
+}
+
+void cd::store_last_location() {
+    prev_volume = env->volume;
+    prev_cwd = env->cwd;
+}
+
+void cd::cd_root() {
+    cd_directory("/");
+}
+
+/**
+ * @param absolute_path Path starting with volume name like /SYSTEM/HOME/
+ */
+void cd::cd_volume_directory(const string& absolute_path) {
+    string volume;
+    string path;
+    split_volume_path(absolute_path, volume, path);
+
+    select_volume_by_name(volume);
+
+    if (!path.empty())
+        cd_directory(path);
+}
+
+void cd::split_volume_path(const string& location, string& volume, string& path) const {
+    // change volume
+    auto volume_path_separator = location.find('/', 1);
+    if (volume_path_separator == string::npos)
+        volume_path_separator = location.size();
+
+    volume = location.substr(1, volume_path_separator - 1);
+
+    // change directory
+    path = location.substr(volume_path_separator, location.length());
+}
+/**
+ * @param path Path without volume name
+ */
+void cd::cd_directory(const string& path) {
+    string absolute_path = format("%/%", env->cwd, path);
+    string normalized_absolute_path = format("/%", normalize_path(absolute_path)); // absolute path must start with "/"
+    SimpleDentryFat32 e;
+    if (!env->volume->get_entry(normalized_absolute_path, e)) {
+        env->printer->format("cd: directory '%' doesnt exist\n", normalized_absolute_path);
+        return;
+    }
+
+    if (!e.is_directory) {
+        env->printer->format("cd: '%' is not directory\n", normalized_absolute_path);
+        return;
+    }
+
+    env->cwd = normalized_absolute_path;
+}
+
+/**
+ *
+ * @param path  Difficult path like /user/home/../data/./..
+ * @return      Normalized path without starting slash
+ */
+string cd::normalize_path(const string& path) const {
+    auto segments = split_string<vector<string>>(path, '/');
+    vector<string> out;
+
+    for (const auto& s : segments) {
+        if (s == "") {}
+        else if (s == ".") {}
+        else if (s == "..") {
+            if (out.empty())
+                return "";
+            else
+                out.pop_back();
+        } else
+            out.push_back(s);
+
+    }
+    return join_string("/", out);
+}
+
+void cd::select_volume_by_name(const kstd::string& name) {
+    for (auto& v : env->volumes)
+        if (v.get_label() == name) {
+            env->cwd = "/";
+            env->volume = &v;
+            return;
+        }
+
+    env->printer->format("cd: no volume named '%'\n", name);
 }
 
 } /* namespace cmds */

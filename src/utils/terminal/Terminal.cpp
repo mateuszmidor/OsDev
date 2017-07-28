@@ -22,6 +22,7 @@
 #include "cmds/cat.h"
 #include "cmds/ps.h"
 #include "cmds/free.h"
+#include "cmds/cd.h"
 
 #include <algorithm>
 #include <memory>
@@ -49,6 +50,7 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("cat", TaskFactory::make<cmds::cat>("cat", (u64)&env));
     cmd_collection.install("ps", TaskFactory::make<cmds::ps>("ps", (u64)&env));
     cmd_collection.install("free", TaskFactory::make<cmds::free>("free", (u64)&env));
+    cmd_collection.install("cd", TaskFactory::make<cmds::cd>("cd", (u64)&env));
 }
 
 void Terminal::run() {
@@ -58,7 +60,7 @@ void Terminal::run() {
     // task main loop
     while(true) {
         // print prompt
-        printer.format(PROMPT);
+        printer.format("/%% %", env.volume->get_label(), env.cwd, PROMPT);
 
         // get command
         string cmd = get_line();
@@ -130,7 +132,7 @@ void Terminal::process_key(Key key) {
             string filter_result;
             std::tie(multiple_results, filter_result) = cmd_collection.filter(edit_line);
             if (multiple_results)
-                printer.format("\n  %\n%%", filter_result, PROMPT, edit_line);
+                printer.format("\n  %\n/%% %%", filter_result, env.volume->get_label(),env.cwd, PROMPT, edit_line);
             else
                 suggest_cmd(filter_result);
             break;
