@@ -24,7 +24,7 @@ void cat::run() {
 //        return;
 //    }
 
-    string filename = env->cwd + env->command_line;//cmds[1];
+    string filename = env->cwd + "/" + env->command_line;//cmds[1];
     VolumeFat32* v = env->volume;
     SimpleDentryFat32 e;
     if (!v->get_entry(filename, e)) {
