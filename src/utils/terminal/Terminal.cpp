@@ -23,6 +23,7 @@
 #include "cmds/ps.h"
 #include "cmds/free.h"
 #include "cmds/cd.h"
+#include "cmds/rm.h"
 
 #include <algorithm>
 #include <memory>
@@ -51,6 +52,7 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("ps", TaskFactory::make<cmds::ps>("ps", (u64)&env));
     cmd_collection.install("free", TaskFactory::make<cmds::free>("free", (u64)&env));
     cmd_collection.install("cd", TaskFactory::make<cmds::cd>("cd", (u64)&env));
+    cmd_collection.install("rm", TaskFactory::make<cmds::rm>("rm", (u64)&env));
 }
 
 void Terminal::run() {
