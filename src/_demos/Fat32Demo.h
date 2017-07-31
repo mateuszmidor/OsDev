@@ -21,7 +21,7 @@ public:
     void run(u64 arg);
 
 private:
-    using OnTreeEntryFound = std::function<bool(const filesystem::SimpleDentryFat32&, u8)>;
+    using OnTreeEntryFound = std::function<bool(filesystem::SimpleDentryFat32&, u8)>;
 
     void print_volume_info(filesystem::VolumeFat32& v);
     void print_file(filesystem::VolumeFat32& v, kstd::string filename);

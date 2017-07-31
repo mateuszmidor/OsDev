@@ -34,14 +34,16 @@ struct SimpleDentryFat32 {
         data_cluster(data_cluster),
         entry_cluster(entry_cluster),
         entry_sector(entry_sector),
-        entry_index(entry_index_no) {}
+        entry_index(entry_index_no),
+        position(0) {}
 
 
     // useful data
     kstd::string    name;
     u32             size;
     bool            is_directory;
-    u32             data_cluster;    // pointer to entry data
+    u32             data_cluster;   // pointer to entry data
+    u32             position;       // read/write position
 
     // entry localization in parent dir, for file/dir operations
     u32             entry_cluster;
@@ -53,7 +55,7 @@ struct SimpleDentryFat32 {
 enum class EnumerateResult { ENUMERATION_FINISHED, ENUMERATION_STOPPED, ENUMERATION_CONTINUE };
 
 // action to take on entry enumeration. Return true to continue directory contents enumeration
-using OnEntryFound = std::function<bool(const SimpleDentryFat32& e)>;
+using OnEntryFound = std::function<bool(SimpleDentryFat32& e)>;
 
 
 class Fat32Data {
@@ -62,6 +64,7 @@ public:
     void setup(u32 data_start, u16 bytes_per_sector, u8 sectors_per_cluster);
 
     bool read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
+    bool read_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void* data, u32 size) const;
     bool write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
     void clear_data_cluster(u32 cluster) const;
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;

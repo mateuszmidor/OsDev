@@ -83,7 +83,7 @@ static const char* INDENTS[] = {
         "                  "};
 
 void Fat32Demo::traverse_tree(VolumeFat32& v, const SimpleDentryFat32& entry, u8 level, const OnTreeEntryFound& user_on_entry) {
-    OnEntryFound on_entry = [&](const SimpleDentryFat32& e) -> bool {
+    OnEntryFound on_entry = [&](SimpleDentryFat32& e) -> bool {
         user_on_entry(e, level);
         if (e.is_directory && e.name != "." && e.name != "..")
             traverse_tree(v, e, level+1, user_on_entry);
@@ -98,7 +98,7 @@ void Fat32Demo::print_tree(VolumeFat32& v, string path) {
     SimpleDentryFat32 directory;
     v.get_entry(path, directory);
 
-    auto on_entry = [&](const SimpleDentryFat32& e, u8 level) -> bool {
+    auto on_entry = [&](SimpleDentryFat32& e, u8 level) -> bool {
          if (e.name == "." || e.name == "..")
              return true;
 
@@ -193,9 +193,9 @@ void Fat32Demo::print_hdd_info(AtaDevice& hdd) {
         for (u32 i = 0; i < 1024; i++)
             ODA_TEXT += kstd::to_str(1000 + i) + " ";
         v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
-        print_volume_info(v);
-        print_tree(v, "/");
-        v.delete_entry("/NUMBERS.TXT");
+//        print_volume_info(v);
+//        print_tree(v, "/");
+//        v.delete_entry("/NUMBERS.TXT");
 //    }
 }
 

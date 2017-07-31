@@ -98,6 +98,8 @@ WRITE FILE ENTRY
 
 
 u32 read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const;
+    find cluster where "position points to"
+    read count number of bytes, increment position
 */
 
 
@@ -126,7 +128,7 @@ public:
     u32 get_used_space_in_clusters() const;
 
     bool get_entry(const kstd::string& unix_path, SimpleDentryFat32& e) const;
-    u32 read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const;
+    u32 read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const;
     u32 write_file_entry(SimpleDentryFat32& file, void const * data, u32 count) const;
     EnumerateResult enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
     bool create_entry(const kstd::string& unix_path, bool directory) const;

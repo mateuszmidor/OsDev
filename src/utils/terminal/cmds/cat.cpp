@@ -37,12 +37,14 @@ void cat::run() {
         return;
     }
 
-    const u32 SIZE = 1024;
+    const u32 SIZE = 1025;
     static char buff[SIZE]; // static to make sure recursive calls dont exhaust task stack
-    u32 count = v->read_file_entry(e, buff, SIZE-1);
-    buff[count-1] = '\0';
-    env->printer->format("% - %B\n", filename, e.size);
-    env->printer->format("%\n", buff);
+    u32 count;
+    while ((count = v->read_file_entry(e, buff, SIZE-1)) > 0) {
+        buff[count] = '\0';
+        env->printer->format("%", buff);
+    }
 
+    env->printer->format("\n");
 }
 } /* namespace cmds */

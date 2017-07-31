@@ -12,11 +12,8 @@
 #include "Fat32Utils.h"
 #include "kstd.h"
 
-using kstd::vector;
-using kstd::string;
-using kstd::rtrim;
-using utils::KernelLog;
-
+using namespace kstd;
+using namespace utils;
 namespace filesystem {
 
 static KernelLog& klog = KernelLog::instance();
@@ -32,7 +29,7 @@ VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_o
     hdd.read28(partition_offset_in_sectors, &vbr, sizeof(vbr));
 
     fat_start = partition_offset_in_sectors + vbr.reserved_sectors;
-    fat_table.setup(fat_start, vbr.bytes_per_sector, vbr.fat_table_size_in_sectors);
+    fat_table.setup(fat_start, vbr.bytes_per_sector,  vbr.sectors_per_cluster, vbr.fat_table_size_in_sectors);
 
     data_start = fat_start + vbr.fat_table_size_in_sectors * vbr.fat_table_copies;
     fat_data.setup(data_start, vbr.bytes_per_sector, vbr.sectors_per_cluster);
@@ -91,32 +88,42 @@ bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entr
 }
 
 /**
- * @brief   Read maximum of count bytes into data buffer
+ * @brief   Read a maximum of "count" bytes, starting from file.position, into data buffer
  * @param   file  Directory entry to read from
  * @param   data  Buffer that has at least [count] capacity
  * @param   count Number of bytes to read
  * @return  Number of bytes actually read
  */
-u32 VolumeFat32::read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const {
+u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const {
     const u16 SECTOR_SIZE = vbr.bytes_per_sector;
     u32 total_bytes_read = 0;
-    u32 remaining_size = (count < file.size) ? count : file.size; // read the min of (count, file size)
-    u32 cluster = file.data_cluster;
+    u32 total_bytes_left = file.size - file.position;
+    u32 remaining_size = (count < total_bytes_left) ? count : total_bytes_left; // read the min of (count, bytes_in_file_left)
+
+
+    u32 cluster = fat_table.get_cluster_for_byte(file.data_cluster, file.position);
+    u8 sector_in_cluster = (file.position % (vbr.sectors_per_cluster * SECTOR_SIZE)) / SECTOR_SIZE;
+    u16 byte_in_sector = file.position % SECTOR_SIZE;
     u8* dst = (u8*)data;
 
     while (fat_table.is_allocated_cluster(cluster) && remaining_size > 0) {
-        for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) {
-            u16 read_count = remaining_size >= SECTOR_SIZE ? SECTOR_SIZE : remaining_size;
-            fat_data.read_data_sector(cluster, sector_offset, dst, read_count);
+        for (; sector_in_cluster < vbr.sectors_per_cluster; sector_in_cluster++) {
+            u16 bytes_in_sector_left = SECTOR_SIZE - byte_in_sector;
+            u16 read_count = remaining_size < bytes_in_sector_left ? remaining_size : bytes_in_sector_left;
+            fat_data.read_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, dst, read_count);
             remaining_size -= read_count;
             total_bytes_read += read_count;
             dst += read_count;
+            byte_in_sector = 0;
             if (remaining_size == 0)
                 break;
         }
 
         cluster = fat_table.get_next_cluster(cluster);
+        sector_in_cluster = 0;
     }
+
+    file.position += total_bytes_read;
     return total_bytes_read;
 }
 

@@ -7,8 +7,7 @@
 
 #include "Fat32Utils.h"
 
-using kstd::string;
-
+using namespace kstd;
 namespace filesystem {
 
 string Fat32Utils::make_8_3_filename(const string& filename) {

@@ -15,12 +15,13 @@ namespace filesystem {
 class Fat32Table {
 public:
     Fat32Table(drivers::AtaDevice& hdd);
-    void setup(u32 fat_start_in_sectors, u16 sector_size, u32 fat_size_in_sectors);
+    void setup(u32 fat_start_in_sectors, u16 sector_size, u8 sectors_per_cluster, u32 fat_size_in_sectors);
 
     u32 get_used_space_in_clusters() const;
     u32 get_next_cluster(u32 cluster) const;
     u32 get_prev_cluster(u32 first_cluster, u32 cluster) const;
     u32 get_last_cluster(u32 cluster) const;
+    u32 get_cluster_for_byte(u32 first_cluster, u32 position) const;
     bool set_next_cluster(u32 cluster, u32 next_cluster) const;
     bool is_allocated_cluster(u32 cluster) const;
     u32 alloc_cluster() const;
@@ -41,7 +42,8 @@ private:
     u16 fat_entries_per_sector  = 0;
     u32 fat_start_in_sectors    = 0;
     u32 fat_size_in_sectors     = 0;
-
+    u16 bytes_per_sector        = 0;
+    u8  sectors_per_cluster     = 0;
 
     bool read_fat_table_sector(u32 sector, void* data, u32 size) const;
     bool write_fat_table_sector(u32 sector, void const* data, u32 size) const;

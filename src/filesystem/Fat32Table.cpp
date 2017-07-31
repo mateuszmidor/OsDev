@@ -13,10 +13,12 @@ Fat32Table::Fat32Table(drivers::AtaDevice& hdd) :
     hdd(hdd) {
 }
 
-void Fat32Table::setup(u32 fat_start_in_sectors, u16 sector_size, u32 fat_size_in_sectors) {
+void Fat32Table::setup(u32 fat_start_in_sectors, u16 sector_size, u8 sectors_per_cluster, u32 fat_size_in_sectors) {
     this->fat_start_in_sectors = fat_start_in_sectors;
     this->fat_entries_per_sector = sector_size / sizeof(FatTableEntry);
     this->fat_size_in_sectors = fat_size_in_sectors;
+    this->bytes_per_sector = sector_size;
+    this->sectors_per_cluster = sectors_per_cluster;
 }
 
 u32 Fat32Table::get_used_space_in_clusters() const {
@@ -78,6 +80,21 @@ u32 Fat32Table::get_last_cluster(u32 cluster) const {
         curr_cluster = get_next_cluster(curr_cluster);
     }
     return prev_cluster;
+}
+
+/**
+ * @brief   Get cluster where the [position] byte resides. For read/write operations
+ */
+u32 Fat32Table::get_cluster_for_byte(u32 first_cluster, u32 position) const {
+    u32 num_clusters = position / (bytes_per_sector * sectors_per_cluster);
+    u32 target_cluster = first_cluster;
+
+    while ((num_clusters > 0) && (target_cluster != CLUSTER_END_OF_CHAIN)) {
+        target_cluster = get_next_cluster(target_cluster);
+        num_clusters--;
+    }
+
+    return target_cluster;
 }
 
 /**

@@ -29,6 +29,28 @@ bool Fat32Data::read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 
     return hdd.read28(data_start_in_sectors + sectors_per_cluster * (cluster - 2) + sector_offset, data, size);
 }
 
+/**
+ * @brief Read "size" bytes of data at [cluster][sector_in_cluster][byte_in_sector]
+ */
+bool Fat32Data::read_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void* data, u32 size) const {
+    // read across sectors is not supported
+    if (byte_in_sector + size > bytes_per_sector)
+        return false;
+
+    // read starts at sector beginning, optimal read
+    if (byte_in_sector == 0)
+        return read_data_sector(cluster, sector_in_cluster, data, size);
+
+
+    // read starts somewhere in the middle of sector, need read entire sector and copy from buffer to data
+    u8 buff[bytes_per_sector];
+    if (!read_data_sector(cluster, sector_in_cluster, buff, bytes_per_sector))
+        return false;
+
+    memcpy(data, buff + byte_in_sector, size);
+    return true;
+}
+
 bool Fat32Data::write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const {
     // (cluster - 2) because data clusters are indexed from 2
     return hdd.write28(data_start_in_sectors + sectors_per_cluster * (cluster - 2) + sector_offset, data, size);
@@ -50,7 +72,7 @@ EnumerateResult Fat32Data::enumerate_directory_cluster(u32 cluster, const OnEntr
         read_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
 
         for (u8 i = start_index; i < entries.size(); i++) { // iterate directory entries
-            const auto& e = entries[i];
+            auto& e = entries[i];
             if (e.name[0] == DIR_ENTRY_NO_MORE)
                 return EnumerateResult::ENUMERATION_FINISHED;    // no more entries for this dir
 
@@ -63,7 +85,8 @@ EnumerateResult Fat32Data::enumerate_directory_cluster(u32 cluster, const OnEntr
             if ((e.attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME)
                 continue;   // extension for 8.3 filename
 
-            if (!on_entry(make_simple_dentry(e, cluster, sector_offset, i)))
+            SimpleDentryFat32 se = make_simple_dentry(e, cluster, sector_offset, i);
+            if (!on_entry(se))
                 return EnumerateResult::ENUMERATION_STOPPED;
         }
     }
