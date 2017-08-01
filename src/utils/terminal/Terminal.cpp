@@ -25,7 +25,8 @@
 #include "cmds/cd.h"
 #include "cmds/rm.h"
 #include "cmds/mv.h"
-//#include "cmds/echo.h"
+#include "cmds/echo.h"
+#include "cmds/mkdir.h"
 
 #include <algorithm>
 #include <memory>
@@ -56,7 +57,8 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("cd", TaskFactory::make<cmds::cd>("cd", (u64)&env));
     cmd_collection.install("rm", TaskFactory::make<cmds::rm>("rm", (u64)&env));
     cmd_collection.install("mv", TaskFactory::make<cmds::mv>("mv", (u64)&env));
-//    cmd_collection.install("echo", TaskFactory::make<cmds::echo>("echo", (u64)&env));
+    cmd_collection.install("echo", TaskFactory::make<cmds::echo>("echo", (u64)&env));
+    cmd_collection.install("mkdir", TaskFactory::make<cmds::mkdir>("mkdir", (u64)&env));
 }
 
 void Terminal::run() {
