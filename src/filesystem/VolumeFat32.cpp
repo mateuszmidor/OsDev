@@ -240,31 +240,40 @@ EnumerateResult VolumeFat32::enumerate_directory_entry(const SimpleDentryFat32& 
  * @return  True if entry created successfuly, False otherwise
  */
 bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) const {
+    SimpleDentryFat32 tmp;
+    return create_entry(unix_path, directory, tmp);
+}
+
+bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, SimpleDentryFat32& out) const {
     if (unix_path.empty() || unix_path == "/")
         return false;
 
     // check if parent_dir exists
     SimpleDentryFat32 parent_dir;
     if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
-        klog.format("Parent not exists: %\n", extract_file_directory(unix_path));
+        klog.format("VolumeFat32::create_entry: Parent not exists: %\n", extract_file_directory(unix_path));
         return false;
     }
 
     // check if entry already exists
     string name = extract_file_name(unix_path);
+    if (name.empty()) {
+        klog.format("VolumeFat32::create_entry: Please specify name for file to create: %\n", unix_path);
+        return false;
+    }
+
     string name_8_3 = Fat32Utils::make_8_3_filename(name);
     SimpleDentryFat32 tmp;
     if (get_entry_for_name(parent_dir, name_8_3, tmp)) {
-        klog.format("Entry already exists: %(%)\n", name_8_3, unix_path);
+        klog.format("VolumeFat32::create_entry: Entry already exists: %(%)\n", name_8_3, unix_path);
         return false;   // entry exists
     }
 
     // allocate entry in parent_dir
-    SimpleDentryFat32 e;
-    e.name = name;
-    e.is_directory = directory;
-    klog.format("Creating entry. Name: %\n", e.name);
-    return alloc_entry_in_directory(parent_dir, e);
+    out.name = name;
+    out.is_directory = directory;
+    klog.format("VolumeFat32::create_entry: Creating entry. Name: %\n", out.name);
+    return alloc_entry_in_directory(parent_dir, out);
 }
 
 /**
@@ -281,17 +290,23 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
 
     // get entry parent dir to be updated
     SimpleDentryFat32 parent_dir;
-    if (!get_entry(extract_file_directory(unix_path), parent_dir))
+    if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
+        klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
+    }
 
     // get entry to be deleted
     SimpleDentryFat32 e;
-    if (!get_entry_for_name(parent_dir, extract_file_name(unix_path), e))
+    if (!get_entry_for_name(parent_dir, extract_file_name(unix_path), e)) {
+        klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
+    }
 
     // for directory - ensure it is empty
-    if (e.is_directory && !is_directory_empty(e))
+    if (e.is_directory && !is_directory_empty(e)) {
+        klog.format("VolumeFat32::delete_entry: cant delete non-empty directory: %\n", unix_path);
         return false;
+    }
 
     // for file - release its data
     if (!e.is_directory)
@@ -311,32 +326,44 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
     return true;
 }
 
+/**
+ * @brief   Move file/directory within volume
+ * @param   unix_path_from Exact source entry path
+ * @param   unix_path_to Exact destination path/destination directory
+ * @return  True on success, False otherwise
+ */
 bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const {
     // get source entry
     SimpleDentryFat32 src;
     if (!get_entry(unix_path_from, src)) {
-        klog.format("VolumeFat32::move_entry: src entry does not exists '%'\n", unix_path_from);
+        klog.format("VolumeFat32::move_entry: src entry doesn't exists '%'\n", unix_path_from);
         return false;
     }
 
+    // if destination directory specified instead of full path - keep source name
+    SimpleDentryFat32 dst;
+    string path_to = unix_path_to;
+    if (get_entry(unix_path_to, dst))
+        if (dst.is_directory)
+            path_to += string("/") + extract_file_name(unix_path_from);
+
     // create destination entry
-    if (!create_entry(unix_path_to, src.is_directory)) {
+    if (!create_entry(path_to, src.is_directory, dst)) {
         klog.format("VolumeFat32::move_entry: can't create dst entry '%'\n", unix_path_to);
         return false;
     }
 
-    // move data cluster chain from src to dst entry
-    SimpleDentryFat32 dst;
-    get_entry(unix_path_to, dst);
+    // move data cluster chain from src path_to dst entry
     dst.data_cluster = src.data_cluster;
     src.data_cluster = Fat32Table::CLUSTER_UNUSED;
     dst.size = src.size;
     src.size = 0;
+    fat_data.write_entry(src);
     fat_data.write_entry(dst);
 
     // remove src entry
     if (!delete_entry(unix_path_from)) {
-        klog.format("VolumeFat32::move_entry: can't remove src entry '%'\n", unix_path_to);
+        klog.format("VolumeFat32::move_entry: can't remove src entry '%'\n", unix_path_from);
         return false;
     }
 
