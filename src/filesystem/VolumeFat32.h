@@ -90,22 +90,50 @@ DELETE ENTRY (FILE OR DIR)
         detach cluster from parent_dir                  // detach_directory_cluster(parent_dir, entry.cluster)
 
 
+READ FILE ENTRY
+    locate reading start point for "position" byte:
+        get cluster
+        calculate sector_in_cluster
+        calculate byte_in_sector
+
+    while (remaining_bytes_to_read > 0) AND (cluster is valid data cluster)
+        for each sector >= sector_in_cluster
+            read data sector bytes into output buffer
+            remaining_bytes_to_read -= bytes_read
+            total_bytes_read += bytes_read
+
+        cluster = next_cluster(cluster)
+        sector_in_cluster = 0
+
+    position += total_bytes_read
+
+
 WRITE FILE ENTRY
-    read entry for provided path, if not exists -> return
-    free file data
-    allocate new cluster for data
+    locate writing start point for "position" byte:
+        get or allocate cluster
+        calculate sector_in_cluster
+        calculate byte_in_sector
 
+    while (remaining_bytes_to_write > 0) AND (cluster is valid data cluster)
+        for each sector >= sector_in_cluster
+            write bytes into sector
+            remaining_bytes_to_write -= bytes_written
+            total_bytes_written += bytes_written
 
+        cluster = attach_next_cluster(cluster)
+        sector_in_cluster = 0
 
-u32 read_file_entry(const SimpleDentryFat32& file, void* data, u32 count) const;
-    find cluster where "position points to"
-    read count number of bytes, increment position
+    position += total_bytes_written
+    size = max(size, position)
+    write file entry to hdd as the size might have been increased
+
 */
 
 
 #ifndef SRC_FILESYSTEM_VOLUMEFAT32_H_
 #define SRC_FILESYSTEM_VOLUMEFAT32_H_
 
+#include "KernelLog.h"
 #include "Fat32Table.h"
 #include "Fat32Data.h"
 #include "kstd.h"
@@ -150,6 +178,7 @@ private:
     VolumeBootRecordFat32 vbr;
     Fat32Table fat_table;
     Fat32Data fat_data;
+    utils::KernelLog& klog;
 
     bool bootable;
     u32 partition_offset_in_sectors;

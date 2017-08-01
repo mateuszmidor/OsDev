@@ -56,6 +56,24 @@ bool Fat32Data::write_data_sector(u32 cluster, u8 sector_offset, void const* dat
     return hdd.write28(data_start_in_sectors + sectors_per_cluster * (cluster - 2) + sector_offset, data, size);
 }
 
+bool Fat32Data::write_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void const* data, u32 size) const {
+    // write across sectors is not supported
+    if (byte_in_sector + size > bytes_per_sector)
+        return false;
+
+    // write starts at sector beginning, optimal write
+    if (byte_in_sector == 0)
+        return write_data_sector(cluster, sector_in_cluster, data, size);
+
+    // write starts somewhere in the middle of sector, need read entire sector first and then update it partially
+    u8 buff[bytes_per_sector];
+    if (!read_data_sector(cluster, sector_in_cluster, buff, bytes_per_sector))
+        return false;
+
+    memcpy(buff + byte_in_sector, data, size);
+    return write_data_sector(cluster, sector_in_cluster, buff, bytes_per_sector);
+}
+
 void Fat32Data::clear_data_cluster(u32 cluster) const {
     u8 zeroes[bytes_per_sector];
     memset(zeroes, 0, sizeof(zeroes));

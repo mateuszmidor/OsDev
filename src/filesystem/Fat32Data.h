@@ -66,6 +66,7 @@ public:
     bool read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
     bool read_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void* data, u32 size) const;
     bool write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
+    bool write_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void const* data, u32 size) const;
     void clear_data_cluster(u32 cluster) const;
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
     u8 get_free_entry_in_dir_cluster(u32 cluster, SimpleDentryFat32& out) const;

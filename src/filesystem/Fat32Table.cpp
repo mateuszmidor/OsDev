@@ -83,14 +83,29 @@ u32 Fat32Table::get_last_cluster(u32 cluster) const {
 }
 
 /**
- * @brief   Get cluster where the [position] byte resides. For read/write operations
+ * @brief   Get cluster where the "position" byte resides (when reading file data)
+ *          Alloc the chain up to the required cluster if not allocated yet (when writing file data)
  */
-u32 Fat32Table::get_cluster_for_byte(u32 first_cluster, u32 position) const {
+u32 Fat32Table::get_or_alloc_cluster_for_byte(u32 first_cluster, u32 position) const {
+    // case 1. File has no clusters allocated yet
+    if (first_cluster == CLUSTER_UNUSED)
+        return alloc_cluster();
+
+    // find cluster that the [position] byte is located in
     u32 num_clusters = position / (bytes_per_sector * sectors_per_cluster);
+    u32 prev_cluster = CLUSTER_END_OF_CHAIN;
     u32 target_cluster = first_cluster;
 
-    while ((num_clusters > 0) && (target_cluster != CLUSTER_END_OF_CHAIN)) {
+    // case 2. Follow/make cluster chain until "num_clusters" is reached
+    while (num_clusters > 0) {
+        prev_cluster = target_cluster;
         target_cluster = get_next_cluster(target_cluster);
+
+        if (!is_allocated_cluster(target_cluster)) {
+            target_cluster = alloc_cluster();
+            set_next_cluster(prev_cluster, target_cluster);
+        }
+
         num_clusters--;
     }
 

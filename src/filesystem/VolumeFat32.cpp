@@ -16,15 +16,21 @@ using namespace kstd;
 using namespace utils;
 namespace filesystem {
 
-static KernelLog& klog = KernelLog::instance();
-
+/**
+ * Constructor.
+ * @param   hdd Physical device this volume is located on
+ * @param   bootable Is this OS bootable volume?
+ * @param   partition_offset_in_sectors Where the volume data starts on the device
+ * @param   partition_size_in_sectors How big the volume is
+ */
 VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors) :
         hdd(hdd),
         bootable(bootable),
         partition_offset_in_sectors(partition_offset_in_sectors),
         partition_size_in_sectors(partition_size_in_sectors),
         fat_table(hdd),
-        fat_data(hdd) {
+        fat_data(hdd),
+        klog(KernelLog::instance()) {
 
     hdd.read28(partition_offset_in_sectors, &vbr, sizeof(vbr));
 
@@ -61,7 +67,7 @@ u32 VolumeFat32::get_used_space_in_clusters() const {
  *          "/home/docs/myphoto.jpg"
  *          "/home/music/"
  *          "/home/music"
- *          "/./" and "/../" and "//" in path are also supported, eg
+ *          "/./" and "/../" and "//" in path are also supported as they are part of Fat32 format, eg
  *          "/home/music/..
  * @return  True if entry exists, False otherwise
  */
@@ -89,80 +95,110 @@ bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entr
 
 /**
  * @brief   Read a maximum of "count" bytes, starting from file.position, into data buffer
- * @param   file  Directory entry to read from
- * @param   data  Buffer that has at least [count] capacity
+ * @param   file  File entry to read from
+ * @param   data  Buffer that has at least "count" capacity
  * @param   count Number of bytes to read
  * @return  Number of bytes actually read
  */
 u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const {
-    const u16 SECTOR_SIZE = vbr.bytes_per_sector;
+    if (file.is_directory)  // please dont read raw data from directory entry
+        return 0;
+
+    if (file.position >= file.size) // please dont read after End Of File
+        return 0;
+
+    // 1. setup reading status variables
+    const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
+    const u16 CLUSTER_SIZE_IN_BYTES = vbr.sectors_per_cluster * SECTOR_SIZE_IN_BYTES;
+    const u32 MAX_BYTES_TO_READ = file.size - file.position;
     u32 total_bytes_read = 0;
-    u32 total_bytes_left = file.size - file.position;
-    u32 remaining_size = (count < total_bytes_left) ? count : total_bytes_left; // read the min of (count, bytes_in_file_left)
+    u32 remaining_bytes_to_read = (count < MAX_BYTES_TO_READ) ? count : MAX_BYTES_TO_READ;
 
+    // 2. locate reading start point
+    u32 cluster = fat_table.get_or_alloc_cluster_for_byte(file.data_cluster, file.position);    // get already allocated data cluster
+    u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
+    u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
 
-    u32 cluster = fat_table.get_cluster_for_byte(file.data_cluster, file.position);
-    u8 sector_in_cluster = (file.position % (vbr.sectors_per_cluster * SECTOR_SIZE)) / SECTOR_SIZE;
-    u16 byte_in_sector = file.position % SECTOR_SIZE;
+    // 3. follow cluster chain and read data from sectors until requested number of bytes is read
     u8* dst = (u8*)data;
-
-    while (fat_table.is_allocated_cluster(cluster) && remaining_size > 0) {
+    while (fat_table.is_allocated_cluster(cluster)) {
         for (; sector_in_cluster < vbr.sectors_per_cluster; sector_in_cluster++) {
-            u16 bytes_in_sector_left = SECTOR_SIZE - byte_in_sector;
-            u16 read_count = remaining_size < bytes_in_sector_left ? remaining_size : bytes_in_sector_left;
+            u16 bytes_in_sector_left = SECTOR_SIZE_IN_BYTES - byte_in_sector;
+            u16 read_count = remaining_bytes_to_read < bytes_in_sector_left ? remaining_bytes_to_read : bytes_in_sector_left;
             fat_data.read_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, dst, read_count);
-            remaining_size -= read_count;
+            remaining_bytes_to_read -= read_count;
             total_bytes_read += read_count;
             dst += read_count;
             byte_in_sector = 0;
-            if (remaining_size == 0)
+            if (remaining_bytes_to_read == 0)
                 break;
         }
+
+        if (remaining_bytes_to_read == 0)
+            break;
 
         cluster = fat_table.get_next_cluster(cluster);
         sector_in_cluster = 0;
     }
 
+    // 4. done
     file.position += total_bytes_read;
     return total_bytes_read;
 }
 
+/**
+ * @brief   Write "count" bytes into the file, starting from file.position, enlarging the file size if needed
+ * @param   file File entry to write to
+ * @param   data Data to be written
+ * @param   count Number of bytes to be written
+ * @return  Number of bytes actually written
+ */
 u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32 count) const {
-    if (file.is_directory)
+    if (file.is_directory)  // please dont write raw data into directory entry
         return 0;
 
-    const u16 SECTOR_SIZE = vbr.bytes_per_sector;
+    if (file.position + count > 0xFFFFFFFF) // FAT32 4GB size limit
+        return 0;
+
+    // 1. setup writing status variables
+    const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
+    const u16 CLUSTER_SIZE_IN_BYTES = vbr.sectors_per_cluster * SECTOR_SIZE_IN_BYTES;
     u32 total_bytes_written = 0;
-    u32 remaining_size = count;
+    u32 remaining_bytes_to_write = count;
 
-    u32 cluster = fat_table.alloc_cluster();
-    if (cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
-        return 0;
+    // 2. locate writing start point
+    u32 cluster = fat_table.get_or_alloc_cluster_for_byte(file.data_cluster, file.position);
+    file.data_cluster = file.data_cluster == Fat32Table::CLUSTER_UNUSED ? cluster : file.data_cluster;
+    u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
+    u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
 
-    fat_table.free_cluster_chain(file.data_cluster);
-    file.data_cluster = cluster;
+    // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     u8 const* src = (u8 const*)data;
-
     while (fat_table.is_allocated_cluster(cluster)) {
-        for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) {
-            u16 written_count = remaining_size >= SECTOR_SIZE ? SECTOR_SIZE : remaining_size;
-            fat_data.write_data_sector(cluster, sector_offset, src, written_count);
-            remaining_size -= written_count;
+        for (; sector_in_cluster < vbr.sectors_per_cluster; sector_in_cluster++) {
+            u16 bytes_in_sector_left = SECTOR_SIZE_IN_BYTES - byte_in_sector;
+            u16 written_count = remaining_bytes_to_write < bytes_in_sector_left ? remaining_bytes_to_write : bytes_in_sector_left;
+            fat_data.write_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, src, written_count);
+            remaining_bytes_to_write -= written_count;
             total_bytes_written += written_count;
             src += written_count;
-            if (remaining_size == 0)
+            byte_in_sector = 0;
+            if (remaining_bytes_to_write == 0)
                 break;
         }
 
-        if (remaining_size == 0)
+        if (remaining_bytes_to_write == 0)
             break;
 
         u32 prev_cluster = cluster;
         cluster = fat_table.alloc_cluster();
         fat_table.set_next_cluster(prev_cluster, cluster);
+        sector_in_cluster = 0;
     }
 
-    file.size = total_bytes_written;
+    // 4. done
+    file.position += total_bytes_written;
+    file.size = file.size > file.position ? file.size : file.position;
     fat_data.write_entry(file);
     return total_bytes_written;
 }
@@ -213,7 +249,7 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) co
     string name_8_3 = Fat32Utils::make_8_3_filename(name);
     SimpleDentryFat32 tmp;
     if (get_entry_for_name(parent_dir, name_8_3, tmp)) {
-        klog.format("Entry exists: %\n", name_8_3);
+        klog.format("Entry already exists: %(%)\n", name_8_3, unix_path);
         return false;   // entry exists
     }
 
@@ -226,7 +262,7 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) co
 }
 
 /**
- * @brief   Delete file or empty directory. Cant delete root "/"
+ * @brief   Delete file or empty directory
  * @return  True on successful deletion, False if:
  *          -empty path specified
  *          -root dir specified
