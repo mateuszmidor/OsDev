@@ -47,6 +47,7 @@ public:
     static s16 handled_interrupt_no();
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
+    void set_text_mode_80_25();
     void set_text_mode_90_30();
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
