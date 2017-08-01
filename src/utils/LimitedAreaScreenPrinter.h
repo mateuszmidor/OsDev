@@ -43,7 +43,7 @@ protected:
     u16 left, top, right, bottom;   // printable area description
     u16 printable_area_width, printable_area_height;    // printable area dimension
     drivers::EgaColor foreground = drivers::EgaColor::White;
-    drivers::EgaColor background = drivers::EgaColor::Brown;
+    drivers::EgaColor background = drivers::EgaColor::Black;
 
     drivers::VgaCharacter& at(const Cursor& cursor);
     drivers::VgaCharacter& at(u16 x, u16 y);
