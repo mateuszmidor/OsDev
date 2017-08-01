@@ -18,7 +18,17 @@ using namespace filesystem;
 namespace cmds {
 
 void rm::run() {
-    string path = env->command_line;
+    if (env->volumes.empty()) {
+        env->printer->format("cat: no volumes installed\n");
+        return;
+    }
+
+    if (env->cmd_args.size() < 2) {
+        env->printer->format("rm: please specify file name\n");
+        return;
+    }
+
+    string path = env->cmd_args[1];
     string absolute_path;
 
     if (env->cwd.back() == '/')

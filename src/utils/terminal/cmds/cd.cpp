@@ -23,7 +23,12 @@ kstd::string cd::prev_cwd = "";
 
 
 void cd::run() {
-    string path = env->command_line;
+    if (env->cmd_args.size() < 2) {
+        env->printer->format("cd: please specify path\n");
+        return;
+    }
+
+    string path = env->cmd_args[1];
 
     if (path[0] == '-')
         navigate_back();

@@ -79,13 +79,19 @@ bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entr
     SimpleDentryFat32 e = get_root_dentry();
 
     // ...and descend down the path to the very last entry
-    auto segments = kstd::split_string<vector<string>>(unix_path, '/');
+    auto normalized_unix_path = Fat32Utils::normalize_path(unix_path); // this takes care of '.' and '..'
+    auto segments = kstd::split_string<vector<string>>(normalized_unix_path, '/');
     for (const auto& path_segment : segments) {
-        if (!e.is_directory)
+        if (!e.is_directory) {
+            klog.format("VolumeFat32::get_entry: entry '%' is not a directory\n", e.name);
             return false;   // path segment is not a directory. this is error
+        }
 
-        if (!get_entry_for_name(e, path_segment, e))
+        if (!get_entry_for_name(e, path_segment, e)) {
+            klog.format("VolumeFat32::get_entry: entry '%' does not exist\n", path_segment);
             return false;   // path segment does not exist. this is error
+        }
+
     }
 
     // managed to descend to the very last element of the path, means element found
@@ -301,6 +307,38 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
     // but dont remove root first cluster!
     if (e.entry_cluster != vbr.root_cluster && fat_data.is_directory_cluster_empty(e.entry_cluster))
         detach_directory_cluster(parent_dir, e.entry_cluster);
+
+    return true;
+}
+
+bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const {
+    // get source entry
+    SimpleDentryFat32 src;
+    if (!get_entry(unix_path_from, src)) {
+        klog.format("VolumeFat32::move_entry: src entry does not exists '%'\n", unix_path_from);
+        return false;
+    }
+
+    // create destination entry
+    if (!create_entry(unix_path_to, src.is_directory)) {
+        klog.format("VolumeFat32::move_entry: can't create dst entry '%'\n", unix_path_to);
+        return false;
+    }
+
+    // move data cluster chain from src to dst entry
+    SimpleDentryFat32 dst;
+    get_entry(unix_path_to, dst);
+    dst.data_cluster = src.data_cluster;
+    src.data_cluster = Fat32Table::CLUSTER_UNUSED;
+    dst.size = src.size;
+    src.size = 0;
+    fat_data.write_entry(dst);
+
+    // remove src entry
+    if (!delete_entry(unix_path_from)) {
+        klog.format("VolumeFat32::move_entry: can't remove src entry '%'\n", unix_path_to);
+        return false;
+    }
 
     return true;
 }

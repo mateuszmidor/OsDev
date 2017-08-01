@@ -90,6 +90,22 @@ DELETE ENTRY (FILE OR DIR)
         detach cluster from parent_dir                  // detach_directory_cluster(parent_dir, entry.cluster)
 
 
+MOVE ENTRY (FILE OR DIR)
+    check if source entry exists
+        if not -> return false
+
+    check if destination path exists
+        if not -> return false
+
+    check if destination entry exists
+        if yes -> return false
+
+    get source entry (src)
+    create destination entry based on source entry including data cluster (dst)
+    src.data_cluster = UNUSED
+    delete entry(src)
+
+
 READ FILE ENTRY
     locate reading start point for "position" byte:
         get cluster
@@ -161,6 +177,7 @@ public:
     EnumerateResult enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
     bool create_entry(const kstd::string& unix_path, bool directory) const;
     bool delete_entry(const kstd::string& unix_path) const;
+    bool move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const;
 
 private:
     SimpleDentryFat32 get_root_dentry() const;

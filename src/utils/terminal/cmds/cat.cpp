@@ -18,13 +18,12 @@ void cat::run() {
         return;
     }
 
-//    auto cmds = kstd::split_string<vector<string>>(env->command_line, ' ');
-//    if (cmds.size() < 2) {
-//        env->printer->format("No filename passed to cat command\n");
-//        return;
-//    }
+    if (env->cmd_args.size() < 2) {
+        env->printer->format("cat: please specify file name\n");
+        return;
+    }
 
-    string filename = env->cwd + "/" + env->command_line;//cmds[1];
+    string filename = env->cwd + "/" + env->cmd_args[1];
     VolumeFat32* v = env->volume;
     SimpleDentryFat32 e;
     if (!v->get_entry(filename, e)) {

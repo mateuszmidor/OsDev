@@ -27,7 +27,7 @@ struct TerminalEnv {
     kstd::vector<filesystem::VolumeFat32> volumes;
 
 
-    kstd::string command_line;
+    kstd::vector<kstd::string> cmd_args;    // command_name, arg1, arg2, ...,  argn
 };
 
 } /* namespace terminal */
