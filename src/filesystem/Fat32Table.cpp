@@ -91,7 +91,7 @@ u32 Fat32Table::get_or_alloc_cluster_for_byte(u32 first_cluster, u32 position) c
     if (first_cluster == CLUSTER_UNUSED)
         return alloc_cluster();
 
-    // find cluster that the [position] byte is located in
+    // find cluster that the "position" byte is located in
     u32 num_clusters = position / (bytes_per_sector * sectors_per_cluster);
     u32 prev_cluster = CLUSTER_END_OF_CHAIN;
     u32 target_cluster = first_cluster;

@@ -91,7 +91,6 @@ bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entr
             klog.format("VolumeFat32::get_entry: entry '%' does not exist\n", path_segment);
             return false;   // path segment does not exist. this is error
         }
-
     }
 
     // managed to descend to the very last element of the path, means element found
@@ -107,11 +106,15 @@ bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entr
  * @return  Number of bytes actually read
  */
 u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const {
-    if (file.is_directory)  // please dont read raw data from directory entry
+    if (file.is_directory) {
+        klog.format("VolumeFat32::read_file_entry: specified entry is a directory\n");
         return 0;
+    }
 
-    if (file.position >= file.size) // please dont read after End Of File
+    if (file.position >= file.size) {
+        klog.format("VolumeFat32::read_file_entry: tried reading after end of file\n");
         return 0;
+    }
 
     // 1. setup reading status variables
     const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
@@ -160,11 +163,20 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
  * @return  Number of bytes actually written
  */
 u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32 count) const {
-    if (file.is_directory)  // please dont write raw data into directory entry
+    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+        klog.format("VolumeFat32::write_file_entry: uninitialized file entry to read specified\n");
         return 0;
+    }
 
-    if (file.position + count > 0xFFFFFFFF) // FAT32 4GB size limit
+    if (file.is_directory){
+        klog.format("VolumeFat32::write_file_entry: specified entry is a directory\n");
         return 0;
+    }
+
+    if (file.position + count > 0xFFFFFFFF){
+        klog.format("VolumeFat32::write_file_entry: file entry exceeds Fat32 4GB limit\n");
+        return 0;
+    }
 
     // 1. setup writing status variables
     const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
@@ -258,7 +270,7 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, Si
     // check if entry already exists
     string name = extract_file_name(unix_path);
     if (name.empty()) {
-        klog.format("VolumeFat32::create_entry: Please specify name for file to create: %\n", unix_path);
+        klog.format("VolumeFat32::create_entry: Please specify name for entry to create: %\n", unix_path);
         return false;
     }
 
@@ -304,7 +316,7 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
 
     // for directory - ensure it is empty
     if (e.is_directory && !is_directory_empty(e)) {
-        klog.format("VolumeFat32::delete_entry: cant delete non-empty directory: %\n", unix_path);
+        klog.format("VolumeFat32::delete_entry: can't delete non-empty directory: %\n", unix_path);
         return false;
     }
 
@@ -349,7 +361,7 @@ bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::str
 
     // create destination entry
     if (!create_entry(path_to, src.is_directory, dst)) {
-        klog.format("VolumeFat32::move_entry: can't create dst entry '%'\n", unix_path_to);
+        klog.format("VolumeFat32::move_entry: can't create dst entry '%'\n", path_to);
         return false;
     }
 
