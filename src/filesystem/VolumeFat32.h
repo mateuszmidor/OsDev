@@ -174,6 +174,7 @@ public:
     bool get_entry(const kstd::string& unix_path, SimpleDentryFat32& e) const;
     u32 read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const;
     u32 write_file_entry(SimpleDentryFat32& file, void const * data, u32 count) const;
+    void seek_file_entry(SimpleDentryFat32& file, u32 position) const;
     EnumerateResult enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
     bool create_entry(const kstd::string& unix_path, bool directory) const;
     bool create_entry(const kstd::string& unix_path, bool directory, SimpleDentryFat32& out) const;
@@ -191,6 +192,8 @@ private:
     bool alloc_entry_in_directory(SimpleDentryFat32& parent_dir, SimpleDentryFat32 &e) const;
     bool is_directory_empty(const SimpleDentryFat32& e) const;
     bool is_no_more_entires_after(const SimpleDentryFat32& parent_dir, const SimpleDentryFat32& entry) const;
+    u32 alloc_first_file_cluster(SimpleDentryFat32& file) const;
+    u32 alloc_next_file_cluster(u32 cluster) const;
 
     drivers::AtaDevice& hdd;
     VolumeBootRecordFat32 vbr;

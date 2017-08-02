@@ -35,15 +35,17 @@ struct SimpleDentryFat32 {
         entry_cluster(entry_cluster),
         entry_sector(entry_sector),
         entry_index(entry_index_no),
-        position(0) {}
+        position(0),
+        position_data_cluster(data_cluster){}
 
 
     // useful data
     kstd::string    name;
     u32             size;
     bool            is_directory;
-    u32             data_cluster;   // pointer to entry data
-    u32             position;       // read/write position
+    u32             data_cluster;           // entry data cluster
+    u32             position;               // read/write byte position
+    u32             position_data_cluster;  // cluster where the "position" byte resides; keep it to reduce FatTable traversal and speedup cluster lookup
 
     // entry localization in parent dir, for file/dir operations
     u32             entry_cluster;

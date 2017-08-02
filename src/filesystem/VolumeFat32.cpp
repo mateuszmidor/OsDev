@@ -18,6 +18,7 @@ namespace filesystem {
 
 /**
  * Constructor.
+ * @brief   Create a volume based on physical drive device, and partition offset
  * @param   hdd Physical device this volume is located on
  * @param   bootable Is this OS bootable volume?
  * @param   partition_offset_in_sectors Where the volume data starts on the device
@@ -106,12 +107,17 @@ bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entr
  * @return  Number of bytes actually read
  */
 u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const {
+    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+        klog.format("VolumeFat32::read_file_entry: uninitialized file entry to read specified\n");
+        return 0;
+    }
+
     if (file.is_directory) {
         klog.format("VolumeFat32::read_file_entry: specified entry is a directory\n");
         return 0;
     }
 
-    if (file.position >= file.size) {
+    if (file.position > file.size) {
         klog.format("VolumeFat32::read_file_entry: tried reading after end of file\n");
         return 0;
     }
@@ -124,9 +130,9 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
     u32 remaining_bytes_to_read = (count < MAX_BYTES_TO_READ) ? count : MAX_BYTES_TO_READ;
 
     // 2. locate reading start point
-    u32 cluster = fat_table.get_or_alloc_cluster_for_byte(file.data_cluster, file.position);    // get already allocated data cluster
-    u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
     u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
+    u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
+    u32 cluster = file.position_data_cluster;
 
     // 3. follow cluster chain and read data from sectors until requested number of bytes is read
     u8* dst = (u8*)data;
@@ -152,6 +158,7 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
 
     // 4. done
     file.position += total_bytes_read;
+    file.position_data_cluster = cluster;
     return total_bytes_read;
 }
 
@@ -164,7 +171,7 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
  */
 u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32 count) const {
     if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
-        klog.format("VolumeFat32::write_file_entry: uninitialized file entry to read specified\n");
+        klog.format("VolumeFat32::write_file_entry: uninitialized entry to write specified\n");
         return 0;
     }
 
@@ -185,10 +192,15 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
     u32 remaining_bytes_to_write = count;
 
     // 2. locate writing start point
-    u32 cluster = fat_table.get_or_alloc_cluster_for_byte(file.data_cluster, file.position);
-    file.data_cluster = file.data_cluster == Fat32Table::CLUSTER_UNUSED ? cluster : file.data_cluster;
-    u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
     u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
+    u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
+    u32 cluster;
+    if (file.data_cluster == Fat32Table::CLUSTER_UNUSED)          // file has no data clusters yet - alloc and assign as first data cluster
+        cluster = alloc_first_file_cluster(file);
+    else if ((sector_in_cluster == 0) && (byte_in_sector == 0))   // position points to beginning of new cluster - alloc this new cluster
+        cluster = alloc_next_file_cluster(cluster);
+    else
+        cluster = file.position_data_cluster;                       // just use the current cluster as it has space in it
 
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     u8 const* src = (u8 const*)data;
@@ -216,9 +228,33 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
 
     // 4. done
     file.position += total_bytes_written;
+    file.position_data_cluster = cluster;
     file.size = file.size > file.position ? file.size : file.position;
     fat_data.write_entry(file);
     return total_bytes_written;
+}
+
+/**
+ * @brief   Move file current position to given "position" if possible
+ */
+void VolumeFat32::seek_file_entry(SimpleDentryFat32& file, u32 position) const {
+    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+        klog.format("VolumeFat32::seek_file_entry: uninitialized entry specified\n");
+        return;
+    }
+
+    if (file.is_directory){
+        klog.format("VolumeFat32::seek_file_entry: specified entry is a directory\n");
+        return;
+    }
+
+    if (position > file.size) {
+        klog.format("VolumeFat32::seek_file_entry: position > size (% > %)\n", position, file.size);
+        return;
+    }
+
+    file.position_data_cluster = fat_table.get_or_alloc_cluster_for_byte(file.data_cluster, position);
+    file.position = position;
 }
 
 /**
@@ -229,6 +265,16 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
  *          ENUMERATION_STOPPED if enumeration stopped by on_entry() returning false
  */
 EnumerateResult VolumeFat32::enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry) const {
+    if (dentry.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+        klog.format("VolumeFat32::enumerate_directory_entry: uninitialized entry specified\n");
+        return EnumerateResult::ENUMERATION_FINISHED;
+    }
+
+    if (!dentry.is_directory){
+        klog.format("VolumeFat32::enumerate_directory_entry: specified entry is a file\n");
+        return EnumerateResult::ENUMERATION_FINISHED;
+    }
+
     u32 cluster = dentry.data_cluster;
 
     while (fat_table.is_allocated_cluster(cluster)) { // iterate cluster chain
@@ -284,7 +330,6 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, Si
     // allocate entry in parent_dir
     out.name = name;
     out.is_directory = directory;
-    klog.format("VolumeFat32::create_entry: Creating entry. Name: %\n", out.name);
     return alloc_entry_in_directory(parent_dir, out);
 }
 
@@ -551,5 +596,27 @@ bool VolumeFat32::is_no_more_entires_after(const SimpleDentryFat32& parent_dir, 
 
 bool VolumeFat32::is_directory_empty(const SimpleDentryFat32& e) const {
     return e.data_cluster == Fat32Table::CLUSTER_UNUSED;
+}
+
+/**
+ * @brief   Alloc new cluster and assign it as file data cluster
+ * @return  Allocated cluster
+ */
+u32 VolumeFat32::alloc_first_file_cluster(SimpleDentryFat32& file) const {
+    // file has no data clusters yet - alloc and assign as first data cluster
+    u32 cluster = fat_table.alloc_cluster();
+    file.data_cluster = cluster;
+    return cluster;
+}
+
+/**
+ * @brief   Alloc new cluster and attach it after "cluster"
+ * @return  Allocated cluster
+ */
+u32 VolumeFat32::alloc_next_file_cluster(u32 cluster) const {
+    // position points to beginning of new cluster, need to alloc this new cluster
+    u32 next_cluster = fat_table.alloc_cluster();
+    fat_table.set_next_cluster(cluster, next_cluster);
+    return next_cluster;
 }
 } /* namespace filesystem */
