@@ -200,7 +200,7 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
     else if ((sector_in_cluster == 0) && (byte_in_sector == 0))   // position points to beginning of new cluster - alloc this new cluster
         cluster = alloc_next_file_cluster(cluster);
     else
-        cluster = file.position_data_cluster;                       // just use the current cluster as it has space in it
+        cluster = file.position_data_cluster;                     // just use the current cluster as it has space in it
 
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     u8 const* src = (u8 const*)data;
@@ -431,7 +431,7 @@ bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::str
  * @brief   Return root directory entry; this is the entry point to entire volume dir tree
  */
 SimpleDentryFat32 VolumeFat32::get_root_dentry() const {
-    return SimpleDentryFat32("/", 0, true, vbr.root_cluster, 0, 0, 0);
+    return SimpleDentryFat32("/", 0, true, vbr.root_cluster, Fat32Table::CLUSTER_END_OF_CHAIN, 0, 0);
 }
 
 /**
