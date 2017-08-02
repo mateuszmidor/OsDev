@@ -198,7 +198,7 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
     if (file.data_cluster == Fat32Table::CLUSTER_UNUSED)          // file has no data clusters yet - alloc and assign as first data cluster
         cluster = alloc_first_file_cluster(file);
     else if ((sector_in_cluster == 0) && (byte_in_sector == 0))   // position points to beginning of new cluster - alloc this new cluster
-        cluster = alloc_next_file_cluster(cluster);
+        cluster = alloc_next_file_cluster(file.position_data_cluster);
     else
         cluster = file.position_data_cluster;                     // just use the current cluster as it has space in it
 
