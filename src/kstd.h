@@ -98,6 +98,7 @@ using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;
 string to_str(s64 num, u8 base = 10);
 string to_upper_case(string s);
 void split_key_value(const string &kv, string &key, string &value, char separator);
+long long str_to_long(const char* str);
 unsigned long long hex_to_long(const char* str);
 string rtrim(const u8 *in, u16 len);
 string extract_file_name(const string& filename);

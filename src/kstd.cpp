@@ -188,6 +188,25 @@ void split_key_value(const string &kv, string &key, string &value, char separato
     value = kv.substr(pivot + 1, kv.length());
 }
 
+long long str_to_long(const char* str) {
+    bool negative = false;
+    if (str[0] == '-') {
+        str++;
+        negative = true;
+    }
+
+    long long res = 0; // Initialize result
+
+    // Iterate through all characters of input string and
+    // update result
+    for (int i = 0; str[i] != '\0'; ++i) {
+        unsigned char c = str[i];
+        res = res*10 + c - '0';
+            }
+
+    return negative ? -res : res;
+}
+
 unsigned long long hex_to_long(const char* str) {
 
     str += 2; // skip 0x prefix
