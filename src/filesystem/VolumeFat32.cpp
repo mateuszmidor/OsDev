@@ -6,11 +6,8 @@
  */
 
 
-#include <algorithm>
-#include "KernelLog.h"
 #include "VolumeFat32.h"
 #include "Fat32Utils.h"
-#include "kstd.h"
 
 using namespace kstd;
 using namespace utils;
@@ -133,6 +130,7 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
     u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
     u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
     u32 cluster = file.position_data_cluster;
+    klog.format("cluster: %\n", cluster);
 
     // 3. follow cluster chain and read data from sectors until requested number of bytes is read
     u8* dst = (u8*)data;
@@ -149,16 +147,19 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
                 break;
         }
 
+        if (((file.position + total_bytes_read) % CLUSTER_SIZE_IN_BYTES) == 0) // cluster finished
+            cluster = fat_table.get_next_cluster(cluster); // go to next cluster if current is finished
+
+        sector_in_cluster = 0;
+
         if (remaining_bytes_to_read == 0)
             break;
-
-        cluster = fat_table.get_next_cluster(cluster);
-        sector_in_cluster = 0;
     }
 
     // 4. done
     file.position += total_bytes_read;
     file.position_data_cluster = cluster;
+
     return total_bytes_read;
 }
 
@@ -195,12 +196,19 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
     u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
     u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
     u32 cluster;
-    if (file.data_cluster == Fat32Table::CLUSTER_UNUSED)          // file has no data clusters yet - alloc and assign as first data cluster
+    if (file.data_cluster == Fat32Table::CLUSTER_UNUSED){          // file has no data clusters yet - alloc and assign as first data cluster
         cluster = alloc_first_file_cluster(file);
-    else if ((sector_in_cluster == 0) && (byte_in_sector == 0))   // position points to beginning of new cluster - alloc this new cluster
-        cluster = alloc_next_file_cluster(file.position_data_cluster);
-    else
+        klog.format("First data cluster allocated: %\n", cluster);
+    }
+    else if ((sector_in_cluster == 0) && (byte_in_sector == 0)) {  // position points to beginning of new cluster - alloc this new cluster
+        u32 last_cluster = fat_table.get_last_cluster(file.data_cluster);
+        cluster = alloc_next_file_cluster(last_cluster);
+        klog.format("Boundary data cluster allocated: % after cluster %\n", cluster, last_cluster);
+    }
+    else {
         cluster = file.position_data_cluster;                     // just use the current cluster as it has space in it
+        klog.format("Continuing with stored data cluster: %\n", cluster);
+    }
 
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     u8 const* src = (u8 const*)data;
@@ -220,9 +228,7 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
         if (remaining_bytes_to_write == 0)
             break;
 
-        u32 prev_cluster = cluster;
-        cluster = fat_table.alloc_cluster();
-        fat_table.set_next_cluster(prev_cluster, cluster);
+        cluster = alloc_next_file_cluster(cluster);
         sector_in_cluster = 0;
     }
 
@@ -253,8 +259,66 @@ void VolumeFat32::seek_file_entry(SimpleDentryFat32& file, u32 position) const {
         return;
     }
 
-    file.position_data_cluster = fat_table.get_or_alloc_cluster_for_byte(file.data_cluster, position);
+    file.position_data_cluster = fat_table.find_cluster_for_byte(file.data_cluster, position);
     file.position = position;
+}
+
+void VolumeFat32::trunc_file_entry(SimpleDentryFat32& file, u32 new_size) const {
+    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+        klog.format("VolumeFat32::trunc_file_entry: uninitialized entry specified\n");
+        return;
+    }
+
+    if (file.is_directory){
+        klog.format("VolumeFat32::trunc_file_entry: specified entry is a directory\n");
+        return;
+    }
+
+    if (new_size == 0) {
+        klog.format("truncating file to 0B\n");
+        fat_table.free_cluster_chain(file.data_cluster);
+        file.data_cluster = Fat32Table::CLUSTER_UNUSED;
+        file.size = 0;
+        // dont change file position
+    } else
+    if (new_size > file.size) {
+         klog.format("extending file from % to %\n", file.size, new_size);
+         // move to the old file end
+         u32 old_position = file.position;
+         seek_file_entry(file, file.size);
+         klog.format("seek to byte %, cluster %\n", file.size, file.position_data_cluster);
+         // calc number of zeroes needed
+         u32 remaining_zeroes = new_size - file.size;
+         klog.format("remaining zeroes %\n", remaining_zeroes);
+         // prepare zeroes
+         const u16 SIZE = vbr.bytes_per_sector;
+         u8 zeroes[SIZE];
+         memset(zeroes, 0, SIZE);
+
+         // fill file tail with zeroes
+         while (remaining_zeroes != 0) {
+             u32 count = remaining_zeroes < SIZE ? remaining_zeroes : SIZE;
+             klog.format("writing % zeroes \n", count);
+             write_file_entry(file, zeroes, count);
+             remaining_zeroes -= count;
+         }
+         seek_file_entry(file, old_position);
+         // file.size already updated by write_file_entry
+         // dont change file position
+    } else
+    if (new_size < file.size) {
+        klog.format("shrinking file from % to %\n", file.size, new_size);
+        u32 last_cluster = fat_table.find_cluster_for_byte(file.data_cluster, new_size -1);
+        u32 cluster_after_end = fat_table.get_next_cluster(last_cluster);
+        if (fat_table.is_allocated_cluster(cluster_after_end)) {
+            klog.format("freeing cluster\n");
+            fat_table.free_cluster_chain(cluster_after_end);
+            fat_table.set_next_cluster(last_cluster, Fat32Table::CLUSTER_END_OF_CHAIN);
+        }
+        file.size = new_size;
+    }
+
+    fat_data.write_entry(file);
 }
 
 /**

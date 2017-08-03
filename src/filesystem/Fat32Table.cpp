@@ -83,33 +83,63 @@ u32 Fat32Table::get_last_cluster(u32 cluster) const {
 }
 
 /**
- * @brief   Get cluster where the "position" byte resides (when reading file data)
- *          Alloc the chain up to the required cluster if not allocated yet (when writing file data)
+ * @brief   Get cluster where the "byte_number" byte resides
  */
-u32 Fat32Table::get_or_alloc_cluster_for_byte(u32 first_cluster, u32 position) const {
-    // case 1. File has no clusters allocated yet
-    if (first_cluster == CLUSTER_UNUSED)
-        return alloc_cluster();
+u32 Fat32Table::find_cluster_for_byte(u32 first_cluster, u32 byte_number) const {
+    // calc cluster number in the chain that the "byte_number" byte is located in
+    u32 cluster_no = byte_number / (bytes_per_sector * sectors_per_cluster);
+    u32 cluster = first_cluster;
 
-    // find cluster that the "position" byte is located in
-    u32 num_clusters = position / (bytes_per_sector * sectors_per_cluster);
+    // follow cluster chain until "last_cluster_no" is reached
+    while (cluster_no > 0 && is_allocated_cluster(cluster)) {
+        cluster = get_next_cluster(cluster);
+        cluster_no--;
+    }
+
+    return cluster;
+}
+
+/**
+ * @brief   Resize cluster chain to accomodate "num_bytes" of data
+ * @return  first_cluster if "num_bytes" > 0, CLUSTER_UNUSED otherwise
+ */
+u32 Fat32Table::resize_cluster_chain(u32 first_cluster, u32 num_bytes) const {
+    // chain should be freed
+    if (num_bytes == 0) {
+        free_cluster_chain(first_cluster);
+        return CLUSTER_UNUSED;
+    }
+
+    // chain is empty but should grow
+    if (first_cluster == CLUSTER_UNUSED)
+        first_cluster = alloc_cluster();
+
+    // calc last cluster number
+    u32 last_cluster_no = (num_bytes - 1) / (bytes_per_sector * sectors_per_cluster); // 5 = 0, 4096 = 0, 4097 = 1
     u32 prev_cluster = CLUSTER_END_OF_CHAIN;
     u32 target_cluster = first_cluster;
 
-    // case 2. Follow/make cluster chain until "num_clusters" is reached
-    while (num_clusters > 0) {
+    // follow/make cluster chain until "last_cluster_no" is reached
+    while (last_cluster_no > 0) {
         prev_cluster = target_cluster;
         target_cluster = get_next_cluster(target_cluster);
 
         if (!is_allocated_cluster(target_cluster)) {
-            target_cluster = alloc_cluster();
+            target_cluster = alloc_cluster(); // should also clear the data
             set_next_cluster(prev_cluster, target_cluster);
         }
 
-        num_clusters--;
+        last_cluster_no--;
     }
 
-    return target_cluster;
+    // check if there is more clusters after target_cluster and if so -free them
+    u32 cluster_after_end = get_next_cluster(target_cluster);
+    if (is_allocated_cluster(cluster_after_end)) {
+        free_cluster_chain(cluster_after_end);
+        set_next_cluster(target_cluster, CLUSTER_END_OF_CHAIN);
+    }
+
+    return first_cluster;
 }
 
 /**

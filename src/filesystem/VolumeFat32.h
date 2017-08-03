@@ -175,6 +175,7 @@ public:
     u32 read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const;
     u32 write_file_entry(SimpleDentryFat32& file, void const * data, u32 count) const;
     void seek_file_entry(SimpleDentryFat32& file, u32 position) const;
+    void trunc_file_entry(SimpleDentryFat32& file, u32 new_size) const;
     EnumerateResult enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
     bool create_entry(const kstd::string& unix_path, bool directory) const;
     bool create_entry(const kstd::string& unix_path, bool directory, SimpleDentryFat32& out) const;

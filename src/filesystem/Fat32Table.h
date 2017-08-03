@@ -21,7 +21,8 @@ public:
     u32 get_next_cluster(u32 cluster) const;
     u32 get_prev_cluster(u32 first_cluster, u32 cluster) const;
     u32 get_last_cluster(u32 cluster) const;
-    u32 get_or_alloc_cluster_for_byte(u32 first_cluster, u32 position) const;
+    u32 find_cluster_for_byte(u32 first_cluster, u32 byte_number) const;
+    u32 resize_cluster_chain(u32 first_cluster, u32 num_bytes) const;
     bool set_next_cluster(u32 cluster, u32 next_cluster) const;
     bool is_allocated_cluster(u32 cluster) const;
     u32 alloc_cluster() const;
