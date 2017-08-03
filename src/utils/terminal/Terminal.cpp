@@ -28,6 +28,7 @@
 #include "cmds/echo.h"
 #include "cmds/mkdir.h"
 #include "cmds/tail.h"
+#include "cmds/trunc.h"
 
 #include <algorithm>
 #include <memory>
@@ -61,6 +62,7 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("echo", TaskFactory::make<cmds::echo>("echo", (u64)&env));
     cmd_collection.install("mkdir", TaskFactory::make<cmds::mkdir>("mkdir", (u64)&env));
     cmd_collection.install("tail", TaskFactory::make<cmds::tail>("tail", (u64)&env));
+    cmd_collection.install("trunc", TaskFactory::make<cmds::trunc>("trunc", (u64)&env));
 }
 
 void Terminal::run() {
