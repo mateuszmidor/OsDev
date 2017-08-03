@@ -58,16 +58,17 @@ bool AtaDevice::is_present() {
 }
 
 bool AtaDevice::read28(u32 sector, void* data, u32 count) {
+    const u32 SECTOR_LIMIT = 1 << 28;
     KernelLog& klog = KernelLog::instance();
     u8* dst = (u8*)data;
 
-    if (sector >= (1 << 28)) {
-        klog.format("Cant read from sector that far: %\n", sector);
+    if (sector >= SECTOR_LIMIT) {
+        klog.format("AtaDevice::read28: Cant read from sector that far: % >= %\n", sector, SECTOR_LIMIT);
         return false;
     }
 
     if (count > 512) {
-        klog.format("Cant write across 512 bytes sectors: sector %, count %\n", sector, count);
+        klog.format("AtaDevice::read28: Cant write across 512 bytes sectors: sector %, count %\n", sector, count);
         return false;
     }
 
@@ -100,16 +101,17 @@ bool AtaDevice::read28(u32 sector, void* data, u32 count) {
 }
 
 bool AtaDevice::write28(u32 sector, void const* data, u32 count) {
+    const u32 SECTOR_LIMIT = 1 << 28;
     KernelLog& klog = KernelLog::instance();
     u8 const* dst = (u8*)data;
 
-    if (sector >= (1 << 28)) {
-        klog.format("Cant write to sector that far: %\n", sector);
+    if (sector >= SECTOR_LIMIT) {
+        klog.format("AtaDevice::write28: Cant write to sector that far: % >= %\n", sector, SECTOR_LIMIT);
         return false;
     }
 
     if (count > BYTES_PER_SECTOR) {
-        klog.format("Cant write across % bytes sectors: sector %, count %\n", BYTES_PER_SECTOR, sector, count);
+        klog.format("AtaDevice::write28: Cant write across % bytes sectors: sector %, count %\n", BYTES_PER_SECTOR, sector, count);
         return false;
     }
 
@@ -153,7 +155,7 @@ bool AtaDevice::flush_cache() {
 
     if (status & STATUS_ERROR)
     {
-        klog.format("ATA flush cache ERROR");
+        klog.format("AtaDevice::flush_cache: flush cache ERROR");
         return false;
     }
 
