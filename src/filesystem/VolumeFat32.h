@@ -191,10 +191,18 @@ private:
     u32 attach_new_directory_cluster(SimpleDentryFat32& parent_dir) const;
     void detach_directory_cluster(const SimpleDentryFat32& dentry, u32 cluster) const;
     bool alloc_entry_in_directory(SimpleDentryFat32& parent_dir, SimpleDentryFat32 &e) const;
+    bool is_file_empty(const SimpleDentryFat32& e) const;
     bool is_directory_empty(const SimpleDentryFat32& e) const;
     bool is_no_more_entires_after(const SimpleDentryFat32& parent_dir, const SimpleDentryFat32& entry) const;
     u32 alloc_first_file_cluster(SimpleDentryFat32& file) const;
     u32 alloc_next_file_cluster(u32 cluster) const;
+
+    u32 read_file_data(SimpleDentryFat32& file, void* data, u32 count) const;
+    u32 read_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, u8* data, u32 count) const;
+    u32 write_file_data(SimpleDentryFat32& file, const void* data, u32 count) const;
+    u32 get_cluster_for_write(SimpleDentryFat32& file) const;
+    u32 write_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, const u8* data, u32 count) const;
+    bool is_next_cluster_needed(u32 next_read_position) const;
 
     drivers::AtaDevice& hdd;
     VolumeBootRecordFat32 vbr;

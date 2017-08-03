@@ -119,47 +119,79 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
         return 0;
     }
 
-    // 1. setup reading status variables
+    return read_file_data(file, data, count);
+}
+
+/**
+ * @brief   Read a maximum of "count" bytes, starting from file.position, into data buffer
+ * @param   file  File entry to read from
+ * @param   data  Buffer that has at least "count" capacity
+ * @param   count Number of bytes to read
+ * @return  Number of bytes actually read
+ */
+u32 VolumeFat32::read_file_data(SimpleDentryFat32& file, void* data, u32 count) const {
+    // 1. setup reading status constants and variables
     const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
-    const u16 CLUSTER_SIZE_IN_BYTES = vbr.sectors_per_cluster * SECTOR_SIZE_IN_BYTES;
+    const u16 CLUSTER_SIZE_IN_BYTES = vbr.bytes_per_sector * vbr.sectors_per_cluster;
     const u32 MAX_BYTES_TO_READ = file.size - file.position;
     u32 total_bytes_read = 0;
     u32 remaining_bytes_to_read = (count < MAX_BYTES_TO_READ) ? count : MAX_BYTES_TO_READ;
-
+    
     // 2. locate reading start point
     u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
     u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
     u32 cluster = file.position_data_cluster;
-    klog.format("cluster: %\n", cluster);
-
+    
     // 3. follow cluster chain and read data from sectors until requested number of bytes is read
-    u8* dst = (u8*)data;
+    u8* dst = (u8*) (data);
     while (fat_table.is_allocated_cluster(cluster)) {
-        for (; sector_in_cluster < vbr.sectors_per_cluster; sector_in_cluster++) {
-            u16 bytes_in_sector_left = SECTOR_SIZE_IN_BYTES - byte_in_sector;
-            u16 read_count = remaining_bytes_to_read < bytes_in_sector_left ? remaining_bytes_to_read : bytes_in_sector_left;
-            fat_data.read_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, dst, read_count);
-            remaining_bytes_to_read -= read_count;
-            total_bytes_read += read_count;
-            dst += read_count;
+        // read the cluster until end of cluster or requested number of bytes is read
+        u32 count = read_cluster_data(byte_in_sector, sector_in_cluster, cluster, dst, remaining_bytes_to_read);
+        remaining_bytes_to_read -= count;
+        total_bytes_read += count;
+        dst += count;
+
+        // move on to the next cluster if needed
+        if (is_next_cluster_needed(file.position + total_bytes_read)) {
             byte_in_sector = 0;
-            if (remaining_bytes_to_read == 0)
-                break;
+            sector_in_cluster = 0;
+            cluster = fat_table.get_next_cluster(cluster);
         }
 
-        if (((file.position + total_bytes_read) % CLUSTER_SIZE_IN_BYTES) == 0) // cluster finished
-            cluster = fat_table.get_next_cluster(cluster); // go to next cluster if current is finished
-
-        sector_in_cluster = 0;
-
+        // stop reading if requested number of bytes is read
         if (remaining_bytes_to_read == 0)
             break;
     }
-
-    // 4. done
+    
+    // 4. done; update file position
     file.position += total_bytes_read;
     file.position_data_cluster = cluster;
+    return total_bytes_read;
+}
 
+/**
+ * @brief   Read the cluster starting from [cluster][sector_in_cluster][byte_in_sector] until "count" bytes is read or end of cluster is reached
+ * @return  Number of bytes actually read
+ */
+u32 VolumeFat32::read_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, u8* data, u32 count) const {
+    const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
+    u32 total_bytes_read = 0;
+
+    for (; sector_in_cluster < vbr.sectors_per_cluster; sector_in_cluster++) {
+        u16 bytes_in_sector_left = SECTOR_SIZE_IN_BYTES - byte_in_sector;
+        u16 read_count = count < bytes_in_sector_left ? count : bytes_in_sector_left;
+
+        if (!fat_data.read_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, data, read_count))
+            break;
+
+        count -= read_count;
+        total_bytes_read += read_count;
+        data += read_count;
+        byte_in_sector = 0;
+
+        if (count == 0)
+            break;
+    }
     return total_bytes_read;
 }
 
@@ -186,6 +218,17 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
         return 0;
     }
 
+    return write_file_data(file, data, count);;
+}
+
+/**
+ * @brief   Write "count" bytes into the file, starting from file.position, enlarging the file size if needed
+ * @param   file File entry to write to
+ * @param   data Data to be written
+ * @param   count Number of bytes to be written
+ * @return  Number of bytes actually written
+ */
+u32 VolumeFat32::write_file_data(SimpleDentryFat32& file, const void* data, u32 count) const {
     // 1. setup writing status variables
     const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
     const u16 CLUSTER_SIZE_IN_BYTES = vbr.sectors_per_cluster * SECTOR_SIZE_IN_BYTES;
@@ -195,49 +238,92 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
     // 2. locate writing start point
     u16 byte_in_sector = (file.position % CLUSTER_SIZE_IN_BYTES) % SECTOR_SIZE_IN_BYTES;
     u8 sector_in_cluster = (file.position % CLUSTER_SIZE_IN_BYTES) / SECTOR_SIZE_IN_BYTES;
-    u32 cluster;
-    if (file.data_cluster == Fat32Table::CLUSTER_UNUSED){          // file has no data clusters yet - alloc and assign as first data cluster
-        cluster = alloc_first_file_cluster(file);
-        klog.format("First data cluster allocated: %\n", cluster);
-    }
-    else if ((sector_in_cluster == 0) && (byte_in_sector == 0)) {  // position points to beginning of new cluster - alloc this new cluster
-        u32 last_cluster = fat_table.get_last_cluster(file.data_cluster);
-        cluster = alloc_next_file_cluster(last_cluster);
-        klog.format("Boundary data cluster allocated: % after cluster %\n", cluster, last_cluster);
-    }
-    else {
-        cluster = file.position_data_cluster;                     // just use the current cluster as it has space in it
-        klog.format("Continuing with stored data cluster: %\n", cluster);
-    }
+    u32 cluster = get_cluster_for_write(file);
 
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
-    u8 const* src = (u8 const*)data;
+    const u8* src = (const u8*)data;
     while (fat_table.is_allocated_cluster(cluster)) {
-        for (; sector_in_cluster < vbr.sectors_per_cluster; sector_in_cluster++) {
-            u16 bytes_in_sector_left = SECTOR_SIZE_IN_BYTES - byte_in_sector;
-            u16 written_count = remaining_bytes_to_write < bytes_in_sector_left ? remaining_bytes_to_write : bytes_in_sector_left;
-            fat_data.write_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, src, written_count);
-            remaining_bytes_to_write -= written_count;
-            total_bytes_written += written_count;
-            src += written_count;
-            byte_in_sector = 0;
-            if (remaining_bytes_to_write == 0)
-                break;
-        }
+        // write the cluster until end of cluster or requested number of bytes is written
+        u32 count = write_cluster_data(byte_in_sector, sector_in_cluster, cluster, src, remaining_bytes_to_write);
+        remaining_bytes_to_write -= count;
+        total_bytes_written += count;
 
+        // stop writing if requested number of bytes is written
         if (remaining_bytes_to_write == 0)
             break;
 
-        cluster = alloc_next_file_cluster(cluster);
+        // move on to the next cluster
+        src += count;
+        byte_in_sector = 0;
         sector_in_cluster = 0;
+        cluster = alloc_next_file_cluster(cluster);
     }
 
-    // 4. done
+    // 4. done; update file position and size if needed
     file.position += total_bytes_written;
     file.position_data_cluster = cluster;
-    file.size = file.size > file.position ? file.size : file.position;
-    fat_data.write_entry(file);
+
+    if (file.size < file.position) {
+        file.size = file.position;
+        fat_data.write_entry(file);
+    }
+
     return total_bytes_written;
+}
+
+/**
+ * @brief   Get proper cluster for data writing depending on file status and file position
+ * @return  Cluster for writing data
+ */
+u32 VolumeFat32::get_cluster_for_write(SimpleDentryFat32& file) const {
+    u32 cluster;
+    if (is_file_empty(file)) {
+        // file has no data clusters yet - alloc and assign as first data cluster
+        cluster = fat_table.alloc_cluster();
+        file.data_cluster = cluster;
+    } else if (is_next_cluster_needed(file.position)) {
+        // position points to beginning of new cluster - alloc this new cluster
+        u32 last_cluster = fat_table.get_last_cluster(file.data_cluster);
+        cluster = fat_table.alloc_cluster();
+        fat_table.set_next_cluster(last_cluster, cluster);
+    } else {
+        cluster = file.position_data_cluster; // just use the current cluster as it has space in it
+    }
+
+    return cluster;
+}
+
+/**
+ * @brief   Write the cluster starting from [cluster][sector_in_cluster][byte_in_sector] until "count" bytes is read or end of cluster is reached
+ * @return  Number of bytes actually read
+ */
+u32 VolumeFat32::write_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, const u8* data, u32 count) const {
+    u32 total_bytes_written = 0;
+
+    for (; sector_in_cluster < vbr.sectors_per_cluster; sector_in_cluster++) {
+        u16 bytes_in_sector_left = vbr.bytes_per_sector - byte_in_sector;
+        u16 written_count = count < bytes_in_sector_left ? count : bytes_in_sector_left;
+
+        if (!fat_data.write_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, data, written_count))
+            break;
+
+        count -= written_count;
+        total_bytes_written += written_count;
+        data += written_count;
+        byte_in_sector = 0;
+
+        if (count == 0)
+            break;
+    }
+    return total_bytes_written;
+}
+
+/**
+ * @brief   Check if we are at the beginning of a brand new cluster
+ */
+bool VolumeFat32::is_next_cluster_needed(u32 position) const {
+    const u16 CLUSTER_SIZE_IN_BYTES = vbr.sectors_per_cluster * vbr.bytes_per_sector;
+    return (position % CLUSTER_SIZE_IN_BYTES) == 0;
 }
 
 /**
@@ -615,7 +701,7 @@ u32 VolumeFat32::attach_new_directory_cluster(SimpleDentryFat32& dir) const {
     klog.format("Allocated new_cluster %\n", new_cluster);
 
     // clear data cluster
-    fat_data.clear_data_cluster(new_cluster);
+    //fat_data.clear_data_cluster(new_cluster);
 
     // attach new_cluster to the dir as either head or last cluster
     if (dir.data_cluster == Fat32Table::CLUSTER_UNUSED)
@@ -656,6 +742,10 @@ bool VolumeFat32::is_no_more_entires_after(const SimpleDentryFat32& parent_dir, 
     };
 
     return (enumerate_directory_entry(parent_dir, on_entry) == EnumerateResult::ENUMERATION_FINISHED); // finished means no more entries after entry in parent_dir
+}
+
+bool VolumeFat32::is_file_empty(const SimpleDentryFat32& e) const {
+    return e.data_cluster == Fat32Table::CLUSTER_UNUSED;
 }
 
 bool VolumeFat32::is_directory_empty(const SimpleDentryFat32& e) const {
