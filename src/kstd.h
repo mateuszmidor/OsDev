@@ -104,6 +104,17 @@ string rtrim(const u8 *in, u16 len);
 string extract_file_name(const string& filename);
 string extract_file_directory(const string& filename);
 
+
+template <class T1, class T2>
+typename std::common_type<T1, T2>::type min(const T1& a, const T2& b) {
+    return a < b ? a : b;
+}
+
+template <class T1, class T2>
+typename std::common_type<T1, T2>::type max(const T1& a, const T2& b) {
+    return a > b ? a : b;
+}
+
 /**
     @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");
                 > READ WRITE
