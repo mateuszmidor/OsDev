@@ -5,10 +5,11 @@
  * @author: Mateusz Midor
  */
 
-
+#include <array>
 #include "VolumeFat32.h"
 #include "Fat32Utils.h"
 
+using std::array;
 using namespace kstd;
 using namespace utils;
 namespace filesystem {
@@ -264,7 +265,7 @@ u32 VolumeFat32::write_file_data(Fat32Entry& file, const void* data, u32 count) 
 
     if (file.size < file.position) {
         file.size = file.position;
-        fat_data.write_entry(file);
+        write_entry(file);
     }
 
     return total_bytes_written;
@@ -400,7 +401,7 @@ void VolumeFat32::trunc_file_entry(Fat32Entry& file, u32 new_size) const {
         file.size = new_size;
     }
 
-    fat_data.write_entry(file);
+    write_entry(file);
 }
 
 /**
@@ -424,7 +425,7 @@ EnumerateResult VolumeFat32::enumerate_directory_entry(const Fat32Entry& dentry,
     u32 cluster = dentry.data_cluster;
 
     while (fat_table.is_allocated_cluster(cluster)) { // iterate cluster chain
-        switch (fat_data.enumerate_directory_cluster(cluster, on_entry)) {
+        switch (enumerate_directory_cluster(cluster, on_entry)) {
         case EnumerateResult::ENUMERATION_STOPPED:
             return EnumerateResult::ENUMERATION_STOPPED;
 
@@ -517,13 +518,13 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
 
     // mark entry as nomore/unused depending on it's position in the directory
     if (is_no_more_entires_after(parent_dir, e))
-        fat_data.mark_entry_as_nomore(e);
+        mark_entry_as_nomore(e);
     else
-        fat_data.mark_entry_as_unused(e);
+        mark_entry_as_unused(e);
 
     // if cluster where our entry was allocated contains no more files - remove it from the chain.
     // but dont remove root first cluster!
-    if (e.entry_cluster != vbr.root_cluster && fat_data.is_directory_cluster_empty(e.entry_cluster))
+    if (e.entry_cluster != vbr.root_cluster && is_directory_cluster_empty(e.entry_cluster))
         detach_directory_cluster(parent_dir, e.entry_cluster);
 
     return true;
@@ -561,8 +562,8 @@ bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::str
     src.data_cluster = Fat32Table::CLUSTER_UNUSED;
     dst.size = src.size;
     src.size = 0;
-    fat_data.write_entry(src);
-    fat_data.write_entry(dst);
+    write_entry(src);
+    write_entry(dst);
 
     // remove src entry
     if (!delete_entry(unix_path_from)) {
@@ -629,7 +630,7 @@ bool VolumeFat32::alloc_first_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir
     e.entry_cluster = new_cluster;
     e.entry_sector = 0;
     e.entry_index = 0;
-    fat_data.write_entry(e);
+    write_entry(e);
 
     // setting NO_MORE marker not needed as fresh cluster has been cleared and effect is the same as NO_MORE
     return true;
@@ -644,20 +645,52 @@ bool VolumeFat32::alloc_last_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir,
     e.entry_cluster = new_cluster;
     e.entry_sector = 0;
     e.entry_index = 0;
-    fat_data.write_entry(e);
+    write_entry(e);
 
     // setting NO_MORE marker not needed as fresh new_cluster has been cleared
     return true;
 }
 
+//-------------------------
+
+EnumerateResult VolumeFat32::enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector, u8 start_index) const {
+    array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
+
+    for (u8 sector_offset = start_sector; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
+
+        // read 1 sector of data (usually 512 bytes)
+        fat_data.read_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+
+        for (u8 i = start_index; i < entries.size(); i++) { // iterate directory entries
+            auto& e = entries[i];
+            if (e.name[0] == DIR_ENTRY_NO_MORE)
+                return EnumerateResult::ENUMERATION_FINISHED;    // no more entries for this dir
+
+            if (e.name[0] == DIR_ENTRY_UNUSED)
+                continue;       // unused entry, skip
+
+            if ((e.attributes & DirectoryEntryFat32Attrib::VOLUMEID) == DirectoryEntryFat32Attrib::VOLUMEID)
+                continue;       // partition label
+
+            if ((e.attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME)
+                continue;   // extension for 8.3 filename
+
+            Fat32Entry se = Fat32Entry::make_simple_dentry(e, cluster, sector_offset, i);
+            if (!on_entry(se))
+                return EnumerateResult::ENUMERATION_STOPPED;
+        }
+    }
+    return EnumerateResult::ENUMERATION_CONTINUE; // continue reading the entries in next cluster
+}
+
 bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir, Fat32Entry &e) const {
     u32 cluster = parent_dir.data_cluster;
-    u8 entry_type = Fat32Data::DIR_ENTRY_NOT_FOUND;
+    u8 entry_type = DIR_ENTRY_NOT_FOUND;
 
     // try find free slot in direcyory clusters
     while (fat_table.is_allocated_cluster(cluster)) {
-        entry_type = fat_data.get_free_entry_in_dir_cluster(cluster, e);
-        if (entry_type != Fat32Data::DIR_ENTRY_NOT_FOUND)
+        entry_type = get_free_entry_in_dir_cluster(cluster, e);
+        if (entry_type != DIR_ENTRY_NOT_FOUND)
             break; // free entry found
 
         cluster = fat_table.get_next_cluster(cluster);
@@ -665,17 +698,17 @@ bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir,
     }
 
     // UNUSED entry found - just reuse it
-    if (entry_type == Fat32Data::DIR_ENTRY_UNUSED) {
+    if (entry_type == DIR_ENTRY_UNUSED) {
         klog.format("Unused entry found. Cluster: %\n", e.entry_cluster);
-        fat_data.write_entry(e);
+        write_entry(e);
         return true;
     }
 
     // NO_MORE entry found - reuse it and mark the next one as NO_MORE
-    if (entry_type == Fat32Data::DIR_ENTRY_NO_MORE) {
+    if (entry_type == DIR_ENTRY_NO_MORE) {
         klog.format("NO MORE entry found. Cluster: %\n", e.entry_cluster);
-        fat_data.write_entry(e);
-        fat_data.mark_next_entry_as_nomore(e);
+        write_entry(e);
+        mark_next_entry_as_nomore(e);
         return true;
     }
 
@@ -701,7 +734,7 @@ u32 VolumeFat32::attach_new_directory_cluster(Fat32Entry& dir) const {
 
     // attach new_cluster to the dir as either head or last cluster
     if (dir.data_cluster == Fat32Table::CLUSTER_UNUSED)
-        fat_data.set_entry_data_cluster(dir, new_cluster);
+        set_entry_data_cluster(dir, new_cluster);
     else {
         // attach data cluster to the end of chain
         u32 last_cluster = fat_table.get_last_cluster(dir.data_cluster);
@@ -714,7 +747,7 @@ u32 VolumeFat32::attach_new_directory_cluster(Fat32Entry& dir) const {
 void VolumeFat32::detach_directory_cluster(const Fat32Entry& parent_dir, u32 cluster) const {
     u32 new_first_cluster = fat_table.detach_cluster(parent_dir.data_cluster, cluster);
     if (new_first_cluster != parent_dir.data_cluster)
-        fat_data.set_entry_data_cluster(parent_dir, new_first_cluster);
+        set_entry_data_cluster(parent_dir, new_first_cluster);
 }
 
 /**
@@ -769,4 +802,84 @@ u32 VolumeFat32::attach_next_cluster(u32 cluster) const {
     fat_table.set_next_cluster(cluster, next_cluster);
     return next_cluster;
 }
+
+/**
+ * @brief   Scan directory cluster looking for either UNUSED or NO_MORE entry
+ * @param   out Free entry, if found, is stored here
+ * @return  DIR_ENTRY_UNUSED, DIR_ENTRY_NO_MORE or 0xFF if not found
+ */
+u8 VolumeFat32::get_free_entry_in_dir_cluster(u32 cluster, Fat32Entry& out) const {
+    array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
+
+    for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
+
+        // read 1 sector of data (usually 512 bytes)
+        fat_data.read_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+
+        for (u8 i = 0; i < entries.size(); i++) { // iterate directory entries
+            const auto& e = entries[i];
+            if (e.name[0] == DIR_ENTRY_NO_MORE || e.name[0] == DIR_ENTRY_UNUSED) {
+                out.entry_cluster = cluster;
+                out.entry_sector = sector_offset;
+                out.entry_index = i;
+                return e.name[0];
+            }
+        }
+    }
+    return DIR_ENTRY_NOT_FOUND; // no free entry found in this cluster
+}
+
+void VolumeFat32::write_entry(const Fat32Entry& e) const {
+    array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
+    fat_data.read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    entries[e.entry_index] = Fat32Entry::make_directory_entry_fat32(e);
+    fat_data.write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+}
+
+void VolumeFat32::mark_entry_as_nomore(const Fat32Entry& e) const {
+    array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
+    fat_data.read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    entries[e.entry_index].name[0] = DIR_ENTRY_NO_MORE; // mark entry as last one
+    fat_data.write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+}
+
+void VolumeFat32::mark_next_entry_as_nomore(const Fat32Entry& e) const {
+    // if e is the very last entry in the cluster - CLUSTER_END_OF_DIRECTORY will mark the end of directory entries
+    if ((e.entry_sector == vbr.sectors_per_cluster - 1) && (e.entry_index == FAT32ENTRIES_PER_SECTOR - 1))
+        return;
+
+    Fat32Entry no_more;
+    no_more.entry_cluster = e.entry_cluster;
+    no_more.entry_sector = (e.entry_index < 15) ? e.entry_sector : e.entry_sector + 1;
+    no_more.entry_index = (e.entry_index < 15) ? e.entry_index + 1 : 0;
+
+    mark_entry_as_nomore(no_more);
+}
+
+void VolumeFat32::mark_entry_as_unused(const Fat32Entry& e) const {
+    array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
+    fat_data.read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    entries[e.entry_index].name[0] = DIR_ENTRY_UNUSED; // mark entry as deleted
+    fat_data.write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+}
+
+void VolumeFat32::set_entry_data_cluster(const Fat32Entry& e, u32 first_cluster) const {
+    // update head
+    array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
+    fat_data.read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+    entries[e.entry_index].first_cluster_lo = first_cluster & 0xFFFF;
+    entries[e.entry_index].first_cluster_hi = first_cluster >> 16;
+    fat_data.write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
+}
+
+bool VolumeFat32::is_directory_cluster_empty(u32 cluster) const {
+    auto on_entry = [](const Fat32Entry& e) -> bool {
+        if (e.name == "." || e.name == "..") // skip . and ..
+            return true;
+
+        return false; // file found, stop enumeration
+    };
+    return (enumerate_directory_cluster(cluster, on_entry) != EnumerateResult::ENUMERATION_STOPPED);
+}
+
 } /* namespace filesystem */

@@ -8,8 +8,8 @@
 #ifndef SRC_FILESYSTEM_FAT32ENTRY_H_
 #define SRC_FILESYSTEM_FAT32ENTRY_H_
 
-#include "types.h"
 #include "kstd.h"
+#include "Fat32Structs.h"
 
 namespace filesystem {
 
@@ -21,6 +21,8 @@ class Fat32Entry {
 public:
     Fat32Entry();
     Fat32Entry(const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 entry_cluster,  u16 entry_sector, u8 entry_index_no);
+    static Fat32Entry make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index);
+    static DirectoryEntryFat32 make_directory_entry_fat32(const Fat32Entry& e);
 
     // useful data
     kstd::string    name;
