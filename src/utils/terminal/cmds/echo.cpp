@@ -23,34 +23,26 @@ void echo::run() {
     }
     string filename = env->cwd + "/" + env->cmd_args[1];
     VolumeFat32* v = env->volume;
-    SimpleDentryFat32 e;
-//    if (!v->get_entry(filename, e)) {
-//        env->printer->format("echo: file % doesnt exist\n", filename);
-//        return;
+    Fat32Entry e;
+    if (!v->create_entry(filename, false, e)) {
+        env->printer->format("echo: couldn't create file '%'\n", filename);
+        return;
+    }
+    string number_str;
+    for (u32 i = 0; i < 4096; i++) {
+        number_str += "#";
+    }
+    v->write_file_entry(e, number_str.data(), number_str.length());
+    number_str = "!!!!!";
+    v->write_file_entry(e, number_str.data(), number_str.length());
+
+//   number_str.reserve(256*4+1);    // 1024 chars
+//    for (u32 i = 0; i < 256; i++) {
+//        number_str += kstd::to_str(100 + i) + " ";
 //    }
 //
-//    if (e.is_directory) {
-//        env->printer->format("cat: % is a directory\n", filename);
-//        return;
-//    }
-
-    v->create_entry(filename, false, e);
-    string number_str;
-
-    number_str.reserve(52450);
-    for (u32 i = 0; i < 1024 * 8; i++){
-        number_str += kstd::to_str(1000 + i) + " ";
-    }
-
-    for (u32 i = 0; i < 128 * 1; i++)
-        v->write_file_entry(e, number_str.data(), number_str.length());
-
-
-//    for (u32 i = 0; i < 1024 * 10; i++){
-//        number_str = kstd::to_str(1000 + i) + " ";
-//        if (0 == v->write_file_entry(e, number_str.data(), number_str.length()))
-//            break;
-//    }
+//    for (u32 i = 0; i < 128 * 4; i++)
+//        v->write_file_entry(e, number_str.data(), number_str.length());
 
 }
 } /* namespace cmds */

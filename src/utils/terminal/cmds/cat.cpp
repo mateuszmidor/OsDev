@@ -25,7 +25,7 @@ void cat::run() {
 
     string filename = env->cwd + "/" + env->cmd_args[1];
     VolumeFat32* v = env->volume;
-    SimpleDentryFat32 e;
+    Fat32Entry e;
     if (!v->get_entry(filename, e)) {
         env->printer->format("cat: file % doesnt exist\n", filename);
         return;

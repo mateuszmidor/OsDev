@@ -21,13 +21,13 @@ public:
     void run(u64 arg);
 
 private:
-    using OnTreeEntryFound = std::function<bool(filesystem::SimpleDentryFat32&, u8)>;
+    using OnTreeEntryFound = std::function<bool(filesystem::Fat32Entry&, u8)>;
 
     void print_volume_info(filesystem::VolumeFat32& v);
     void print_file(filesystem::VolumeFat32& v, kstd::string filename);
     void print_tree(filesystem::VolumeFat32& v, kstd::string path);
     void print_hdd_info(drivers::AtaDevice& hdd);
-    void traverse_tree(filesystem::VolumeFat32& v, const filesystem::SimpleDentryFat32& entry, u8 level, const OnTreeEntryFound& user_on_entry);
+    void traverse_tree(filesystem::VolumeFat32& v, const filesystem::Fat32Entry& entry, u8 level, const OnTreeEntryFound& user_on_entry);
 
     utils::KernelLog& klog;
 };

@@ -69,12 +69,12 @@ u32 VolumeFat32::get_used_space_in_clusters() const {
  *          "/home/music/..
  * @return  True if entry exists, False otherwise
  */
-bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entry) const {
+bool VolumeFat32::get_entry(const string& unix_path, Fat32Entry& out_entry) const {
     if (unix_path.empty() || unix_path.front() != '/')
         return false;
 
     // start at root...
-    SimpleDentryFat32 e = get_root_dentry();
+    Fat32Entry e = get_root_dentry();
 
     // ...and descend down the path to the very last entry
     auto normalized_unix_path = Fat32Utils::normalize_path(unix_path); // this takes care of '.' and '..'
@@ -103,7 +103,7 @@ bool VolumeFat32::get_entry(const string& unix_path, SimpleDentryFat32& out_entr
  * @param   count Number of bytes to read
  * @return  Number of bytes actually read
  */
-u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const {
+u32 VolumeFat32::read_file_entry(Fat32Entry& file, void* data, u32 count) const {
     if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
         klog.format("VolumeFat32::read_file_entry: uninitialized file entry to read specified\n");
         return 0;
@@ -129,7 +129,7 @@ u32 VolumeFat32::read_file_entry(SimpleDentryFat32& file, void* data, u32 count)
  * @param   count Number of bytes to read
  * @return  Number of bytes actually read
  */
-u32 VolumeFat32::read_file_data(SimpleDentryFat32& file, void* data, u32 count) const {
+u32 VolumeFat32::read_file_data(Fat32Entry& file, void* data, u32 count) const {
     // 1. setup reading status constants and variables
     const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
     const u16 CLUSTER_SIZE_IN_BYTES = vbr.bytes_per_sector * vbr.sectors_per_cluster;
@@ -201,7 +201,7 @@ u32 VolumeFat32::read_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32
  * @param   count Number of bytes to be written
  * @return  Number of bytes actually written
  */
-u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32 count) const {
+u32 VolumeFat32::write_file_entry(Fat32Entry& file, void const* data, u32 count) const {
     if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
         klog.format("VolumeFat32::write_file_entry: uninitialized entry to write specified\n");
         return 0;
@@ -227,7 +227,7 @@ u32 VolumeFat32::write_file_entry(SimpleDentryFat32& file, void const* data, u32
  * @param   count Number of bytes to be written
  * @return  Number of bytes actually written
  */
-u32 VolumeFat32::write_file_data(SimpleDentryFat32& file, const void* data, u32 count) const {
+u32 VolumeFat32::write_file_data(Fat32Entry& file, const void* data, u32 count) const {
     // 1. setup writing status variables
     const u16 SECTOR_SIZE_IN_BYTES = vbr.bytes_per_sector;
     const u16 CLUSTER_SIZE_IN_BYTES = vbr.sectors_per_cluster * SECTOR_SIZE_IN_BYTES;
@@ -274,15 +274,14 @@ u32 VolumeFat32::write_file_data(SimpleDentryFat32& file, const void* data, u32 
  * @brief   Get proper cluster for data writing depending on file status and file position
  * @return  Cluster for writing data
  */
-u32 VolumeFat32::get_cluster_for_write(SimpleDentryFat32& file) const {
+u32 VolumeFat32::get_cluster_for_write(Fat32Entry& file) const {
     u32 cluster;
     if (is_file_empty(file)) {                          // file has no data clusters yet - alloc and assign as first data cluster
         cluster = fat_table.alloc_cluster();
         file.data_cluster = cluster;
     } else if (is_cluster_beginning(file.position)) {   // position points to beginning of new cluster - alloc this new cluster
         u32 last_cluster = fat_table.get_last_cluster(file.data_cluster);
-        cluster = fat_table.alloc_cluster();
-        fat_table.set_next_cluster(last_cluster, cluster);
+        cluster = attach_next_cluster(last_cluster);
     } else {                                            // just use the current cluster as it has space in it
         cluster = file.position_data_cluster;
     }
@@ -326,7 +325,7 @@ bool VolumeFat32::is_cluster_beginning(u32 position) const {
 /**
  * @brief   Move file current position to given "position" if possible
  */
-void VolumeFat32::seek_file_entry(SimpleDentryFat32& file, u32 position) const {
+void VolumeFat32::seek_file_entry(Fat32Entry& file, u32 position) const {
     if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
         klog.format("VolumeFat32::seek_file_entry: uninitialized entry specified\n");
         return;
@@ -346,7 +345,7 @@ void VolumeFat32::seek_file_entry(SimpleDentryFat32& file, u32 position) const {
     file.position = position;
 }
 
-void VolumeFat32::trunc_file_entry(SimpleDentryFat32& file, u32 new_size) const {
+void VolumeFat32::trunc_file_entry(Fat32Entry& file, u32 new_size) const {
     if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
         klog.format("VolumeFat32::trunc_file_entry: uninitialized entry specified\n");
         return;
@@ -411,7 +410,7 @@ void VolumeFat32::trunc_file_entry(SimpleDentryFat32& file, u32 new_size) const 
  * @return  ENUMERATION_FINISHED if all entries have been enumerated,
  *          ENUMERATION_STOPPED if enumeration stopped by on_entry() returning false
  */
-EnumerateResult VolumeFat32::enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry) const {
+EnumerateResult VolumeFat32::enumerate_directory_entry(const Fat32Entry& dentry, const OnEntryFound& on_entry) const {
     if (dentry.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
         klog.format("VolumeFat32::enumerate_directory_entry: uninitialized entry specified\n");
         return EnumerateResult::ENUMERATION_FINISHED;
@@ -445,16 +444,16 @@ EnumerateResult VolumeFat32::enumerate_directory_entry(const SimpleDentryFat32& 
  * @return  True if entry created successfuly, False otherwise
  */
 bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) const {
-    SimpleDentryFat32 tmp;
+    Fat32Entry tmp;
     return create_entry(unix_path, directory, tmp);
 }
 
-bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, SimpleDentryFat32& out) const {
+bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, Fat32Entry& out) const {
     if (unix_path.empty() || unix_path == "/")
         return false;
 
     // check if parent_dir exists
-    SimpleDentryFat32 parent_dir;
+    Fat32Entry parent_dir;
     if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
         klog.format("VolumeFat32::create_entry: Parent not exists: %\n", extract_file_directory(unix_path));
         return false;
@@ -468,7 +467,7 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, Si
     }
 
     string name_8_3 = Fat32Utils::make_8_3_filename(name);
-    SimpleDentryFat32 tmp;
+    Fat32Entry tmp;
     if (get_entry_for_name(parent_dir, name_8_3, tmp)) {
         klog.format("VolumeFat32::create_entry: Entry already exists: %(%)\n", name_8_3, unix_path);
         return false;   // entry exists
@@ -493,14 +492,14 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
         return false;
 
     // get entry parent dir to be updated
-    SimpleDentryFat32 parent_dir;
+    Fat32Entry parent_dir;
     if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
         klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
     }
 
     // get entry to be deleted
-    SimpleDentryFat32 e;
+    Fat32Entry e;
     if (!get_entry_for_name(parent_dir, extract_file_name(unix_path), e)) {
         klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
@@ -538,14 +537,14 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
  */
 bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const {
     // get source entry
-    SimpleDentryFat32 src;
+    Fat32Entry src;
     if (!get_entry(unix_path_from, src)) {
         klog.format("VolumeFat32::move_entry: src entry doesn't exists '%'\n", unix_path_from);
         return false;
     }
 
     // if destination directory specified instead of full path - keep source name
-    SimpleDentryFat32 dst;
+    Fat32Entry dst;
     string path_to = unix_path_to;
     if (get_entry(unix_path_to, dst))
         if (dst.is_directory)
@@ -577,8 +576,8 @@ bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::str
 /**
  * @brief   Return root directory entry; this is the entry point to entire volume dir tree
  */
-SimpleDentryFat32 VolumeFat32::get_root_dentry() const {
-    return SimpleDentryFat32("/", 0, true, vbr.root_cluster, Fat32Table::CLUSTER_END_OF_CHAIN, 0, 0);
+Fat32Entry VolumeFat32::get_root_dentry() const {
+    return Fat32Entry("/", 0, true, vbr.root_cluster, Fat32Table::CLUSTER_END_OF_CHAIN, 0, 0);
 }
 
 /**
@@ -586,8 +585,8 @@ SimpleDentryFat32 VolumeFat32::get_root_dentry() const {
  * @param   Filename Entry name. Case sensitive
  * @return  True if entry found, False otherwise
  */
-bool VolumeFat32::get_entry_for_name(const SimpleDentryFat32& parent_dir, const string& filename, SimpleDentryFat32& out_entry) const {
-    auto on_entry = [&filename, &out_entry](const SimpleDentryFat32& e) -> bool {
+bool VolumeFat32::get_entry_for_name(const Fat32Entry& parent_dir, const string& filename, Fat32Entry& out_entry) const {
+    auto on_entry = [&filename, &out_entry](const Fat32Entry& e) -> bool {
         if (e.name == filename) {
             out_entry = e;
             return false;   // entry found. stop enumeration
@@ -604,7 +603,7 @@ bool VolumeFat32::get_entry_for_name(const SimpleDentryFat32& parent_dir, const 
  *          entry cluster, segment and index are set to describe the allocated position in parent_dir
  * @return  True if entry was successfully allocated in parent_dir
  */
-bool VolumeFat32::alloc_entry_in_directory(SimpleDentryFat32& parent_dir, SimpleDentryFat32& e) const {
+bool VolumeFat32::alloc_entry_in_directory(Fat32Entry& parent_dir, Fat32Entry& e) const {
     // if dir has no data cluster yet (dir is empty) - allocate new cluster and set it as directory first cluster
     if (parent_dir.data_cluster == Fat32Table::CLUSTER_UNUSED) {
         return alloc_first_dir_cluster_and_alloc_entry(parent_dir, e);
@@ -618,7 +617,7 @@ bool VolumeFat32::alloc_entry_in_directory(SimpleDentryFat32& parent_dir, Simple
     return alloc_last_dir_cluster_and_alloc_entry(parent_dir, e);
 }
 
-bool VolumeFat32::alloc_first_dir_cluster_and_alloc_entry(SimpleDentryFat32& parent_dir, SimpleDentryFat32& e) const {
+bool VolumeFat32::alloc_first_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const {
     u32 new_cluster = attach_new_directory_cluster(parent_dir);
     if (new_cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
         return false;
@@ -636,7 +635,7 @@ bool VolumeFat32::alloc_first_dir_cluster_and_alloc_entry(SimpleDentryFat32& par
     return true;
 }
 
-bool VolumeFat32::alloc_last_dir_cluster_and_alloc_entry(SimpleDentryFat32& parent_dir, SimpleDentryFat32& e) const {
+bool VolumeFat32::alloc_last_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const {
     u32 new_cluster = attach_new_directory_cluster(parent_dir);
     if (new_cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
         return false;
@@ -651,7 +650,7 @@ bool VolumeFat32::alloc_last_dir_cluster_and_alloc_entry(SimpleDentryFat32& pare
     return true;
 }
 
-bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const SimpleDentryFat32& parent_dir, SimpleDentryFat32 &e) const {
+bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir, Fat32Entry &e) const {
     u32 cluster = parent_dir.data_cluster;
     u8 entry_type = Fat32Data::DIR_ENTRY_NOT_FOUND;
 
@@ -687,7 +686,7 @@ bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const SimpleDentryFat32& pare
  * @brief   Attach new data cluster to the directory
  * @return  Cluster number if success, Fat32Table::CLUSTER_END_OF_CHAIN otherwise
  */
-u32 VolumeFat32::attach_new_directory_cluster(SimpleDentryFat32& dir) const {
+u32 VolumeFat32::attach_new_directory_cluster(Fat32Entry& dir) const {
     klog.format("attach_new_directory_cluster\n");
 
     // try alloc new cluster
@@ -712,7 +711,7 @@ u32 VolumeFat32::attach_new_directory_cluster(SimpleDentryFat32& dir) const {
     return new_cluster;
 }
 
-void VolumeFat32::detach_directory_cluster(const SimpleDentryFat32& parent_dir, u32 cluster) const {
+void VolumeFat32::detach_directory_cluster(const Fat32Entry& parent_dir, u32 cluster) const {
     u32 new_first_cluster = fat_table.detach_cluster(parent_dir.data_cluster, cluster);
     if (new_first_cluster != parent_dir.data_cluster)
         fat_data.set_entry_data_cluster(parent_dir, new_first_cluster);
@@ -722,8 +721,8 @@ void VolumeFat32::detach_directory_cluster(const SimpleDentryFat32& parent_dir, 
  * @brief   Check if entry is the last entry present in parent_dir
  * @return  True if there is no valid entries after our entry. False otherwise
  */
-bool VolumeFat32::is_no_more_entires_after(const SimpleDentryFat32& parent_dir, const SimpleDentryFat32& entry) const {
-    auto on_entry = [&entry](const SimpleDentryFat32& e) -> bool {
+bool VolumeFat32::is_no_more_entires_after(const Fat32Entry& parent_dir, const Fat32Entry& entry) const {
+    auto on_entry = [&entry](const Fat32Entry& e) -> bool {
         static bool entry_found = false;
 
         if (e.name == "." || e.name == "..") // skip . and ..
@@ -741,11 +740,11 @@ bool VolumeFat32::is_no_more_entires_after(const SimpleDentryFat32& parent_dir, 
     return (enumerate_directory_entry(parent_dir, on_entry) == EnumerateResult::ENUMERATION_FINISHED); // finished means no more entries after entry in parent_dir
 }
 
-bool VolumeFat32::is_file_empty(const SimpleDentryFat32& e) const {
+bool VolumeFat32::is_file_empty(const Fat32Entry& e) const {
     return e.data_cluster == Fat32Table::CLUSTER_UNUSED;
 }
 
-bool VolumeFat32::is_directory_empty(const SimpleDentryFat32& e) const {
+bool VolumeFat32::is_directory_empty(const Fat32Entry& e) const {
     return e.data_cluster == Fat32Table::CLUSTER_UNUSED;
 }
 
@@ -753,7 +752,7 @@ bool VolumeFat32::is_directory_empty(const SimpleDentryFat32& e) const {
  * @brief   Alloc new cluster and assign it as file data cluster
  * @return  Allocated cluster
  */
-u32 VolumeFat32::alloc_first_file_cluster(SimpleDentryFat32& file) const {
+u32 VolumeFat32::alloc_first_file_cluster(Fat32Entry& file) const {
     // file has no data clusters yet - alloc and assign as first data cluster
     u32 cluster = fat_table.alloc_cluster();
     file.data_cluster = cluster;

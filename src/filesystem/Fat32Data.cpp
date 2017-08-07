@@ -103,7 +103,7 @@ EnumerateResult Fat32Data::enumerate_directory_cluster(u32 cluster, const OnEntr
             if ((e.attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME)
                 continue;   // extension for 8.3 filename
 
-            SimpleDentryFat32 se = make_simple_dentry(e, cluster, sector_offset, i);
+            Fat32Entry se = make_simple_dentry(e, cluster, sector_offset, i);
             if (!on_entry(se))
                 return EnumerateResult::ENUMERATION_STOPPED;
         }
@@ -116,7 +116,7 @@ EnumerateResult Fat32Data::enumerate_directory_cluster(u32 cluster, const OnEntr
  * @param   out Free entry, if found, is stored here
  * @return  DIR_ENTRY_UNUSED, DIR_ENTRY_NO_MORE or 0xFF if not found
  */
-u8 Fat32Data::get_free_entry_in_dir_cluster(u32 cluster, SimpleDentryFat32& out) const {
+u8 Fat32Data::get_free_entry_in_dir_cluster(u32 cluster, Fat32Entry& out) const {
     array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
 
     for (u8 sector_offset = 0; sector_offset < sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
@@ -137,26 +137,26 @@ u8 Fat32Data::get_free_entry_in_dir_cluster(u32 cluster, SimpleDentryFat32& out)
     return DIR_ENTRY_NOT_FOUND; // no free entry found in this cluster
 }
 
-void Fat32Data::write_entry(const SimpleDentryFat32& e) const {
+void Fat32Data::write_entry(const Fat32Entry& e) const {
     array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
     read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
     entries[e.entry_index] = make_directory_entry_fat32(e);
     write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
 }
 
-void Fat32Data::mark_entry_as_nomore(const SimpleDentryFat32& e) const {
+void Fat32Data::mark_entry_as_nomore(const Fat32Entry& e) const {
     array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
     read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
     entries[e.entry_index].name[0] = DIR_ENTRY_NO_MORE; // mark entry as last one
     write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
 }
 
-void Fat32Data::mark_next_entry_as_nomore(const SimpleDentryFat32& e) const {
+void Fat32Data::mark_next_entry_as_nomore(const Fat32Entry& e) const {
     // if e is the very last entry in the cluster - CLUSTER_END_OF_DIRECTORY will mark the end of directory entries
     if ((e.entry_sector == sectors_per_cluster - 1) && (e.entry_index == FAT32ENTRIES_PER_SECTOR - 1))
         return;
 
-    SimpleDentryFat32 no_more;
+    Fat32Entry no_more;
     no_more.entry_cluster = e.entry_cluster;
     no_more.entry_sector = (e.entry_index < 15) ? e.entry_sector : e.entry_sector + 1;
     no_more.entry_index = (e.entry_index < 15) ? e.entry_index + 1 : 0;
@@ -164,14 +164,14 @@ void Fat32Data::mark_next_entry_as_nomore(const SimpleDentryFat32& e) const {
     mark_entry_as_nomore(no_more);
 }
 
-void Fat32Data::mark_entry_as_unused(const SimpleDentryFat32& e) const {
+void Fat32Data::mark_entry_as_unused(const Fat32Entry& e) const {
     array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
     read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
     entries[e.entry_index].name[0] = DIR_ENTRY_UNUSED; // mark entry as deleted
     write_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
 }
 
-void Fat32Data::set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_cluster) const {
+void Fat32Data::set_entry_data_cluster(const Fat32Entry& e, u32 first_cluster) const {
     // update head
     array<DirectoryEntryFat32, FAT32ENTRIES_PER_SECTOR> entries;
     read_data_sector(e.entry_cluster, e.entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
@@ -181,7 +181,7 @@ void Fat32Data::set_entry_data_cluster(const SimpleDentryFat32& e, u32 first_clu
 }
 
 bool Fat32Data::is_directory_cluster_empty(u32 cluster) const {
-    auto on_entry = [](const SimpleDentryFat32& e) -> bool {
+    auto on_entry = [](const Fat32Entry& e) -> bool {
         if (e.name == "." || e.name == "..") // skip . and ..
             return true;
 
@@ -190,11 +190,11 @@ bool Fat32Data::is_directory_cluster_empty(u32 cluster) const {
     return (enumerate_directory_cluster(cluster, on_entry) != EnumerateResult::ENUMERATION_STOPPED);
 }
 
-SimpleDentryFat32 Fat32Data::make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const {
+Fat32Entry Fat32Data::make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const {
     string name = rtrim(dentry.name, sizeof(dentry.name));
     string ext = rtrim(dentry.ext, sizeof(dentry.ext));
 
-    return SimpleDentryFat32(
+    return Fat32Entry(
                 ext.empty() ? name : name + "." + ext,
                 dentry.size,
                 (dentry.attributes & DirectoryEntryFat32Attrib::DIRECTORY) == DirectoryEntryFat32Attrib::DIRECTORY,
@@ -206,7 +206,7 @@ SimpleDentryFat32 Fat32Data::make_simple_dentry(const DirectoryEntryFat32& dentr
 
 }
 
-DirectoryEntryFat32 Fat32Data::make_directory_entry_fat32(const SimpleDentryFat32& e) const {
+DirectoryEntryFat32 Fat32Data::make_directory_entry_fat32(const Fat32Entry& e) const {
     DirectoryEntryFat32 result;
     string name, ext;
 

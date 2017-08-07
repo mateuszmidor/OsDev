@@ -171,36 +171,36 @@ public:
     u32 get_used_space_in_bytes() const;
     u32 get_used_space_in_clusters() const;
 
-    bool get_entry(const kstd::string& unix_path, SimpleDentryFat32& e) const;
-    u32 read_file_entry(SimpleDentryFat32& file, void* data, u32 count) const;
-    u32 write_file_entry(SimpleDentryFat32& file, void const * data, u32 count) const;
-    void seek_file_entry(SimpleDentryFat32& file, u32 position) const;
-    void trunc_file_entry(SimpleDentryFat32& file, u32 new_size) const;
-    EnumerateResult enumerate_directory_entry(const SimpleDentryFat32& dentry, const OnEntryFound& on_entry_found) const;
+    bool get_entry(const kstd::string& unix_path, Fat32Entry& e) const;
+    u32 read_file_entry(Fat32Entry& file, void* data, u32 count) const;
+    u32 write_file_entry(Fat32Entry& file, void const * data, u32 count) const;
+    void seek_file_entry(Fat32Entry& file, u32 position) const;
+    void trunc_file_entry(Fat32Entry& file, u32 new_size) const;
+    EnumerateResult enumerate_directory_entry(const Fat32Entry& dentry, const OnEntryFound& on_entry_found) const;
     bool create_entry(const kstd::string& unix_path, bool directory) const;
-    bool create_entry(const kstd::string& unix_path, bool directory, SimpleDentryFat32& out) const;
+    bool create_entry(const kstd::string& unix_path, bool directory, Fat32Entry& out) const;
     bool delete_entry(const kstd::string& unix_path) const;
     bool move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const;
 
 private:
-    SimpleDentryFat32 get_root_dentry() const;
-    bool get_entry_for_name(const SimpleDentryFat32& parent_dir, const kstd::string& filename, SimpleDentryFat32& out) const;
-    bool alloc_first_dir_cluster_and_alloc_entry(SimpleDentryFat32& parent_dir, SimpleDentryFat32& e) const;
-    bool alloc_last_dir_cluster_and_alloc_entry(SimpleDentryFat32& parent_dir, SimpleDentryFat32& e) const;
-    bool try_alloc_entry_in_free_dir_slot(const SimpleDentryFat32& parent_dir, SimpleDentryFat32 &e) const;
-    u32 attach_new_directory_cluster(SimpleDentryFat32& parent_dir) const;
-    void detach_directory_cluster(const SimpleDentryFat32& dentry, u32 cluster) const;
-    bool alloc_entry_in_directory(SimpleDentryFat32& parent_dir, SimpleDentryFat32 &e) const;
-    bool is_file_empty(const SimpleDentryFat32& e) const;
-    bool is_directory_empty(const SimpleDentryFat32& e) const;
-    bool is_no_more_entires_after(const SimpleDentryFat32& parent_dir, const SimpleDentryFat32& entry) const;
-    u32 alloc_first_file_cluster(SimpleDentryFat32& file) const;
+    Fat32Entry get_root_dentry() const;
+    bool get_entry_for_name(const Fat32Entry& parent_dir, const kstd::string& filename, Fat32Entry& out) const;
+    bool alloc_first_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const;
+    bool alloc_last_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const;
+    bool try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir, Fat32Entry &e) const;
+    u32 attach_new_directory_cluster(Fat32Entry& parent_dir) const;
+    void detach_directory_cluster(const Fat32Entry& dentry, u32 cluster) const;
+    bool alloc_entry_in_directory(Fat32Entry& parent_dir, Fat32Entry &e) const;
+    bool is_file_empty(const Fat32Entry& e) const;
+    bool is_directory_empty(const Fat32Entry& e) const;
+    bool is_no_more_entires_after(const Fat32Entry& parent_dir, const Fat32Entry& entry) const;
+    u32 alloc_first_file_cluster(Fat32Entry& file) const;
     u32 attach_next_cluster(u32 cluster) const;
 
-    u32 read_file_data(SimpleDentryFat32& file, void* data, u32 count) const;
+    u32 read_file_data(Fat32Entry& file, void* data, u32 count) const;
     u32 read_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, u8* data, u32 count) const;
-    u32 write_file_data(SimpleDentryFat32& file, const void* data, u32 count) const;
-    u32 get_cluster_for_write(SimpleDentryFat32& file) const;
+    u32 write_file_data(Fat32Entry& file, const void* data, u32 count) const;
+    u32 get_cluster_for_write(Fat32Entry& file) const;
     u32 write_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, const u8* data, u32 count) const;
     bool is_cluster_beginning(u32 next_read_position) const;
 

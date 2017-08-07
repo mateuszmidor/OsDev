@@ -16,7 +16,7 @@ void ls::run() {
         env->printer->format("No volumes installed\n");
 
 
-    OnEntryFound on_entry = [&](const SimpleDentryFat32& e) -> bool {
+    OnEntryFound on_entry = [&](const Fat32Entry& e) -> bool {
         if (e.is_directory)
             env->printer->format("[%]\n", e.name);
         else
@@ -32,7 +32,7 @@ void ls::run() {
         path = env->cwd;
 
     VolumeFat32* v = env->volume;
-    SimpleDentryFat32 e;
+    Fat32Entry e;
     if (!v->get_entry(path, e)) {
         env->printer->format("ls: path '%' does not exist\n", path);
         return;
