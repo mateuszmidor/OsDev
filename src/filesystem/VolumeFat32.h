@@ -205,10 +205,8 @@ private:
     u32 attach_next_cluster(u32 cluster) const;
 
     u32 read_file_data(Fat32Entry& file, void* data, u32 count) const;
-    u32 read_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, u8* data, u32 count) const;
     u32 write_file_data(Fat32Entry& file, const void* data, u32 count) const;
     u32 get_cluster_for_write(Fat32Entry& file) const;
-    u32 write_cluster_data(u16 byte_in_sector, u8 sector_in_cluster, u32 cluster, const u8* data, u32 count) const;
     bool is_cluster_beginning(u32 next_read_position) const;
 
     drivers::AtaDevice& hdd;
