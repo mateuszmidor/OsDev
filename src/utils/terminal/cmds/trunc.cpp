@@ -36,6 +36,6 @@ void trunc::run() {
         return;
     }
 
-    v->trunc_file_entry(e, new_size);
+    e.truncate(new_size);
 }
 } /* namespace cmds */

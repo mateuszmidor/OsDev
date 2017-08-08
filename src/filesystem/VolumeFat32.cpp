@@ -101,64 +101,6 @@ Fat32Entry VolumeFat32::empty_entry() const {
     return Fat32Entry(fat_table, fat_data);
 }
 
-void VolumeFat32::trunc_file_entry(Fat32Entry& file, u32 new_size) const {
-    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
-        klog.format("VolumeFat32::trunc_file_entry: uninitialized entry specified\n");
-        return;
-    }
-
-    if (file.is_directory){
-        klog.format("VolumeFat32::trunc_file_entry: specified entry is a directory\n");
-        return;
-    }
-
-    if (new_size == 0) {
-        klog.format("truncating file to 0B\n");
-        fat_table.free_cluster_chain(file.data_cluster);
-        file.data_cluster = Fat32Table::CLUSTER_UNUSED;
-        file.size = 0;
-        // dont change file position
-    } else
-    if (new_size > file.size) {
-         klog.format("extending file from % to %\n", file.size, new_size);
-         // move to the old file end
-         u32 old_position = file.position;
-         file.seek(file.size);
-         klog.format("seek to byte %, cluster %\n", file.size, file.position_data_cluster);
-         // calc number of zeroes needed
-         u32 remaining_zeroes = new_size - file.size;
-         klog.format("remaining zeroes %\n", remaining_zeroes);
-         // prepare zeroes
-         const u16 SIZE = vbr.bytes_per_sector;
-         u8 zeroes[SIZE];
-         memset(zeroes, 0, SIZE);
-
-         // fill file tail with zeroes
-         while (remaining_zeroes != 0) {
-             u32 count = min(remaining_zeroes, SIZE);
-             klog.format("writing % zeroes \n", count);
-             file.write(zeroes, count);
-             remaining_zeroes -= count;
-         }
-         file.seek(old_position);
-         // file.size already updated by write_file_entry
-         // dont change file position
-    } else
-    if (new_size < file.size) {
-        klog.format("shrinking file from % to %\n", file.size, new_size);
-        u32 last_cluster = fat_table.find_cluster_for_byte(file.data_cluster, new_size -1);
-        u32 cluster_after_end = fat_table.get_next_cluster(last_cluster);
-        if (fat_table.is_allocated_cluster(cluster_after_end)) {
-            klog.format("freeing cluster\n");
-            fat_table.free_cluster_chain(cluster_after_end);
-            fat_table.set_next_cluster(last_cluster, Fat32Table::CLUSTER_END_OF_CHAIN);
-        }
-        file.size = new_size;
-    }
-
-    write_entry(file);
-}
-
 /**
  * @brief   Enumerate directory contents
  * @param   dentry Directory entry for which we want to enumerate elements

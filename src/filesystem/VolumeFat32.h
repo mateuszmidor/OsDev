@@ -179,7 +179,6 @@ public:
     u32 get_used_space_in_clusters() const;
 
     Fat32Entry get_entry(const kstd::string& unix_path) const;
-    void trunc_file_entry(Fat32Entry& file, u32 new_size) const;
     EnumerateResult enumerate_directory_entry(const Fat32Entry& dentry, const OnEntryFound& on_entry_found) const;
     Fat32Entry create_entry(const kstd::string& unix_path, bool directory) const;
     bool delete_entry(const kstd::string& unix_path) const;

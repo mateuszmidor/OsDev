@@ -212,6 +212,60 @@ void Fat32Entry::seek(u32 new_position) {
     position = new_position;
 }
 
+void Fat32Entry::truncate(u32 new_size) {
+    if (entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+        klog.format("Fat32Entry::truncate: uninitialized entry\n");
+        return;
+    }
+
+    if (is_directory){
+        klog.format("Fat32Entry::truncate: entry is a directory\n");
+        return;
+    }
+
+    if (new_size == 0) {
+        fat_table.free_cluster_chain(data_cluster);
+        data_cluster = Fat32Table::CLUSTER_UNUSED;
+        size = 0;
+        // dont change file position
+    } else
+    if (new_size > size) {
+         // move to the old file end
+         u32 old_position = position;
+         seek(size);
+
+         // calc number of zeroes needed
+         u32 remaining_zeroes = new_size - size;
+
+         // prepare zeroes
+         const u16 SIZE = 512;
+         u8 zeroes[SIZE];
+         memset(zeroes, 0, SIZE);
+
+         // fill file tail with zeroes
+         while (remaining_zeroes != 0) {
+             u32 count = min(remaining_zeroes, SIZE);
+             klog.format("writing % zeroes \n", count);
+             write(zeroes, count);
+             remaining_zeroes -= count;
+         }
+         seek(old_position);
+         // file.size already updated by write_file_entry
+         // dont change file position
+    } else
+    if (new_size < size) {
+        u32 last_cluster = fat_table.find_cluster_for_byte(data_cluster, new_size -1);
+        u32 cluster_after_end = fat_table.get_next_cluster(last_cluster);
+        if (fat_table.is_allocated_cluster(cluster_after_end)) {
+            klog.format("freeing cluster\n");
+            fat_table.free_cluster_chain(cluster_after_end);
+            fat_table.set_next_cluster(last_cluster, Fat32Table::CLUSTER_END_OF_CHAIN);
+        }
+        size = new_size;
+    }
+
+    write_entry();
+}
 
 Fat32Entry::operator bool() const {
     return !name.empty();

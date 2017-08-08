@@ -29,6 +29,7 @@ public:
     u32 read(void* data, u32 count);
     u32 write(const void* data, u32 count);
     void seek(u32 new_position);
+    void truncate(u32 new_size);
     operator bool() const;
     bool operator!() const;
 
