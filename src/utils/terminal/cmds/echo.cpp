@@ -23,8 +23,8 @@ void echo::run() {
     }
     string filename = env->cwd + "/" + env->cmd_args[1];
     VolumeFat32* v = env->volume;
-    Fat32Entry e;
-    if (!v->create_entry(filename, false, e)) {
+    auto e = v->create_entry(filename, false);
+    if (!e) {
         env->printer->format("echo: couldn't create file '%'\n", filename);
         return;
     }

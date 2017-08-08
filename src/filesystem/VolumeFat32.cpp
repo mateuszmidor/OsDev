@@ -68,11 +68,11 @@ u32 VolumeFat32::get_used_space_in_clusters() const {
  *          "/home/music"
  *          "/./" and "/../" and "//" in path are also supported as they are part of Fat32 format, eg
  *          "/home/music/..
- * @return  True if entry exists, False otherwise
+ * @return  Valid entry exists, Invalid entry otherwise
  */
-bool VolumeFat32::get_entry(const string& unix_path, Fat32Entry& out_entry) const {
+Fat32Entry VolumeFat32::get_entry(const string& unix_path) const {
     if (unix_path.empty() || unix_path.front() != '/')
-        return false;
+        return empty_entry();
 
     // start at root...
     Fat32Entry e = get_root_dentry();
@@ -83,87 +83,18 @@ bool VolumeFat32::get_entry(const string& unix_path, Fat32Entry& out_entry) cons
     for (const auto& path_segment : segments) {
         if (!e.is_directory) {
             klog.format("VolumeFat32::get_entry: entry '%' is not a directory\n", e.name);
-            return false;   // path segment is not a directory. this is error
+            return empty_entry();   // path segment is not a directory. this is error
         }
 
-        if (!get_entry_for_name(e, path_segment, e)) {
+        e = get_entry_for_name(e, path_segment);
+        if (!e) {
             klog.format("VolumeFat32::get_entry: entry '%' does not exist\n", path_segment);
-            return false;   // path segment does not exist. this is error
+            return empty_entry();   // path segment does not exist. this is error
         }
     }
 
     // managed to descend to the very last element of the path, means element found
-    out_entry = e;
-    return true;
-}
-
-/**
- * @brief   Read a maximum of "count" bytes, starting from file.position, into data buffer
- * @param   file  File entry to read from
- * @param   data  Buffer that has at least "count" capacity
- * @param   count Number of bytes to read
- * @return  Number of bytes actually read
- */
-u32 VolumeFat32::read_file_entry(Fat32Entry& file, void* data, u32 count) const {
-    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
-        klog.format("VolumeFat32::read_file_entry: uninitialized file entry to read specified\n");
-        return 0;
-    }
-
-    if (file.is_directory) {
-        klog.format("VolumeFat32::read_file_entry: specified entry is a directory\n");
-        return 0;
-    }
-
-    if (file.position > file.size) {
-        klog.format("VolumeFat32::read_file_entry: tried reading after end of file\n");
-        return 0;
-    }
-
-    return read_file_data(file, data, count);
-}
-
-/**
- * @brief   Read a maximum of "count" bytes, starting from file.position, into data buffer
- * @param   file  File entry to read from
- * @param   data  Buffer that has at least "count" capacity
- * @param   count Number of bytes to read
- * @return  Number of bytes actually read
- */
-u32 VolumeFat32::read_file_data(Fat32Entry& file, void* data, u32 count) const {
-    // 1. setup reading status constants and variables
-    const u32 MAX_BYTES_TO_READ = file.size - file.position;
-    u32 total_bytes_read = 0;
-    u32 remaining_bytes_to_read = min(count, MAX_BYTES_TO_READ);
-    
-    // 2. locate reading start point
-    u32 position = file.position;
-    u32 cluster = file.position_data_cluster;
-    
-    // 3. follow cluster chain and read data from sectors until requested number of bytes is read
-    u8* dst = (u8*)data;
-    while (fat_table.is_allocated_cluster(cluster)) {
-        // read the cluster until end of cluster or requested number of bytes is read
-        u32 count = fat_data.read_data_cluster(position, cluster, dst, remaining_bytes_to_read);
-        remaining_bytes_to_read -= count;
-        total_bytes_read += count;
-        dst += count;
-
-        // move on to the next cluster if needed
-        if (is_cluster_beginning(file.position + total_bytes_read)) {
-            position = 0;
-            cluster = fat_table.get_next_cluster(cluster);
-        }
-
-        // stop reading if requested number of bytes is read
-        if (remaining_bytes_to_read == 0)
-            break;
-    }
-    
-    // 4. done; update file position
-    file.position += total_bytes_read;
-    file.position_data_cluster = cluster;
-    return total_bytes_read;
+    return e;
 }
 
 /**
@@ -247,7 +178,7 @@ u32 VolumeFat32::get_cluster_for_write(Fat32Entry& file) const {
     if (is_file_empty(file)) {                          // file has no data clusters yet - alloc and assign as first data cluster
         cluster = fat_table.alloc_cluster();
         file.data_cluster = cluster;
-    } else if (is_cluster_beginning(file.position)) {   // position points to beginning of new cluster - alloc this new cluster
+    } else if (fat_data.is_cluster_beginning(file.position)) {   // position points to beginning of new cluster - alloc this new cluster
         u32 last_cluster = fat_table.get_last_cluster(file.data_cluster);
         cluster = attach_next_cluster(last_cluster);
     } else {                                            // just use the current cluster as it has space in it
@@ -257,12 +188,8 @@ u32 VolumeFat32::get_cluster_for_write(Fat32Entry& file) const {
     return cluster;
 }
 
-/**
- * @brief   Check if we are at the beginning of a cluster
- */
-bool VolumeFat32::is_cluster_beginning(u32 position) const {
-    const u16 CLUSTER_SIZE_IN_BYTES = vbr.sectors_per_cluster * vbr.bytes_per_sector;
-    return (position % CLUSTER_SIZE_IN_BYTES) == 0;
+Fat32Entry VolumeFat32::empty_entry() const {
+    return Fat32Entry(fat_table, fat_data);
 }
 
 /**
@@ -386,40 +313,37 @@ EnumerateResult VolumeFat32::enumerate_directory_entry(const Fat32Entry& dentry,
  * @brief   Create new file/directory for given unix path
  * @return  True if entry created successfuly, False otherwise
  */
-bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) const {
-    Fat32Entry tmp;
-    return create_entry(unix_path, directory, tmp);
-}
-
-bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, Fat32Entry& out) const {
+Fat32Entry VolumeFat32::create_entry(const kstd::string& unix_path, bool directory) const {
     if (unix_path.empty() || unix_path == "/")
-        return false;
+        return empty_entry();
 
     // check if parent_dir exists
-    Fat32Entry parent_dir;
-    if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
+    auto parent_dir = get_entry(extract_file_directory(unix_path));
+    if (!parent_dir) {
         klog.format("VolumeFat32::create_entry: Parent not exists: %\n", extract_file_directory(unix_path));
-        return false;
+        return empty_entry();
     }
 
     // check if entry already exists
     string name = extract_file_name(unix_path);
     if (name.empty()) {
         klog.format("VolumeFat32::create_entry: Please specify name for entry to create: %\n", unix_path);
-        return false;
+        return empty_entry();
     }
 
     string name_8_3 = Fat32Utils::make_8_3_filename(name);
-    Fat32Entry tmp;
-    if (get_entry_for_name(parent_dir, name_8_3, tmp)) {
+    Fat32Entry tmp = get_entry_for_name(parent_dir, name_8_3);
+    if (tmp) {
         klog.format("VolumeFat32::create_entry: Entry already exists: %(%)\n", name_8_3, unix_path);
-        return false;   // entry exists
+        return Optional<Fat32Entry>(empty_entry());  // entry exists
     }
 
     // allocate entry in parent_dir
+    auto out = empty_entry();
     out.name = name;
     out.is_directory = directory;
-    return alloc_entry_in_directory(parent_dir, out);
+    alloc_entry_in_directory(parent_dir, out);
+    return out;
 }
 
 /**
@@ -430,20 +354,20 @@ bool VolumeFat32::create_entry(const kstd::string& unix_path, bool directory, Fa
  *          -path does not exist
  *          -path points to a dir that is not empty
  */
-bool VolumeFat32::delete_entry(const string& unix_path) const {
+bool VolumeFat32::delete_entry(const string& unix_path) const{
     if (unix_path.empty() || unix_path == "/")
         return false;
 
     // get entry parent dir to be updated
-    Fat32Entry parent_dir;
-    if (!get_entry(extract_file_directory(unix_path), parent_dir)) {
+    auto parent_dir = get_entry(extract_file_directory(unix_path));
+    if (!parent_dir) {
         klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
     }
 
     // get entry to be deleted
-    Fat32Entry e;
-    if (!get_entry_for_name(parent_dir, extract_file_name(unix_path), e)) {
+    Fat32Entry e = get_entry_for_name(parent_dir, extract_file_name(unix_path));
+    if (!e) {
         klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
     }
@@ -480,21 +404,22 @@ bool VolumeFat32::delete_entry(const string& unix_path) const {
  */
 bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const {
     // get source entry
-    Fat32Entry src;
-    if (!get_entry(unix_path_from, src)) {
+    auto src = get_entry(unix_path_from);
+    if (!src) {
         klog.format("VolumeFat32::move_entry: src entry doesn't exists '%'\n", unix_path_from);
         return false;
     }
 
     // if destination directory specified instead of full path - keep source name
-    Fat32Entry dst;
     string path_to = unix_path_to;
-    if (get_entry(unix_path_to, dst))
-        if (dst.is_directory)
+    auto tmp = get_entry(unix_path_to);
+    if (tmp)
+        if (tmp.is_directory)
             path_to += string("/") + extract_file_name(unix_path_from);
 
     // create destination entry
-    if (!create_entry(path_to, src.is_directory, dst)) {
+    auto dst = create_entry(path_to, src.is_directory);
+    if (!dst) {
         klog.format("VolumeFat32::move_entry: can't create dst entry '%'\n", path_to);
         return false;
     }
@@ -520,7 +445,7 @@ bool VolumeFat32::move_entry(const kstd::string& unix_path_from, const kstd::str
  * @brief   Return root directory entry; this is the entry point to entire volume dir tree
  */
 Fat32Entry VolumeFat32::get_root_dentry() const {
-    return Fat32Entry("/", 0, true, vbr.root_cluster, Fat32Table::CLUSTER_END_OF_CHAIN, 0, 0);
+    return Fat32Entry(fat_table, fat_data, "/", 0, true, vbr.root_cluster, Fat32Table::CLUSTER_END_OF_CHAIN, 0, 0);
 }
 
 /**
@@ -528,16 +453,18 @@ Fat32Entry VolumeFat32::get_root_dentry() const {
  * @param   Filename Entry name. Case sensitive
  * @return  True if entry found, False otherwise
  */
-bool VolumeFat32::get_entry_for_name(const Fat32Entry& parent_dir, const string& filename, Fat32Entry& out_entry) const {
-    auto on_entry = [&filename, &out_entry](const Fat32Entry& e) -> bool {
+Fat32Entry VolumeFat32::get_entry_for_name(const Fat32Entry& parent_dir, const string& filename) const {
+    Fat32Entry result = empty_entry();
+    auto on_entry = [&](const Fat32Entry& e) -> bool {
         if (e.name == filename) {
-            out_entry = e;
+            result = e;
             return false;   // entry found. stop enumeration
-        } else
+        }
+        else
             return true;    // continue searching for entry
     };
-
-    return enumerate_directory_entry(parent_dir, on_entry) == EnumerateResult::ENUMERATION_STOPPED; // enumeration stopped means entry found
+    enumerate_directory_entry(parent_dir, on_entry);
+    return result;
 }
 
 /**
@@ -617,7 +544,7 @@ EnumerateResult VolumeFat32::enumerate_directory_cluster(u32 cluster, const OnEn
             if ((e.attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME)
                 continue;   // extension for 8.3 filename
 
-            Fat32Entry se = Fat32Entry::make_simple_dentry(e, cluster, sector_offset, i);
+            Fat32Entry se = Fat32Entry::make_simple_dentry(fat_table, fat_data, e, cluster, sector_offset, i);
             if (!on_entry(se))
                 return EnumerateResult::ENUMERATION_STOPPED;
         }
@@ -790,7 +717,7 @@ void VolumeFat32::mark_next_entry_as_nomore(const Fat32Entry& e) const {
     if ((e.entry_sector == vbr.sectors_per_cluster - 1) && (e.entry_index == FAT32ENTRIES_PER_SECTOR - 1))
         return;
 
-    Fat32Entry no_more;
+    Fat32Entry no_more = empty_entry();
     no_more.entry_cluster = e.entry_cluster;
     no_more.entry_sector = (e.entry_index < 15) ? e.entry_sector : e.entry_sector + 1;
     no_more.entry_index = (e.entry_index < 15) ? e.entry_index + 1 : 0;

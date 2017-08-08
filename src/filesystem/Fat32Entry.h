@@ -9,7 +9,10 @@
 #define SRC_FILESYSTEM_FAT32ENTRY_H_
 
 #include "kstd.h"
+#include "KernelLog.h"
 #include "Fat32Structs.h"
+#include "Fat32Table.h"
+#include "Fat32Data.h"
 
 namespace filesystem {
 
@@ -19,10 +22,13 @@ namespace filesystem {
  */
 class Fat32Entry {
 public:
-    Fat32Entry();
-    Fat32Entry(const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 entry_cluster,  u16 entry_sector, u8 entry_index_no);
-    static Fat32Entry make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index);
+    static Fat32Entry make_simple_dentry(const Fat32Table& fat_table, const Fat32Data& fat_data, const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index);
     static DirectoryEntryFat32 make_directory_entry_fat32(const Fat32Entry& e);
+    Fat32Entry(const Fat32Entry& other) = default;
+    Fat32Entry& operator=(const Fat32Entry& other);
+    u32 read(void* data, u32 count);
+    operator bool() const;
+    bool operator!() const;
 
     // useful data
     kstd::string    name;
@@ -36,6 +42,16 @@ public:
     u32             entry_cluster;
     u16             entry_sector;
     u8              entry_index;
+
+    const Fat32Table&     fat_table;
+    const Fat32Data&      fat_data;
+
+private:
+    friend class VolumeFat32;
+    Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data);
+    Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 entry_cluster, u16 entry_sector, u8 entry_index_no);
+
+    utils::KernelLog& klog;
 };
 
 } /* namespace filesystem */

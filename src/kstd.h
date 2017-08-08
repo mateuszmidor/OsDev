@@ -34,7 +34,8 @@ public:
     Optional() : valid(false) {}
     virtual ~Optional() {};
     bool is_valid() { return valid; }
-
+    operator bool() { return valid; }
+    bool operator !() { return !valid; }
 private:
     bool valid;
 };

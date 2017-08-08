@@ -139,4 +139,11 @@ void Fat32Data::clear_data_cluster(u32 cluster) const {
         write_data_sector(cluster, sector_offset, zeroes, sizeof(zeroes));
 }
 
+/**
+ * @brief   Check if we are at the beginning of a cluster
+ */
+bool Fat32Data::is_cluster_beginning(u32 position) const {
+    const u16 CLUSTER_SIZE_IN_BYTES = sectors_per_cluster * bytes_per_sector;
+    return (position % CLUSTER_SIZE_IN_BYTES) == 0;
+}
 } /* namespace filesystem */

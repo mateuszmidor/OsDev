@@ -9,37 +9,17 @@
 #include "Fat32Utils.h"
 
 using namespace kstd;
+using namespace utils;
 namespace filesystem {
 
-Fat32Entry::Fat32Entry() :
-        Fat32Entry("", 0, false, 0, 0, 0, 0) {
-}
-
-Fat32Entry::Fat32Entry(const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 entry_cluster, u16 entry_sector, u8 entry_index_no) :
-    name(name),
-    size(size),
-    is_directory(is_directory),
-    data_cluster(data_cluster),
-    entry_cluster(entry_cluster),
-    entry_sector(entry_sector),
-    entry_index(entry_index_no),
-    position(0),
-    position_data_cluster(data_cluster) {
-}
-
-Fat32Entry Fat32Entry::make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) {
+Fat32Entry Fat32Entry::make_simple_dentry(const Fat32Table& fat_table, const Fat32Data& fat_data, const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) {
     string name = rtrim(dentry.name, sizeof(dentry.name));
     string ext = rtrim(dentry.ext, sizeof(dentry.ext));
 
-    return Fat32Entry(
-                ext.empty() ? name : name + "." + ext,
-                dentry.size,
-                (dentry.attributes & DirectoryEntryFat32Attrib::DIRECTORY) == DirectoryEntryFat32Attrib::DIRECTORY,
-                dentry.first_cluster_hi << 16 | dentry.first_cluster_lo,
-                entry_cluster,
-                entry_sector,
-                entry_index
-            );
+    return Fat32Entry(fat_table, fat_data,
+            ext.empty() ? name : name + "." + ext, dentry.size,
+            (dentry.attributes & DirectoryEntryFat32Attrib::DIRECTORY) == DirectoryEntryFat32Attrib::DIRECTORY,
+            dentry.first_cluster_hi << 16 | dentry.first_cluster_lo, entry_cluster, entry_sector, entry_index);
 
 }
 
@@ -64,4 +44,90 @@ DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32(const Fat32Entry& e) 
 
     return result;
 }
+
+Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data) :
+        Fat32Entry(fat_table, fat_data, "", 0, false, 0, 0, 0, 0) {
+}
+
+Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 entry_cluster,
+        u16 entry_sector, u8 entry_index_no) :
+        fat_table(fat_table),
+        fat_data(fat_data),
+        name(name),
+        size(size),
+        is_directory(is_directory),
+        data_cluster(data_cluster),
+        entry_cluster(entry_cluster),
+        entry_sector(entry_sector),
+        entry_index(entry_index_no),
+        position(0),
+        position_data_cluster(data_cluster),
+        klog(KernelLog::instance()) {
+}
+
+Fat32Entry& Fat32Entry::operator=(const Fat32Entry& other) {
+    new (this) Fat32Entry(other);
+    return *this;
+}
+
+/**
+ * @brief   Read a maximum of "count" bytes, starting from file.position, into data buffer
+ * @param   data  Buffer that has at least "count" capacity
+ * @param   count Number of bytes to read
+ * @return  Number of bytes actually read
+ */
+u32 Fat32Entry::read(void* data, u32 count) {
+    if (is_directory) {
+        klog.format("Fat32Entry::read: entry is a directory\n");
+        return 0;
+    }
+
+    if (position > size) {
+        klog.format("Fat32Entry::read: tried reading after end of file\n");
+        return 0;
+    }
+
+    // 1. setup reading status constants and variables
+    const u32 MAX_BYTES_TO_READ = size - position;
+    u32 total_bytes_read = 0;
+    u32 remaining_bytes_to_read = min(count, MAX_BYTES_TO_READ);
+
+    // 2. locate reading start point
+    u32 position_in_cluster = position; // modulo CLUSTER_SIZE_IN_BYTES but this is done in fat_data.read_data_cluster anyway
+    u32 cluster = position_data_cluster;
+
+    // 3. follow cluster chain and read data from sectors until requested number of bytes is read
+    u8* dst = (u8*) data;
+    while (fat_table.is_allocated_cluster(cluster)) {
+        // read the cluster until end of cluster or requested number of bytes is read
+        u32 count = fat_data.read_data_cluster(position_in_cluster, cluster, dst, remaining_bytes_to_read);
+        remaining_bytes_to_read -= count;
+        total_bytes_read += count;
+        dst += count;
+
+        // move on to the next cluster if needed
+        if (fat_data.is_cluster_beginning(position + total_bytes_read)) {
+            position_in_cluster = 0;
+            cluster = fat_table.get_next_cluster(cluster);
+        }
+
+        // stop reading if requested number of bytes is read
+        if (remaining_bytes_to_read == 0)
+            break;
+    }
+
+    // 4. done; update file position
+    position += total_bytes_read;
+    position_data_cluster = cluster;
+    return total_bytes_read;
+}
+
+Fat32Entry::operator bool() const {
+    return !name.empty();
+}
+
+bool Fat32Entry::operator!() const {
+    return name.empty();
+}
+
 } /* namespace filesystem */

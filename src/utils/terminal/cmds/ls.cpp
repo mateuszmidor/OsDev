@@ -32,8 +32,8 @@ void ls::run() {
         path = env->cwd;
 
     VolumeFat32* v = env->volume;
-    Fat32Entry e;
-    if (!v->get_entry(path, e)) {
+    auto e = v->get_entry(path);
+    if (!e) {
         env->printer->format("ls: path '%' does not exist\n", path);
         return;
     }

@@ -178,20 +178,18 @@ public:
     u32 get_used_space_in_bytes() const;
     u32 get_used_space_in_clusters() const;
 
-    bool get_entry(const kstd::string& unix_path, Fat32Entry& e) const;
-    u32 read_file_entry(Fat32Entry& file, void* data, u32 count) const;
+    Fat32Entry get_entry(const kstd::string& unix_path) const;
     u32 write_file_entry(Fat32Entry& file, void const * data, u32 count) const;
     void seek_file_entry(Fat32Entry& file, u32 position) const;
     void trunc_file_entry(Fat32Entry& file, u32 new_size) const;
     EnumerateResult enumerate_directory_entry(const Fat32Entry& dentry, const OnEntryFound& on_entry_found) const;
-    bool create_entry(const kstd::string& unix_path, bool directory) const;
-    bool create_entry(const kstd::string& unix_path, bool directory, Fat32Entry& out) const;
+    Fat32Entry create_entry(const kstd::string& unix_path, bool directory) const;
     bool delete_entry(const kstd::string& unix_path) const;
     bool move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const;
 
 private:
     Fat32Entry get_root_dentry() const;
-    bool get_entry_for_name(const Fat32Entry& parent_dir, const kstd::string& filename, Fat32Entry& out) const;
+    Fat32Entry get_entry_for_name(const Fat32Entry& parent_dir, const kstd::string& filename) const;
     bool alloc_first_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const;
     bool alloc_last_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const;
     bool try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir, Fat32Entry &e) const;
@@ -204,10 +202,10 @@ private:
     u32 alloc_first_file_cluster(Fat32Entry& file) const;
     u32 attach_next_cluster(u32 cluster) const;
 
-    u32 read_file_data(Fat32Entry& file, void* data, u32 count) const;
     u32 write_file_data(Fat32Entry& file, const void* data, u32 count) const;
     u32 get_cluster_for_write(Fat32Entry& file) const;
-    bool is_cluster_beginning(u32 next_read_position) const;
+
+    Fat32Entry empty_entry() const;
 
     drivers::AtaDevice& hdd;
     VolumeBootRecordFat32 vbr;

@@ -25,8 +25,8 @@ void cat::run() {
 
     string filename = env->cwd + "/" + env->cmd_args[1];
     VolumeFat32* v = env->volume;
-    Fat32Entry e;
-    if (!v->get_entry(filename, e)) {
+    auto e = v->get_entry(filename);
+    if (!e) {
         env->printer->format("cat: file % doesnt exist\n", filename);
         return;
     }
@@ -39,7 +39,7 @@ void cat::run() {
     const u32 SIZE = 1025;
     static char buff[SIZE]; // static to make sure recursive calls dont exhaust task stack
     u32 count;
-    while ((count = v->read_file_entry(e, buff, SIZE-1)) > 0) {
+    while ((count = e.read(buff, SIZE-1)) > 0) {
         buff[count] = '\0';
         env->printer->format("%", buff);
     }

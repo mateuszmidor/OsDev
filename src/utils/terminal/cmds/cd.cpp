@@ -97,8 +97,8 @@ void cd::split_volume_path(const string& location, string& volume, string& path)
 void cd::cd_directory(const string& path) {
     string absolute_path = format("%/%", env->cwd, path);
     string normalized_absolute_path = format("/%", normalize_path(absolute_path)); // absolute path must start with "/"
-    Fat32Entry e;
-    if (!env->volume->get_entry(normalized_absolute_path, e)) {
+    auto e = env->volume->get_entry(normalized_absolute_path);
+    if (!e) {
         env->printer->format("cd: directory '%' doesnt exist\n", normalized_absolute_path);
         return;
     }

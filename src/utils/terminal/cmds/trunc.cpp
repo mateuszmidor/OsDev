@@ -25,8 +25,8 @@ void trunc::run() {
     string filename = env->cwd + "/" + env->cmd_args[1];
     u32 new_size = kstd::str_to_long(env->cmd_args[2].c_str());
     VolumeFat32* v = env->volume;
-    Fat32Entry e;
-    if (!v->get_entry(filename, e)) {
+    auto e = v->get_entry(filename);
+    if (!e) {
         env->printer->format("trunc: file % doesnt exist\n", filename);
         return;
     }

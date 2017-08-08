@@ -28,6 +28,7 @@ public:
     bool write_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void const* data, u32 size) const;
     u32 write_data_cluster(u32 position, u32 cluster, const u8* data, u32 count) const;
     void clear_data_cluster(u32 cluster) const;
+    bool is_cluster_beginning(u32 position) const;
 
 private:
     drivers::AtaDevice& hdd;

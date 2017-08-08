@@ -51,8 +51,8 @@ void Fat32Demo::print_volume_info(VolumeFat32& v) {
 }
 
 void Fat32Demo::print_file(VolumeFat32& v, string filename) {
-    Fat32Entry file;
-    if (!v.get_entry(filename, file)) {
+    Fat32Entry file = v.get_entry(filename);
+    if (!file) {
         klog.format("File % not found\n", filename);
         return;
     }
@@ -64,7 +64,7 @@ void Fat32Demo::print_file(VolumeFat32& v, string filename) {
 
     const u32 SIZE = 513;
     char buff[SIZE];
-    u32 count = v.read_file_entry(file, buff, SIZE-1);
+    u32 count = file.read(buff, SIZE-1);
     buff[count] = '\0';
     klog.format("%:\n", filename);
     klog.format("%\n", buff);
@@ -95,8 +95,7 @@ void Fat32Demo::traverse_tree(VolumeFat32& v, const Fat32Entry& entry, u8 level,
 }
 
 void Fat32Demo::print_tree(VolumeFat32& v, string path) {
-    Fat32Entry directory;
-    v.get_entry(path, directory);
+    Fat32Entry directory = v.get_entry(path);
 
     auto on_entry = [&](Fat32Entry& e, u8 level) -> bool {
          if (e.name == "." || e.name == "..")
@@ -111,7 +110,7 @@ void Fat32Demo::print_tree(VolumeFat32& v, string path) {
              {
                  const u32 SIZE = 1024 * 6;
                  static char buff[SIZE]; // static to make sure recursive calls dont exhaust task stack
-                 u32 count = v.read_file_entry(e, buff, SIZE-1);
+                 u32 count = e.read(buff, SIZE-1);
                  buff[count-1] = '\0';
                  klog.format("%% - %B, %\n", INDENTS[level], e.name, e.size, buff);
              }
@@ -187,8 +186,7 @@ void Fat32Demo::print_hdd_info(AtaDevice& hdd) {
 
 
         v.create_entry("/NUMBERS.TXT", false);
-        Fat32Entry oda;
-        v.get_entry("/NUMBERS.TXT", oda);
+        auto oda = v.get_entry("/NUMBERS.TXT");
         string ODA_TEXT;
         for (u32 i = 0; i < 1024; i++)
             ODA_TEXT += kstd::to_str(1000 + i) + " ";
