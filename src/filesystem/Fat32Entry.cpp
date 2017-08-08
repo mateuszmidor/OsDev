@@ -122,6 +122,75 @@ u32 Fat32Entry::read(void* data, u32 count) {
     return total_bytes_read;
 }
 
+/**
+ * @brief   Write "count" bytes into the file, starting from file.position, enlarging the file size if needed
+ * @param   data Data to be written
+ * @param   count Number of bytes to be written
+ * @return  Number of bytes actually written
+ */
+//u32 Fat32Entry::write(const void* data, u32 count) {
+//    // 1. setup writing status variables
+//    u32 total_bytes_written = 0;
+//    u32 remaining_bytes_to_write = count;
+//
+//    // 2. locate writing start point
+//    u32 position_in_cluster = position;
+//    u32 cluster = get_cluster_for_write(file);
+//
+//    // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
+//    const u8* src = (const u8*)data;
+//    while (fat_table.is_allocated_cluster(cluster)) {
+//        // write the cluster until end of cluster or requested number of bytes is written
+//        u32 count = fat_data.write_data_cluster(position_in_cluster, cluster, src, remaining_bytes_to_write);
+//        remaining_bytes_to_write -= count;
+//        total_bytes_written += count;
+//
+//        // stop writing if requested number of bytes is written
+//        if (remaining_bytes_to_write == 0)
+//            break;
+//
+//        // move on to the next cluster
+//        src += count;
+//        position_in_cluster = 0;
+//        cluster = attach_next_cluster(cluster);
+//    }
+//
+//    // 4. done; update file position and size if needed
+//    position += total_bytes_written;
+//    position_data_cluster = cluster;
+//
+//    if (size < position) {
+//        size = position;
+//        write_entry(file);
+//    }
+//
+//    return total_bytes_written;
+//}
+
+/**
+ * @brief   Move file current position to given "position" if possible
+ */
+void Fat32Entry::seek(u32 new_position) {
+    if (entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+        klog.format("Fat32Entry::seek: uninitialized entry\n");
+        return;
+    }
+
+    if (is_directory){
+        klog.format("Fat32Entry::seek: entry is a directory\n");
+        return;
+    }
+
+    if (new_position > size) {
+        klog.format("Fat32Entry::seek: new_position > size (% > %)\n", new_position, size);
+        return;
+    }
+
+    position_data_cluster = fat_table.find_cluster_for_byte(data_cluster, new_position);
+    position = new_position;
+}
+
+
 Fat32Entry::operator bool() const {
     return !name.empty();
 }

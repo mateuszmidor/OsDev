@@ -192,29 +192,6 @@ Fat32Entry VolumeFat32::empty_entry() const {
     return Fat32Entry(fat_table, fat_data);
 }
 
-/**
- * @brief   Move file current position to given "position" if possible
- */
-void VolumeFat32::seek_file_entry(Fat32Entry& file, u32 position) const {
-    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
-        klog.format("VolumeFat32::seek_file_entry: uninitialized entry specified\n");
-        return;
-    }
-
-    if (file.is_directory){
-        klog.format("VolumeFat32::seek_file_entry: specified entry is a directory\n");
-        return;
-    }
-
-    if (position > file.size) {
-        klog.format("VolumeFat32::seek_file_entry: position > size (% > %)\n", position, file.size);
-        return;
-    }
-
-    file.position_data_cluster = fat_table.find_cluster_for_byte(file.data_cluster, position);
-    file.position = position;
-}
-
 void VolumeFat32::trunc_file_entry(Fat32Entry& file, u32 new_size) const {
     if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
         klog.format("VolumeFat32::trunc_file_entry: uninitialized entry specified\n");
@@ -237,7 +214,7 @@ void VolumeFat32::trunc_file_entry(Fat32Entry& file, u32 new_size) const {
          klog.format("extending file from % to %\n", file.size, new_size);
          // move to the old file end
          u32 old_position = file.position;
-         seek_file_entry(file, file.size);
+         file.seek(file.size);
          klog.format("seek to byte %, cluster %\n", file.size, file.position_data_cluster);
          // calc number of zeroes needed
          u32 remaining_zeroes = new_size - file.size;
@@ -254,7 +231,7 @@ void VolumeFat32::trunc_file_entry(Fat32Entry& file, u32 new_size) const {
              write_file_entry(file, zeroes, count);
              remaining_zeroes -= count;
          }
-         seek_file_entry(file, old_position);
+         file.seek(old_position);
          // file.size already updated by write_file_entry
          // dont change file position
     } else

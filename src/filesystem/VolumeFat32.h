@@ -180,7 +180,6 @@ public:
 
     Fat32Entry get_entry(const kstd::string& unix_path) const;
     u32 write_file_entry(Fat32Entry& file, void const * data, u32 count) const;
-    void seek_file_entry(Fat32Entry& file, u32 position) const;
     void trunc_file_entry(Fat32Entry& file, u32 new_size) const;
     EnumerateResult enumerate_directory_entry(const Fat32Entry& dentry, const OnEntryFound& on_entry_found) const;
     Fat32Entry create_entry(const kstd::string& unix_path, bool directory) const;

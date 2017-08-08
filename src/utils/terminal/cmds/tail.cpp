@@ -38,7 +38,7 @@ void tail::run() {
 
     const u32 MAX_CHARS = 90;
     u32 position = e.size > MAX_CHARS ? e.size - MAX_CHARS : 0;
-    v->seek_file_entry(e, position);
+    e.seek(position);
     const u32 BUFF_SIZE = 1025;
     static char buff[BUFF_SIZE]; // static to make sure recursive calls dont exhaust task stack
     u32 count;

@@ -27,6 +27,8 @@ public:
     Fat32Entry(const Fat32Entry& other) = default;
     Fat32Entry& operator=(const Fat32Entry& other);
     u32 read(void* data, u32 count);
+//    u32 write(const void* data, u32 count);
+    void seek(u32 new_position);
     operator bool() const;
     bool operator!() const;
 
