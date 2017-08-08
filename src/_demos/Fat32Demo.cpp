@@ -91,7 +91,7 @@ void Fat32Demo::traverse_tree(VolumeFat32& v, const Fat32Entry& entry, u8 level,
         return true;
     };
 
-    v.enumerate_directory_entry(entry, on_entry);
+    entry.enumerate_entries(on_entry);
 }
 
 void Fat32Demo::print_tree(VolumeFat32& v, string path) {

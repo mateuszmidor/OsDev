@@ -149,7 +149,6 @@ WRITE FILE ENTRY
 #ifndef SRC_FILESYSTEM_VOLUMEFAT32_H_
 #define SRC_FILESYSTEM_VOLUMEFAT32_H_
 
-#include <functional>
 #include "KernelLog.h"
 #include "Fat32Table.h"
 #include "Fat32Data.h"
@@ -158,12 +157,6 @@ WRITE FILE ENTRY
 #include "AtaDriver.h"
 
 namespace filesystem {
-
-// directory enumeration result
-enum class EnumerateResult { ENUMERATION_FINISHED, ENUMERATION_STOPPED, ENUMERATION_CONTINUE };
-
-// action to take on entry enumeration. Return true to continue directory contents enumeration
-using OnEntryFound = std::function<bool(Fat32Entry& e)>;
 
 /**
  * @name    VolumeFat32
@@ -179,7 +172,6 @@ public:
     u32 get_used_space_in_clusters() const;
 
     Fat32Entry get_entry(const kstd::string& unix_path) const;
-    EnumerateResult enumerate_directory_entry(const Fat32Entry& dentry, const OnEntryFound& on_entry_found) const;
     Fat32Entry create_entry(const kstd::string& unix_path, bool directory) const;
     bool delete_entry(const kstd::string& unix_path) const;
     bool move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const;
@@ -193,10 +185,8 @@ private:
     u32 attach_new_directory_cluster(Fat32Entry& parent_dir) const;
     void detach_directory_cluster(const Fat32Entry& dentry, u32 cluster) const;
     bool alloc_entry_in_directory(Fat32Entry& parent_dir, Fat32Entry &e) const;
-    bool is_file_empty(const Fat32Entry& e) const;
     bool is_directory_empty(const Fat32Entry& e) const;
     bool is_no_more_entires_after(const Fat32Entry& parent_dir, const Fat32Entry& entry) const;
-    u32 alloc_first_file_cluster(Fat32Entry& file) const;
     Fat32Entry empty_entry() const;
 
     drivers::AtaDevice& hdd;
@@ -209,22 +199,12 @@ private:
     u32 partition_offset_in_sectors;
     u32 partition_size_in_sectors;
 
-    u32 fat_start;
-    u32 data_start;
-
-    EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
     u8 get_free_entry_in_dir_cluster(u32 cluster, Fat32Entry& out) const;
-    void write_entry(const Fat32Entry& e) const;
     void mark_entry_as_nomore(const Fat32Entry& e) const;
     void mark_next_entry_as_nomore(const Fat32Entry& e) const;
     void mark_entry_as_unused(const Fat32Entry& e) const;
     void set_entry_data_cluster(const Fat32Entry& e, u32 first_cluster) const;
-    bool is_directory_cluster_empty(u32 cluster) const;
-
-    static constexpr u8 FAT32ENTRIES_PER_SECTOR = 16; // BYTES_PER_SECTOR / sizeof(DirectoryEntryFat32);
-    static const u8 DIR_ENTRY_NO_MORE   = 0x00;   // First byte of dir entry == 0 means there is no more entries in this dir
-    static const u8 DIR_ENTRY_UNUSED    = 0xE5;   // Unused entry means the file was deleted
-    static const u8 DIR_ENTRY_NOT_FOUND = 0xFF;   // No dir entry found
+    bool is_directory_cluster_empty(const Fat32Entry& directory, u32 cluster) const;
 };
 
 } /* namespace filesystem */

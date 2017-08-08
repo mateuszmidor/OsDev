@@ -39,7 +39,7 @@ void ls::run() {
     }
 
     if (e.is_directory)
-        v->enumerate_directory_entry(e, on_entry);
+        e.enumerate_entries(on_entry);
     else
         env->printer->format("% - %B\n", e.name, e.size);
 
