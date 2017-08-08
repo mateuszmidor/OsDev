@@ -32,9 +32,9 @@ void echo::run() {
     for (u32 i = 0; i < 4096; i++) {
         number_str += "#";
     }
-    v->write_file_entry(e, number_str.data(), number_str.length());
+    e.write(number_str.data(), number_str.length());
     number_str = "!!!!!";
-    v->write_file_entry(e, number_str.data(), number_str.length());
+    e.write(number_str.data(), number_str.length());
 
 //   number_str.reserve(256*4+1);    // 1024 chars
 //    for (u32 i = 0; i < 256; i++) {

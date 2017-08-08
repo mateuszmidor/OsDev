@@ -27,7 +27,7 @@ public:
     Fat32Entry(const Fat32Entry& other) = default;
     Fat32Entry& operator=(const Fat32Entry& other);
     u32 read(void* data, u32 count);
-//    u32 write(const void* data, u32 count);
+    u32 write(const void* data, u32 count);
     void seek(u32 new_position);
     operator bool() const;
     bool operator!() const;
@@ -45,15 +45,19 @@ public:
     u16             entry_sector;
     u8              entry_index;
 
-    const Fat32Table&     fat_table;
-    const Fat32Data&      fat_data;
+    const Fat32Table&   fat_table;
+    const Fat32Data&    fat_data;
 
 private:
     friend class VolumeFat32;
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data);
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 entry_cluster, u16 entry_sector, u8 entry_index_no);
+    void write_entry() const;
+    u32 get_cluster_for_write();
+    u32 attach_next_cluster(u32 cluster) const;
+    utils::KernelLog&   klog;
 
-    utils::KernelLog& klog;
+    static constexpr u8 FAT32ENTRIES_PER_SECTOR = 16; // BYTES_PER_SECTOR / sizeof(DirectoryEntryFat32);
 };
 
 } /* namespace filesystem */

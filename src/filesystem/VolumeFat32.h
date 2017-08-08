@@ -179,7 +179,6 @@ public:
     u32 get_used_space_in_clusters() const;
 
     Fat32Entry get_entry(const kstd::string& unix_path) const;
-    u32 write_file_entry(Fat32Entry& file, void const * data, u32 count) const;
     void trunc_file_entry(Fat32Entry& file, u32 new_size) const;
     EnumerateResult enumerate_directory_entry(const Fat32Entry& dentry, const OnEntryFound& on_entry_found) const;
     Fat32Entry create_entry(const kstd::string& unix_path, bool directory) const;
@@ -199,11 +198,6 @@ private:
     bool is_directory_empty(const Fat32Entry& e) const;
     bool is_no_more_entires_after(const Fat32Entry& parent_dir, const Fat32Entry& entry) const;
     u32 alloc_first_file_cluster(Fat32Entry& file) const;
-    u32 attach_next_cluster(u32 cluster) const;
-
-    u32 write_file_data(Fat32Entry& file, const void* data, u32 count) const;
-    u32 get_cluster_for_write(Fat32Entry& file) const;
-
     Fat32Entry empty_entry() const;
 
     drivers::AtaDevice& hdd;

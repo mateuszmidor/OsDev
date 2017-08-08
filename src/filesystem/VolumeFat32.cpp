@@ -97,97 +97,6 @@ Fat32Entry VolumeFat32::get_entry(const string& unix_path) const {
     return e;
 }
 
-/**
- * @brief   Write "count" bytes into the file, starting from file.position, enlarging the file size if needed
- * @param   file File entry to write to
- * @param   data Data to be written
- * @param   count Number of bytes to be written
- * @return  Number of bytes actually written
- */
-u32 VolumeFat32::write_file_entry(Fat32Entry& file, void const* data, u32 count) const {
-    if (file.entry_cluster == Fat32Table::CLUSTER_UNUSED) {
-        klog.format("VolumeFat32::write_file_entry: uninitialized entry to write specified\n");
-        return 0;
-    }
-
-    if (file.is_directory){
-        klog.format("VolumeFat32::write_file_entry: specified entry is a directory\n");
-        return 0;
-    }
-
-    if (file.position + count > 0xFFFFFFFF){
-        klog.format("VolumeFat32::write_file_entry: file entry exceeds Fat32 4GB limit\n");
-        return 0;
-    }
-
-    return write_file_data(file, data, count);;
-}
-
-/**
- * @brief   Write "count" bytes into the file, starting from file.position, enlarging the file size if needed
- * @param   file File entry to write to
- * @param   data Data to be written
- * @param   count Number of bytes to be written
- * @return  Number of bytes actually written
- */
-u32 VolumeFat32::write_file_data(Fat32Entry& file, const void* data, u32 count) const {
-    // 1. setup writing status variables
-    u32 total_bytes_written = 0;
-    u32 remaining_bytes_to_write = count;
-
-    // 2. locate writing start point
-    u32 position = file.position;
-    u32 cluster = get_cluster_for_write(file);
-
-    // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
-    const u8* src = (const u8*)data;
-    while (fat_table.is_allocated_cluster(cluster)) {
-        // write the cluster until end of cluster or requested number of bytes is written
-        u32 count = fat_data.write_data_cluster(position, cluster, src, remaining_bytes_to_write);
-        remaining_bytes_to_write -= count;
-        total_bytes_written += count;
-
-        // stop writing if requested number of bytes is written
-        if (remaining_bytes_to_write == 0)
-            break;
-
-        // move on to the next cluster
-        src += count;
-        position = 0;
-        cluster = attach_next_cluster(cluster);
-    }
-
-    // 4. done; update file position and size if needed
-    file.position += total_bytes_written;
-    file.position_data_cluster = cluster;
-
-    if (file.size < file.position) {
-        file.size = file.position;
-        write_entry(file);
-    }
-
-    return total_bytes_written;
-}
-
-/**
- * @brief   Get proper cluster for data writing depending on file status and file position
- * @return  Cluster for writing data
- */
-u32 VolumeFat32::get_cluster_for_write(Fat32Entry& file) const {
-    u32 cluster;
-    if (is_file_empty(file)) {                          // file has no data clusters yet - alloc and assign as first data cluster
-        cluster = fat_table.alloc_cluster();
-        file.data_cluster = cluster;
-    } else if (fat_data.is_cluster_beginning(file.position)) {   // position points to beginning of new cluster - alloc this new cluster
-        u32 last_cluster = fat_table.get_last_cluster(file.data_cluster);
-        cluster = attach_next_cluster(last_cluster);
-    } else {                                            // just use the current cluster as it has space in it
-        cluster = file.position_data_cluster;
-    }
-
-    return cluster;
-}
-
 Fat32Entry VolumeFat32::empty_entry() const {
     return Fat32Entry(fat_table, fat_data);
 }
@@ -228,7 +137,7 @@ void VolumeFat32::trunc_file_entry(Fat32Entry& file, u32 new_size) const {
          while (remaining_zeroes != 0) {
              u32 count = min(remaining_zeroes, SIZE);
              klog.format("writing % zeroes \n", count);
-             write_file_entry(file, zeroes, count);
+             file.write(zeroes, count);
              remaining_zeroes -= count;
          }
          file.seek(old_position);
@@ -636,17 +545,6 @@ u32 VolumeFat32::alloc_first_file_cluster(Fat32Entry& file) const {
     u32 cluster = fat_table.alloc_cluster();
     file.data_cluster = cluster;
     return cluster;
-}
-
-/**
- * @brief   Alloc new cluster and attach it after "cluster"
- * @return  Allocated cluster
- */
-u32 VolumeFat32::attach_next_cluster(u32 cluster) const {
-    // position points to beginning of new cluster, need to alloc this new cluster
-    u32 next_cluster = fat_table.alloc_cluster();
-    fat_table.set_next_cluster(cluster, next_cluster);
-    return next_cluster;
 }
 
 /**

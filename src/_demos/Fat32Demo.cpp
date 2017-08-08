@@ -190,7 +190,7 @@ void Fat32Demo::print_hdd_info(AtaDevice& hdd) {
         string ODA_TEXT;
         for (u32 i = 0; i < 1024; i++)
             ODA_TEXT += kstd::to_str(1000 + i) + " ";
-        v.write_file_entry(oda, ODA_TEXT.data(), ODA_TEXT.length());
+        oda.write(ODA_TEXT.data(), ODA_TEXT.length());
 //        print_volume_info(v);
 //        print_tree(v, "/");
 //        v.delete_entry("/NUMBERS.TXT");
