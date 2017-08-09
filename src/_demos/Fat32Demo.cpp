@@ -104,15 +104,15 @@ void Fat32Demo::print_tree(VolumeFat32& v, string path) {
          if (e.is_directory) {
              klog.format("%[%]\n", INDENTS[level], e.name);
          } else {
-             if (e.size == 0)
-                 klog.format("%% - %B\n", INDENTS[level], e.name, e.size);
+             if (e.data.get_size() == 0)
+                 klog.format("%% - %B\n", INDENTS[level], e.name, e.data.get_size());
              else
              {
                  const u32 SIZE = 1024 * 6;
                  static char buff[SIZE]; // static to make sure recursive calls dont exhaust task stack
                  u32 count = e.read(buff, SIZE-1);
                  buff[count-1] = '\0';
-                 klog.format("%% - %B, %\n", INDENTS[level], e.name, e.size, buff);
+                 klog.format("%% - %B, %\n", INDENTS[level], e.data.get_size(), e.data.get_size(), buff);
              }
          }
          return true;
@@ -146,21 +146,21 @@ void Fat32Demo::print_hdd_info(AtaDevice& hdd) {
     auto &v = ms.get_volumes()[1];
     //for (auto& v : volumes) {
 //        print_volume_info(v);
-//        for (u16 i = 1; i <= 16; i++) {
-//              string name = string("/FILE_") +kstd::to_str(i);
-//              v.delete_entry(name);
-//        }
+        for (u16 i = 1; i <= 16; i++) {
+              string name = string("/FILE_") +kstd::to_str(i);
+              v.delete_entry(name);
+        }
 
-//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
-//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
-//        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
-//        v.delete_entry("/LEVEL1/LEVEL2");
-//        v.delete_entry("/LEVEL1/LEVEL1.TXT");
-//        v.delete_entry("/LEVEL1");
-//        v.delete_entry("/TMP/TMP1.TXT");
-//        v.delete_entry("/TMP/TMP2.TXT");
-//        v.delete_entry("/TMP");
-//        v.delete_entry("/TO_BE_~1");
+        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
+        v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
+        v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
+        v.delete_entry("/LEVEL1/LEVEL2");
+        v.delete_entry("/LEVEL1/LEVEL1.TXT");
+        v.delete_entry("/LEVEL1");
+        v.delete_entry("/TMP/TMP1.TXT");
+        v.delete_entry("/TMP/TMP2.TXT");
+        v.delete_entry("/TMP");
+        v.move_entry("/TO_BE_~1", "/HAM");
 //        print_volume_info(v);
 
 
@@ -185,12 +185,12 @@ void Fat32Demo::print_hdd_info(AtaDevice& hdd) {
 //        }
 
 
-        v.create_entry("/NUMBERS.TXT", false);
-        auto oda = v.get_entry("/NUMBERS.TXT");
-        string ODA_TEXT;
-        for (u32 i = 0; i < 1024; i++)
-            ODA_TEXT += kstd::to_str(1000 + i) + " ";
-        oda.write(ODA_TEXT.data(), ODA_TEXT.length());
+//        v.create_entry("/NUMBERS.TXT", false);
+//        auto oda = v.get_entry("/NUMBERS.TXT");
+//        string ODA_TEXT;
+//        for (u32 i = 0; i < 1024; i++)
+//            ODA_TEXT += kstd::to_str(1000 + i) + " ";
+//        oda.write(ODA_TEXT.data(), ODA_TEXT.length());
 //        print_volume_info(v);
 //        print_tree(v, "/");
 //        v.delete_entry("/NUMBERS.TXT");

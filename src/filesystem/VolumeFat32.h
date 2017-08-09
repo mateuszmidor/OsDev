@@ -183,7 +183,7 @@ private:
     bool alloc_last_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const;
     bool try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir, Fat32Entry &e) const;
     u32 attach_new_directory_cluster(Fat32Entry& parent_dir) const;
-    void detach_directory_cluster(const Fat32Entry& dentry, u32 cluster) const;
+    void detach_directory_cluster(Fat32Entry& dentry, u32 cluster) const;
     bool alloc_entry_in_directory(Fat32Entry& parent_dir, Fat32Entry &e) const;
     bool is_directory_empty(const Fat32Entry& e) const;
     bool is_no_more_entires_after(const Fat32Entry& parent_dir, const Fat32Entry& entry) const;

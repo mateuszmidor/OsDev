@@ -175,6 +175,10 @@ bool Fat32Table::write_fat_table_sector(u32 sector, void const* data, u32 size) 
     return hdd.write28(fat_start_in_sectors + sector, data, size);
 }
 
+/**
+ * @brief   Allocate single cluster and set it in Fat table as CLUSTER_END_OF_CHAIN
+ * @return  Newly allocated cluster if success, Fat32Table::CLUSTER_END_OF_CHAIN otherwise
+ */
 u32 Fat32Table::alloc_cluster() const {
     FatTableEntry table[fat_entries_per_sector];
 

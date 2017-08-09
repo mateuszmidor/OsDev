@@ -29,10 +29,10 @@ DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32(const Fat32Entry& e) 
     result.c_time = 0;
     result.c_time_tenth = 0;
     result.attributes = e.is_directory ? DirectoryEntryFat32Attrib::DIRECTORY : 0;
-    result.first_cluster_hi = e.data_cluster >> 16;
-    result.first_cluster_lo = e.data_cluster & 0xFFFF;
+    result.first_cluster_hi = e.data.get_head() >> 16;
+    result.first_cluster_lo = e.data.get_head() & 0xFFFF;
     result.reserved = 0;
-    result.size = e.size;
+    result.size = e.data.get_size();
 
     return result;
 }
@@ -46,14 +46,11 @@ Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, c
         fat_table(fat_table),
         fat_data(fat_data),
         name(name),
-        size(size),
         is_directory(is_directory),
-        data_cluster(data_cluster),
+        data(fat_table, fat_data, data_cluster, size),
         entry_cluster(entry_cluster),
         entry_sector(entry_sector),
         entry_index(entry_index_no),
-        current_position(0),
-        current_data_cluster(data_cluster),
         klog(KernelLog::instance()) {
 }
 
@@ -79,44 +76,7 @@ u32 Fat32Entry::read(void* data, u32 count) {
         return 0;
     }
 
-    if (current_position > size) {
-        klog.format("Fat32Entry::read: tried reading after end of file\n");
-        return 0;
-    }
-
-    // 1. setup reading status constants and variables
-    const u32 MAX_BYTES_TO_READ = size - current_position;
-    u32 total_bytes_read = 0;
-    u32 remaining_bytes_to_read = min(count, MAX_BYTES_TO_READ);
-
-    // 2. locate reading start point
-    u32 position_in_cluster = current_position; // modulo CLUSTER_SIZE_IN_BYTES but this is done in fat_data.read_data_cluster anyway
-    u32 cluster = current_data_cluster;
-
-    // 3. follow cluster chain and read data from sectors until requested number of bytes is read
-    u8* dst = (u8*) data;
-    while (fat_table.is_allocated_cluster(cluster)) {
-        // read the cluster until end of cluster or requested number of bytes is read
-        u32 count = fat_data.read_data_cluster(position_in_cluster, cluster, dst, remaining_bytes_to_read);
-        remaining_bytes_to_read -= count;
-        total_bytes_read += count;
-        dst += count;
-
-        // move on to the next cluster if needed
-        if (fat_data.is_cluster_beginning(current_position + total_bytes_read)) {
-            position_in_cluster = 0;
-            cluster = fat_table.get_next_cluster(cluster);
-        }
-
-        // stop reading if requested number of bytes is read
-        if (remaining_bytes_to_read == 0)
-            break;
-    }
-
-    // 4. done; update file position
-    current_position += total_bytes_read;
-    current_data_cluster = cluster;
-    return total_bytes_read;
+    return this->data.read(data, count);
 }
 
 /**
@@ -131,50 +91,20 @@ u32 Fat32Entry::write(const void* data, u32 count) {
         return 0;
     }
 
-    if (is_directory){
+    if (is_directory) {
         klog.format("Fat32Entry::write: specified entry is a directory\n");
         return 0;
     }
 
-    if (current_position + count > 0xFFFFFFFF){
-        klog.format("Fat32Entry::write: file entry exceeds Fat32 4GB limit\n");
+    if ((u64)this->data.get_size() + count > 0xFFFFFFFF){
+        klog.format("Fat32Entry::write: would exceed Fat32 4GB limit\n");
         return 0;
     }
 
-    // 1. setup writing status variables
-    u32 total_bytes_written = 0;
-    u32 remaining_bytes_to_write = count;
-
-    // 2. locate writing start point
-    u32 position_in_cluster = current_position;
-    u32 cluster = get_cluster_for_write();
-
-    // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
-    const u8* src = (const u8*)data;
-    while (fat_table.is_allocated_cluster(cluster)) {
-        // write the cluster until end of cluster or requested number of bytes is written
-        u32 count = fat_data.write_data_cluster(position_in_cluster, cluster, src, remaining_bytes_to_write);
-        remaining_bytes_to_write -= count;
-        total_bytes_written += count;
-
-        // stop writing if requested number of bytes is written
-        if (remaining_bytes_to_write == 0)
-            break;
-
-        // move on to the next cluster
-        src += count;
-        position_in_cluster = 0;
-        cluster = attach_next_cluster(cluster);
-    }
-
-    // 4. done; update file position and size if needed
-    current_position += total_bytes_written;
-    current_data_cluster = cluster;
-
-    if (size < current_position) {
-        size = current_position;
+    u32 old_size = this->data.get_size();
+    u32 total_bytes_written = this->data.write(data, count);
+    if (old_size != this->data.get_size())
         write_entry();
-    }
 
     return total_bytes_written;
 }
@@ -183,7 +113,7 @@ u32 Fat32Entry::write(const void* data, u32 count) {
  * @brief   Move file current position to given "position" if possible
  */
 void Fat32Entry::seek(u32 new_position) {
-    if (entry_cluster == Fat32Table::CLUSTER_UNUSED) {
+    if (data.empty()) {
         klog.format("Fat32Entry::seek: uninitialized entry\n");
         return;
     }
@@ -193,19 +123,19 @@ void Fat32Entry::seek(u32 new_position) {
         return;
     }
 
-    if (new_position > size) {
-        klog.format("Fat32Entry::seek: new_position > size (% > %)\n", new_position, size);
+    if (new_position > data.get_size()) {
+        klog.format("Fat32Entry::seek: new_position > size (% > %)\n", new_position, data.get_size());
         return;
     }
 
-    current_data_cluster = fat_table.find_cluster_for_byte(data_cluster, new_position);
-    current_position = new_position;
+    data.seek(new_position);
 }
 
 /**
  * @brief   Resize file, if new_size > current size, extra space is overwritten with zeroes
  */
 void Fat32Entry::truncate(u32 new_size) {
+
     if (entry_cluster == Fat32Table::CLUSTER_UNUSED) {
         klog.format("Fat32Entry::truncate: uninitialized entry\n");
         return;
@@ -216,19 +146,13 @@ void Fat32Entry::truncate(u32 new_size) {
         return;
     }
 
-    if (new_size == 0) {
-        fat_table.free_cluster_chain(data_cluster);
-        data_cluster = Fat32Table::CLUSTER_UNUSED;
-        size = 0;
-        // dont change file position
-    } else
-    if (new_size > size) {
+    if (new_size > data.get_size()) {
          // move to the old file end
-         u32 old_position = current_position;
-         seek(size);
+         u32 old_position = data.get_position();
+         data.seek(data.get_size());
 
          // calc number of zeroes needed
-         u32 remaining_zeroes = new_size - size;
+         u32 remaining_zeroes = new_size - data.get_size();
 
          // prepare zeroes
          const u16 SIZE = 512;
@@ -242,22 +166,16 @@ void Fat32Entry::truncate(u32 new_size) {
              write(zeroes, count);
              remaining_zeroes -= count;
          }
-         seek(old_position);
-         // file.size already updated by write_file_entry
+         data.seek(old_position);
+         // file.size already updated by write
          // dont change file position
     } else
-    if (new_size < size) {
-        u32 last_cluster = fat_table.find_cluster_for_byte(data_cluster, new_size -1);
-        u32 cluster_after_end = fat_table.get_next_cluster(last_cluster);
-        if (fat_table.is_allocated_cluster(cluster_after_end)) {
-            klog.format("freeing cluster\n");
-            fat_table.free_cluster_chain(cluster_after_end);
-            fat_table.set_next_cluster(last_cluster, Fat32Table::CLUSTER_END_OF_CHAIN);
-        }
-        size = new_size;
+    if (new_size < data.get_size()) {
+        data.resize(new_size);
     }
 
     write_entry();
+
 }
 
 /**
@@ -277,7 +195,7 @@ EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) cons
         return EnumerateResult::ENUMERATION_FINISHED;
     }
 
-    u32 cluster = data_cluster;
+    u32 cluster = data.get_head();
 
     while (fat_table.is_allocated_cluster(cluster)) { // iterate cluster chain
         switch (enumerate_directory_cluster(cluster, on_entry)) {
@@ -310,36 +228,6 @@ void Fat32Entry::write_entry() const {
     fat_data.read_data_sector(entry_cluster, entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
     entries[entry_index] = Fat32Entry::make_directory_entry_fat32(*this);
     fat_data.write_data_sector(entry_cluster, entry_sector, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
-}
-
-/**
- * @brief   Get proper cluster for data writing depending on file status and file position
- * @return  Cluster for writing data
- */
-u32 Fat32Entry::get_cluster_for_write() {
-    u32 cluster;
-    if (data_cluster == Fat32Table::CLUSTER_UNUSED) {           // file has no data clusters yet - alloc and assign as first data cluster
-        cluster = fat_table.alloc_cluster();
-        data_cluster = cluster;
-    } else if (fat_data.is_cluster_beginning(current_position)) {   // position points to beginning of new cluster - alloc this new cluster
-        u32 last_cluster = fat_table.get_last_cluster(data_cluster);
-        cluster = attach_next_cluster(last_cluster);
-    } else {                                            // just use the current cluster as it has space in it
-        cluster = current_data_cluster;
-    }
-
-    return cluster;
-}
-
-/**
- * @brief   Alloc new cluster and attach it after "cluster"
- * @return  Allocated cluster
- */
-u32 Fat32Entry::attach_next_cluster(u32 cluster) const {
-    // position points to beginning of new cluster, need to alloc this new cluster
-    u32 next_cluster = fat_table.alloc_cluster();
-    fat_table.set_next_cluster(cluster, next_cluster);
-    return next_cluster;
 }
 
 /**

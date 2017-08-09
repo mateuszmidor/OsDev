@@ -14,6 +14,7 @@
 #include "Fat32Structs.h"
 #include "Fat32Table.h"
 #include "Fat32Data.h"
+#include "Fat32ClusterChain.h"
 
 namespace filesystem {
 
@@ -46,17 +47,14 @@ public:
     bool operator!() const;
 
     // useful data
-    kstd::string    name;
-    u32             size;
-    bool            is_directory;
-    u32             data_cluster;           // entry data cluster
-    u32             current_position;       // read/write byte position
-    u32             current_data_cluster;   // cluster where the "current_position" byte resides; keep it to reduce FatTable traversal and speedup cluster lookup
+    kstd::string        name;
+    Fat32ClusterChain   data;
+    bool                is_directory;
 
     // entry localization in parent dir, for file/dir operations
-    u32             entry_cluster;
-    u16             entry_sector;
-    u8              entry_index;
+    u32                 entry_cluster;
+    u16                 entry_sector;
+    u8                  entry_index;
 
     const Fat32Table&   fat_table;
     const Fat32Data&    fat_data;
@@ -67,8 +65,6 @@ private:
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data);
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 entry_cluster, u16 entry_sector, u8 entry_index_no);
     void write_entry() const;
-    u32 get_cluster_for_write();
-    u32 attach_next_cluster(u32 cluster) const;
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
     Fat32Entry make_simple_dentry(const DirectoryEntryFat32& dentry, u32 entry_cluster, u16 entry_sector, u8 entry_index) const;
 
