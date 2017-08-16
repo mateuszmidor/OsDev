@@ -81,6 +81,9 @@ u32 Fat32ClusterChain::get_position() const {
 }
 
 void Fat32ClusterChain::seek(u32 new_position) {
+    if (new_position == current_byte)
+        return;
+
     current_cluster = fat_table.find_cluster_for_byte(head_cluster, new_position);
     current_byte = new_position;
 }
@@ -92,13 +95,15 @@ void Fat32ClusterChain::seek(u32 new_position) {
 bool Fat32ClusterChain::attach_cluster() {
     u32 new_cluster = fat_table.alloc_cluster();
 
+    // check for allocation failure
     if (new_cluster == Fat32Table::CLUSTER_END_OF_CHAIN)
         return false;
 
-    // if no head yet, update head
+    // if chain has no head yet, attach new_cluster as head and update tail and current cluster
     if (head_cluster == Fat32Table::CLUSTER_UNUSED) {
         head_cluster = new_cluster;
         tail_cluster = new_cluster;
+        current_cluster = new_cluster;
     } else
     // if head present, attach to tail
     {
@@ -205,6 +210,7 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
     u32 position_in_cluster = current_byte;
     u32 cluster = get_cluster_for_write();
 
+    klog.format("Fat32ClusterChain::write: cluster %, byte %\n", cluster, position_in_cluster);
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     const u8* src = (const u8*)data;
     while (fat_table.is_allocated_cluster(cluster)) {
@@ -220,13 +226,16 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
         // move on to the next cluster
         src += count;
         position_in_cluster = 0;
-        attach_cluster();
-        cluster = get_tail();
+        cluster = fat_table.get_next_cluster(cluster);
+        if (cluster == Fat32Table::CLUSTER_END_OF_CHAIN) {
+            attach_cluster();
+            cluster = get_tail();
+        }
     }
 
     // 4. done; update file position and size if needed
     current_byte += total_bytes_written;
-    current_cluster = cluster;
+    current_cluster = (fat_data.is_cluster_beginning(current_byte)) ? fat_table.get_next_cluster(cluster) : cluster;
 
     if (size < current_byte) {
         size = current_byte;
@@ -242,14 +251,13 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
 u32 Fat32ClusterChain::get_cluster_for_write() {
     u32 cluster;
 
-    if (empty()) {                                              // file has no data clusters yet - alloc and assign as head data cluster
-        attach_cluster();
-        cluster = get_head();
-    } else if (fat_data.is_cluster_beginning(current_byte)) {   // position points to beginning of new cluster - alloc this new cluster
+    if (fat_table.is_allocated_cluster(current_cluster)) {
+        cluster = current_cluster;
+        klog.format("Fat32ClusterChain::get_cluster_for_write: reusing cluster %\n", cluster);
+    } else {
         attach_cluster();
         cluster = get_tail();
-    } else {                                                    // just use the current cluster as it still has space in it
-        cluster = current_cluster;
+        klog.format("Fat32ClusterChain::get_cluster_for_write: attached new cluster %\n", cluster);
     }
 
     return cluster;

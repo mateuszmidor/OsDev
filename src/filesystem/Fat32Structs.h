@@ -46,6 +46,16 @@ struct VolumeBootRecordFat32 {
     u8  fat_type_label[8];
 } __attribute__((packed));
 
+enum DirectoryEntryFat32Attrib : u8 {
+    READ_ONLY = 0x01, // Should not allow writing
+    HIDDEN    = 0x02, // Should not show in dir listing
+    SYSTEM    = 0x04, // Should not be moved physically; OS file
+    VOLUMEID  = 0x08, // Filename is Volume ID
+    LONGNAME  = 0x0F, // Entry providing long filename
+    DIRECTORY = 0x10, // Is a subdirectory (16 x 32-byte records)
+    ARCHIVE   = 0x20  // Has been changed since last backup
+};
+
 /**
  * @name    DirectoryEntryFat32
  * @brief   Fat32 directory entry
@@ -66,17 +76,43 @@ struct DirectoryEntryFat32 {
     u16 w_date;
     u16 first_cluster_lo;
     u32 size;
-} __attribute__((packed));
 
-enum DirectoryEntryFat32Attrib : u8 {
-    READ_ONLY = 0x01, // Should not allow writing
-    HIDDEN    = 0x02, // Should not show in dir listing
-    SYSTEM    = 0x04, // Should not be moved physically; OS file
-    VOLUMEID  = 0x08, // Filename is Volume ID
-    LONGNAME  = 0x0F, // Entry providing long filename
-    DIRECTORY = 0x10, // Is a subdirectory (16 x 32-byte records)
-    ARCHIVE   = 0x20  // Has been changed since last backup
-};
+
+    static const u8 DIR_ENTRY_NO_MORE           = 0x00;   // entry.name[0] == 0x00 means there is no more entries in this dir
+    static const u8 DIR_ENTRY_UNUSED            = 0xE5;   // entry.name[0] == 0xE5 means the file was deleted
+
+    /**
+     * @brief   Is this a meta entry describing volume id?
+     */
+    bool is_volume_id() const {
+        return (attributes & DirectoryEntryFat32Attrib::VOLUMEID) == DirectoryEntryFat32Attrib::VOLUMEID;
+    }
+
+    /**
+     * @brief   Is this a meta entry describing long (more than 8.3) file name?
+     */
+    bool is_long_name() const {
+        return (attributes & DirectoryEntryFat32Attrib::LONGNAME) == DirectoryEntryFat32Attrib::LONGNAME;
+    }
+
+    /**
+     * @brief   Is this a meta entry describing empty space (eg. space after deleted file/directory)?
+     */
+    bool is_unused() const {
+        return (name[0] == DIR_ENTRY_UNUSED) ||
+               (name[0] == '.' && name[1] == ' ') ||                    // treat dot folder as unused (why waste space for it?)
+               (name[0] == '.' && name[1] == '.' && name[2] == ' ');    // treat dot-dot folder as unused (why waste space for it?)
+    }
+
+    /**
+     * @brief   Is this a meta entry describing end of directory contents?
+     */
+    bool is_nomore() const {
+        return name[0] == DIR_ENTRY_NO_MORE;
+    }
+
+} __attribute__((packed));  // 32 bytes in total
+
 
 } // filesystem
 

@@ -21,10 +21,10 @@ public:
     Fat32Data(drivers::AtaDevice& hdd);
     void setup(u32 data_start, u16 bytes_per_sector, u8 sectors_per_cluster);
 
-    bool read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const;
+    bool read_data_sector(u32 cluster, u8 sector_in_cluster, void* data, u32 size) const;
     bool read_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void* data, u32 size) const;
     u32 read_data_cluster(u32 position, u32 cluster, u8* data, u32 count) const;
-    bool write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const;
+    bool write_data_sector(u32 cluster, u8 sector_in_cluster, void const* data, u32 size) const;
     bool write_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u16 byte_in_sector, void const* data, u32 size) const;
     u32 write_data_cluster(u32 position, u32 cluster, const u8* data, u32 count) const;
     void clear_data_cluster(u32 cluster) const;

@@ -27,7 +27,7 @@ private:
     void print_file(filesystem::VolumeFat32& v, kstd::string filename);
     void print_tree(filesystem::VolumeFat32& v, kstd::string path);
     void print_hdd_info(drivers::AtaDevice& hdd);
-    void traverse_tree(filesystem::VolumeFat32& v, const filesystem::Fat32Entry& entry, u8 level, const OnTreeEntryFound& user_on_entry);
+    void traverse_tree(filesystem::VolumeFat32& v, filesystem::Fat32Entry& entry, u8 level, const OnTreeEntryFound& user_on_entry);
 
     utils::KernelLog& klog;
 };

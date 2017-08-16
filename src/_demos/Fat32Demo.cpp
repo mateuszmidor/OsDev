@@ -82,7 +82,7 @@ static const char* INDENTS[] = {
         "                ",
         "                  "};
 
-void Fat32Demo::traverse_tree(VolumeFat32& v, const Fat32Entry& entry, u8 level, const OnTreeEntryFound& user_on_entry) {
+void Fat32Demo::traverse_tree(VolumeFat32& v, Fat32Entry& entry, u8 level, const OnTreeEntryFound& user_on_entry) {
     OnEntryFound on_entry = [&](Fat32Entry& e) -> bool {
         user_on_entry(e, level);
         if (e.is_directory && e.name != "." && e.name != "..")

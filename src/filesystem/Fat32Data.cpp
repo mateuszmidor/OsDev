@@ -7,7 +7,7 @@
 
 #include "Fat32Data.h"
 #include "kstd.h"
-
+#include "KernelLog.h"
 using namespace kstd;
 namespace filesystem {
 
@@ -21,9 +21,9 @@ void Fat32Data::setup(u32 data_start_in_sectors, u16 bytes_per_sector, u8 sector
     this->sectors_per_cluster = sectors_per_cluster;
 }
 
-bool Fat32Data::read_data_sector(u32 cluster, u8 sector_offset, void* data, u32 size) const {
+bool Fat32Data::read_data_sector(u32 cluster, u8 sector_in_cluster, void* data, u32 size) const {
     // (cluster - 2) because data clusters are indexed from 2
-    return hdd.read28(data_start_in_sectors + sectors_per_cluster * (cluster - 2) + sector_offset, data, size);
+    return hdd.read28(data_start_in_sectors + sectors_per_cluster * (cluster - 2) + sector_in_cluster, data, size);
 }
 
 /**
@@ -77,9 +77,13 @@ u32 Fat32Data::read_data_cluster(u32 position, u32 cluster, u8* data, u32 count)
     return total_bytes_read;
 }
 
-bool Fat32Data::write_data_sector(u32 cluster, u8 sector_offset, void const* data, u32 size) const {
+/**
+ * @brief   Write "size" bytes into given Fat32 data sector
+ * @note    IF SIZE < SECTOR SIZE (512 bytes), REMAINING BYTES IN SECTOR ARE FILLED WITH 0 !!!
+ */
+bool Fat32Data::write_data_sector(u32 cluster, u8 sector_in_cluster, void const* data, u32 size) const {
     // (cluster - 2) because data clusters are indexed from 2
-    return hdd.write28(data_start_in_sectors + sectors_per_cluster * (cluster - 2) + sector_offset, data, size);
+    return hdd.write28(data_start_in_sectors + sectors_per_cluster * (cluster - 2) + sector_in_cluster, data, size);
 }
 
 /**
@@ -90,8 +94,8 @@ bool Fat32Data::write_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u
     if (byte_in_sector + size > bytes_per_sector)
         return false;
 
-    // write starts at sector beginning, optimal write
-    if (byte_in_sector == 0)
+    // write the entire sector, optimal write for FAT32
+    if ((byte_in_sector == 0) && (size == bytes_per_sector))
         return write_data_sector(cluster, sector_in_cluster, data, size);
 
     // write starts somewhere in the middle of sector, need read entire sector first and then update it partially
@@ -117,7 +121,6 @@ u32 Fat32Data::write_data_cluster(u32 position, u32 cluster, const u8* data, u32
     for (; sector_in_cluster < sectors_per_cluster; sector_in_cluster++) {
         u16 bytes_in_sector_left = bytes_per_sector - byte_in_sector;
         u16 written_count = min(count, bytes_in_sector_left);
-
         if (!write_data_sector_from_byte(cluster, sector_in_cluster, byte_in_sector, data, written_count))
             break;
 
