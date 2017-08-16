@@ -47,7 +47,7 @@ void Fat32Demo::print_volume_info(VolumeFat32& v) {
                 v.get_label(),
                 v.get_type(),
                 v.get_size_in_bytes() / 1024 / 1024,
-                v.get_used_space_in_clusters());
+                v.get_used_space_in_bytes() / v.get_cluster_size_in_bytes());
 }
 
 void Fat32Demo::print_file(VolumeFat32& v, string filename) {

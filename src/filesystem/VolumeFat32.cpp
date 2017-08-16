@@ -53,11 +53,11 @@ u32 VolumeFat32::get_size_in_bytes() const {
 }
 
 u32 VolumeFat32::get_used_space_in_bytes() const {
-    return get_used_space_in_clusters() * vbr.sectors_per_cluster * vbr.bytes_per_sector;
+    return fat_table.get_used_space_in_clusters() * vbr.sectors_per_cluster * vbr.bytes_per_sector;
 }
 
-u32 VolumeFat32::get_used_space_in_clusters() const {
-    return fat_table.get_used_space_in_clusters();
+u32 VolumeFat32::get_cluster_size_in_bytes() const {
+    return vbr.sectors_per_cluster * vbr.bytes_per_sector;
 }
 
 /**

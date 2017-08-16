@@ -169,7 +169,7 @@ public:
     kstd::string get_type() const;
     u32 get_size_in_bytes() const;
     u32 get_used_space_in_bytes() const;
-    u32 get_used_space_in_clusters() const;
+    u32 get_cluster_size_in_bytes() const;
 
     Fat32Entry get_entry(const kstd::string& unix_path) const;
     Fat32Entry create_entry(const kstd::string& unix_path, bool directory) const;

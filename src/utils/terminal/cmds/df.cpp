@@ -43,11 +43,15 @@ void df::print_hdd_info(drivers::AtaDevice& hdd) {
 
     MassStorageMsDos ms(hdd);
     for (auto& v : ms.get_volumes()) {
-        env->printer->format("  %, size: %MB, used: %KB (% clusters)\n",
+        u32 size_in_bytes = v.get_size_in_bytes();
+        u32 used_space_in_bytes = v.get_used_space_in_bytes();
+        u32 cluster_in_bytes = v.get_cluster_size_in_bytes();
+        env->printer->format("  %, size: %MB, used: %KB (% clusters), cluster size: %B\n",
                 v.get_label(),
-                v.get_size_in_bytes() / 1024 / 1024,
-                v.get_used_space_in_bytes() / 1024,
-                v.get_used_space_in_clusters());
+                size_in_bytes / 1024 / 1024,
+                used_space_in_bytes / 1024,
+                used_space_in_bytes / cluster_in_bytes,
+                cluster_in_bytes);
     }
 }
 } /* namespace cmds */
