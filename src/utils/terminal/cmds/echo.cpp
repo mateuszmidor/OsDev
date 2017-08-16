@@ -29,11 +29,22 @@ void echo::run() {
         return;
     }
     string number_str;
-    for (u32 i = 0; i < 4096; i++) {
+
+    u32 count;
+    if (env->cmd_args.size() == 3)
+        count = str_to_long(env->cmd_args[2].c_str());
+    else
+        count = 64;
+
+    if (count == 0)
+        return;
+
+    for (u32 i = 0; i < count; i++) {
         number_str += "#";
     }
+    env->klog->format("echo: writing % bytes of data\n", number_str.length());
     e.write(number_str.data(), number_str.length());
-    number_str = "!!!!!";
+    number_str = "!!!";
     e.write(number_str.data(), number_str.length());
 
 //   number_str.reserve(256*4+1);    // 1024 chars
