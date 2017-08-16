@@ -179,13 +179,8 @@ public:
 private:
     Fat32Entry get_root_dentry() const;
     Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& filename) const;
-    bool alloc_first_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const;
-    bool alloc_last_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const;
-    bool try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir, Fat32Entry &e) const;
     u32 attach_new_directory_cluster(Fat32Entry& parent_dir) const;
     void detach_directory_cluster(Fat32Entry& dentry, u32 cluster) const;
-//    bool alloc_entry_in_directory(Fat32Entry& parent_dir, Fat32Entry &e) const;
-    bool is_directory_empty(const Fat32Entry& e) const;
     bool is_no_more_entires_after(Fat32Entry& parent_dir, const Fat32Entry& entry) const;
     Fat32Entry empty_entry() const;
 
@@ -199,9 +194,7 @@ private:
     u32 partition_offset_in_sectors;
     u32 partition_size_in_sectors;
 
-    u8 get_free_entry_in_dir_cluster(u32 cluster, Fat32Entry& out) const;
     void mark_entry_as_nomore(Fat32Entry& e) const;
-    void mark_next_entry_as_nomore(const Fat32Entry& e) const;
     void mark_entry_as_unused(Fat32Entry& e) const;
     bool is_directory_cluster_empty(const Fat32Entry& directory, u32 cluster) const;
 };

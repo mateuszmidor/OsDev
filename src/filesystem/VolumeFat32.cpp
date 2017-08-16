@@ -71,8 +71,10 @@ u32 VolumeFat32::get_cluster_size_in_bytes() const {
  * @return  Valid entry if exists, empty entry otherwise
  */
 Fat32Entry VolumeFat32::get_entry(const string& unix_path) const {
-    if (unix_path.empty() || unix_path.front() != '/')
+    if (unix_path.empty() || unix_path.front() != '/') {
+        klog.format("VolumeFat32::get_entry: path '%' is empty or it is not an absolute path\n", unix_path);
         return empty_entry();
+    }
 
     // start at root...
     Fat32Entry e = get_root_dentry();
@@ -167,7 +169,7 @@ bool VolumeFat32::delete_entry(const string& unix_path) const{
     }
 
     // for directory - ensure it is empty
-    if (e.is_directory && !is_directory_empty(e)) {
+    if (e.is_directory && !e.data.empty()) {
         klog.format("VolumeFat32::delete_entry: can't delete non-empty directory: %\n", unix_path);
         return false;
     }
@@ -245,8 +247,8 @@ Fat32Entry VolumeFat32::get_root_dentry() const {
 }
 
 /**
- * @brief   Get directory entry for directory pointed by dentry_cluster
- * @param   Filename Entry name. Case sensitive
+ * @brief   Get entry in "parent_dir"
+ * @param   filename Entry name. Case sensitive
  * @return  Valid entry if exists, empty entry otherwise
  */
 Fat32Entry VolumeFat32::get_entry_for_name(Fat32Entry& parent_dir, const string& filename) const {
@@ -261,70 +263,6 @@ Fat32Entry VolumeFat32::get_entry_for_name(Fat32Entry& parent_dir, const string&
     };
     parent_dir.enumerate_entries(on_entry);
     return result;
-}
-
-bool VolumeFat32::alloc_first_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const {
-
-    // setup directory head
-//    if (!parent_dir.data.attach_cluster_and_zero_it())
-//        return false;
-//
-//    // head updated; persist it
-//    parent_dir.write_entry();
-//
-//    // setup entry
-//    e.parent_data = parent_dir.data;
-//    e.parent_index = 0;
-//    e.write_entry();
-
-    return true;
-}
-
-bool VolumeFat32::alloc_last_dir_cluster_and_alloc_entry(Fat32Entry& parent_dir, Fat32Entry& e) const {
-//    if (!parent_dir.data.attach_cluster_and_zero_it())
-//        return false;
-//
-//    // setup file entry
-//    e.parent_data = parent_dir.data;
-////    e.parent_index = ?;
-//    e.write_entry();
-
-    return true;
-}
-
-//-------------------------
-
-
-bool VolumeFat32::try_alloc_entry_in_free_dir_slot(const Fat32Entry& parent_dir, Fat32Entry &e) const {
-//    u32 cluster = parent_dir.data.get_head();
-//    u8 entry_type = Fat32Entry::DIR_ENTRY_NOT_FOUND;
-//
-//    // try find free slot in direcyory clusters
-//    while (fat_table.is_allocated_cluster(cluster)) {
-//        entry_type = get_free_entry_in_dir_cluster(cluster, e);
-//        if (entry_type != Fat32Entry::DIR_ENTRY_NOT_FOUND)
-//            break; // free entry found
-//
-//        cluster = fat_table.get_next_cluster(cluster);
-//        klog.format("   Next Cluster: %\n", cluster);
-//    }
-//
-//    // UNUSED entry found - just reuse it
-//    if (entry_type == Fat32Entry::DIR_ENTRY_UNUSED) {
-//        klog.format("   Unused entry found. [Index in parent]: [%]\n", e.parent_index);
-//        e.write_entry();
-//        return true;
-//    }
-//
-//    // NO_MORE entry found - reuse it and mark the next one as NO_MORE
-//    if (entry_type == Fat32Entry::DIR_ENTRY_NO_MORE) {
-//        klog.format("   NO MORE entry found. [Index in parent]: [%]\n", e.parent_index);
-//        e.write_entry();
-//        mark_next_entry_as_nomore(e);
-//        return true;
-//    }
-
-    return false; // no free slot found
 }
 
 void VolumeFat32::detach_directory_cluster(Fat32Entry& parent_dir, u32 cluster) const {
@@ -361,54 +299,12 @@ bool VolumeFat32::is_no_more_entires_after(Fat32Entry& parent_dir, const Fat32En
     return (parent_dir.enumerate_entries(on_entry) == EnumerateResult::ENUMERATION_FINISHED); // finished means no more entries after entry in parent_dir
 }
 
-bool VolumeFat32::is_directory_empty(const Fat32Entry& e) const {
-    return e.data.empty();
-}
-
-/**
- * @brief   Scan directory cluster looking for either UNUSED or NO_MORE entry
- * @param   out Free entry, if found, is stored here
- * @return  DIR_ENTRY_UNUSED, DIR_ENTRY_NO_MORE or 0xFF if not found
- */
-u8 VolumeFat32::get_free_entry_in_dir_cluster(u32 cluster, Fat32Entry& out) const {
-//    array<DirectoryEntryFat32, Fat32Entry::FAT32ENTRIES_PER_SECTOR> entries;
-//
-//    for (u8 sector_offset = 0; sector_offset < vbr.sectors_per_cluster; sector_offset++) { // iterate sectors in cluster
-//
-//        // read 1 sector of data (usually 512 bytes)
-//        fat_data.read_data_sector(cluster, sector_offset, entries.data(), sizeof(DirectoryEntryFat32) * entries.size());
-//
-//        for (u8 i = 0; i < entries.size(); i++) { // iterate directory entries
-//            const auto& e = entries[i];
-//            if (e.name[0] == Fat32Entry::DIR_ENTRY_NO_MORE || e.name[0] == Fat32Entry::DIR_ENTRY_UNUSED) {
-//                out.entry_cluster = cluster;
-//                out.entry_sector = sector_offset;
-//                out.entry_index = i;
-//                return e.name[0];
-//            }
-//        }
-//    }
-    return 0;//Fat32Entry::DIR_ENTRY_NOT_FOUND; // no free entry found in this cluster
-}
-
 void VolumeFat32::mark_entry_as_nomore(Fat32Entry& e) const {
     e.name = DirectoryEntryFat32::DIR_ENTRY_NO_MORE; // mark entry as last one
     e.write_entry();
 }
 
-void VolumeFat32::mark_next_entry_as_nomore(const Fat32Entry& e) const {
-    // if e is the very last entry in the cluster - CLUSTER_END_OF_DIRECTORY will mark the end of directory entries
-    if (e.parent_index == Fat32Entry::FAT32ENTRIES_PER_SECTOR * vbr.sectors_per_cluster - 1)
-        return;
-
-    Fat32Entry no_more = empty_entry();
-    no_more.parent_data = e.parent_data;
-    no_more.parent_index = e.parent_index + 1;
-    mark_entry_as_nomore(no_more);
-}
-
 void VolumeFat32::mark_entry_as_unused(Fat32Entry& e) const {
-    // TODO: will conversion of names work for this?
     e.name = DirectoryEntryFat32::DIR_ENTRY_UNUSED; // mark entry as deleted
     e.write_entry();
 }
