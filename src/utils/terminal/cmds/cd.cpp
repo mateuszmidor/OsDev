@@ -103,7 +103,7 @@ void cd::cd_directory(const string& path) {
         return;
     }
 
-    if (!e.is_directory) {
+    if (!e.is_directory()) {
         env->printer->format("cd: '%' is not directory\n", normalized_absolute_path);
         return;
     }

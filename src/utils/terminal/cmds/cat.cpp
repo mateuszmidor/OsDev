@@ -31,7 +31,7 @@ void cat::run() {
         return;
     }
 
-    if (e.is_directory) {
+    if (e.is_directory()) {
         env->printer->format("cat: % is a directory\n", filename);
         return;
     }

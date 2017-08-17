@@ -34,6 +34,7 @@ class Fat32Entry {
 public:
     static DirectoryEntryFat32 make_directory_entry_fat32(const Fat32Entry& e);
 
+    // [default constructor is private so Fat32Entry instance can only be obtained from VolumeFat32]
     Fat32Entry(const Fat32Entry& other) = default;
     Fat32Entry& operator=(const Fat32Entry& other);
 
@@ -46,33 +47,35 @@ public:
     operator bool() const;
     bool operator!() const;
 
-    // useful data
-    kstd::string        name;
-    Fat32ClusterChain   data;
-    bool                is_directory;
-
-    // entry localization in parent dir, for file/dir operations
-    Fat32ClusterChain   parent_data;
-    u32                 parent_index;
-
-    const Fat32Table&   fat_table;
-    const Fat32Data&    fat_data;
+    bool is_directory() const;
+    u32 get_size() const;
+    kstd::string get_name() const;
 
 private:
-    friend class VolumeFat32;
+    friend class VolumeFat32;   // VolumeFat32 can instantiate Fat32Entry
 
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data);
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 parent_data_cluster, u32 parent_index);
-    void write_entry();
+    void update_entry_info_in_parent_dir();
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
     Fat32Entry make_simple_dentry(const DirectoryEntryFat32& dentry, Fat32ClusterChain parent_data, u32 parent_index) const;
     bool alloc_entry_in_directory(Fat32Entry& out);
     void mark_entry_as_nomore(Fat32Entry& e) const;
     void mark_next_entry_as_nomore(const Fat32Entry& e) const;
 
-    utils::KernelLog&   klog;
-
     static constexpr u8 FAT32ENTRIES_PER_SECTOR = 16; // BYTES_PER_SECTOR / sizeof(DirectoryEntryFat32);
+    utils::KernelLog&   klog;
+    const Fat32Table&   fat_table;
+    const Fat32Data&    fat_data;
+
+    // entry metadata
+    kstd::string        name;
+    Fat32ClusterChain   data;
+    bool                is_dir;
+
+    // entry localization in parent dir
+    Fat32ClusterChain   parent_data;
+    u32                 parent_index;   // DirectoryEntryFat32 index in parent_data
 };
 
 } /* namespace filesystem */

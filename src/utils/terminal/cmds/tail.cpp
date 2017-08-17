@@ -31,13 +31,13 @@ void tail::run() {
         return;
     }
 
-    if (e.is_directory) {
+    if (e.is_directory()) {
         env->printer->format("tail: % is a directory\n", filename);
         return;
     }
 
     const u32 MAX_CHARS = 90;
-    u32 position = e.data.get_size() > MAX_CHARS ? e.data.get_size() - MAX_CHARS : 0;
+    u32 position = e.get_size() > MAX_CHARS ? e.get_size() - MAX_CHARS : 0;
     e.seek(position);
     const u32 BUFF_SIZE = 1025;
     static char buff[BUFF_SIZE]; // static to make sure recursive calls dont exhaust task stack

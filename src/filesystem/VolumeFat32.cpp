@@ -83,7 +83,7 @@ Fat32Entry VolumeFat32::get_entry(const UnixPath& unix_path) const {
     auto normalized_unix_path = unix_path.normalize(); // this takes care of '.' and '..'
     auto segments = kstd::split_string<vector<string>>(normalized_unix_path, '/');
     for (const auto& path_segment : segments) {
-        if (!e.is_directory) {
+        if (!e.is_dir) {
             klog.format("VolumeFat32::get_entry: entry '%' is not a directory\n", e.name);
             return empty_entry();   // path segment is not a directory. this is error
         }
@@ -135,7 +135,7 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
     // allocate entry in parent_dir
     Fat32Entry out = empty_entry();
     out.name = name;
-    out.is_directory = is_directory;
+    out.is_dir = is_directory;
     klog.format("VolumeFat32::create_entry: name is %\n", out.name);
     parent_dir.alloc_entry_in_directory(out);
     return out;
@@ -175,13 +175,13 @@ bool VolumeFat32::delete_entry(const UnixPath& unix_path) const{
     }
 
     // for directory - ensure it is empty
-    if (e.is_directory && !e.data.empty()) {
+    if (e.is_dir && !e.data.empty()) {
         klog.format("VolumeFat32::delete_entry: can't delete non-empty directory: %\n", unix_path);
         return false;
     }
 
     // for file - release its data
-    if (!e.is_directory)
+    if (!e.is_dir)
         e.data.free();
 
     // mark entry as nomore/unused depending on it's position in the directory
@@ -230,13 +230,13 @@ bool VolumeFat32::move_entry(const UnixPath& unix_path_from, const UnixPath& uni
     // if destination directory specified instead of full path - keep source name
     string path_to;
     Fat32Entry dest = get_entry(unix_path_to);
-    if (dest && dest.is_directory)
+    if (dest && dest.is_dir)
         path_to = format("%/%", unix_path_to, unix_path_from.extract_file_name());
     else
         path_to = unix_path_to;
 
     // create destination entry
-    Fat32Entry dst = create_entry(path_to, src.is_directory);
+    Fat32Entry dst = create_entry(path_to, src.is_dir);
     if (!dst) {
         klog.format("VolumeFat32::move_entry: can't create dst entry '%'\n", path_to);
         return false;
@@ -244,8 +244,8 @@ bool VolumeFat32::move_entry(const UnixPath& unix_path_from, const UnixPath& uni
 
     // move data cluster chain from src to dst entry, clear src data
     std::swap(src.data, dst.data);
-    src.write_entry();
-    dst.write_entry();
+    src.update_entry_info_in_parent_dir();
+    dst.update_entry_info_in_parent_dir();
 
     // remove src entry
     if (!delete_entry(unix_path_from)) {
@@ -288,7 +288,7 @@ void VolumeFat32::detach_directory_cluster(Fat32Entry& parent_dir, u32 cluster) 
     parent_dir.data.detach_cluster(cluster);
     u32 new_head = parent_dir.data.get_head();
     if (old_head != new_head)
-        parent_dir.write_entry();
+        parent_dir.update_entry_info_in_parent_dir();
 }
 
 /**
@@ -318,12 +318,12 @@ Fat32Entry VolumeFat32::empty_entry() const {
 
 void VolumeFat32::mark_entry_as_nomore(Fat32Entry& e) const {
     e.name = DirectoryEntryFat32::DIR_ENTRY_NO_MORE; // mark entry as last one
-    e.write_entry();
+    e.update_entry_info_in_parent_dir();
 }
 
 void VolumeFat32::mark_entry_as_unused(Fat32Entry& e) const {
     e.name = DirectoryEntryFat32::DIR_ENTRY_UNUSED; // mark entry as deleted
-    e.write_entry();
+    e.update_entry_info_in_parent_dir();
 }
 
 bool VolumeFat32::is_directory_cluster_empty(const Fat32Entry& directory, u32 cluster) const {

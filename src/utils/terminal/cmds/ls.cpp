@@ -17,10 +17,10 @@ void ls::run() {
 
 
     OnEntryFound on_entry = [&](const Fat32Entry& e) -> bool {
-        if (e.is_directory)
-            env->printer->format("[%]\n", e.name);
+        if (e.is_directory())
+            env->printer->format("[%]\n", e.get_name());
         else
-            env->printer->format("% - %B\n", e.name, e.data.get_size());
+            env->printer->format("% - %B\n", e.get_name(), e.get_size());
 
         return true;
     };
@@ -38,10 +38,10 @@ void ls::run() {
         return;
     }
 
-    if (e.is_directory)
+    if (e.is_directory())
         e.enumerate_entries(on_entry);
     else
-        env->printer->format("% - %B\n", e.name, e.data.get_size());
+        env->printer->format("% - %B\n", e.get_name(), e.get_size());
 
 }
 } /* namespace cmds */

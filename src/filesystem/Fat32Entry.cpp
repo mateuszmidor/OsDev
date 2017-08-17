@@ -28,11 +28,11 @@ DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32(const Fat32Entry& e) 
     result.c_date = 0;
     result.c_time = 0;
     result.c_time_tenth = 0;
-    result.attributes = e.is_directory ? DirectoryEntryFat32Attrib::DIRECTORY : 0;
+    result.attributes = e.is_dir ? DirectoryEntryFat32Attrib::DIRECTORY : 0;
     result.first_cluster_hi = e.data.get_head() >> 16;
     result.first_cluster_lo = e.data.get_head() & 0xFFFF;
     result.reserved = 0;
-    result.size = e.is_directory ? 0 : e.data.get_size();
+    result.size = e.is_dir ? 0 : e.data.get_size();
 
     return result;
 }
@@ -47,7 +47,7 @@ Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, c
         fat_table(fat_table),
         fat_data(fat_data),
         name(name),
-        is_directory(is_directory),
+        is_dir(is_directory),
         data(fat_table, fat_data, data_cluster, is_directory ?  0xFFFFFFFF : size),
         parent_data(fat_table, fat_data, parent_data_cluster, 0xFFFFFFFF), // parent_data is directory data cluster which size is unknown
         parent_index(parent_index),
@@ -71,7 +71,7 @@ u32 Fat32Entry::read(void* data, u32 count) {
         return 0;
     }
 
-    if (is_directory) {
+    if (is_dir) {
         klog.format("Fat32Entry::read: entry is a directory\n");
         return 0;
     }
@@ -91,7 +91,7 @@ u32 Fat32Entry::write(const void* data, u32 count) {
         return 0;
     }
 
-    if (is_directory) {
+    if (is_dir) {
         klog.format("Fat32Entry::write: specified entry is a directory\n");
         return 0;
     }
@@ -104,7 +104,7 @@ u32 Fat32Entry::write(const void* data, u32 count) {
     u32 old_size = this->data.get_size();
     u32 total_bytes_written = this->data.write(data, count);
     if (old_size != this->data.get_size())
-        write_entry();
+        update_entry_info_in_parent_dir();
 
     klog.format("Fat32Entry::write: % bytes written\n", total_bytes_written);
     return total_bytes_written;
@@ -119,7 +119,7 @@ void Fat32Entry::seek(u32 new_position) {
         return;
     }
 
-    if (is_directory){
+    if (is_dir){
         klog.format("Fat32Entry::seek: entry is a directory\n");
         return;
     }
@@ -142,7 +142,7 @@ void Fat32Entry::truncate(u32 new_size) {
         return;
     }
 
-    if (is_directory){
+    if (is_dir){
         klog.format("Fat32Entry::truncate: entry is a directory\n");
         return;
     }
@@ -175,7 +175,7 @@ void Fat32Entry::truncate(u32 new_size) {
         data.resize(new_size);
     }
 
-    write_entry();
+    update_entry_info_in_parent_dir();
 
 }
 
@@ -191,7 +191,7 @@ EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
         return EnumerateResult::ENUMERATION_FINISHED;
     }
 
-    if (!is_directory){
+    if (!is_dir){
         klog.format("Fat32Entry::enumerate_entries: not a directory\n");
         return EnumerateResult::ENUMERATION_FINISHED;
     }
@@ -220,7 +220,7 @@ EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
                 continue;
             }
 
-            if (e.is_long_name()) { // // extension for 8.3 filename, skip
+            if (e.is_long_name()) { // extension for 8.3 filename, skip
                 entry_index++;
                 continue;
             }
@@ -244,16 +244,26 @@ bool Fat32Entry::operator!() const {
     return name.empty();
 }
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+bool Fat32Entry::is_directory() const {
+    return is_dir;
+}
 
-void Fat32Entry::write_entry() {
+u32 Fat32Entry::get_size() const {
+    return data.get_size();
+}
+
+string Fat32Entry::get_name() const {
+    return name;
+}
+
+/**
+ * @brief   Update entry meta data in parent directory, eg it's name, size, attributes
+ */
+void Fat32Entry::update_entry_info_in_parent_dir() {
     DirectoryEntryFat32 dentry = make_directory_entry_fat32(*this);
     u32 position_in_parent = parent_index * sizeof(DirectoryEntryFat32);
     parent_data.seek(position_in_parent);
-    klog.format("Fat32Entry::write_entry: write entry at index %\n", parent_index);
-//    klog.format("parent write pos: % byte\n", parent_data.get_position());
     u32 written = parent_data.write(&dentry, sizeof(dentry));
-    klog.format("Fat32Entry::write_entry: % bytes written\n",written);
 }
 
 /**
@@ -371,7 +381,7 @@ bool Fat32Entry::alloc_entry_in_directory(Fat32Entry& out) {
 
     if (old_head != data.get_head()) {
         klog.format("   Directory head udpate, so need to write_entry\n");
-        write_entry();
+        update_entry_info_in_parent_dir();
     }
 
 
@@ -380,7 +390,7 @@ bool Fat32Entry::alloc_entry_in_directory(Fat32Entry& out) {
 
 void Fat32Entry::mark_entry_as_nomore(Fat32Entry& e) const {
     e.name = DirectoryEntryFat32::DIR_ENTRY_NO_MORE; // mark entry as last one
-    e.write_entry();
+    e.update_entry_info_in_parent_dir();
 }
 
 void Fat32Entry::mark_next_entry_as_nomore(const Fat32Entry& e) const {

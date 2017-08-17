@@ -57,7 +57,7 @@ void Fat32Demo::print_file(VolumeFat32& v, string filename) {
         return;
     }
 
-    if (file.is_directory) {
+    if (file.is_directory()) {
         klog.format("% is a directory\n", filename);
         return;
     }
@@ -85,7 +85,7 @@ static const char* INDENTS[] = {
 void Fat32Demo::traverse_tree(VolumeFat32& v, Fat32Entry& entry, u8 level, const OnTreeEntryFound& user_on_entry) {
     OnEntryFound on_entry = [&](Fat32Entry& e) -> bool {
         user_on_entry(e, level);
-        if (e.is_directory && e.name != "." && e.name != "..")
+        if (e.is_directory() && e.get_name() != "." && e.get_name() != "..")
             traverse_tree(v, e, level+1, user_on_entry);
 
         return true;
@@ -98,21 +98,21 @@ void Fat32Demo::print_tree(VolumeFat32& v, string path) {
     Fat32Entry directory = v.get_entry(path);
 
     auto on_entry = [&](Fat32Entry& e, u8 level) -> bool {
-         if (e.name == "." || e.name == "..")
+         if (e.get_name() == "." || e.get_name() == "..")
              return true;
 
-         if (e.is_directory) {
-             klog.format("%[%]\n", INDENTS[level], e.name);
+         if (e.is_directory()) {
+             klog.format("%[%]\n", INDENTS[level], e.get_name());
          } else {
-             if (e.data.get_size() == 0)
-                 klog.format("%% - %B\n", INDENTS[level], e.name, e.data.get_size());
+             if (e.get_size() == 0)
+                 klog.format("%% - %B\n", INDENTS[level], e.get_name(), e.get_size());
              else
              {
                  const u32 SIZE = 1024 * 6;
                  static char buff[SIZE]; // static to make sure recursive calls dont exhaust task stack
                  u32 count = e.read(buff, SIZE-1);
                  buff[count-1] = '\0';
-                 klog.format("%% - %B, %\n", INDENTS[level], e.data.get_size(), e.data.get_size(), buff);
+                 klog.format("%% - %B, %\n", INDENTS[level], e.get_size(), e.get_size(), buff);
              }
          }
          return true;

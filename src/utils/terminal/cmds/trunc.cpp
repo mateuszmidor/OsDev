@@ -31,7 +31,7 @@ void trunc::run() {
         return;
     }
 
-    if (e.is_directory) {
+    if (e.is_directory()) {
         env->printer->format("trunc: % is a directory\n", filename);
         return;
     }
