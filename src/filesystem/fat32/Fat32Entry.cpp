@@ -372,12 +372,16 @@ bool Fat32Entry::alloc_entry_in_directory(Fat32Entry& out) {
  * @brief   Allocate entry at given index in directory
  */
 bool Fat32Entry::alloc_entry_in_directory_at_index(u32 index_in_dir, Fat32Entry& out) {
-    out.parent_data = data;
-    out.parent_index = index_in_dir;
     u32 position_in_parent = index_in_dir * sizeof(DirectoryEntryFat32);
     data.seek(position_in_parent);
     DirectoryEntryFat32 dentry = make_directory_entry_fat32(out);
-    return data.write(&dentry, sizeof(dentry)) == sizeof(dentry);
+    bool result = data.write(&dentry, sizeof(dentry)) == sizeof(dentry);
+
+    // assignment must go after write since write can update "data"
+    out.parent_data = data;
+    out.parent_index = index_in_dir;
+
+    return result;
 }
 
 bool Fat32Entry::dealloc_entry_in_directory(Fat32Entry& e, u32 root_cluster) {
