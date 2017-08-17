@@ -5,8 +5,8 @@
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_FAT32UTILS_H_
-#define SRC_FILESYSTEM_FAT32UTILS_H_
+#ifndef SRC_FILESYSTEM_FAT32_FAT32UTILS_H_
+#define SRC_FILESYSTEM_FAT32_FAT32UTILS_H_
 
 #include "kstd.h"
 
@@ -20,4 +20,4 @@ public:
 
 } /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_FAT32UTILS_H_ */
+#endif /* SRC_FILESYSTEM_FAT32_FAT32UTILS_H_ */

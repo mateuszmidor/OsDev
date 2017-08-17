@@ -9,8 +9,9 @@
 #define SRC__DEMOS_FAT32DEMO_H_
 
 #include <memory>
-#include "KernelLog.h"
+
 #include "VolumeFat32.h"
+#include "KernelLog.h"
 #include "kstd.h"
 
 namespace demos {

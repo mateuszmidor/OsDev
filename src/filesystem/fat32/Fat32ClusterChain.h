@@ -5,11 +5,11 @@
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_FAT32CLUSTERCHAIN_H_
-#define SRC_FILESYSTEM_FAT32CLUSTERCHAIN_H_
+#ifndef SRC_FILESYSTEM_FAT32_FAT32CLUSTERCHAIN_H_
+#define SRC_FILESYSTEM_FAT32_FAT32CLUSTERCHAIN_H_
 
-#include "Fat32Table.h"
 #include "Fat32Data.h"
+#include "Fat32Table.h"
 #include "KernelLog.h"
 
 namespace filesystem {
@@ -51,4 +51,4 @@ private:
 
 } /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_FAT32CLUSTERCHAIN_H_ */
+#endif /* SRC_FILESYSTEM_FAT32_FAT32CLUSTERCHAIN_H_ */

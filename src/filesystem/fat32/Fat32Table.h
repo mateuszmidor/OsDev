@@ -5,8 +5,8 @@
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_FAT32TABLE_H_
-#define SRC_FILESYSTEM_FAT32TABLE_H_
+#ifndef SRC_FILESYSTEM_FAT32_FAT32TABLE_H_
+#define SRC_FILESYSTEM_FAT32_FAT32TABLE_H_
 
 #include "AtaDriver.h"
 #include "KernelLog.h"
@@ -53,4 +53,4 @@ private:
 
 } /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_FAT32TABLE_H_ */
+#endif /* SRC_FILESYSTEM_FAT32_FAT32TABLE_H_ */

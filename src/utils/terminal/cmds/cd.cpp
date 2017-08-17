@@ -6,8 +6,8 @@
  */
 
 #include "cd.h"
-#include "kstd.h"
 #include "VolumeFat32.h"
+#include "kstd.h"
 #include "MassStorageMsDos.h"
 #include "DriverManager.h"
 

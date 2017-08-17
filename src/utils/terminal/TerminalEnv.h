@@ -8,9 +8,9 @@
 #ifndef SRC_UTILS_TERMINAL_TERMINALENV_H_
 #define SRC_UTILS_TERMINAL_TERMINALENV_H_
 
+#include "VolumeFat32.h"
 #include "kstd.h"
 #include "AtaDriver.h"
-#include "VolumeFat32.h"
 #include "KernelLog.h"
 #include "ScrollableScreenPrinter.h"
 

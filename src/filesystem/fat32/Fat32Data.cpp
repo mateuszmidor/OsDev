@@ -5,9 +5,10 @@
  * @author: Mateusz Midor
  */
 
-#include "Fat32Data.h"
 #include "kstd.h"
+#include "Fat32Data.h"
 #include "KernelLog.h"
+
 using namespace kstd;
 namespace filesystem {
 

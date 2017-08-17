@@ -6,7 +6,7 @@
  */
 
 #include "Fat32Demo.h"
-#include "VolumeFat32.h"
+
 #include "MassStorageMsDos.h"
 #include "KernelLog.h"
 #include "DriverManager.h"

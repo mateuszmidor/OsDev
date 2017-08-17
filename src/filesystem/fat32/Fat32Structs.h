@@ -5,8 +5,8 @@
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_FAT32STRUCTS_H_
-#define SRC_FILESYSTEM_FAT32STRUCTS_H_
+#ifndef SRC_FILESYSTEM_FAT32_FAT32STRUCTS_H_
+#define SRC_FILESYSTEM_FAT32_FAT32STRUCTS_H_
 
 #include "types.h"
 
@@ -116,4 +116,4 @@ struct DirectoryEntryFat32 {
 
 } // filesystem
 
-#endif /* SRC_FILESYSTEM_FAT32STRUCTS_H_ */
+#endif /* SRC_FILESYSTEM_FAT32_FAT32STRUCTS_H_ */

@@ -4,7 +4,7 @@ iso := build/os-$(arch).iso
 hdd := build/hdd.vdi
 
 GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding
-GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem -Isrc/hardware -Isrc/multitasking \
+GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem -Isrc/filesystem/fat32 -Isrc/hardware -Isrc/multitasking \
 			  -Isrc/utils -Isrc/utils/terminal
 
 linker_script := src/arch/$(arch)/linker.ld
@@ -18,6 +18,7 @@ c_source_files :=  $(wildcard src/*.cpp) \
                    $(wildcard src/drivers/*.cpp) \
                    $(wildcard src/cpuexceptions/*.cpp) \
                    $(wildcard src/filesystem/*.cpp) \
+                   $(wildcard src/filesystem/fat32/*.cpp) \
                    $(wildcard src/hardware/*.cpp) \
                    $(wildcard src/multitasking/*.cpp) \
                    $(wildcard src/utils/*.cpp) \

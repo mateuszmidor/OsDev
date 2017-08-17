@@ -5,16 +5,16 @@
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_FAT32ENTRY_H_
-#define SRC_FILESYSTEM_FAT32ENTRY_H_
+#ifndef SRC_FILESYSTEM_FAT32_FAT32ENTRY_H_
+#define SRC_FILESYSTEM_FAT32_FAT32ENTRY_H_
 
 #include <functional>
-#include "kstd.h"
-#include "KernelLog.h"
+#include "Fat32ClusterChain.h"
+#include "Fat32Data.h"
 #include "Fat32Structs.h"
 #include "Fat32Table.h"
-#include "Fat32Data.h"
-#include "Fat32ClusterChain.h"
+#include "kstd.h"
+#include "KernelLog.h"
 
 namespace filesystem {
 
@@ -98,4 +98,4 @@ private:
 
 } /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_FAT32ENTRY_H_ */
+#endif /* SRC_FILESYSTEM_FAT32_FAT32ENTRY_H_ */

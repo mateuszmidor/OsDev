@@ -5,11 +5,9 @@
  * @author: Mateusz Midor
  */
 
-#include <array>
-#include "VolumeFat32.h"
 #include "Fat32Utils.h"
+#include "VolumeFat32.h"
 
-using std::array;
 using namespace kstd;
 using namespace utils;
 namespace filesystem {

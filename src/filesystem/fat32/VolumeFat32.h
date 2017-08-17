@@ -146,15 +146,15 @@ WRITE FILE ENTRY
 */
 
 
-#ifndef SRC_FILESYSTEM_VOLUMEFAT32_H_
-#define SRC_FILESYSTEM_VOLUMEFAT32_H_
+#ifndef SRC_FILESYSTEM_FAT32_VOLUMEFAT32_H_
+#define SRC_FILESYSTEM_FAT32_VOLUMEFAT32_H_
 
 #include "KernelLog.h"
-#include "Fat32Table.h"
-#include "Fat32Data.h"
-#include "Fat32Entry.h"
 #include "kstd.h"
 #include "AtaDriver.h"
+#include "Fat32Data.h"
+#include "Fat32Entry.h"
+#include "Fat32Table.h"
 #include "UnixPath.h"
 
 namespace filesystem {
@@ -195,4 +195,4 @@ private:
 
 } /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_VOLUMEFAT32_H_ */
+#endif /* SRC_FILESYSTEM_FAT32_VOLUMEFAT32_H_ */
