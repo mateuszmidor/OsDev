@@ -102,8 +102,6 @@ void split_key_value(const string &kv, string &key, string &value, char separato
 long long str_to_long(const char* str);
 unsigned long long hex_to_long(const char* str);
 string rtrim(const u8 *in, u16 len);
-string extract_file_name(const string& filename);
-string extract_file_directory(const string& filename);
 
 
 template <class T1, class T2>

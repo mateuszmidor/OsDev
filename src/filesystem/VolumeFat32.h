@@ -155,6 +155,7 @@ WRITE FILE ENTRY
 #include "Fat32Entry.h"
 #include "kstd.h"
 #include "AtaDriver.h"
+#include "UnixPath.h"
 
 namespace filesystem {
 
@@ -171,14 +172,14 @@ public:
     u32 get_used_space_in_bytes() const;
     u32 get_cluster_size_in_bytes() const;
 
-    Fat32Entry get_entry(const kstd::string& unix_path) const;
-    Fat32Entry create_entry(const kstd::string& unix_path, bool directory) const;
-    bool delete_entry(const kstd::string& unix_path) const;
-    bool move_entry(const kstd::string& unix_path_from, const kstd::string& unix_path_to) const;
+    Fat32Entry get_entry(const UnixPath& unix_path) const;
+    Fat32Entry create_entry(const UnixPath& unix_path, bool is_directory) const;
+    bool delete_entry(const UnixPath& unix_path) const;
+    bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const;
 
 private:
     Fat32Entry get_root_dentry() const;
-    Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& filename) const;
+    Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& name) const;
     u32 attach_new_directory_cluster(Fat32Entry& parent_dir) const;
     void detach_directory_cluster(Fat32Entry& dentry, u32 cluster) const;
     bool is_no_more_entires_after(Fat32Entry& parent_dir, const Fat32Entry& entry) const;
