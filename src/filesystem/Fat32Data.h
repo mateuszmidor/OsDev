@@ -29,6 +29,7 @@ public:
     u32 write_data_cluster(u32 position, u32 cluster, const u8* data, u32 count) const;
     void clear_data_cluster(u32 cluster) const;
     bool is_cluster_beginning(u32 position) const;
+    u16 get_bytes_per_sector() const { return bytes_per_sector; }
     u8 get_sectors_per_cluster() const { return sectors_per_cluster; }
 
 private:

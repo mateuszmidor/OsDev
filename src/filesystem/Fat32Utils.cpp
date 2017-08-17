@@ -10,30 +10,6 @@
 using namespace kstd;
 namespace filesystem {
 
-/**
- *
- * @param   path Difficult path like /user/home/../data/./..
- * @return  Normalized path without starting slash
- */
-string Fat32Utils::normalize_path(const string& unix_path) {
-    auto segments = split_string<vector<string>>(unix_path, '/');
-    vector<string> out;
-
-    for (const auto& s : segments) {
-        if (s == "") {}
-        else if (s == ".") {}
-        else if (s == "..") {
-            if (out.empty())
-                return "";
-            else
-                out.pop_back();
-        } else
-            out.push_back(s);
-
-    }
-    return join_string("/", out);
-}
-
 string Fat32Utils::make_8_3_filename(const string& filename) {
     string name, ext;
 

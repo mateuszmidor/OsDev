@@ -42,6 +42,9 @@ u32 Fat32Table::get_used_space_in_clusters() const {
     return used_clusters;
 }
 
+/**
+ * @brief   Get next cluster in the chain or Fat32Table::CLUSTER_END_OF_CHAIN if end of chain reached
+ */
 u32 Fat32Table::get_next_cluster(u32 cluster) const {
     FatTableEntry fat_buffer[fat_entries_per_sector];
 

@@ -136,8 +136,10 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
     Fat32Entry out = empty_entry();
     out.name = name;
     out.is_dir = is_directory;
-    klog.format("VolumeFat32::create_entry: name is %\n", out.name);
-    parent_dir.alloc_entry_in_directory(out);
+    klog.format("VolumeFat32::create_entry: name is '%'\n", out.name);
+    if (!parent_dir.alloc_entry_in_directory(out))
+        return empty_entry();
+
     return out;
 }
 
@@ -175,7 +177,7 @@ bool VolumeFat32::delete_entry(const UnixPath& unix_path) const{
     }
 
     // for directory - ensure it is empty
-    if (e.is_dir && !e.data.empty()) {
+    if (e.is_dir && !e.data.is_empty()) {
         klog.format("VolumeFat32::delete_entry: can't delete non-empty directory: %\n", unix_path);
         return false;
     }
@@ -184,23 +186,7 @@ bool VolumeFat32::delete_entry(const UnixPath& unix_path) const{
     if (!e.is_dir)
         e.data.free();
 
-    // mark entry as nomore/unused depending on it's position in the directory
-    if (is_no_more_entires_after(parent_dir, e)) {
-        klog.format("VolumeFat32::delete_entry: no more entries after\n");
-        mark_entry_as_nomore(e);
-    }
-    else {
-        klog.format("VolumeFat32::delete_entry: set entry unused\n");
-        mark_entry_as_unused(e);
-    }
-
-    // if cluster where our entry was allocated contains no more files - remove it from the chain.
-    // but dont remove root first cluster!
-    u32 entry_cluster = fat_table.find_cluster_for_byte(e.parent_data.get_head(), e.parent_index * sizeof(DirectoryEntryFat32));
-    if (entry_cluster != vbr.root_cluster && is_directory_cluster_empty(parent_dir, entry_cluster))
-        detach_directory_cluster(parent_dir, entry_cluster);
-
-    return true;
+    return parent_dir.dealloc_entry_in_directory(e, vbr.root_cluster);
 }
 
 /**
@@ -244,8 +230,11 @@ bool VolumeFat32::move_entry(const UnixPath& unix_path_from, const UnixPath& uni
 
     // move data cluster chain from src to dst entry, clear src data
     std::swap(src.data, dst.data);
-    src.update_entry_info_in_parent_dir();
-    dst.update_entry_info_in_parent_dir();
+    if (!src.update_entry_info_in_parent_dir())
+        return false;
+
+    if (!dst.update_entry_info_in_parent_dir())
+        return false;
 
     // remove src entry
     if (!delete_entry(unix_path_from)) {
@@ -283,57 +272,9 @@ Fat32Entry VolumeFat32::get_entry_for_name(Fat32Entry& parent_dir, const string&
     return result;
 }
 
-void VolumeFat32::detach_directory_cluster(Fat32Entry& parent_dir, u32 cluster) const {
-    u32 old_head = parent_dir.data.get_head();
-    parent_dir.data.detach_cluster(cluster);
-    u32 new_head = parent_dir.data.get_head();
-    if (old_head != new_head)
-        parent_dir.update_entry_info_in_parent_dir();
-}
-
-/**
- * @brief   Check if entry is the last entry present in parent_dir
- * @return  True if there is no valid entries after our entry. False otherwise
- */
-bool VolumeFat32::is_no_more_entires_after(Fat32Entry& parent_dir, const Fat32Entry& entry) const {
-    bool entry_found = false;
-    auto on_entry = [&entry, &entry_found, this](const Fat32Entry& e) -> bool {
-        if (entry_found) {
-            klog.format("VolumeFat32::is_no_more_entires_after: Entry after deleted found: %, index %\n", e.name, e.parent_index);
-            return false; // entry after our entry found, stop enumeration
-        }
-
-        if (e.parent_index == entry.parent_index)
-            entry_found = true; // our entry found, mark this fact
-
-        return true;
-    };
-
-    return (parent_dir.enumerate_entries(on_entry) == EnumerateResult::ENUMERATION_FINISHED); // finished means no more entries after entry in parent_dir
-}
-
 Fat32Entry VolumeFat32::empty_entry() const {
     return Fat32Entry(fat_table, fat_data);
 }
 
-void VolumeFat32::mark_entry_as_nomore(Fat32Entry& e) const {
-    e.name = DirectoryEntryFat32::DIR_ENTRY_NO_MORE; // mark entry as last one
-    e.update_entry_info_in_parent_dir();
-}
-
-void VolumeFat32::mark_entry_as_unused(Fat32Entry& e) const {
-    e.name = DirectoryEntryFat32::DIR_ENTRY_UNUSED; // mark entry as deleted
-    e.update_entry_info_in_parent_dir();
-}
-
-bool VolumeFat32::is_directory_cluster_empty(const Fat32Entry& directory, u32 cluster) const {
-    auto on_entry = [](const Fat32Entry& e) -> bool {
-        if (e.name == "." || e.name == "..") // skip . and ..
-            return true;
-
-        return false; // file found, stop enumeration
-    };
-    return (directory.enumerate_directory_cluster(cluster, on_entry) != EnumerateResult::ENUMERATION_STOPPED);
-}
 
 } /* namespace filesystem */

@@ -28,13 +28,6 @@ Fat32ClusterChain& Fat32ClusterChain::operator=(const Fat32ClusterChain& other) 
 }
 
 /**
- * @brief   Is this cluster chain empty, meaning it contains no clusters?
- */
-bool Fat32ClusterChain::empty() const {
-    return head_cluster == Fat32Table::CLUSTER_UNUSED;
-}
-
-/**
  * @brief   Release all cluster chain elements, effectively making them free to use
  */
 void Fat32ClusterChain::free() {
@@ -53,6 +46,13 @@ void Fat32ClusterChain::resize(u32 new_size_in_bytes) {
     head_cluster = fat_table.resize_cluster_chain(head_cluster, new_size_in_bytes);
     tail_cluster = Fat32Table::CLUSTER_UNUSED;
     size = new_size_in_bytes;
+}
+
+/**
+ * @brief   Is this cluster chain empty, meaning it contains no clusters?
+ */
+bool Fat32ClusterChain::is_empty() const {
+    return head_cluster == Fat32Table::CLUSTER_UNUSED;
 }
 
 /**
@@ -83,12 +83,17 @@ u32 Fat32ClusterChain::get_position() const {
     return current_byte;
 }
 
-void Fat32ClusterChain::seek(u32 new_position) {
+bool Fat32ClusterChain::seek(u32 new_position) {
+    if (new_position > size)
+        return false;
+
     if (new_position == current_byte)
-        return;
+        return true;
 
     current_cluster = fat_table.find_cluster_for_byte(head_cluster, new_position);
     current_byte = new_position;
+
+    return true;
 }
 
 /**
@@ -148,7 +153,7 @@ bool Fat32ClusterChain::detach_cluster(u32 cluster) {
  * @return  Number of bytes actually read
  */
 u32 Fat32ClusterChain::read(void* data, u32 count) {
-    if (empty()) {
+    if (is_empty()) {
         klog.format("Fat32ClusterChain::read: empty cluster chain\n");
         return 0;
     }
@@ -213,7 +218,6 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
     u32 position_in_cluster = current_byte;
     u32 cluster = get_cluster_for_write();
 
-    klog.format("Fat32ClusterChain::write: cluster %, byte %\n", cluster, position_in_cluster);
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     const u8* src = (const u8*)data;
     while (fat_table.is_allocated_cluster(cluster)) {

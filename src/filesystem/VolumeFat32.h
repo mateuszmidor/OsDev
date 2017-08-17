@@ -180,24 +180,17 @@ public:
 private:
     Fat32Entry get_root_dentry() const;
     Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& name) const;
-    u32 attach_new_directory_cluster(Fat32Entry& parent_dir) const;
-    void detach_directory_cluster(Fat32Entry& dentry, u32 cluster) const;
-    bool is_no_more_entires_after(Fat32Entry& parent_dir, const Fat32Entry& entry) const;
     Fat32Entry empty_entry() const;
 
-    drivers::AtaDevice& hdd;
-    VolumeBootRecordFat32 vbr;
-    Fat32Table fat_table;
-    Fat32Data fat_data;
-    utils::KernelLog& klog;
+    utils::KernelLog&       klog;
+    drivers::AtaDevice&     hdd;
+    VolumeBootRecordFat32   vbr;
+    Fat32Table              fat_table;
+    Fat32Data               fat_data;
 
     bool bootable;
     u32 partition_offset_in_sectors;
     u32 partition_size_in_sectors;
-
-    void mark_entry_as_nomore(Fat32Entry& e) const;
-    void mark_entry_as_unused(Fat32Entry& e) const;
-    bool is_directory_cluster_empty(const Fat32Entry& directory, u32 cluster) const;
 };
 
 } /* namespace filesystem */
