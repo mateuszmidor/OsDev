@@ -34,6 +34,9 @@ bool Fat32ClusterChain::empty() const {
     return head_cluster == Fat32Table::CLUSTER_UNUSED;
 }
 
+/**
+ * @brief   Release all cluster chain elements, effectively making them free to use
+ */
 void Fat32ClusterChain::free() {
     resize(0);
     current_byte = 0;
