@@ -42,18 +42,13 @@ void echo::run() {
     for (u32 i = 0; i < count; i++) {
         number_str += "#";
     }
+
+
     env->klog->format("echo: writing % bytes of data\n", number_str.length());
     e.write(number_str.data(), number_str.length());
+
     number_str = "!!!";
+    env->klog->format("echo: writing '!!!' at the end\n", number_str.length());
     e.write(number_str.data(), number_str.length());
-
-//   number_str.reserve(256*4+1);    // 1024 chars
-//    for (u32 i = 0; i < 256; i++) {
-//        number_str += kstd::to_str(100 + i) + " ";
-//    }
-//
-//    for (u32 i = 0; i < 128 * 4; i++)
-//        v->write_file_entry(e, number_str.data(), number_str.length());
-
 }
 } /* namespace cmds */

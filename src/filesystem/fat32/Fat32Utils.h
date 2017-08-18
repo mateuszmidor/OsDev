@@ -14,6 +14,7 @@ namespace filesystem {
 
 class Fat32Utils {
 public:
+    static void make_8_3_filename(const kstd::string& filename, kstd::string& name, kstd::string& ext);
     static kstd::string make_8_3_filename(const kstd::string& filename);
     static void make_8_3_space_padded_filename(const kstd::string& filename, kstd::string& name, kstd::string& ext);
 };

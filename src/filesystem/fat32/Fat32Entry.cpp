@@ -12,11 +12,13 @@ using namespace kstd;
 using namespace utils;
 namespace filesystem {
 
-DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32(const Fat32Entry& e) {
+DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32(const Fat32Entry& e) const {
     DirectoryEntryFat32 result;
     string name, ext;
 
     Fat32Utils::make_8_3_space_padded_filename(e.name, name, ext);
+
+    klog.format("Fat32Entry::make_directory_entry_fat32: name '%', ext '%'\n", name, ext);
     memcpy(result.name, name.data(), 8);
     memcpy(result.ext, ext.data(), 3);
     result.a_time = 0;
@@ -127,7 +129,7 @@ u32 Fat32Entry::write(const void* data, u32 count) {
     u32 old_size = get_size();
     u32 total_bytes_written = this->data.write(data, count);
     if (old_size != get_size())
-        if (!update_entry_info_in_parent_dir())
+        if (!update_entry_info_in_parent_dir()) // should this go in destructor maybe?
             return 0;
 
     return total_bytes_written;
@@ -262,6 +264,17 @@ EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
         }
     }
     return EnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
+}
+
+bool Fat32Entry::is_directory_empty() {
+    auto on_entry = [&](const Fat32Entry& e) -> bool {
+        if (e.name == "." || e.name == "..")
+            return true;    // "." and ".." entries dont count. continue
+        else
+            return false;   // entry found, stop
+    };
+
+    return enumerate_entries(on_entry) != EnumerateResult::ENUMERATION_STOPPED;
 }
 
 /**
@@ -426,7 +439,7 @@ bool Fat32Entry::is_no_more_entires_after(const Fat32Entry& entry) {
 }
 
 bool Fat32Entry::mark_entry_as_nomore(Fat32Entry& e) const {
-    e.name = DirectoryEntryFat32::DIR_ENTRY_NO_MORE; // mark entry as last one
+    e.name = DirectoryEntryFat32::DIR_ENTRY_NO_MORE;
     return e.update_entry_info_in_parent_dir();
 }
 
@@ -444,7 +457,7 @@ bool Fat32Entry::mark_next_entry_as_nomore(const Fat32Entry& e) const {
 }
 
 bool Fat32Entry::mark_entry_as_unused(Fat32Entry& e) const {
-    e.name = DirectoryEntryFat32::DIR_ENTRY_UNUSED; // mark entry as deleted
+    e.name = DirectoryEntryFat32::DIR_ENTRY_UNUSED;
     return e.update_entry_info_in_parent_dir();
 }
 

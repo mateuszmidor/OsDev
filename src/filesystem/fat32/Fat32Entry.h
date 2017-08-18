@@ -37,7 +37,7 @@ using OnEntryFound = std::function<bool(Fat32Entry& e)>;
  */
 class Fat32Entry {
 public:
-    static DirectoryEntryFat32 make_directory_entry_fat32(const Fat32Entry& e);
+    DirectoryEntryFat32 make_directory_entry_fat32(const Fat32Entry& e) const;
 
     // [common interface]
     Fat32Entry(const Fat32Entry& other) = default;
@@ -56,6 +56,7 @@ public:
 
     // [directory interface]
     EnumerateResult enumerate_entries(const OnEntryFound& on_entry);
+    bool is_directory_empty();
 
 private:
     friend class VolumeFat32;   // only VolumeFat32 can instantiate Fat32Entry

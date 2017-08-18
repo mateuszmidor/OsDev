@@ -138,7 +138,26 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
     if (!parent_dir.alloc_entry_in_directory(out))
         return empty_entry();
 
+    // if directory - alloc the required "." and ".." entries
+    if (is_directory)
+        alloc_dot_dot_entries(out);
+
     return out;
+}
+
+/**
+ * @brief   Fat32 requires each directory except for the root to start with "." and ".." directory entries
+ */
+void VolumeFat32::alloc_dot_dot_entries(Fat32Entry& out) const {
+    Fat32Entry dot = empty_entry();
+    dot.name = "..";        // last dot is treated as name - extension separator so we loose it ending up with "."
+    dot.is_dir = true;
+    out.alloc_entry_in_directory(dot);
+
+    Fat32Entry dotdot = empty_entry();
+    dotdot.name = "...";    // last dot is treated as name - extension separator so we loose it ending up with ".."
+    dotdot.is_dir = true;
+    out.alloc_entry_in_directory(dotdot);
 }
 
 /**
@@ -174,15 +193,14 @@ bool VolumeFat32::delete_entry(const UnixPath& unix_path) const{
         return false;
     }
 
-    // for directory - ensure it is empty
-    if (e.is_dir && !e.data.is_empty()) {
+    // for directory entry - ensure it is empty
+    if (e.is_dir && !e.is_directory_empty()) {
         klog.format("VolumeFat32::delete_entry: can't delete non-empty directory: %\n", unix_path);
         return false;
     }
 
-    // for file - release its data
-    if (!e.is_dir)
-        e.data.free();
+    // release entry  data
+    e.data.free();
 
     return parent_dir.dealloc_entry_in_directory(e, vbr.root_cluster);
 }

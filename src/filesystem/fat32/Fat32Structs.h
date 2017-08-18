@@ -99,9 +99,7 @@ struct DirectoryEntryFat32 {
      * @brief   Is this a meta entry describing empty space (eg. space after deleted file/directory)?
      */
     bool is_unused() const {
-        return (name[0] == DIR_ENTRY_UNUSED) ||
-               (name[0] == '.' && name[1] == ' ') ||                    // treat dot folder as unused (why waste space for it?)
-               (name[0] == '.' && name[1] == '.' && name[2] == ' ');    // treat dot-dot folder as unused (why waste space for it?)
+        return (name[0] == DIR_ENTRY_UNUSED);
     }
 
     /**

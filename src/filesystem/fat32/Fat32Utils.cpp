@@ -10,9 +10,7 @@
 using namespace kstd;
 namespace filesystem {
 
-string Fat32Utils::make_8_3_filename(const string& filename) {
-    string name, ext;
-
+void Fat32Utils::make_8_3_filename(const kstd::string& filename, kstd::string& name, kstd::string& ext) {
     // split filename -> name:ext on '.', or use empty ext
     if (filename.rfind('.') == string::npos) {
         name = filename;
@@ -34,20 +32,16 @@ string Fat32Utils::make_8_3_filename(const string& filename) {
     // make the name and ext upper case
     name = to_upper_case(name);
     ext = to_upper_case(ext);
+}
 
+string Fat32Utils::make_8_3_filename(const string& filename) {
+    string name, ext;
+    make_8_3_filename(filename, name, ext);
     return ext.empty() ? name : name + "." + ext;
 }
 
 void Fat32Utils::make_8_3_space_padded_filename(const string& filename, string& name, string& ext)  {
-    string name_8_3 = make_8_3_filename(filename);
-
-    // split filename -> name:ext on '.', or use empty ext
-    if (name_8_3.rfind('.') == string::npos) {
-        name = name_8_3;
-        ext = "";
-    } else
-        split_key_value(name_8_3, name, ext, '.');
-
+    make_8_3_filename(filename, name, ext);
 
     // pad name with space up to 8 characters length
     for (u32 i = name.length(); i < 8; i++)
