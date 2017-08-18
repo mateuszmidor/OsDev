@@ -18,7 +18,7 @@ DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32(const Fat32Entry& e) 
 
     Fat32Utils::make_8_3_space_padded_filename(e.name, name, ext);
 
-    klog.format("Fat32Entry::make_directory_entry_fat32: name '%', ext '%'\n", name, ext);
+//    klog.format("Fat32Entry::make_directory_entry_fat32: name '%', ext '%'\n", name, ext);
     memcpy(result.name, name.data(), 8);
     memcpy(result.ext, ext.data(), 3);
     result.a_time = 0;
@@ -480,6 +480,29 @@ bool Fat32Entry::is_directory_cluster_empty(u32 cluster) {
 
 u8 Fat32Entry::get_entries_per_sector() const {
     return fat_data.get_bytes_per_sector() / sizeof(DirectoryEntryFat32);
+}
+
+/**
+ * @brief   Fat32 requires each directory except for the root to start with "." and ".." directory entries
+ */
+void Fat32Entry::alloc_dot_dot_entries() {
+    // attach and zero the directory first cluster otherwise linux displays garbage from the cluster despite NO_MORE marker
+    data.attach_cluster_and_zero_it();
+
+    // alloc dot at index 0
+    Fat32Entry dot(fat_table, fat_data);
+    dot.name = "..";        // last dot is treated as name - extension separator so we loose it ending up with "."
+    dot.is_dir = true;
+    alloc_entry_in_directory_at_index(0, dot);
+
+    // alloc dotd0t at index 1
+    Fat32Entry dotdot(fat_table, fat_data);
+    dotdot.name = "...";    // last dot is treated as name - extension separator so we loose it ending up with ".."
+    dotdot.is_dir = true;
+    alloc_entry_in_directory_at_index(1, dotdot);
+
+    // update directory data as it has changed
+    update_entry_info_in_parent_dir();
 }
 
 /**

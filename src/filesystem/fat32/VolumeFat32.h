@@ -178,7 +178,7 @@ public:
     bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const;
 
 private:
-    void alloc_dot_dot_entries(Fat32Entry& out) const;
+    bool get_free_name_8_3(Fat32Entry& parent, const kstd::string& full_name, kstd::string& name_8_3) const;
     Fat32Entry get_root_dentry() const;
     Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& name) const;
     Fat32Entry empty_entry() const;

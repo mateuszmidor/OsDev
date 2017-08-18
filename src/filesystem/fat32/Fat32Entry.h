@@ -82,6 +82,7 @@ private:
     bool detach_directory_cluster(u32 cluster);
     bool is_directory_cluster_empty(u32 cluster);
     u8 get_entries_per_sector() const;
+    void alloc_dot_dot_entries();
 
     utils::KernelLog&   klog;
     const Fat32Table&   fat_table;

@@ -122,17 +122,16 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
         return empty_entry();
     }
 
-    // check if entry already exists. We are using 8.3 names until support for long names is implemented :)
-    string name_8_3 = Fat32Utils::make_8_3_filename(name);
-    Fat32Entry tmp = get_entry_for_name(parent_dir, name_8_3);
-    if (tmp) {
+    // try get valid 8.3 name that is not in use yet. We are using 8.3 names until support for long names is implemented :)
+    string name_8_3;
+    if (!get_free_name_8_3(parent_dir, name, name_8_3)) {
         klog.format("VolumeFat32::create_entry: Entry already exists: %(full: %)\n", name_8_3, unix_path);
         return empty_entry();
     }
 
     // allocate entry in parent_dir
     Fat32Entry out = empty_entry();
-    out.name = name;
+    out.name = name_8_3;
     out.is_dir = is_directory;
     klog.format("VolumeFat32::create_entry: name is '%'\n", out.name);
     if (!parent_dir.alloc_entry_in_directory(out))
@@ -140,24 +139,44 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
 
     // if directory - alloc the required "." and ".." entries
     if (is_directory)
-        alloc_dot_dot_entries(out);
+        out.alloc_dot_dot_entries();
 
     return out;
 }
 
 /**
- * @brief   Fat32 requires each directory except for the root to start with "." and ".." directory entries
+ * @brief   Get a valid, unique 8.3 filename
+ * @param   parent Folder where the name must be unique
+ * @param   full_name Original name
+ * @param   name_8_3 Result
+ * @return  True if successfully generated unique 8_3 filename, False otherwise
  */
-void VolumeFat32::alloc_dot_dot_entries(Fat32Entry& out) const {
-    Fat32Entry dot = empty_entry();
-    dot.name = "..";        // last dot is treated as name - extension separator so we loose it ending up with "."
-    dot.is_dir = true;
-    out.alloc_entry_in_directory(dot);
+bool VolumeFat32::get_free_name_8_3(Fat32Entry& parent, const string& full_name, string& name_8_3) const {
+    // case 1. full_name fits in 8_3 limits
+    if (Fat32Utils::fits_in_8_3(full_name)) {
+        klog.format("VolumeFat32::get_free_name_8_3: name fits in 8_3\n");
 
-    Fat32Entry dotdot = empty_entry();
-    dotdot.name = "...";    // last dot is treated as name - extension separator so we loose it ending up with ".."
-    dotdot.is_dir = true;
-    out.alloc_entry_in_directory(dotdot);
+        // check if entry with such name exists
+        name_8_3 = Fat32Utils::make_8_3_filename(full_name);
+        if (get_entry_for_name(parent, name_8_3)) {
+            klog.format("VolumeFat32::get_free_name_8_3: but such file already exists\n");
+            return false;
+        }
+        klog.format("VolumeFat32::get_free_name_8_3: and no such file exists yet\n");
+        return true;
+    }
+
+    // case 2. full_name exceeds 8_3 limits. Need generate name~x.ext version
+    klog.format("VolumeFat32::get_free_name_8_3: name doesnt fit in 8_3\n");
+    for (u8 i = 1; i < 255; i++) {
+        name_8_3 = Fat32Utils::make_8_3_filename(full_name, i);
+        if (!get_entry_for_name(parent, name_8_3)) {
+            klog.format("VolumeFat32::get_free_name_8_3: generated name %\n", name_8_3);
+            return true;
+        }
+    }
+    klog.format("VolumeFat32::get_free_name_8_3: couldnt generate free name\n");
+    return false;
 }
 
 /**
