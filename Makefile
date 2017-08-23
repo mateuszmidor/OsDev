@@ -3,7 +3,7 @@ kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 hdd := build/hdd.vdi
 
-GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding
+GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
 GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem -Isrc/filesystem/fat32 -Isrc/hardware -Isrc/multitasking \
 			  -Isrc/utils -Isrc/utils/terminal
 
@@ -40,10 +40,10 @@ install: $(kernel)
 	sudo cp $< /boot/PhobOS.bin
 	
 run: $(iso) $(hdd)
-	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso)  # pcnet is AMD am79c973 network chip
+	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso) -d int -no-reboot # pcnet is AMD am79c973 network chip
 
-debug: $(iso) $(hdd)
-	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso) -d int -no-reboot
+rungdb: $(iso) $(hdd)	
+	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso) -s -S
 	
 iso: $(iso)
 

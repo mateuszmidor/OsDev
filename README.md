@@ -13,8 +13,13 @@ sudo apt install qemu-system-x86
 # Run it
 set your emulator to network chip AMD am79c973 (default for VBox, for QEMU: -net nic,model=pcnet)
 make run
-make debug
 
+# Debug it
+make rungdb
+gdb -symbols=build/kernel-x86_64.bin -ex "set arch i386:x86-64:intel" -ex "target remote localhost:1234"
+(gdb) break kmain
+(gdb) continue
+(gdb) ^a + ^x
 
 # Tools
 objdump -f - entry point logical address
