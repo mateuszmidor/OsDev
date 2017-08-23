@@ -37,7 +37,7 @@ using OnEntryFound = std::function<bool(Fat32Entry& e)>;
  */
 class Fat32Entry {
 public:
-    DirectoryEntryFat32 make_directory_entry_fat32(const Fat32Entry& e) const;
+    DirectoryEntryFat32 make_directory_entry_fat32() const;
 
     // [common interface]
     Fat32Entry(const Fat32Entry& other) = default;
@@ -59,7 +59,7 @@ public:
     bool is_directory_empty();
 
 private:
-    friend class VolumeFat32;   // only VolumeFat32 can instantiate Fat32Entry
+    friend class VolumeFat32;   // only VolumeFat32 can instantiate Fat32Entry, so entry knows where it belongs to
 
     // default constructor is private so Fat32Entry instance can only be obtained from VolumeFat32
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data);

@@ -57,6 +57,7 @@ $(iso): $(kernel) $(grub_cfg)
 
 # copy beforehand-prepared hdd drive image
 # to prepare hdd.vdi: qemu-img create -f vdi hdd.vdi 64M, then create DOS partition table and 2 FAT32 partitions
+hdd: $(hdd)
 $(hdd):
 	@cp media/hdd.vdi $(hdd)
 	

@@ -20,3 +20,4 @@ make debug
 objdump -f - entry point logical address
 objdump -h - elf headers
 grub-file --is-x86-multiboot2 build/kernel-x86_64.bin; echo $? - check if kernel is multiboot2 compliant, (0 means yes)
+make hdd && sudo ./remount_hdd.sh - mount build/hdd.vdi partitions as "p1" and "p2" in current directory

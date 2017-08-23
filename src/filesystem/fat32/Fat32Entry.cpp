@@ -12,10 +12,11 @@ using namespace kstd;
 using namespace utils;
 namespace filesystem {
 
-DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32(const Fat32Entry& e) const {
+DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32() const {
     DirectoryEntryFat32 result;
     string name, ext;
 
+    const Fat32Entry& e = *this;
     Fat32Utils::make_8_3_space_padded_filename(e.name, name, ext);
 
 //    klog.format("Fat32Entry::make_directory_entry_fat32: name '%', ext '%'\n", name, ext);
@@ -281,7 +282,7 @@ bool Fat32Entry::is_directory_empty() {
  * @brief   Update entry meta data in parent directory, eg it's name, size, attributes
  */
 bool Fat32Entry::update_entry_info_in_parent_dir() {
-    DirectoryEntryFat32 dentry = make_directory_entry_fat32(*this);
+    DirectoryEntryFat32 dentry = make_directory_entry_fat32();
     u32 position_in_parent = parent_index * sizeof(DirectoryEntryFat32);
     parent_data.seek(position_in_parent);
     return parent_data.write(&dentry, sizeof(dentry)) == sizeof(dentry);
@@ -387,7 +388,7 @@ bool Fat32Entry::alloc_entry_in_directory(Fat32Entry& out) {
 bool Fat32Entry::alloc_entry_in_directory_at_index(u32 index_in_dir, Fat32Entry& out) {
     u32 position_in_parent = index_in_dir * sizeof(DirectoryEntryFat32);
     data.seek(position_in_parent);
-    DirectoryEntryFat32 dentry = make_directory_entry_fat32(out);
+    DirectoryEntryFat32 dentry = out.make_directory_entry_fat32();
     bool result = data.write(&dentry, sizeof(dentry)) == sizeof(dentry);
 
     // assignment must go after write since write can update "data"
@@ -486,7 +487,7 @@ u8 Fat32Entry::get_entries_per_sector() const {
  * @brief   Fat32 requires each directory except for the root to start with "." and ".." directory entries
  */
 void Fat32Entry::alloc_dot_dot_entries() {
-    // attach and zero the directory first cluster otherwise linux displays garbage from the cluster despite NO_MORE marker
+    // attach and zero the directory head cluster otherwise linux displays garbage from the cluster despite NO_MORE marker
     data.attach_cluster_and_zero_it();
 
     // alloc dot at index 0
@@ -501,7 +502,7 @@ void Fat32Entry::alloc_dot_dot_entries() {
     dotdot.is_dir = true;
     alloc_entry_in_directory_at_index(1, dotdot);
 
-    // update directory data as it has changed
+    // update directory data as its head has changed
     update_entry_info_in_parent_dir();
 }
 
