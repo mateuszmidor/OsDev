@@ -43,6 +43,7 @@ using namespace utils;
 using namespace demos;
 
 Gdt gdt;
+PCIController pcic;
 KernelLog& klog                     = KernelLog::instance();
 TaskManager& task_manager           = TaskManager::instance();
 DriverManager& driver_manager       = DriverManager::instance();
@@ -75,60 +76,50 @@ void task_init(u64 unused) {
  * Kernel entry point
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
-    // run constructors of global objects. This could be run from long_mode_init.S
+    // 1. run constructors of global objects. This could be run from long_mode_init.S
     GlobalConstructorsRunner::run();
 
-    // install new Global Descriptor Table
+    // 2. install new Global Descriptor Table that will allow user-mode
     gdt.reinstall_gdt();
 
-    // 1. prepare drivers
+    // 3. prepare drivers
     pit->set_channel0_hz(100);
     pit->set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
 
-    // 2. install drivers
-    PCIController pcic;
+    // 4. install drivers
     pcic.install_drivers_into(driver_manager);  // if VGA device is present -> VgaDriver will be installed here
     driver_manager.install_driver(keyboard);
     driver_manager.install_driver(mouse);
     driver_manager.install_driver(pit);
     driver_manager.install_driver(ata_primary_bus);
 
-    // 3. install exceptions
+    // 5. install exceptions
     exception_manager.install_handler(make_shared<TaskExitHandler>());
     exception_manager.install_handler(make_shared<PageFaultHandler>());
 
-    // 4. configure Interrupt Descriptor Table
+    // 6. configure interrupt manager
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
 
-    // 5. prepare vga text mode
+    // 7. configure vga text mode
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
         vga_drv->set_text_mode_90_30();
 
-    // 6. ready to run custom code
-
-    // inform kernel is ready
+    // 8. SETUP DONE
     klog.format("KERNEL SETUP DONE.\n");
 
-    // print CPU info
-    CpuInfo cpu_info;
-    cpu_info.print_to_klog();
-    klog.format("\n");
-
     // print Multiboot2 info
-    Multiboot2 mb2(multiboot2_info_ptr);
-    mb2.print_to_klog();
-    klog.format("\n");
-
-    // print PCI devics
-    pcic.drivers_to_klog();
+//    Multiboot2 mb2(multiboot2_info_ptr);
+//    mb2.print_to_klog();
+//    klog.format("\n");
 
 
-    // start multitasking
+
+    // 9. start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));
 
     
-    // wait until timer interrupt switches execution to init task
+    // 10. wait until timer interrupt switches execution to init task
     Task::idle();
 }

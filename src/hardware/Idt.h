@@ -20,9 +20,9 @@ namespace hardware {
 struct IdtEntryOptions {
     u16 interrupt_stack_table_index : 3;    // 0 for DONT CHANGE THE STACKS
     u16 reserved                    : 5;    // always 0
-    u16 interrupts_enabled          : 1;    // better be 0 for now
-    u16 always_1                    : 3;    // always 0b111
-    u16 always_0                    : 1;    // always 0
+    u16 interrupts_enabled          : 1;    // should CPU disable interrupts during this interrupt handling?
+    u16 always_1                    : 3;    // always 0b111 for 80386 32 (64?) bit interrupt gate
+    u16 always_0                    : 1;    // Storage Segment. Set to 0 for interrupt and trap gates.
     u16 min_privilege_level         : 2;    // 3 for user space
     u16 present                     : 1;    // 1 for true
 
@@ -40,6 +40,7 @@ struct IdtEntryOptions {
 
 /**
  * Interrupt Descriptor Table Entry
+ * See: http://wiki.osdev.org/Interrupt_Descriptor_Table
  */
 struct IdtEntry {
     u16 pointer_low;
