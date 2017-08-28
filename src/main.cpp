@@ -75,11 +75,11 @@ void task_init(u64 unused) {
  * Kernel entry point
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
-    // install new Global Descriptor Table
-    gdt.reinstall_gdt();
-
     // run constructors of global objects. This could be run from long_mode_init.S
     GlobalConstructorsRunner::run();
+
+    // install new Global Descriptor Table
+    gdt.reinstall_gdt();
 
     // 1. prepare drivers
     pit->set_channel0_hz(100);

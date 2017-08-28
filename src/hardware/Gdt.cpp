@@ -9,7 +9,7 @@
 
 namespace hardware {
 
-std::array<GdtEntry, Gates::GDT_MAX> Gdt::gdt;
+std::array<GdtEntry, Gate::GDT_MAX> Gdt::gdt;
 
 /**
  * @brief   Replace current Global Descriptor Table with a new, ready for user-mode one
@@ -20,9 +20,9 @@ void Gdt::reinstall_gdt() {
 }
 
 void Gdt::setup_global_descriptor_table() {
-    gdt[Gates::GDT_NULL] = make_entry(0, 0, 0);                     // NULL descriptor, obligatory in GDT at index 0
-    gdt[Gates::GDT_USER_CODE] = make_entry(0x0, 0xFFFFFFFF, 3);     // EXECUTABLE(43) | ALWAYS1(44) | USERMODE(45,46) | PRESENT(47) | LONG_MODE(53)
-    gdt[Gates::GDT_KERNEL_CODE] = make_entry(0x0, 0xFFFFFFFF, 0);   // EXECUTABLE(43) | ALWAYS1(44) | PRESENT(47) | LONG_MODE(53)
+    gdt[Gate::GDT_NULL] = make_entry(0, 0, 0);                     // NULL descriptor, obligatory in GDT at index 0
+    gdt[Gate::GDT_USER_CODE] = make_entry(0x0, 0xFFFFFFFF, 3);     // EXECUTABLE(43) | ALWAYS1(44) | USERMODE(45,46) | PRESENT(47) | LONG_MODE(53)
+    gdt[Gate::GDT_KERNEL_CODE] = make_entry(0x0, 0xFFFFFFFF, 0);   // EXECUTABLE(43) | ALWAYS1(44) | PRESENT(47) | LONG_MODE(53)
 }
 
 void Gdt::install_global_descriptor_table() {
@@ -33,9 +33,9 @@ void Gdt::install_global_descriptor_table() {
     asm (
         "lgdt %0 \n\t"
         "push %1 \n\t"
-        "push $reinstall2 \n\t"
+        "push $jump_to_new_gdt \n\t"
         "lretq \n\t"
-        "reinstall2: \n\t"
+        "jump_to_new_gdt: \n\t"
         : // no output
         : "m" (gdt_size_address), "g" (get_kernel_code_segment_selector())
     );
@@ -57,7 +57,7 @@ GdtEntry Gdt::make_entry(u32 base, u32 limit, u32 privilege) {
     g.available = 1;
     g.long_mode = 1;
     g.protected_mode = 0;
-    g.gran = 0;
+    g.granularity = 0;
     g.base_high = (base >> 24) & 0xFF;
 
     return g;
