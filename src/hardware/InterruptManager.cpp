@@ -179,7 +179,7 @@ void InterruptManager::setup_programmable_interrupt_controllers() {
 
 void InterruptManager::install_interrupt_descriptor_table() {
     IdtSizeAddress idt_size_address;
-    idt_size_address.size_minus_1 = sizeof(idt) - 1;
+    idt_size_address.size_minus_1 = sizeof(IdtEntry) * idt.size() - 1;
     idt_size_address.address = (u64) (idt.data());
 
     asm("lidt %0" : : "m" (idt_size_address));
