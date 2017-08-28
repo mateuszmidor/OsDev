@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <functional>
+#include "kstd.h"
 #include "Port.h"
 #include "DeviceDriver.h"
 #include "DriverManager.h"
@@ -54,7 +55,7 @@ public:
     u32 read(u16 bus, u16 device, u16 function, u32 register_offset);
     void write(u16 bus, u16 device, u16 function, u32 register_offset, u32 value);
     bool device_has_functions(u16 bus, u16 device);
-    void drivers_to_klog();
+    kstd::string drivers_to_string();
     void enumerate_device_drivers(OnDeviceDriver on_driver);
     void install_drivers_into(drivers::DriverManager& driver_manager);
     PCIDeviceDescriptor get_device_descriptor(u16 bus, u16 device, u16 function);

@@ -30,6 +30,7 @@
 #include "cmds/tail.h"
 #include "cmds/trunc.h"
 #include "cmds/testfat32.h"
+#include "cmds/lspci.h"
 #include <algorithm>
 #include <memory>
 
@@ -64,6 +65,7 @@ Terminal::Terminal(u64 arg) :
     cmd_collection.install("tail", TaskFactory::make<cmds::tail>("tail", (u64)&env));
     cmd_collection.install("trunc", TaskFactory::make<cmds::trunc>("trunc", (u64)&env));
     cmd_collection.install("test_fat32", TaskFactory::make<cmds::test_fat32>("test_fat32", (u64)&env));
+    cmd_collection.install("lspci", TaskFactory::make<cmds::lspci>("lspci", (u64)&env));
 }
 
 void Terminal::run() {
