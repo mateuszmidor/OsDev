@@ -8,9 +8,18 @@
 #ifndef SRC_HARDWARE_GDT_H_
 #define SRC_HARDWARE_GDT_H_
 
+#include <array>
 #include "types.h"
 
 namespace hardware {
+
+
+enum Gates : u16 {
+    GDT_NULL = 0,
+    GDT_USER_CODE = 1,
+    GDT_KERNEL_CODE = 2,
+    GDT_MAX
+};
 
 // A struct describing a Task State Segment.
 struct tss_entry_struct
@@ -83,9 +92,17 @@ struct GdtSizeAddress {
 class Gdt {
 public:
     void reinstall_gdt();
+    static u64 get_null_segment_selector() { return gate_to_segment_selector(Gates::GDT_NULL); };
+    static u64 get_kernel_code_segment_selector() { return gate_to_segment_selector(Gates::GDT_KERNEL_CODE); };
+    static u64 get_user_code_segment_selector() { return gate_to_segment_selector(Gates::GDT_USER_CODE); };
 
 private:
-    void set_gate(u32 num, u32 base, u32 limit, u32 privilege);
+    void setup_global_descriptor_table();
+    void install_global_descriptor_table();
+    GdtEntry make_entry(u32 base, u32 limit, u32 privilege);
+    static u32 gate_to_segment_selector(u8 gate_num) { return gate_num * sizeof(GdtEntry); }
+
+    static std::array<GdtEntry, Gates::GDT_MAX> gdt;
 };
 
 } /* namespace hardware */

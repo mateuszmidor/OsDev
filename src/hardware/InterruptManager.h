@@ -90,7 +90,7 @@ private:
     void ack_interrupt_handled(u8 interrupt_no);
     void config_interrupts();
     void setup_interrupt_descriptor_table();
-    IdtEntry make_entry(u64 pointer, u16 code_segment_selector = 8);
+    IdtEntry make_entry(u64 pointer);
     void setup_programmable_interrupt_controllers();
     void install_interrupt_descriptor_table();
 

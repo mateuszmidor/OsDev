@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "Gdt.h"
 #include "CpuState.h"
 
 namespace hardware {
@@ -32,11 +33,11 @@ CpuState::CpuState(u64 rip, u64 rsp, u64 task_arg) {
     r14 = 0;
     r15 = 0;
 
-    error_code = 0;         // this is returned from CPU exceptions that come with error_code, otherwise just 0
-    this->rip = rip;        // this is return address for iretq instruction in interrupt handler in interrupts.S
-    cs = 8;                 // for long mode we have only null segment(gdt offset 0) and code segment(gdt offset 8)
-    rflags = 0x202;         // 1000000010; INTERRUPTS | BIT_1 (always set)
-    this->rsp = rsp;
-    ss = 0;
+    error_code  = 0;                                        // this is returned from CPU exceptions that come with error_code, otherwise just 0
+    this->rip   = rip;                                      // this is return address for iretq instruction in interrupt handler in interrupts.S
+    cs          = Gdt::get_kernel_code_segment_selector();  // target code segment selector in GDT
+    rflags      = 0x202;                                    // 1000000010; INTERRUPTS | BIT_1 (always set)
+    this->rsp   = rsp;                                      // target stack pointer
+    ss          = Gdt::get_null_segment_selector();         // in long mode we use null selector for all segments expect for code
 }
 } /* namespace cpu */

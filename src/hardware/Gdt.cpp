@@ -5,43 +5,44 @@
  * @author: Mateusz Midor
  */
 
-#include <array>
 #include "Gdt.h"
 
 namespace hardware {
 
-enum Gates : u16 {
-    GDT_NULL = 0,
-    GDT_KERNEL_CODE = 1,
-    GDT_USER_CODE = 2,
-    GDT_MAX
-};
-std::array<GdtEntry, Gates::GDT_MAX> gdt;
+std::array<GdtEntry, Gates::GDT_MAX> Gdt::gdt;
 
+/**
+ * @brief   Replace current Global Descriptor Table with a new, ready for user-mode one
+ */
 void Gdt::reinstall_gdt() {
-    set_gate(Gates::GDT_NULL, 0, 0, 0);
-    set_gate(Gates::GDT_KERNEL_CODE, 0x0, 0xFFFFFFFF, 0); // EXECUTABLE(43) | ALWAYS1(44) | PRESENT(47) | LONG_MODE(53)
-    set_gate(Gates::GDT_USER_CODE, 0x0, 0xFFFFFFFF, 3); // EXECUTABLE(43) | ALWAYS1(44) | USERMODE(45,46) | PRESENT(47) | LONG_MODE(53)
-
-    GdtSizeAddress gdt_size_address;
-    gdt_size_address.size_minus_1 = sizeof(GdtEntry) * gdt.size() - 1;
-    gdt_size_address.address = (u64)gdt.data();
-
-    __asm__(
-            "lgdt %0; \n\t"
-            "push %1; \n\t"
-            "push $reinstall2; \n\t"
-            "lretq; \n\t"
-            "reinstall2:; \n\t"
-
-            : // no output
-            : "m" (gdt_size_address), "g" (Gates::GDT_KERNEL_CODE * 8)
-    );
-
+    setup_global_descriptor_table();
+    install_global_descriptor_table();
 }
 
-void Gdt::set_gate(u32 gate_num, u32 base, u32 limit, u32 privilege) {
-    auto& g = gdt[gate_num];
+void Gdt::setup_global_descriptor_table() {
+    gdt[Gates::GDT_NULL] = make_entry(0, 0, 0);                     // NULL descriptor, obligatory in GDT at index 0
+    gdt[Gates::GDT_USER_CODE] = make_entry(0x0, 0xFFFFFFFF, 3);     // EXECUTABLE(43) | ALWAYS1(44) | USERMODE(45,46) | PRESENT(47) | LONG_MODE(53)
+    gdt[Gates::GDT_KERNEL_CODE] = make_entry(0x0, 0xFFFFFFFF, 0);   // EXECUTABLE(43) | ALWAYS1(44) | PRESENT(47) | LONG_MODE(53)
+}
+
+void Gdt::install_global_descriptor_table() {
+    GdtSizeAddress gdt_size_address;
+    gdt_size_address.size_minus_1 = sizeof(GdtEntry) * gdt.size() - 1;
+    gdt_size_address.address = (u64) (gdt.data());
+
+    asm (
+        "lgdt %0 \n\t"
+        "push %1 \n\t"
+        "push $reinstall2 \n\t"
+        "lretq \n\t"
+        "reinstall2: \n\t"
+        : // no output
+        : "m" (gdt_size_address), "g" (get_kernel_code_segment_selector())
+    );
+}
+
+GdtEntry Gdt::make_entry(u32 base, u32 limit, u32 privilege) {
+    GdtEntry g;
 
     g.limit_low = (limit & 0xFFFF);
     g.base_low = (base & 0xFFFFF);
@@ -58,5 +59,7 @@ void Gdt::set_gate(u32 gate_num, u32 base, u32 limit, u32 privilege) {
     g.protected_mode = 0;
     g.gran = 0;
     g.base_high = (base >> 24) & 0xFF;
+
+    return g;
 }
 } /* namespace hardware */

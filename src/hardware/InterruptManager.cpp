@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "Gdt.h"
 #include "InterruptManager.h"
 
 // CPU exceptions
@@ -136,10 +137,10 @@ void InterruptManager::setup_interrupt_descriptor_table() {
     idt[Interrupts::SecondaryAta]   = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata bus
 }
 
-IdtEntry InterruptManager::make_entry(u64 pointer, u16 code_segment_selector) {
+IdtEntry InterruptManager::make_entry(u64 pointer) {
     IdtEntry e;
 
-    e.gdt_code_segment_selector = code_segment_selector; // at offset 8 starts our one and the only code segment entry for 64 bit long mode
+    e.gdt_code_segment_selector = Gdt::get_kernel_code_segment_selector();
     e.pointer_low = pointer & 0xFFFF;
     e.pointer_middle = (pointer >> 16) & 0xFFFF;
     e.pointer_high = (pointer >> 32) & 0xFFFFFFFF;
