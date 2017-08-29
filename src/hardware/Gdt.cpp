@@ -20,9 +20,11 @@ void Gdt::reinstall_gdt() {
 }
 
 void Gdt::setup_global_descriptor_table() {
-    gdt[Gate::GDT_NULL] = make_entry(0, 0, 0);                     // NULL descriptor, obligatory in GDT at index 0
-    gdt[Gate::GDT_USER_CODE] = make_entry(0x0, 0xFFFFFFFF, 3);     // EXECUTABLE(43) | ALWAYS1(44) | USERMODE(45,46) | PRESENT(47) | LONG_MODE(53)
-    gdt[Gate::GDT_KERNEL_CODE] = make_entry(0x0, 0xFFFFFFFF, 0);   // EXECUTABLE(43) | ALWAYS1(44) | PRESENT(47) | LONG_MODE(53)
+    gdt[Gate::GDT_NULL] = make_entry(0, 0, 0, 0);                     // NULL descriptor, obligatory in GDT at index 0
+    gdt[Gate::GDT_USER_CODE] = make_entry(0x0, 0xFFFFFFFF, 3, 1);
+    gdt[Gate::GDT_USER_DATA] = make_entry(0x0, 0xFFFFFFFF, 3, 0);
+    gdt[Gate::GDT_KERNEL_CODE] = make_entry(0x0, 0xFFFFFFFF, 0, 1);
+    gdt[Gate::GDT_KERNEL_DATA] = make_entry(0x0, 0xFFFFFFFF, 0, 0);
 }
 
 void Gdt::install_global_descriptor_table() {
@@ -41,7 +43,7 @@ void Gdt::install_global_descriptor_table() {
     );
 }
 
-GdtEntry Gdt::make_entry(u32 base, u32 limit, u32 privilege) {
+GdtEntry Gdt::make_entry(u32 base, u32 limit, u32 privilege, u32 is_executable) {
     GdtEntry g;
 
     g.limit_low = (limit & 0xFFFF);
@@ -49,7 +51,7 @@ GdtEntry Gdt::make_entry(u32 base, u32 limit, u32 privilege) {
     g.accessed = 0;
     g.read_write = 1;
     g.conforming_expand_down = 0;
-    g.executable = 1;
+    g.executable = is_executable;
     g.always_1 = 1;
     g.DPL = privilege;
     g.present = 1;

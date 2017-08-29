@@ -162,12 +162,12 @@ check_long_mode:
 set_up_page_tables:
     # map first P4 entry to P3 table
     mov $p3_table, %eax
-    or $0b11, %eax       # present + writable
+    or $0b111, %eax       # present + writable + user space accessible
     mov %eax, p4_table
 
     # map first P3 entry to P2 table
     mov $p2_table, %eax
-    or $0b11, %eax       # present + writable
+    or $0b111, %eax       # present + writable + user space accessible
     mov %eax, p3_table
 
     # map each P2 entry to a huge 2MiB page
@@ -177,7 +177,7 @@ set_up_page_tables:
         # map ecx-th P2 entry to a huge page that starts at address 2MiB*ecx
         mov $0x200000, %eax     # 2MiB
         mul %ecx                # start address of ecx-th page
-        or $0b10000011, %eax    # present + writable + huge
+        or $0b10000111, %eax    # present + writable + user space accessible + huge
         mov %eax, p2_table(, %ecx, 8) # map ecx-th entry; memory[p2_table + ecx * 8] = eax
 
         inc %ecx                # increase counter

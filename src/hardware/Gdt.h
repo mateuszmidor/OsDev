@@ -17,7 +17,9 @@ namespace hardware {
 enum Gate : u16 {
     GDT_NULL = 0,
     GDT_USER_CODE = 1,
-    GDT_KERNEL_CODE = 2,
+    GDT_USER_DATA = 2,
+    GDT_KERNEL_CODE = 3,
+    GDT_KERNEL_DATA = 4,
     GDT_MAX
 };
 
@@ -95,13 +97,15 @@ class Gdt {
 public:
     void reinstall_gdt();
     static u64 get_null_segment_selector() { return gate_to_segment_selector(Gate::GDT_NULL); };
-    static u64 get_user_code_segment_selector() { return gate_to_segment_selector(Gate::GDT_USER_CODE); };
+    static u64 get_user_code_segment_selector() { return gate_to_segment_selector(Gate::GDT_USER_CODE) | 0x03; }; // "| 0x03" to point out the ring 3 in the selector
+    static u64 get_user_data_segment_selector() { return gate_to_segment_selector(Gate::GDT_USER_DATA) | 0x03; }; // "| 0x03" to point out the ring 3 in the selector
     static u64 get_kernel_code_segment_selector() { return gate_to_segment_selector(Gate::GDT_KERNEL_CODE); };
+    static u64 get_kernel_data_segment_selector() { return gate_to_segment_selector(Gate::GDT_KERNEL_DATA); };
 
 private:
     void setup_global_descriptor_table();
     void install_global_descriptor_table();
-    GdtEntry make_entry(u32 base, u32 limit, u32 privilege);
+    GdtEntry make_entry(u32 base, u32 limit, u32 privilege, u32 is_executable);
     static u32 gate_to_segment_selector(Gate gate_num) { return gate_num * sizeof(GdtEntry); }
 
     static std::array<GdtEntry, Gate::GDT_MAX> gdt;

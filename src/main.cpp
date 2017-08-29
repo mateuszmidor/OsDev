@@ -114,12 +114,36 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 //    mb2.print_to_klog();
 //    klog.format("\n");
 
+    // switch to user mode
+    asm volatile(
+      "cli \n\t"
+      "mov %%rsp, %%rax \n\t"
+      "push %0 \n\t"    // stack segment selector
+      "push %%rax \n\t" // stack pointer
+      "pushfq \n\t"     // flags
+      "push %1 \n\t"    // code segment selector
+      "push $user_mode_finally \n\t" // rip
+      "iretq \n\t"
+      "user_mode_finally: \n\t"
+            :
+            : "g" (gdt.get_user_data_segment_selector()), "g" (gdt.get_user_code_segment_selector())
+            : "memory", "%rax"
+      );
 
+    // USER MODE STARTS HERE! NO MORE PORT OPERATIONS, CPU HLT, AND SO ON!
 
     // 9. start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));
+    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
+        string hello = "Hello from user mode!";
+        u16 x = 0;
+        for (auto c : hello) {
+            vga_drv->at(x, 0) = VgaCharacter { c, EgaColor::Black, EgaColor::White };
+            x++;
+        }
+    }
 
-    
     // 10. wait until timer interrupt switches execution to init task
-    Task::idle();
+    while (true) ;
+   // Task::idle();
 }
