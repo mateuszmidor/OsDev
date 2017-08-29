@@ -115,20 +115,20 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 //    klog.format("\n");
 
     // switch to user mode
-    asm volatile(
-      "cli \n\t"
-      "mov %%rsp, %%rax \n\t"
-      "push %0 \n\t"    // stack segment selector
-      "push %%rax \n\t" // stack pointer
-      "pushfq \n\t"     // flags
-      "push %1 \n\t"    // code segment selector
-      "push $user_mode_finally \n\t" // rip
-      "iretq \n\t"
-      "user_mode_finally: \n\t"
-            :
-            : "g" (gdt.get_user_data_segment_selector()), "g" (gdt.get_user_code_segment_selector())
-            : "memory", "%rax"
-      );
+//    asm volatile(
+//      "cli \n\t"
+//      "mov %%rsp, %%rax \n\t"
+//      "push %0 \n\t"    // stack segment selector
+//      "push %%rax \n\t" // stack pointer
+//      "pushfq \n\t"     // flags
+//      "push %1 \n\t"    // code segment selector
+//      "push $user_mode_finally \n\t" // rip
+//      "iretq \n\t"
+//      "user_mode_finally: \n\t"
+//            :
+//            : "g" (gdt.get_user_data_segment_selector()), "g" (gdt.get_user_code_segment_selector())
+//            : "memory", "%rax"
+//      );
 
     // USER MODE STARTS HERE! NO MORE PORT OPERATIONS, CPU HLT, AND SO ON!
 
