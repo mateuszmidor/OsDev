@@ -15,32 +15,32 @@ namespace hardware {
 
 
 /**
- * Interrupt Descriptor Table Entry Options
+ * @brief   Interrupt Descriptor Table Entry Options
+ * @see     https://www.intel.com/content/dam/support/us/en/documents/processors/pentium4/sb/25366821.pdf, Table 3-2. System-Segment and Gate-Descriptor Types
  */
 struct IdtEntryOptions {
-    u16 interrupt_stack_table_index : 3;    // 0 for DONT CHANGE THE STACKS
+    u16 interrupt_stack_table_index : 3;    // 0 = use modified legacy stack-switching mechanism instead of interrupt stack table
     u16 reserved                    : 5;    // always 0
-    u16 interrupts_enabled          : 1;    // should CPU disable interrupts during this interrupt handling?
-    u16 always_1                    : 3;    // always 0b111 for 80386 32 (64?) bit interrupt gate
+    u16 type                        : 4;    // 14 for 64-bit Interrupt Gate
     u16 always_0                    : 1;    // Storage Segment. Set to 0 for interrupt and trap gates.
     u16 min_privilege_level         : 2;    // 3 for user space
     u16 present                     : 1;    // 1 for true
 
-    IdtEntryOptions(bool is_present = false) {
+    IdtEntryOptions(u8 privilege = 0, bool is_present = false) {
         interrupt_stack_table_index = 0;
         reserved = 0;
-        interrupts_enabled = 0;
-        always_1 = 7; // 0b111
+        type = 14;
         always_0 = 0;
-        min_privilege_level = 0;
+        min_privilege_level = privilege; // minimum privilege from which this interrupt can be emitted
         present = is_present;
 
     }
 } __attribute__((packed));
 
 /**
- * Interrupt Descriptor Table Entry
- * See: http://wiki.osdev.org/Interrupt_Descriptor_Table
+ * @brief   Interrupt Descriptor Table Entry
+ * @see     http://wiki.osdev.org/Interrupt_Descriptor_Table
+ *          https://www.intel.com/content/dam/support/us/en/documents/processors/pentium4/sb/25366821.pdf, Figure 5-7. 64-Bit IDT Gate Descriptors
  */
 struct IdtEntry {
     u16 pointer_low;
@@ -48,7 +48,7 @@ struct IdtEntry {
     IdtEntryOptions options;
     u16 pointer_middle;
     u32 pointer_high;
-    u32 always_0;
+    u32 reserved;   // set to 0
 
 } __attribute__((packed));
 
@@ -69,7 +69,7 @@ public:
     void reinstall_idt();
 
 private:
-    IdtEntry make_entry(u64 handler_pointer);
+    IdtEntry make_entry(u64 handler_pointer, u8 min_privilege_level = 0);
     void setup_interrupt_descriptor_table();
     void install_interrupt_descriptor_table();
 

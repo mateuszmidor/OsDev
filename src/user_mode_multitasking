@@ -1,0 +1,20 @@
+Each task, no matter user-space or kernel-space, has its own stack.
+There is a special kernel stack used when switching from user-space to kernel-space.
+For now there is only one such kernel stack, later a kernel-stack per task can be introduced.
+
+On interrupt (currenly executing user-space task):
+    -CPU automatically switches the stack to predefined TSS.rsp0 (kernel stack)
+    -pushes rip, cs, rflags, rsp, ss onto the kernel stack
+    -enters interrupt gate routine
+    
+On interrupt (currenly executing kernel-space task):
+    -CPU pushes rip, cs, rflags, rsp, ss onto the current (kernel-space) task stack
+    -enters interrupt gate routine
+    
+If task switch happens (currenly executing user-space task):
+    -cpu state is copied from kernel stack to current task stack
+    -new cpu state is returned (pointer to the top of new stack where the cpu state was stored)
+    
+If task switch happens (currenly executing kernel-space task):
+    -cpu state is already on current task stack
+    -new cpu state is returned (pointer to the top of new stack where the cpu state was stored)

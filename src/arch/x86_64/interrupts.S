@@ -61,6 +61,8 @@ HandleInterrupt 0x2C    # mouse
 HandleInterrupt 0x2E    # primary ata hdd
 HandleInterrupt 0x2F    # secondary ata hdd
 
+HandleInterrupt 0xA0    # sys call
+
 .extern _ZN8hardware16InterruptManager12on_interruptEhPNS_8CpuStateE
 handle_interrupt:
     # save registers to CpuState struct, in the right order that reflects CpuState struct fields
@@ -104,8 +106,6 @@ handle_interrupt:
     pop %r14
     pop %r15
     add $8, %rsp # pop CpuState::error_code from stack
-
-
 .global ignore_interrupt
 ignore_interrupt:
     # return from interrupt handler

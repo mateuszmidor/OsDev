@@ -39,7 +39,7 @@ extern "C" void handle_interrupt_no_0x21();
 extern "C" void handle_interrupt_no_0x2C();
 extern "C" void handle_interrupt_no_0x2E();
 extern "C" void handle_interrupt_no_0x2F();
-
+extern "C" void handle_interrupt_no_0xA0(); // sys call 0x80 + IRQ_BASE
 
 namespace hardware {
 
@@ -48,15 +48,15 @@ void Idt::reinstall_idt() {
     install_interrupt_descriptor_table();
 }
 
-IdtEntry Idt::make_entry(u64 handler_pointer) {
+IdtEntry Idt::make_entry(u64 handler_pointer, u8 min_privilege_level) {
     IdtEntry e;
 
     e.gdt_code_segment_selector = Gdt::get_kernel_code_segment_selector();
     e.pointer_low = handler_pointer & 0xFFFF;
     e.pointer_middle = (handler_pointer >> 16) & 0xFFFF;
     e.pointer_high = (handler_pointer >> 32) & 0xFFFFFFFF;
-    e.options = IdtEntryOptions(true);
-    e.always_0 = 0;
+    e.options = IdtEntryOptions(min_privilege_level, true);
+    e.reserved = 0;
 
     return e;
 }
@@ -78,7 +78,7 @@ void Idt::setup_interrupt_descriptor_table() {
     idt[0x0C] = make_entry((u64) (handle_exception_no_0x0C));
     idt[0x0D] = make_entry((u64) (handle_exception_no_0x0D));
     idt[0x0E] = make_entry((u64) (handle_exception_no_0x0E));
-    idt[0x0F] = make_entry((u64) (handle_exception_no_0x0F));
+    idt[0x0F] = make_entry((u64) (handle_exception_no_0x0F), 3); // task exit, runnable from ring 3
     idt[0x10] = make_entry((u64) (handle_exception_no_0x10));
     idt[0x11] = make_entry((u64) (handle_exception_no_0x11));
     idt[0x12] = make_entry((u64) (handle_exception_no_0x12));
@@ -97,6 +97,7 @@ void Idt::setup_interrupt_descriptor_table() {
     idt[Interrupts::Mouse]          = make_entry((u64) (handle_interrupt_no_0x2C));   // mouse
     idt[Interrupts::PrimaryAta]     = make_entry((u64) (handle_interrupt_no_0x2E));   // primary ata bus
     idt[Interrupts::SecondaryAta]   = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata bus
+//    idt[Interrupts::SysCall]        = make_entry((u64) (handle_interrupt_no_0xA0), 3);
 }
 
 void Idt::install_interrupt_descriptor_table() {

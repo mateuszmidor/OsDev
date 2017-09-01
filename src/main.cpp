@@ -18,6 +18,7 @@
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "PitDriver.h"
+//#include "SysCallDriver.h"
 #include "PCIController.h"
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
@@ -55,7 +56,28 @@ auto keyboard           = make_shared<KeyboardDriver> (scs1);
 auto mouse              = make_shared<MouseDriver>();
 auto pit                = make_shared<PitDriver>();
 auto ata_primary_bus    = make_shared<AtaPrimaryBusDriver>();
+//auto sys_call           = make_shared<SysCallDriver>();
 
+
+const char hello_user1[]    = "Hello from user space 1";
+const char hello_user2[]    = "Hello from user space 2";
+const char hello_kernel[]   = "Hello from kernel space!!!";
+
+void print(u64 arg) {
+    static u8 call_number = 0;
+    u8 y = call_number;
+    call_number++;
+    char* s = (char*)arg;
+    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
+        int x = 0;
+        while (*s) {
+            vga_drv->at(x, y) = VgaCharacter { *s, EgaColor::Black, EgaColor::White };
+            x++;
+            s++;
+            for (int i = 0; i < 5000000; i++) {}
+        }
+    }
+}
 
 /**
  * Here we enter multitasking
@@ -66,9 +88,16 @@ void task_init(u64 unused) {
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
 //    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal"));
+//    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal"));
 //    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
+
+    auto print1 = std::make_shared<multitasking::Task>(print, "user_print1", (u64)hello_user1, true);
+    auto print2 = std::make_shared<multitasking::Task>(print, "kernel_print", (u64)hello_kernel, false);
+    auto print3 = std::make_shared<multitasking::Task>(print, "user_print2", (u64)hello_user2, true);
+    task_manager.add_task(print1);
+    task_manager.add_task(print2);
+    task_manager.add_task(print3);
 }
 
 /**
@@ -83,15 +112,16 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     gdt.reinstall_gdt();
 
     // 3. prepare drivers
-    pit->set_channel0_hz(100);
+    pit->set_channel0_hz(20);
     pit->set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
 
     // 4. install drivers
-    pcic.install_drivers_into(driver_manager);  // if VGA device is present -> VgaDriver will be installed here
+    pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
     driver_manager.install_driver(keyboard);
     driver_manager.install_driver(mouse);
     driver_manager.install_driver(pit);
     driver_manager.install_driver(ata_primary_bus);
+//    driver_manager.install_driver(sys_call);
 
     // 5. install exceptions
     exception_manager.install_handler(make_shared<TaskExitHandler>());
@@ -114,36 +144,9 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 //    mb2.print_to_klog();
 //    klog.format("\n");
 
-    // switch to user mode
-//    asm volatile(
-//      "cli \n\t"
-//      "mov %%rsp, %%rax \n\t"
-//      "push %0 \n\t"    // stack segment selector
-//      "push %%rax \n\t" // stack pointer
-//      "pushfq \n\t"     // flags
-//      "push %1 \n\t"    // code segment selector
-//      "push $user_mode_finally \n\t" // rip
-//      "iretq \n\t"
-//      "user_mode_finally: \n\t"
-//            :
-//            : "g" (gdt.get_user_data_segment_selector()), "g" (gdt.get_user_code_segment_selector())
-//            : "memory", "%rax"
-//      );
-
-    // USER MODE STARTS HERE! NO MORE PORT OPERATIONS, CPU HLT, AND SO ON!
-
     // 9. start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));
-    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
-        string hello = "Hello from user mode!";
-        u16 x = 0;
-        for (auto c : hello) {
-            vga_drv->at(x, 0) = VgaCharacter { c, EgaColor::Black, EgaColor::White };
-            x++;
-        }
-    }
 
     // 10. wait until timer interrupt switches execution to init task
-    while (true) ;
-   // Task::idle();
+    Task::idle();
 }

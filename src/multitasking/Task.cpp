@@ -19,8 +19,8 @@ namespace multitasking {
                         ^
                   here is rsp when first time jumping from interrupt to task function
 */
-Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg) :
-        entrypoint(entrypoint), name(name), arg(arg), cpu_state(0) {
+Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_space) :
+        entrypoint(entrypoint), name(name), arg(arg), is_user_space(user_space), cpu_state(0) {
 }
 
 /**
@@ -36,7 +36,7 @@ void Task::prepare(TaskExitPoint exitpoint) {
 
     // prepare task cpu state to setup cpu register with
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
-    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg};
+    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg, is_user_space};
 
     is_terminated = false;
 }

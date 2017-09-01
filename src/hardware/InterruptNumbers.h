@@ -24,6 +24,7 @@ enum Interrupts : u16 {
     Mouse           = IRQ_BASE + 12,
     PrimaryAta      = IRQ_BASE + 14,
     SecondaryAta    = IRQ_BASE + 15,
+    SysCall         = IRQ_BASE + 0x80,
     Vga             = 0xFF,             // fake interrupt no; Vga sends no interrupts but it is needed to fit in InterruptManager interface
     IRQ_MAX         = 0x100
 };

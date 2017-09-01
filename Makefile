@@ -43,7 +43,7 @@ run: $(iso) $(hdd)
 	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso) -d int -no-reboot # pcnet is AMD am79c973 network chip
 
 rungdb: $(iso) $(hdd)	
-	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso) -s -S
+	@qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb $(hdd) -cdrom $(iso) -s -S -no-reboot
 	
 iso: $(iso)
 

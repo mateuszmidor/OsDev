@@ -10,7 +10,7 @@
 .extern long_mode_start
 start:
     # setup stack
-    movl $stack_top, %esp
+    movl $kernel_stack_top, %esp
 
     # store multiboot2 info struct pointer in edi so it then gets passed to kmain function
     mov %ebx, %edi
@@ -228,9 +228,10 @@ enable_paging:
 
 
 # create stack memory
-stack_bottom:
+kernel_stack_bottom:
     .lcomm STACK_DATA, 4*4096
-stack_top:
+kernel_stack_top:
+.global kernel_stack_top
 
 .section .rodata
 

@@ -17,7 +17,7 @@ namespace hardware {
  * See: https://os.phil-opp.com/handling-exceptions/
  */
 struct CpuState {
-    CpuState(u64 rip = 0, u64 rsp = 0, u64 task_arg = 0);
+    CpuState(u64 rip = 0, u64 rsp = 0, u64 task_arg = 0, bool user_space = false);
 
     // this first part we save/restore manually
     u64 rax;
