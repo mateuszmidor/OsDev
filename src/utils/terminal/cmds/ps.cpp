@@ -15,6 +15,6 @@ void ps::run() {
     TaskManager& task_manager = TaskManager::instance();
     const auto& tasks = task_manager.get_tasks();
     for (u16 i = 0; i < task_manager.get_num_tasks(); i++)
-        env->printer->format("% %\n", i, tasks[i]->name);
+        env->printer->format("% % [%]\n", i, tasks[i]->name, tasks[i]->is_user_space ? "User" : "Kernel");
 }
 } /* namespace cmds */

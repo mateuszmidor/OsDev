@@ -36,7 +36,7 @@ void MouseDemo::run(u64 arg) {
 
     // keep task alive
     while (true)
-        asm("hlt");
+        asm volatile("mov $0, %rax; int $0x80");    // yield
 }
 
 void MouseDemo::on_mouse_down(u8 button) {

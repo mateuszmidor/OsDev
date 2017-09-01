@@ -74,7 +74,19 @@ void print(u64 arg) {
             vga_drv->at(x, y) = VgaCharacter { *s, EgaColor::Black, EgaColor::White };
             x++;
             s++;
-            asm volatile("mov $0, %rax; int $0x80");
+            asm volatile("mov $0, %rax; int $0x80");    // yield
+        }
+    }
+}
+
+void corner_counter(u64 arg) {
+    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
+        u64 i = 0;
+        while (true) {
+            s8 c = (i % 10) + '0';
+            vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
+            i++;
+            asm volatile("mov $0, %rax; int $0x80");    // yield
         }
     }
 }
@@ -88,16 +100,19 @@ void task_init(u64 unused) {
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
 //    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal"));
-//    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));
+    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal", 0, false));
+    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo", 0, true));
+    task_manager.add_task(std::make_shared<multitasking::Task>(corner_counter, "corner_counter", 0, true));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
 
-    auto print1 = std::make_shared<multitasking::Task>(print, "user_print1", (u64)hello_user1, true);
-    auto print2 = std::make_shared<multitasking::Task>(print, "kernel_print", (u64)hello_kernel, false);
-    auto print3 = std::make_shared<multitasking::Task>(print, "user_print2", (u64)hello_user2, true);
-    task_manager.add_task(print1);
-    task_manager.add_task(print2);
-    task_manager.add_task(print3);
+//    auto print1 = std::make_shared<multitasking::Task>(print, "user_print1", (u64)hello_user1, true);
+//    auto print2 = std::make_shared<multitasking::Task>(print, "kernel_print", (u64)hello_kernel, false);
+//    auto print3 = std::make_shared<multitasking::Task>(print, "user_print2", (u64)hello_user2, true);
+//    task_manager.add_task(print1);
+//    task_manager.add_task(print2);
+//    task_manager.add_task(print3);
+
+
 }
 
 /**

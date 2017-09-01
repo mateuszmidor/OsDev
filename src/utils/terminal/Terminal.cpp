@@ -11,7 +11,6 @@
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
 #include "TaskManager.h"
-#include "TaskFactory.h"
 #include "CpuInfo.h"
 
 #include "cmds/df.h"
@@ -43,6 +42,7 @@ using namespace multitasking;
 namespace terminal {
 
 const string Terminal::PROMPT {"> "};
+
 Terminal::Terminal(u64 arg) :
         printer(0, 0, 89, 29),
         klog(KernelLog::instance()) {
@@ -50,24 +50,27 @@ Terminal::Terminal(u64 arg) :
     env.printer = &printer;
     env.klog = &klog;
 
-    cmd_collection.install("pwd", TaskFactory::make<cmds::pwd>("pwd", (u64)&env));
-    cmd_collection.install("klog", TaskFactory::make<cmds::log>("klog", (u64)&env));
-    cmd_collection.install("lscpu", TaskFactory::make<cmds::lscpu>("lscpu", (u64)&env));
-    cmd_collection.install("df", TaskFactory::make<cmds::df>("df", (u64)&env));
-    cmd_collection.install("ls", TaskFactory::make<cmds::ls>("ls", (u64)&env));
-    cmd_collection.install("cat", TaskFactory::make<cmds::cat>("cat", (u64)&env));
-    cmd_collection.install("ps", TaskFactory::make<cmds::ps>("ps", (u64)&env));
-    cmd_collection.install("free", TaskFactory::make<cmds::free>("free", (u64)&env));
-    cmd_collection.install("cd", TaskFactory::make<cmds::cd>("cd", (u64)&env));
-    cmd_collection.install("rm", TaskFactory::make<cmds::rm>("rm", (u64)&env));
-    cmd_collection.install("mv", TaskFactory::make<cmds::mv>("mv", (u64)&env));
-    cmd_collection.install("echo", TaskFactory::make<cmds::echo>("echo", (u64)&env));
-    cmd_collection.install("mkdir", TaskFactory::make<cmds::mkdir>("mkdir", (u64)&env));
-    cmd_collection.install("tail", TaskFactory::make<cmds::tail>("tail", (u64)&env));
-    cmd_collection.install("trunc", TaskFactory::make<cmds::trunc>("trunc", (u64)&env));
-    cmd_collection.install("test_fat32", TaskFactory::make<cmds::test_fat32>("test_fat32", (u64)&env));
-    cmd_collection.install("lspci", TaskFactory::make<cmds::lspci>("lspci", (u64)&env));
-    cmd_collection.install("date", TaskFactory::make<cmds::date>("date", (u64)&env));
+    // user space
+    install_cmd<cmds::pwd>("pwd", true);
+    install_cmd<cmds::log>("klog", true);
+    install_cmd<cmds::lscpu>("lscpu", true);
+    install_cmd<cmds::ps>("ps", true);
+    install_cmd<cmds::free>("free", true);
+    install_cmd<cmds::lspci>("lspci", true);
+    install_cmd<cmds::date>("date", true);
+
+    // kernel space, to be moved to user space once system call interface is complete
+    install_cmd<cmds::df>("df", false);
+    install_cmd<cmds::ls>("ls", false);
+    install_cmd<cmds::cat>("cat", false);
+    install_cmd<cmds::cd>("cd", false);
+    install_cmd<cmds::rm>("rm", false);
+    install_cmd<cmds::mv>("mv", false);
+    install_cmd<cmds::echo>("echo", false);
+    install_cmd<cmds::mkdir>("mkdir", false);
+    install_cmd<cmds::tail>("tail", false);
+    install_cmd<cmds::trunc>("trunc", false);
+    install_cmd<cmds::test_fat32>("test_fat32", false);
 }
 
 void Terminal::run() {

@@ -13,6 +13,7 @@
 #include "KeyboardDriver.h"
 #include "CommandHistory.h"
 #include "CommandCollection.h"
+#include "TaskFactory.h"
 #include "kstd.h"
 #include <memory>
 #include <tuple>
@@ -34,6 +35,11 @@ private:
 
     void process_cmd(const kstd::string& cmd);
     void print_klog();
+
+    template <class T>
+    void install_cmd(const kstd::string& cmd, bool user_space = false) {
+        cmd_collection.install(cmd, multitasking::TaskFactory::make<T>(cmd, (u64)&env, user_space));
+    }
 
     static const kstd::string PROMPT;
 
