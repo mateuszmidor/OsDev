@@ -18,7 +18,7 @@
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "PitDriver.h"
-//#include "SysCallDriver.h"
+#include "SysCallDriver.h"
 #include "PCIController.h"
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
@@ -56,7 +56,7 @@ auto keyboard           = make_shared<KeyboardDriver> (scs1);
 auto mouse              = make_shared<MouseDriver>();
 auto pit                = make_shared<PitDriver>();
 auto ata_primary_bus    = make_shared<AtaPrimaryBusDriver>();
-//auto sys_call           = make_shared<SysCallDriver>();
+auto sys_call           = make_shared<SysCallDriver>();
 
 
 const char hello_user1[]    = "Hello from user space 1";
@@ -74,7 +74,7 @@ void print(u64 arg) {
             vga_drv->at(x, y) = VgaCharacter { *s, EgaColor::Black, EgaColor::White };
             x++;
             s++;
-            for (int i = 0; i < 5000000; i++) {}
+            asm volatile("mov $0, %rax; int $0x80");
         }
     }
 }
@@ -88,7 +88,7 @@ void task_init(u64 unused) {
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
 //    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-//    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal"));
+    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal"));
 //    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo"));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
 
@@ -121,7 +121,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(mouse);
     driver_manager.install_driver(pit);
     driver_manager.install_driver(ata_primary_bus);
-//    driver_manager.install_driver(sys_call);
+    driver_manager.install_driver(sys_call);
 
     // 5. install exceptions
     exception_manager.install_handler(make_shared<TaskExitHandler>());

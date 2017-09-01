@@ -61,7 +61,7 @@ HandleInterrupt 0x2C    # mouse
 HandleInterrupt 0x2E    # primary ata hdd
 HandleInterrupt 0x2F    # secondary ata hdd
 
-HandleInterrupt 0xA0    # sys call
+HandleInterrupt 0x80    # sys call
 
 .extern _ZN8hardware16InterruptManager12on_interruptEhPNS_8CpuStateE
 handle_interrupt:

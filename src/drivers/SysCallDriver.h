@@ -19,6 +19,9 @@ public:
 
     static s16 handled_interrupt_no();
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
+
+private:
+    hardware::CpuState* task_exit();
 };
 
 } /* namespace drivers */

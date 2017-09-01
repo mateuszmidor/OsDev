@@ -59,8 +59,7 @@ void Task::yield() {
 }
 
 void Task::exit() {
-    // int 15 is handled by TaskExitHandler that simply calls TaskManager::kill_current_task()
-    asm("int $15");
+    asm("mov $1, %rax; int $0x80");
 }
 
 } /* namespace multitasking */

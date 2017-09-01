@@ -39,7 +39,7 @@ extern "C" void handle_interrupt_no_0x21();
 extern "C" void handle_interrupt_no_0x2C();
 extern "C" void handle_interrupt_no_0x2E();
 extern "C" void handle_interrupt_no_0x2F();
-extern "C" void handle_interrupt_no_0xA0(); // sys call 0x80 + IRQ_BASE
+extern "C" void handle_interrupt_no_0x80(); // sys call 0x80
 
 namespace hardware {
 
@@ -97,7 +97,7 @@ void Idt::setup_interrupt_descriptor_table() {
     idt[Interrupts::Mouse]          = make_entry((u64) (handle_interrupt_no_0x2C));   // mouse
     idt[Interrupts::PrimaryAta]     = make_entry((u64) (handle_interrupt_no_0x2E));   // primary ata bus
     idt[Interrupts::SecondaryAta]   = make_entry((u64) (handle_interrupt_no_0x2F));   // secondary ata bus
-//    idt[Interrupts::SysCall]        = make_entry((u64) (handle_interrupt_no_0xA0), 3);
+    idt[Interrupts::SysCall]        = make_entry((u64) (handle_interrupt_no_0x80), 3);
 }
 
 void Idt::install_interrupt_descriptor_table() {
