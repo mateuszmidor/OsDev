@@ -9,6 +9,7 @@
 #define SRC_MULTIBOOT2_H_
 
 #include <cstdint>
+#include "kstd.h"
 
 namespace utils {
 
@@ -99,10 +100,14 @@ struct Elf64Sections {
  */
 class Multiboot2 {
 public:
-    Multiboot2(void *multiboot2_info_ptr);
-    void print_to_klog() const;
+    static Multiboot2& instance();
+    kstd::string to_string() const;
+    void setup(void *multiboot2_info_ptr);
 
 private:
+    Multiboot2();
+    static Multiboot2 _instance;
+
     unsigned long long multiboot2_info_addr;
     unsigned int multiboot2_info_totalsize;
     BasicMemInfo bmi;

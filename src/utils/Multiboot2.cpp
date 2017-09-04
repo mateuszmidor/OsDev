@@ -5,13 +5,23 @@
  * @author: mateusz
  */
 
-#include "KernelLog.h"
 #include "kstd.h"
 #include "Multiboot2.h"
 
+using namespace kstd;
 namespace utils {
 
-Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
+Multiboot2 Multiboot2::_instance;
+
+Multiboot2& Multiboot2::instance() {
+    return _instance;
+}
+
+Multiboot2::Multiboot2() :
+    esh_count(0), mme_count(0), multiboot2_info_totalsize(0), multiboot2_info_addr(0) {
+}
+
+void Multiboot2::setup(void *multiboot2_info_ptr) {
     multiboot2_info_addr = (unsigned long long)multiboot2_info_ptr;
     char *tag_ptr = (char*)multiboot2_info_ptr;
 
@@ -93,15 +103,15 @@ Multiboot2::Multiboot2(void *multiboot2_info_ptr) {
     }
 }
 
-void Multiboot2::print_to_klog() const {
-    KernelLog& klog = KernelLog::instance();
+string Multiboot2::to_string() const {
+    string result;
 
-    klog.format("boot loader: %, ", bl.name);
-    klog.format("boot cmdline: %\n", cmd.cmd);
-    klog.format("framebuffer: %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, kstd::enum_to_str(fb.fb_type, "indexed=0x0"," RGB=0x1", "EGA text=0x2").c_str());
-    klog.format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
-    klog.format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
-    klog.format("memory areas:\n");
+    result += format("boot loader: %\n, ", bl.name);
+    result += format("boot cmdline: %\n", cmd.cmd);
+    result += format("framebuffer: %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, kstd::enum_to_str(fb.fb_type, "indexed=0x0"," RGB=0x1", "EGA text=0x2").c_str());
+    result += format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
+    result += format("memory map: size: %, entry size: %, entry version: %\n", mm.size, mm.entry_size, mm.entry_version);
+    result += format("memory areas:\n");
     for (int i = 0; i < mme_count; i++) {
         kstd::string type =
                 kstd::enum_to_str(mme[i].type,
@@ -111,11 +121,11 @@ void Multiboot2::print_to_klog() const {
                         "ACPI NVS=0x4",
                         "BAD=0x5");
 
-        klog.format("   addr: %KB, len: %KB, type: %\n",
+        result += format("   addr: %KB, len: %KB, type: %\n",
                     mme[i].address / 1024, mme[i].length / 1024, type.c_str());
     }
 
-    klog.format("elf sections: \n");
+    result += format("elf sections: \n");
 
     for (int i = 0; i < esh_count; i++) {
         kstd::string type =
@@ -159,11 +169,13 @@ void Multiboot2::print_to_klog() const {
                 "EXCLUDE=0x8000000"
                 );
 
-        klog.format("   addr: %, len: %, type: %, flags: %\n", esh[i].addr, esh[i].size, type.c_str(), flags.c_str());
+        result += format("   addr: %, len: %, type: %, flags: %\n", esh[i].addr, esh[i].size, type.c_str(), flags.c_str());
     }
 
 
-    klog.format("multiboot: addr: %, len: %\n", multiboot2_info_addr, multiboot2_info_totalsize);
+    result += format("multiboot: addr: %, len: %\n", multiboot2_info_addr, multiboot2_info_totalsize);
+
+    return result;
 }
 
 } // namespace utils

@@ -45,6 +45,7 @@ using namespace demos;
 
 Gdt gdt;
 PCIController pcic;
+Multiboot2& mb2                     = Multiboot2::instance();
 KernelLog& klog                     = KernelLog::instance();
 TaskManager& task_manager           = TaskManager::instance();
 DriverManager& driver_manager       = DriverManager::instance();
@@ -123,14 +124,17 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 1. run constructors of global objects. This could be run from long_mode_init.S
     GlobalConstructorsRunner::run();
 
-    // 2. install new Global Descriptor Table that will allow user-mode
+    // 2. setup multiboot2 info provided by boot loader
+    mb2.setup(multiboot2_info_ptr);
+
+    // 3. install new Global Descriptor Table that will allow user-mode
     gdt.reinstall_gdt();
 
-    // 3. prepare drivers
+    // 4. prepare drivers
     pit->set_channel0_hz(20);
     pit->set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
 
-    // 4. install drivers
+    // 5. install drivers
     pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
     driver_manager.install_driver(keyboard);
     driver_manager.install_driver(mouse);
@@ -138,26 +142,18 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(ata_primary_bus);
     driver_manager.install_driver(sys_call);
 
-    // 5. install exceptions
+    // 6. install exceptions
     exception_manager.install_handler(make_shared<TaskExitHandler>());
     exception_manager.install_handler(make_shared<PageFaultHandler>());
 
-    // 6. configure interrupt manager
+    // 7. configure interrupt manager
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
 
-    // 7. configure vga text mode
+    // 8. configure vga text mode
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
         vga_drv->set_text_mode_90_30();
-
-    // 8. SETUP DONE
-    klog.format("KERNEL SETUP DONE.\n");
-
-    // print Multiboot2 info
-//    Multiboot2 mb2(multiboot2_info_ptr);
-//    mb2.print_to_klog();
-//    klog.format("\n");
 
     // 9. start multitasking
     task_manager.add_task(make_shared<Task>(task_init, "init"));
