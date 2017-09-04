@@ -106,7 +106,7 @@ void Multiboot2::setup(void *multiboot2_info_ptr) {
 string Multiboot2::to_string() const {
     string result;
 
-    result += format("boot loader: %\n, ", bl.name);
+    result += format("boot loader: %, ", bl.name);
     result += format("boot cmdline: %\n", cmd.cmd);
     result += format("framebuffer: %x%x%, colors: %\n", fb.width, fb.height, fb.bpp, kstd::enum_to_str(fb.fb_type, "indexed=0x0"," RGB=0x1", "EGA text=0x2").c_str());
     result += format("memory info: lower: %KB, upper:%MB\n", bmi.lower, bmi.upper / 1024);
