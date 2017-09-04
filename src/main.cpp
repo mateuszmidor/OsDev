@@ -25,7 +25,6 @@
 #include "TaskManager.h"
 #include "TaskFactory.h"
 #include "PageFaultHandler.h"
-#include "TaskExitHandler.h"
 #include "Terminal.h"
 #include "_demos/Demo.h"
 #include "_demos/VgaDemo.h"
@@ -127,7 +126,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 2. setup multiboot2 info provided by boot loader
     mb2.setup(multiboot2_info_ptr);
 
-    // 3. install new Global Descriptor Table that will allow user-mode
+    // 3. install new Global Descriptor Table that will allow user-space
     gdt.reinstall_gdt();
 
     // 4. prepare drivers
@@ -143,7 +142,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(sys_call);
 
     // 6. install exceptions
-    exception_manager.install_handler(make_shared<TaskExitHandler>());
     exception_manager.install_handler(make_shared<PageFaultHandler>());
 
     // 7. configure interrupt manager
