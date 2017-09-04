@@ -59,26 +59,6 @@ auto ata_primary_bus    = make_shared<AtaPrimaryBusDriver>();
 auto sys_call           = make_shared<SysCallDriver>();
 
 
-const char hello_user1[]    = "Hello from user space 1";
-const char hello_user2[]    = "Hello from user space 2";
-const char hello_kernel[]   = "Hello from kernel space!!!";
-
-void print(u64 arg) {
-    static u8 call_number = 0;
-    u8 y = call_number;
-    call_number++;
-    char* s = (char*)arg;
-    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
-        int x = 0;
-        while (*s) {
-            vga_drv->at(x, y) = VgaCharacter { *s, EgaColor::Black, EgaColor::White };
-            x++;
-            s++;
-            asm volatile("mov $0, %rax; int $0x80");    // yield
-        }
-    }
-}
-
 void corner_counter(u64 arg) {
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
         u64 i = 0;
@@ -104,15 +84,6 @@ void task_init(u64 unused) {
     task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo", 0, true));
     task_manager.add_task(std::make_shared<multitasking::Task>(corner_counter, "corner_counter", 0, true));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
-
-//    auto print1 = std::make_shared<multitasking::Task>(print, "user_print1", (u64)hello_user1, true);
-//    auto print2 = std::make_shared<multitasking::Task>(print, "kernel_print", (u64)hello_kernel, false);
-//    auto print3 = std::make_shared<multitasking::Task>(print, "user_print2", (u64)hello_user2, true);
-//    task_manager.add_task(print1);
-//    task_manager.add_task(print2);
-//    task_manager.add_task(print3);
-
-
 }
 
 /**
