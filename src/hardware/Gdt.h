@@ -32,13 +32,13 @@ enum Gate64 : u16 {
  * @see     https://www.intel.com/content/dam/support/us/en/documents/processors/pentium4/sb/25366821.pdf, 6.7 TASK MANAGEMENT IN 64-BIT MODE
  */
 struct TaskStateSegment64 {
-    u32 reserved0;  // set to 0
-    u64 rsp0;       // stack pointer for ring 0
-    u64 rsp1;       // stack pointer for ring 1
-    u64 rsp2;       // stack pointer for ring 2
+    u32 reserved0;      // set to 0
+    u64 rsp0;           // stack pointer for ring 0
+    u64 rsp1;           // stack pointer for ring 1
+    u64 rsp2;           // stack pointer for ring 2
     u32 reserved1;
     u32 reserved2;
-    u64 ist1;       // interrupt stack table 1 and further
+    u64 ist1;           // interrupt stack table 1 and further
     u64 ist2;
     u64 ist3;
     u64 ist4;
@@ -48,7 +48,8 @@ struct TaskStateSegment64 {
     u32 reserved3;
     u32 reserved4;
     u16 reserved5;
-    u16 io_map_base;// set to sizeof(TaskStateSegment64)
+    u16 io_map_base;    // set to "io_map" offset within TaskStateSegment64
+    u8  io_map[8192];   // bitmap for 65536 ports. "1" means access denied for rings other than 0
 } __attribute__((packed));
 
 /**

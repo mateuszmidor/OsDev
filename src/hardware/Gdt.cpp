@@ -7,7 +7,6 @@
 
 #include "kstd.h"
 #include "Gdt.h"
-
 /**
  * @brief   Statically allocated kernel stack (the top of it)
  * @see     boot.S
@@ -30,9 +29,15 @@ void Gdt::reinstall_gdt() {
 }
 
 void Gdt::setup_task_state_segment() {
+    // clear entire structure
     memset(&tss, 0, sizeof(tss));
+
+    // set kernel stack pointer for ring0
     tss.rsp0 = (u64)kernel_stack_top;
-    tss.io_map_base = sizeof(tss);
+
+    // set io ports bitmap to deny any port access from rings other than ring0
+    memset(&tss.io_map, 0xFF, sizeof(tss.io_map));
+    tss.io_map_base = __builtin_offsetof(TaskStateSegment64, io_map);
 }
 
 void Gdt::setup_global_descriptor_table() {

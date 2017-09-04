@@ -51,15 +51,16 @@ Terminal::Terminal(u64 arg) :
     env.klog = &klog;
 
     // user space
-    install_cmd<cmds::pwd>("pwd", true);
-    install_cmd<cmds::log>("klog", true);
-    install_cmd<cmds::lscpu>("lscpu", true);
-    install_cmd<cmds::ps>("ps", true);
-    install_cmd<cmds::free>("free", true);
-    install_cmd<cmds::lspci>("lspci", true);
-    install_cmd<cmds::date>("date", true);
+
 
     // kernel space, to be moved to user space once system call interface is complete
+    install_cmd<cmds::pwd>("pwd", false);
+    install_cmd<cmds::log>("klog", false);
+    install_cmd<cmds::lscpu>("lscpu", false);
+    install_cmd<cmds::ps>("ps", false);
+    install_cmd<cmds::free>("free", false);
+    install_cmd<cmds::lspci>("lspci", false);
+    install_cmd<cmds::date>("date", false);
     install_cmd<cmds::df>("df", false);
     install_cmd<cmds::ls>("ls", false);
     install_cmd<cmds::cat>("cat", false);

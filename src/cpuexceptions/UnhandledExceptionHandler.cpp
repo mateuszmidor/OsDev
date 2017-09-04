@@ -64,8 +64,12 @@ CpuState* UnhandledExceptionHandler::on_exception(CpuState* cpu_state) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     auto current = mngr.get_current_task();
-    klog.format("\nUNHANDLED CPU EXCEPTION: %(%) by \"%\", error code %. KILLING\n",
-                EXCEPTION_NAMES[exception_no], exception_no, current->name.c_str(), cpu_state->error_code);
+    klog.format("\nCPU EXCEPTION: %(%) by \"%\" [%], error %. KILLING\n",
+                EXCEPTION_NAMES[exception_no],
+                exception_no,
+                current->name.c_str(),
+                current->is_user_space ? "User" : "Kernel",
+                cpu_state->error_code);
 
     return mngr.kill_current_task();
 }
