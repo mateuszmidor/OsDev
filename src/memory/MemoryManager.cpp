@@ -7,17 +7,6 @@
 
 #include "MemoryManager.h"
 
-void* kmalloc(size_t size) {
-    memory::MemoryManager& mm = memory::MemoryManager::instance();
-    return mm.alloc(size);
-}
-
-void kfree(void* address) {
-    memory::MemoryManager& mm = memory::MemoryManager::instance();
-    mm.free(address);
-}
-
-
 namespace memory {
 
 MemoryManager MemoryManager::_instance;
@@ -27,29 +16,18 @@ MemoryManager& MemoryManager::instance() {
     return _instance;
 }
 
+/**
+ * @brief   Allocate and return a memory block, or return nullptr on failure
+ */
 void* MemoryManager::alloc(size_t size) const {
     return allocation_policy->alloc(size);
 }
 
+/**
+ * @brief   Release memory block at "address"
+ */
 void MemoryManager::free(void* address) const {
     allocation_policy->free(address);
-}
-
-/**
- * @brief   Set the last byte available for allocation.
- *          Use is when the available memory range is known (eg. extracted from multiboot2 structures)
- */
-void MemoryManager::set_high_limit(size_t limit) const {
-    allocation_policy->set_high_limit_in_bytes(limit);
-}
-
-/**
- * @brief   Get total memory amount available for dynamic allocation.
- *          This is less than total physical memory since the first megabyte is used for multiboot2 structures
- *          and the second megabyte is used for kernel code and data; see MemoryManager::install_allocation_policy
- */
-size_t MemoryManager::get_total_memory_in_bytes() const {
-    return allocation_policy->total_memory_in_bytes();
 }
 
 /**
@@ -58,5 +36,15 @@ size_t MemoryManager::get_total_memory_in_bytes() const {
 size_t MemoryManager::get_free_memory_in_bytes() const {
     return allocation_policy->free_memory_in_bytes();
 }
+
+/**
+ * @brief   Get total memory amount available for dynamic allocation.
+ *          This is less than total physical memory,
+ *          since the first megabytes are used for kernel code/data and multiboot2 structures (eg. 0..2MB in release build, 0..7MB in debug build)
+ */
+size_t MemoryManager::get_total_memory_in_bytes() const {
+    return allocation_policy->total_memory_in_bytes();
+}
+
 
 } /* namespace memory */

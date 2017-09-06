@@ -12,9 +12,9 @@
 
 namespace memory {
 
-class BumpAllocator: public AllocationPolicy {
+class BumpAllocationPolicy: public AllocationPolicy {
 public:
-    BumpAllocator(size_t available_memory_start, size_t available_memory_end);
+    BumpAllocationPolicy(size_t available_memory_start, size_t available_memory_end);
     void* alloc(size_t size) override;
     void free(void* address) override;
     size_t free_memory_in_bytes() override;

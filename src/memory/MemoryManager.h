@@ -21,18 +21,17 @@ public:
     static MemoryManager& instance();
     void* alloc(size_t size) const;
     void free(void* address) const;
-    void set_high_limit(size_t limit) const;
     size_t get_free_memory_in_bytes() const;
     size_t get_total_memory_in_bytes() const;
 
     /**
      * @brief   Setup how the memory manager will handle memory. This must be done before running any other C/C++ code that needs dynamic memory
-     * @param   first_byte    First byte available for allocation. Set it high enough so multiboot2 nor kernel code/data gets overriden. EG 10MB
+     * @param   first_byte    First byte available for allocation. Set it high enough not to overwrite kernel code/data that start at 1MB
      * @param   last_byte     Last byte available for allocation.
      */
-    template <class AllocationPolicyType>
+    template <typename AllocationPolicyType>
     static void install_allocation_policy(size_t first_byte, size_t last_byte) {
-        static char storage[sizeof(AllocationPolicyType)]; // policy is stored here since no dynamic memory is available yet, but we're working on it :)
+        static char storage[sizeof(AllocationPolicyType)]; // policy is stored here since no dynamic memory is available yet, but we're just working on it :)
         allocation_policy = new (storage) AllocationPolicyType(first_byte, last_byte);
     }
 

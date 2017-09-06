@@ -97,31 +97,31 @@ struct Elf64Sections {
 /**
  * @class   Multiboot2
  * @see     http://nongnu.askapache.com/grub/phcoder/multiboot.pdf
+ * @note    This class is specific as it is not meant to be instantiated, just used in a static-class way.
+ *          This is because it must not rely on global constructors nor dynamic memory (it is used at the very beginning of kernel startup)
  */
 class Multiboot2 {
 public:
-    static Multiboot2& instance();
-    kstd::string to_string() const;
-    void setup(void *multiboot2_info_ptr);
-    size_t available_memory_first_byte() { return bmi.lower * 1024; }
-    size_t available_memory_last_byte() { return bmi.upper * 1024; }
+    static void initialize(void *multiboot2_info_ptr);
+    static size_t get_available_memory_first_byte();
+    static size_t get_available_memory_last_byte();
+    static kstd::string to_string();
 
 private:
-    Multiboot2();
-    static Multiboot2 _instance;
+    Multiboot2() = delete;  // don't instantiate this class
 
-    unsigned long long multiboot2_info_addr;
-    unsigned int multiboot2_info_totalsize;
-    BasicMemInfo bmi;
-    CommandLine cmd;
-    BootLoader bl;
-    FrameBuffer fb;
-    MemoryMap mm;
-    MemoryMapEntry mme[20]; // 20 is selected arbitrarily
-    unsigned int mme_count;
-    Elf64Sections es;
-    Elf64SectionHeader esh[20];
-    unsigned int esh_count;
+    static unsigned long long multiboot2_info_addr;
+    static unsigned int multiboot2_info_totalsize;
+    static BasicMemInfo* bmi;
+    static CommandLine* cmd;
+    static BootLoader* bl;
+    static FrameBuffer* fb;
+    static MemoryMap* mm;
+    static MemoryMapEntry* mme[];
+    static unsigned int mme_count;
+    static Elf64Sections* es;
+    static Elf64SectionHeader* esh[];
+    static unsigned int esh_count;
 };
 
 } // namespace utils

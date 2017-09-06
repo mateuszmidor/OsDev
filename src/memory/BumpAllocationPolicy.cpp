@@ -1,5 +1,5 @@
 /**
- *   @file: BumpAllocator.cpp
+ *   @file: BumpAllocationPolicy.cpp
  *
  *   @date: Sep 5, 2017
  * @author: Mateusz Midor
@@ -9,7 +9,12 @@
 
 namespace memory {
 
-BumpAllocator::BumpAllocator(size_t first_byte, size_t last_byte):
+/**
+ * Constructor.
+ * @param   first_byte  The first byte available for allocation
+ * @param   last_byte   The last byte available for allocation
+ */
+BumpAllocationPolicy::BumpAllocationPolicy(size_t first_byte, size_t last_byte):
         AllocationPolicy(first_byte, last_byte) {
     bump_addr = first_byte;
 }
@@ -18,7 +23,7 @@ BumpAllocator::BumpAllocator(size_t first_byte, size_t last_byte):
  * @brief   Allocate "size" bytes of memory if enough memory is available
  * @return  Allocated memory address on success, nullptr on failure
  */
-void* BumpAllocator::alloc(size_t size) {
+void* BumpAllocationPolicy::alloc(size_t size) {
     if (bump_addr + size > available_memory_last_byte)
         return nullptr;
 
@@ -27,15 +32,15 @@ void* BumpAllocator::alloc(size_t size) {
     return (void*)old;
 }
 
-void BumpAllocator::free(void* address) {
+void BumpAllocationPolicy::free(void* address) {
     // bump allocator doesnt free memory by design
 }
 
-size_t BumpAllocator::total_memory_in_bytes() {
+size_t BumpAllocationPolicy::total_memory_in_bytes() {
     return available_memory_last_byte - available_memory_first_byte;
 }
 
-size_t BumpAllocator::free_memory_in_bytes() {
+size_t BumpAllocationPolicy::free_memory_in_bytes() {
     return available_memory_last_byte - bump_addr;
 }
 

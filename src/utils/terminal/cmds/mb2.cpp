@@ -12,8 +12,7 @@ using namespace utils;
 namespace cmds {
 
 void mb2::run() {
-    Multiboot2& mb2 = Multiboot2::instance();
-    env->printer->format(mb2.to_string());
+    env->printer->format(Multiboot2::to_string());
 }
 
 } /* namespace cmds */

@@ -9,14 +9,22 @@
 #include "kstd.h"
 #include "types.h"
 #include "KernelLog.h"
+#include "MemoryManager.h"
 
 using utils::KernelLog;
 
 static KernelLog& klog = KernelLog::instance();
 
-// see MemoryManager.cpp
-extern void* kmalloc(size_t size);
-extern void kfree(void* address);
+void* kmalloc(size_t size) {
+    memory::MemoryManager& mm = memory::MemoryManager::instance();
+    return mm.alloc(size);
+}
+
+void kfree(void* address) {
+    memory::MemoryManager& mm = memory::MemoryManager::instance();
+    mm.free(address);
+}
+
 
 void* operator new(size_t size) {
     return kmalloc(size);

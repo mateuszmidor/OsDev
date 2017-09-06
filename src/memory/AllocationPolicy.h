@@ -1,5 +1,5 @@
 /**
- *   @file: Allocator.h
+ *   @file: AllocationPolicy.h
  *
  *   @date: Sep 5, 2017
  * @author: Mateusz Midor
@@ -25,9 +25,6 @@ public:
     virtual void free(void* address) = 0;
     virtual size_t free_memory_in_bytes() = 0;
     virtual size_t total_memory_in_bytes() = 0;
-
-//    virtual void set_low_limit_in_bytes(size_t memory_start);
-    virtual void set_high_limit_in_bytes(size_t memory_end);
 
 protected:
     size_t available_memory_first_byte  = 0;    // first available byte for allocation

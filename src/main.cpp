@@ -49,7 +49,6 @@ using namespace demos;
 
 Gdt gdt;
 PCIController pcic;
-Multiboot2& mb2                     = Multiboot2::instance();
 MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();
 TaskManager& task_manager           = TaskManager::instance();
@@ -65,6 +64,9 @@ auto ata_primary_bus    = make_shared<AtaPrimaryBusDriver>();
 auto sys_call           = make_shared<SysCallDriver>();
 
 
+/**
+ *  Little counter in the right-top corner
+ */
 void corner_counter(u64 arg) {
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
         u64 i = 0;
@@ -88,26 +90,24 @@ void task_init(u64 unused) {
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
     task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal", 0, false));
     task_manager.add_task(Demo::make_demo<MouseDemo>("mouse_demo", 0, true));
-    task_manager.add_task(std::make_shared<multitasking::Task>(corner_counter, "corner_counter", 0, true));
+    task_manager.add_task(make_shared<multitasking::Task>(corner_counter, "corner_counter", 0, true));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
 }
 
 /**
  * @name    kmain
- * @brief   Kernel entry point.
- * @note    We are staring with just stack in place, no dynamic memory available
+ * @brief   Kernel entry point, we jump here right from long_mode_init.S
+ * @note    We are starting with just stack in place, no dynamic memory available, no global objects constructed yet
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
-    // 0. setup dynamic memory manager. This must be done very first since even global constructors may require dynamic memory
-    // TODO: get multiboot2 low and high limits here
-    MemoryManager::install_allocation_policy<BumpAllocator>(10 * 1024 * 1024, 14 * 1024 * 1024);
+    // 0. initialize multiboot2 info from the data provided by the boot loader
+    Multiboot2::initialize(multiboot2_info_ptr);
 
-    // 1. run constructors of global objects
+    // 1. setup dynamic memory manager. This must be done before global constructors are run since global constructors may require dynamic memory
+    MemoryManager::install_allocation_policy<BumpAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
+
+    // 2. run constructors of global objects
     GlobalConstructorsRunner::run();
-
-    // 2. setup multiboot2 info provided by boot loader and update memory limit available to memory_manager
-    mb2.setup(multiboot2_info_ptr);
-   // memory_manager.set_high_limit(mb2.available_memory_last_byte());
 
     // 3. install new Global Descriptor Table that will allow user-space
     gdt.reinstall_gdt();
@@ -127,7 +127,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 6. install exceptions
     exception_manager.install_handler(make_shared<PageFaultHandler>());
 
-    // 7. configure interrupt manager
+    // 7. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts();
