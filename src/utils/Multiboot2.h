@@ -26,8 +26,8 @@ struct TagHeader {
 struct BasicMemInfo {
     uint32_t type;  // = 4
     unsigned int size;
-    unsigned int lower;
-    unsigned int upper;
+    unsigned int lower; // in KB
+    unsigned int upper; // in KB
 } __attribute__((packed));
 
 struct MemoryMapEntry {
@@ -103,6 +103,8 @@ public:
     static Multiboot2& instance();
     kstd::string to_string() const;
     void setup(void *multiboot2_info_ptr);
+    size_t available_memory_first_byte() { return bmi.lower * 1024; }
+    size_t available_memory_last_byte() { return bmi.upper * 1024; }
 
 private:
     Multiboot2();

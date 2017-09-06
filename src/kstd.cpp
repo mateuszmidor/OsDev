@@ -14,32 +14,24 @@ using utils::KernelLog;
 
 static KernelLog& klog = KernelLog::instance();
 
-// allocation should be done using memory manager
-size_t bump_addr = 2 * 1024 * 1024;
-void* bump_alloc(size_t size) {
-    size_t old = bump_addr;
-    bump_addr += size;
-   // klog.format("Allocated % bytes of mem\n", size);
-    if (bump_addr > 1024 * 1024 * 16)
-        klog.format("bump_alloc: exceeded 16MB of allocated memory");
-
-    return (void*)old;
-}
+// see MemoryManager.cpp
+extern void* kmalloc(size_t size);
+extern void kfree(void* address);
 
 void* operator new(size_t size) {
-    return bump_alloc(size);
+    return kmalloc(size);
 }
 
 void* operator new[](size_t size) {
-    return bump_alloc(size);
+    return kmalloc(size);
 }
 
 void operator delete[](void* ptr) {
-    // should deallocate using memory manager
+    kfree(ptr);
 }
 
 void operator delete(void *ptr) {
-    // should deallocate using memory manager
+    kfree(ptr);
 }
 
 extern "C" void * memcpy( void * destination, const void * source, size_t num ) {

@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include <memory>
 #include "GlobalConstructorsRunner.h"
 #include "Gdt.h"
 #include "KernelLog.h"
@@ -26,6 +27,8 @@
 #include "TaskFactory.h"
 #include "PageFaultHandler.h"
 #include "Terminal.h"
+#include "MemoryManager.h"
+#include "BumpAllocationPolicy.h"
 #include "_demos/Demo.h"
 #include "_demos/VgaDemo.h"
 #include "_demos/Fat32Demo.h"
@@ -33,18 +36,21 @@
 #include "_demos/MultitaskingDemo.h"
 #include "_demos/CpuSpeedDemo.h"
 
+
 using std::make_shared;
 using namespace kstd;
 using namespace drivers;
 using namespace cpuexceptions;
 using namespace hardware;
 using namespace multitasking;
+using namespace memory;
 using namespace utils;
 using namespace demos;
 
 Gdt gdt;
 PCIController pcic;
 Multiboot2& mb2                     = Multiboot2::instance();
+MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();
 TaskManager& task_manager           = TaskManager::instance();
 DriverManager& driver_manager       = DriverManager::instance();
@@ -87,15 +93,21 @@ void task_init(u64 unused) {
 }
 
 /**
- * kmain
- * Kernel entry point
+ * @name    kmain
+ * @brief   Kernel entry point.
+ * @note    We are staring with just stack in place, no dynamic memory available
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
-    // 1. run constructors of global objects. This could be run from long_mode_init.S
+    // 0. setup dynamic memory manager. This must be done very first since even global constructors may require dynamic memory
+    // TODO: get multiboot2 low and high limits here
+    MemoryManager::install_allocation_policy<BumpAllocator>(10 * 1024 * 1024, 14 * 1024 * 1024);
+
+    // 1. run constructors of global objects
     GlobalConstructorsRunner::run();
 
-    // 2. setup multiboot2 info provided by boot loader
+    // 2. setup multiboot2 info provided by boot loader and update memory limit available to memory_manager
     mb2.setup(multiboot2_info_ptr);
+   // memory_manager.set_high_limit(mb2.available_memory_last_byte());
 
     // 3. install new Global Descriptor Table that will allow user-space
     gdt.reinstall_gdt();

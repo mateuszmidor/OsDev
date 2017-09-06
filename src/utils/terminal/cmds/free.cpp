@@ -6,11 +6,15 @@
  */
 
 #include "free.h"
+#include "MemoryManager.h"
 
-extern size_t bump_addr;
+using namespace memory;
 namespace cmds {
 
 void free::run() {
-    env->printer->format("Used memory so far: % KB\n", (bump_addr - 2 * 1024 * 1024) / 1024);
+    MemoryManager& mm = MemoryManager::instance();
+    size_t free_memory = mm.get_total_memory_in_bytes() - mm.get_free_memory_in_bytes();
+    size_t total_memory = mm.get_total_memory_in_bytes();
+    env->printer->format("Used memory so far: % KB, total available: % MB\n", free_memory / 1024, total_memory / 1024 / 1024);
 }
 } /* namespace cmds */
