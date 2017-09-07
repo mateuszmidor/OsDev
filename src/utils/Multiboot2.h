@@ -71,7 +71,7 @@ struct FrameBuffer {
 } __attribute__((packed));
 
 struct Elf64SectionHeader {
-    unsigned int name;
+    unsigned int name_offset;  // offset into section names string, see: Elf64Sections::shndx
     unsigned int type;
     unsigned long long flags;
     unsigned long long addr;
@@ -88,7 +88,7 @@ struct Elf64Sections {
     unsigned int size;
     unsigned int num;
     unsigned int ent_size;
-    unsigned int shndx;
+    unsigned int shndx; // index into below "headers". The pointed header contains section names C string at "addr"
     Elf64SectionHeader headers[0];
 } __attribute__((packed));
 

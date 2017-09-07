@@ -195,7 +195,10 @@ string Multiboot2::to_string() {
                 "EXCLUDE=0x8000000"
                 );
 
-        result += format("   addr: %, len: %, type: %, flags: %\n", esh[i]->addr, esh[i]->size, type.c_str(), flags.c_str());
+        char* section_names = (char*)es->headers[es->shndx].addr;
+        u16 name_offset = esh[i]->name_offset;
+        char* section_name = section_names + name_offset;
+        result += format("   addr: %, len: %, name: %, type: %, flags: %\n", esh[i]->addr, esh[i]->size, section_name, type.c_str(), flags.c_str());
     }
 
 
