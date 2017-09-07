@@ -167,7 +167,7 @@ string Multiboot2::to_string() {
                 ".BSS=0x8",
                 "REL=0x9",
                 "SHLIB=0x0A",
-                "DYNSYM=0x0B"
+                "DYNSYM=0x0B",
                 "CONSTRUCTORS=0x0E",
                 "DESTRUCTORS=0x0F",
                 "PRECONSTRUC=0x10",
