@@ -21,7 +21,7 @@ MemoryMap* Multiboot2::mm;
 MemoryMapEntry* Multiboot2::mme[20];    // 20 is selected arbitrarily
 unsigned int Multiboot2::mme_count;
 Elf64Sections* Multiboot2::es;
-Elf64SectionHeader* Multiboot2::esh[50];// 50 is selected arbitrarily
+Elf64_Shdr* Multiboot2::esh[50];// 50 is selected arbitrarily
 unsigned int Multiboot2::esh_count;
 
 
@@ -95,9 +95,9 @@ void Multiboot2::initialize(void *multiboot2_info_ptr) {
 
             char *entry_ptr = tag_ptr +  sizeof(Elf64Sections);
             for (int i = 0; i < esh_count; i++) {
-                Elf64SectionHeader *eshp = (Elf64SectionHeader*)entry_ptr;
+                Elf64_Shdr *eshp = (Elf64_Shdr*)entry_ptr;
                 esh[i] = eshp;
-                entry_ptr += sizeof(Elf64SectionHeader);
+                entry_ptr += sizeof(Elf64_Shdr);
             }
 
             break;
@@ -152,55 +152,11 @@ string Multiboot2::to_string() {
     }
 
     result += format("elf sections: \n");
-
+    char* section_names = (char*)es->headers[es->shndx].sh_addr;
     for (int i = 0; i < esh_count; i++) {
-        kstd::string type =
-                kstd::enum_to_str(esh[i]->type,
-                "NULL=0x0",
-                "PROGBITS=0x1",
-                "SYMTAB=0x2",
-                "STRTAB=0x3",
-                "RELA=0x4",
-                "HASH=0x5",
-                "DYNAMIC=0x6"
-                "NOTE=0x7",
-                ".BSS=0x8",
-                "REL=0x9",
-                "SHLIB=0x0A",
-                "DYNSYM=0x0B",
-                "CONSTRUCTORS=0x0E",
-                "DESTRUCTORS=0x0F",
-                "PRECONSTRUC=0x10",
-                "GROUP=0x11",
-                "SYMTAB_SHNDX=0x12",
-                "NUM=0x13",
-                "OS_SPECYFIC=0x60000000"
-                );
-
-        kstd::string flags =
-                kstd::flags_to_str(esh[i]->flags,
-                "WRITE=0x1",
-                "ALLOC=0x2",
-                "EXEC=0x4",
-                "MERGE=0x10",
-                "STRINGS=0x20",
-                "INFO_LINK=0x40",
-                "LINK_ORDER=0x80",
-                "OS_NONCONFORMING=0x100"
-                "GROUP=0x200",
-                "TLS=0x400",
-                "MASKOS=0x0FF00000",
-                "MASKPROC=0xF0000000",
-                "ORDERED=0x4000000",
-                "EXCLUDE=0x8000000"
-                );
-
-        char* section_names = (char*)es->headers[es->shndx].addr;
-        u16 name_offset = esh[i]->name_offset;
-        char* section_name = section_names + name_offset;
-        result += format("   addr: %, len: %, name: %, type: %, flags: %\n", esh[i]->addr, esh[i]->size, section_name, type.c_str(), flags.c_str());
+        string esh_str = Elf64::section_header_to_string(section_names, (Elf64_Shdr*)esh[i]);
+        result += format("  %. %\n", i, esh_str);
     }
-
 
     result += format("multiboot: addr: %, len: %\n", multiboot2_info_addr, multiboot2_info_totalsize);
 

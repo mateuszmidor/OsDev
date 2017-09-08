@@ -21,49 +21,61 @@ typedef int32_t     Elf64_Sword;
 typedef uint64_t    Elf64_Xword;
 typedef int64_t     Elf64_Sxword;
 
-enum Identification {
-    EI_MAG0         = 0,
-    EI_MAG1         = 1,
-    EI_MAG2         = 2,
-    EI_MAG3         = 3,
-    EI_CLASS        = 4,
-    EI_DATA         = 5,
-    EI_VERSION      = 6,
-    EI_OSABI        = 7,
-    EI_ABIVERSION   = 8,
-    EI_PAD          = 9,
-    EI_NIDENT       = 16
+/**
+ * @brief   ELF64 file identification bytes
+ * @see     https://www.uclibc.org/docs/elf-64-gen.pdf, Table 2. ELF Identification, e_ident
+ */
+enum Elf64_Ident {
+    EI_MAG0         = 0,    // File identification
+    EI_MAG1         = 1,    // File identification
+    EI_MAG2         = 2,    // File identification
+    EI_MAG3         = 3,    // File identification
+    EI_CLASS        = 4,    // File class
+    EI_DATA         = 5,    // Data encoding
+    EI_VERSION      = 6,    // File version
+    EI_OSABI        = 7,    // OS/ABI identification
+    EI_ABIVERSION   = 8,    // ABI version
+    EI_PAD          = 9,    // Start of padding  bytes
+    EI_NIDENT       = 16    // sizeof e_ident[]
 };
 
-struct bfelf_ehdr {
-    unsigned char   e_ident[Identification::EI_NIDENT];
-    Elf64_Half      e_type;
-    Elf64_Half      e_machine;
-    Elf64_Word      e_version;
-    Elf64_Addr      e_entry;
-    Elf64_Off       e_phoff;
-    Elf64_Off       e_shoff;
-    Elf64_Word      e_flags;
-    Elf64_Half      e_ehsize;
-    Elf64_Half      e_phentsize;
-    Elf64_Half      e_phnum;
-    Elf64_Half      e_shentsize;
-    Elf64_Half      e_shnum;
-    Elf64_Half      e_shstrndx;
-};
+/**
+ * @brief   ELF64 file header
+ * @see     https://www.uclibc.org/docs/elf-64-gen.pdf, Figure 2. ELF-64 Header
+ */
+struct Elf64_Ehdr {
+    unsigned char   e_ident[16];    // ELF identification
+    Elf64_Half      e_type;         // Object file type
+    Elf64_Half      e_machine;      // Machine type
+    Elf64_Word      e_version;      // Object file version
+    Elf64_Addr      e_entry;        // Entry point address
+    Elf64_Off       e_phoff;        // Program header offset
+    Elf64_Off       e_shoff;        // Section header offse
+    Elf64_Word      e_flags;        // Processor-specific flags
+    Elf64_Half      e_ehsize;       // ELF header size
+    Elf64_Half      e_phentsize;    // Size of program header entry
+    Elf64_Half      e_phnum;        // Number of program header entries
+    Elf64_Half      e_shentsize;    // Size of section header entry
+    Elf64_Half      e_shnum;        // Number of section header entries
+    Elf64_Half      e_shstrndx;     //Section name string table index
+} __attribute__((packed));
 
+/**
+ * @brief   ELF64 section header
+ * @see     https://www.uclibc.org/docs/elf-64-gen.pdf, Figure 3. ELF-64 Section Header
+ */
 struct Elf64_Shdr {
-    Elf64_Word      sh_name;        /*  Section  name  */
-    Elf64_Word      sh_type;        /*  Section  type  */
-    Elf64_Xword     sh_flags;       /*  Section  attributes  */
-    Elf64_Addr      sh_addr;        /*  Virtual  address  in  memory  */
-    Elf64_Off       sh_offset;      /*  Offset  in  file  */
-    Elf64_Xword     sh_size;        /*  Size  of  section  */
-    Elf64_Word      sh_link;        /*  Link  to  other  section  */
-    Elf64_Word      sh_info;        /*  Miscellaneous  information  */
-    Elf64_Xword     sh_addralign;   /*  Address  alignment  boundary  */
-    Elf64_Xword     sh_entsize;     /*  Size  of  entries;  if  section  has  table  */
-} __attribute__((packed));;
+    Elf64_Word      sh_name;        // Section  name offset in section header names table, see   Elf64_Ehdr::e_shstrndx
+    Elf64_Word      sh_type;        // Section  type
+    Elf64_Xword     sh_flags;       // Section  attributes
+    Elf64_Addr      sh_addr;        // Virtual  address  in  memory
+    Elf64_Off       sh_offset;      // Offset  in  file
+    Elf64_Xword     sh_size;        // Size  of  section
+    Elf64_Word      sh_link;        // Link  to  other  section
+    Elf64_Word      sh_info;        // Miscellaneous  information
+    Elf64_Xword     sh_addralign;   // Address  alignment  boundary
+    Elf64_Xword     sh_entsize;     // Size  of  entries;  if  section  has  table
+} __attribute__((packed));
 
 /**
  * @brief   This class allows loading of Executable Linkable Format files
@@ -71,6 +83,7 @@ struct Elf64_Shdr {
  */
 class Elf64 {
 public:
+    static kstd::string section_header_to_string(const char* section_names, Elf64_Shdr* section_header);
     kstd::string to_string(void* elf64_data) const;
 };
 

@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include "kstd.h"
+#include "Elf64.h"
 
 namespace utils {
 
@@ -70,26 +71,13 @@ struct FrameBuffer {
     // here color palette if fb_type == 0
 } __attribute__((packed));
 
-struct Elf64SectionHeader {
-    unsigned int name_offset;  // offset into section names string, see: Elf64Sections::shndx
-    unsigned int type;
-    unsigned long long flags;
-    unsigned long long addr;
-    unsigned long long offset;
-    unsigned long long size;
-    unsigned int link;
-    unsigned int info;
-    unsigned long long addralign;
-    unsigned long long entsize;
-} __attribute__((packed));
-
 struct Elf64Sections {
     unsigned int type;  // = 9
     unsigned int size;
     unsigned int num;
     unsigned int ent_size;
     unsigned int shndx; // index into below "headers". The pointed header contains section names C string at "addr"
-    Elf64SectionHeader headers[0];
+    Elf64_Shdr headers[0];
 } __attribute__((packed));
 
 
@@ -120,7 +108,7 @@ private:
     static MemoryMapEntry* mme[];
     static unsigned int mme_count;
     static Elf64Sections* es;
-    static Elf64SectionHeader* esh[];
+    static Elf64_Shdr* esh[];
     static unsigned int esh_count;
 };
 
