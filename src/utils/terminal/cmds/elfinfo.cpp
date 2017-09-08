@@ -43,12 +43,9 @@ void elfinfo::run() {
     u32 size = e.get_size();
     char* buff = new char[size];
     e.read(buff, size);
-
     Elf64 elf;
+    env->printer->format("% \n", elf.to_string(buff));
 
-    string s = elf.to_string(buff);
-    env->printer->format("%", s);
-
-    env->printer->format("\n");
+    delete[] buff;
 }
 } /* namespace cmds */
