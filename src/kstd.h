@@ -114,6 +114,34 @@ typename std::common_type<T1, T2>::type max(const T1& a, const T2& b) {
     return a > b ? a : b;
 }
 
+
+string format(const string& fmt);
+
+string format(s64 num);
+
+string format(char const *fmt);
+
+template<typename Head, typename ... Tail>
+string format(char const *fmt, Head head, Tail ... tail) {
+
+    string result;
+    while (*fmt) {
+        if (*fmt == '%') {
+            result += format(head);
+            result += format(++fmt, tail...);
+            break;
+        } else
+            result += (*fmt++);
+    }
+
+    return result;
+}
+
+template<typename ... Args>
+string format(const string& fmt, Args ... args) {
+    return format(fmt.c_str(), args...);
+}
+
 /**
     @example    flags_to_str(6, "READ=0x4", "WRITE=0x2", "EXEC=0x1");
                 > READ WRITE
@@ -139,7 +167,7 @@ string flags_to_str(unsigned long long flags, H head, T... tail) {
                 > CLOSE
 */
 inline string enum_to_str(unsigned long long enumval) {
-    return string("[UNKNOWN]");
+    return format("[?-%]", enumval);
 }
 
 template <class H, class ...T>
@@ -208,32 +236,6 @@ string join_string(string separator, const C& elements) {
     return result;
 }
 
-string format(const string& fmt);
-
-string format(s64 num);
-
-string format(char const *fmt);
-
-template<typename Head, typename ... Tail>
-string format(char const *fmt, Head head, Tail ... tail) {
-
-    string result;
-    while (*fmt) {
-        if (*fmt == '%') {
-            result += format(head);
-            result += format(++fmt, tail...);
-            break;
-        } else
-            result += (*fmt++);
-    }
-
-    return result;
-}
-
-template<typename ... Args>
-string format(const string& fmt, Args ... args) {
-    return format(fmt.c_str(), args...);
-}
 
 }; // namespace kstd
 
