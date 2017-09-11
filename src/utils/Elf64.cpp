@@ -33,21 +33,28 @@ string Elf64::to_string(void* elf64_data) const {
     result += format("String table section index: %\n", hdr->e_shstrndx);
 
     result += format("elf sections: \n");
-
     Elf64_Shdr* sections_start = (Elf64_Shdr*)((char*)elf64_data + hdr->e_shoff);
-    Elf64_Shdr* esh = sections_start;
+    Elf64_Shdr* section = sections_start;
     const char* section_names = (char*) ((char*)elf64_data + (sections_start + hdr->e_shstrndx)->sh_offset );
-    for (int i = 0; i < hdr->e_shnum; i++) {
-        string esh_str = section_header_to_string(section_names, esh);
+    for (auto i = 0; i < hdr->e_shnum; i++) {
+        string esh_str = section_header_to_string(section_names, section);
         result += format("  %. %\n", i, esh_str);
-        esh++;
+        section++;
+    }
+
+    result += format("elf segments: \n");
+    Elf64_Phdr* segment = (Elf64_Phdr*)((char*)elf64_data + hdr->e_phoff);
+    for (auto i = 0; i < hdr->e_phnum; i++) {
+        string esh_str = segment_header_to_string(segment);
+        result += format("  %. %\n", i, esh_str);
+        segment++;
     }
 
     return result;
 }
 
 string Elf64::section_header_to_string(const char* section_names, Elf64_Shdr* esh) {
-    kstd::string type =
+    string type =
        enum_to_str(esh->sh_type,
            "NULL=0x0",
            "PROGBITS=0x1",
@@ -61,8 +68,8 @@ string Elf64::section_header_to_string(const char* section_names, Elf64_Shdr* es
            "REL=0x9",
            "SHLIB=0x0A",
            "DYNSYM=0x0B",
-           "CONSTRUCTORS=0x0E",
-           "DESTRUCTORS=0x0F",
+           "CONSTR.=0x0E",
+           "DESTR.=0x0F",
            "PRECONSTRUC=0x10",
            "GROUP=0x11",
            "SYMTAB_SHNDX=0x12",
@@ -70,7 +77,7 @@ string Elf64::section_header_to_string(const char* section_names, Elf64_Shdr* es
            "OS_SPECYFIC=0x60000000"
        );
 
-   kstd::string flags =
+   string flags =
        flags_to_str(esh->sh_flags,
            "WRITE=0x1",
            "ALLOC=0x2",
@@ -91,7 +98,28 @@ string Elf64::section_header_to_string(const char* section_names, Elf64_Shdr* es
 
     u16 name_offset = esh->sh_name;
     const char* section_name = section_names + name_offset;
-    return format("addr: %, len: %, name: %, type: %, flags: %", esh->sh_addr, esh->sh_size, section_name, type.c_str(), flags.c_str());
+    return format("vaddr: %, vsize: %, name: %, type: %, flags: %", esh->sh_addr, esh->sh_size, section_name, type.c_str(), flags.c_str());
 }
 
+string Elf64::segment_header_to_string(Elf64_Phdr* esh) {
+    string type =
+       enum_to_str(esh->p_type,
+           "NULL=0x0",
+           "PT_LOAD=0x1",
+           "PT_DYNAMIC=0x2",
+           "PT_INTERP=0x3",
+           "PT_NOTE=0x4",
+           "PT_SHLIB=0x5",
+           "PT_PHDR=0x6"
+       );
+
+    string flags =
+        flags_to_str(esh->p_flags,
+            "X=0x1",
+            "W=0x2",
+            "R=0x4"
+        );
+
+    return format("vaddr: %, vsize: %, type: %, flags: %", esh->p_vaddr, esh->p_memsz, type, flags);
+}
 } /* namespace utils */

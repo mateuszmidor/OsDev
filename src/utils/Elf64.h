@@ -78,12 +78,28 @@ struct Elf64_Shdr {
 } __attribute__((packed));
 
 /**
+ * @brief   ELF64 program header
+ * @see     https://www.uclibc.org/docs/elf-64-gen.pdf, Figure 6. ELF-64 Program Header Table Entry
+ */
+struct Elf64_Phdr {
+    Elf64_Word      p_type;         //  Type  of  segment
+    Elf64_Word      p_flags;        //  Segment  attributes
+    Elf64_Off       p_offset;       //  Offset  in  file
+    Elf64_Addr      p_vaddr;        //  Virtual  address  in  memory
+    Elf64_Addr      p_paddr;        //  Reserved
+    Elf64_Xword     p_filesz;       //  Size  of  segment  in  file
+    Elf64_Xword     p_memsz;        //  Size  of  segment  in  memory
+    Elf64_Xword     p_align;        //  Alignment  of  segment
+} __attribute__((packed));
+
+/**
  * @brief   This class allows loading of Executable Linkable Format files
  * @see     https://www.uclibc.org/docs/elf-64-gen.pdf
  */
 class Elf64 {
 public:
     static kstd::string section_header_to_string(const char* section_names, Elf64_Shdr* section_header);
+    static kstd::string segment_header_to_string(Elf64_Phdr* segment_header);
     kstd::string to_string(void* elf64_data) const;
 };
 
