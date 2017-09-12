@@ -5,10 +5,9 @@
  * @author: Mateusz Midor
  */
 
-#include "elfinfo.h"
-
-#include "../../Elf64.h"
 #include "kstd.h"
+#include "Elf64.h"
+#include "elfinfo.h"
 
 using namespace kstd;
 using namespace utils;
@@ -43,8 +42,7 @@ void elfinfo::run() {
     u32 size = e.get_size();
     char* buff = new char[size];
     e.read(buff, size);
-    Elf64 elf;
-    env->printer->format("% \n", elf.to_string(buff));
+    env->printer->format("% \n", Elf64::to_string(buff));
 
     delete[] buff;
 }

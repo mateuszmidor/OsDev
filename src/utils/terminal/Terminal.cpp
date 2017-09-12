@@ -33,6 +33,7 @@
 #include "cmds/date.h"
 #include "cmds/mb2.h"
 #include "cmds/elfinfo.h"
+#include "cmds/elfrun.h"
 #include <algorithm>
 #include <memory>
 
@@ -65,6 +66,7 @@ Terminal::Terminal(u64 arg) :
     install_cmd<cmds::date>("date", false);
     install_cmd<cmds::mb2>("mb2", false);
     install_cmd<cmds::elfinfo>("elfinfo", false);
+    install_cmd<cmds::elfrun>("elfrun", false);
     install_cmd<cmds::df>("df", false);
     install_cmd<cmds::ls>("ls", false);
     install_cmd<cmds::cat>("cat", false);
