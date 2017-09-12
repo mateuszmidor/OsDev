@@ -27,7 +27,13 @@ void elfrun::run() {
         return;
     }
 
-    string filename = env->cwd + "/" + env->cmd_args[1];
+    string name = env->cmd_args[1];
+    u64 arg = 0;
+    if (env->cmd_args.size() > 2) {
+        arg = str_to_long(env->cmd_args[2].c_str());
+    }
+
+    string filename = env->cwd + "/" + name;
     VolumeFat32* v = env->volume;
     auto e = v->get_entry(filename);
     if (!e) {
@@ -47,7 +53,7 @@ void elfrun::run() {
 
     TaskEntryPoint entry_point = (TaskEntryPoint)Elf64::load_into_current_addressspace(buff);
     TaskManager& task_manager = TaskManager::instance();
-    auto task = std::make_shared<Task>(entry_point, env->cmd_args[1], 0, true);
+    auto task = std::make_shared<Task>(entry_point, name, arg, true);
     task_manager.add_task(task);
 
     delete[] buff;
