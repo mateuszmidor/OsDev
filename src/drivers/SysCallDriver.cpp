@@ -23,18 +23,18 @@ hardware::CpuState* SysCallDriver::on_interrupt(hardware::CpuState* cpu_state) {
     TaskManager& mngr = TaskManager::instance();
     switch (cpu_state->rax) {
     case 1: // sys_exit
-        return task_exit();
+        return task_exit(cpu_state->rbx);
 
     default:
         return mngr.schedule(cpu_state);
     }
 }
 
-hardware::CpuState* SysCallDriver::task_exit() {
+hardware::CpuState* SysCallDriver::task_exit(u64 exit_code) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     auto current = mngr.get_current_task();
-    klog.format("[% task \"%\" exits]\n\n", current->is_user_space ? "User" : "Kernel", current->name.c_str());
+    klog.format("[% task \"%\" exits with code %]\n\n", current->is_user_space ? "User" : "Kernel", current->name.c_str(), exit_code);
     return mngr.kill_current_task();
 }
 

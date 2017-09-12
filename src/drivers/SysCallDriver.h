@@ -21,7 +21,7 @@ public:
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
 private:
-    hardware::CpuState* task_exit();
+    hardware::CpuState* task_exit(u64 exit_code);
 };
 
 } /* namespace drivers */
