@@ -5,6 +5,8 @@
  * @author: Mateusz Midor
  */
 
+#include "utils.h"
+
 /**
  * @brief   Beacuse this is a -nostdlib binary, we need to provide "_start" symbol for the system to know where to start execution
  */
@@ -19,8 +21,12 @@ __asm__ __volatile__(
 
 /**
  * @brief   Entry point
- * @return  Simply return argc**2
+ * @return  argv[1] * argv[1]
  */
 int main(int argc, char* argv[]) {
-    return argc * argc;
+    if (argc < 2)
+        return -1;
+
+    int value = str_to_long(argv[1]);
+    return value * value;
 }

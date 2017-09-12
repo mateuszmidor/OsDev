@@ -16,6 +16,51 @@ using namespace filesystem;
 using namespace multitasking;
 namespace cmds {
 
+/**
+ * @brief   Because multitasking::Task only takes 1 u64 argument, we pack (entry point address, argc, argv) in a struct and pass it to the Task
+ */
+struct RunElfParams {
+    u64 entry_point;
+    u64 argc;
+    u64 argv;
+};
+
+/**
+ * @brief   Prepare execution environment(argc and argv for "main" function) and jump to main function
+ * @note    RunElfParams and all pointers in it will leak;
+ *          in the future they will be allocated in the process address space and cleaned up with it when process is done
+ * @note    This function never returns; instead int 0x80 for sys_exit is called from within the elf itself
+ */
+[[noreturn]] void run_elf_in_current_addressspace(u64 arg) {
+    RunElfParams* params = (RunElfParams*)arg;
+
+    asm volatile(
+            "mov %0, %%rdi       \n;"   // argc
+            "mov %1, %%rsi       \n;"   // argv
+            "jmp *%2             \n;"   // jump to "main" function address
+            :
+            : "g"(params->argc), "g"(params->argv), "g"(params->entry_point)
+            : "%rsi", "%rdi"
+    );
+
+    __builtin_unreachable();
+}
+
+/**
+ * @brief   Convert vector<string> into char*[]
+ */
+char** string_vec_to_argv(const vector<string>& src_vec) {
+    u8 argc = src_vec.size() - 1;   // no first ("elfrun" cmd) item
+    char** argv = new char* [argc];
+    for (u8 i = 0; i < argc; i++) {
+        const string& src = src_vec[i + 1];
+        argv[i] = new char[src.length() + 1]; // +1 for null terminator
+        memcpy(argv[i], src.c_str(), src.length() + 1); // +1 for null terminator
+    }
+
+    return argv;
+}
+
 void elfrun::run() {
     if (env->volumes.empty()) {
         env->printer->format("elfrun: no volumes installed\n");
@@ -28,11 +73,6 @@ void elfrun::run() {
     }
 
     string name = env->cmd_args[1];
-    u64 arg = 0;
-    if (env->cmd_args.size() > 2) {
-        arg = str_to_long(env->cmd_args[2].c_str());
-    }
-
     string filename = env->cwd + "/" + name;
     VolumeFat32* v = env->volume;
     auto e = v->get_entry(filename);
@@ -47,15 +87,23 @@ void elfrun::run() {
     }
 
 
+    // load elf file data
     u32 size = e.get_size();
     char* buff = new char[size];
     e.read(buff, size);
 
-    TaskEntryPoint entry_point = (TaskEntryPoint)Elf64::load_into_current_addressspace(buff);
+    // prepare elf run environment
+    RunElfParams* run_env = new RunElfParams;
+    run_env->entry_point = Elf64::load_into_current_addressspace(buff);
+    run_env->argc = (u64)env->cmd_args.size() - 1; // no "elfrun" command
+    run_env->argv = (u64)string_vec_to_argv(env->cmd_args);
+
+    // run elf with environment pointer as an arg
+    auto task = std::make_shared<Task>(run_elf_in_current_addressspace, name, (u64)run_env, true);
     TaskManager& task_manager = TaskManager::instance();
-    auto task = std::make_shared<Task>(entry_point, name, arg, true);
     task_manager.add_task(task);
 
+    // free elf file data
     delete[] buff;
 }
 

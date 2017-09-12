@@ -12,6 +12,7 @@ all: $(TARGETS) # This is first target. It is used when no params passed to “m
 
 install: $(TARGETS)
 	@cp $^ ../p2
+	@sync
 	 
 # indicate that following target doesnt update any file called "clean"
 .PHONY: clean

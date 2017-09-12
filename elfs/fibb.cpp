@@ -5,6 +5,8 @@
  * @author: Mateusz Midor
  */
 
+#include "utils.h"
+
 /**
  * @brief   Beacuse this is a -nostdlib binary, we need to provide "_start" symbol for the system to know where to start execution
  */
@@ -16,7 +18,6 @@ __asm__ __volatile__(
     "mov $1, %rax       \n;"
     "int $0x80          \n;"
 );
-
 
 /**
  * @brief   Recursive Fibonacci; tests stack well
@@ -30,8 +31,11 @@ int fib_rec(int n) {
 
 /**
  * @brief   Entry point
- * @return  Return fibonacci of argc
+ * @return  Fibonacci of argv[1]
  */
 int main(int argc, char* argv[]) {
-    return fib_rec(argc);
+    if (argc < 2)
+        return -1;
+    else
+        return fib_rec(str_to_long(argv[1]));
 }
