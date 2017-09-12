@@ -10,7 +10,7 @@
 using namespace kstd;
 namespace utils {
 
-string Elf64::to_string(void* elf64_data) const {
+string Elf64::to_string(void* elf64_data) {
     Elf64_Ehdr* hdr = (Elf64_Ehdr*) elf64_data;
     string result;
 
@@ -120,6 +120,26 @@ string Elf64::segment_header_to_string(Elf64_Phdr* esh) {
             "R=0x4"
         );
 
-    return format("vaddr: %, vsize: %, type: %, flags: %", esh->p_vaddr, esh->p_memsz, type, flags);
+    return format("vaddr: %, vsize: %, faddr: %, fsize: %, type: %, flags: %", esh->p_vaddr, esh->p_memsz, esh->p_offset, esh->p_filesz, type, flags);
+}
+
+/**
+ * @brief   Load ELF64 executable from memory pointed by "elf64_data" into current address space
+ * @return  Address of the executable entry point
+ * @note    This can only work with statically linked -nostdlib binaries; very early stage of ELF64 support :)
+ */
+u64 Elf64::load_into_current_addressspace(void* elf64_data) {
+    Elf64_Ehdr* hdr = (Elf64_Ehdr*) elf64_data;
+
+    Elf64_Phdr* segment = (Elf64_Phdr*)((char*)elf64_data + hdr->e_phoff);
+    for (auto i = 0; i < hdr->e_phnum; i++) {
+        if (segment->p_type == 1) { // PT_LOAD
+            memcpy((u8*)segment->p_vaddr, (u8*)elf64_data + segment->p_offset, segment->p_filesz);
+        }
+
+        segment++;
+    }
+
+    return hdr->e_entry;
 }
 } /* namespace utils */

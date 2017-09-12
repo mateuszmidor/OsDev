@@ -98,9 +98,10 @@ struct Elf64_Phdr {
  */
 class Elf64 {
 public:
+    static kstd::string to_string(void* elf64_data);
     static kstd::string section_header_to_string(const char* section_names, Elf64_Shdr* section_header);
     static kstd::string segment_header_to_string(Elf64_Phdr* segment_header);
-    kstd::string to_string(void* elf64_data) const;
+    static u64 load_into_current_addressspace(void* elf64_data);
 };
 
 } /* namespace utils */
