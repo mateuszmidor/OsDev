@@ -1,7 +1,7 @@
 # comments begin with pound sign.
 CXX = g++ # an alias. You can specify any number of aliases
 CF = -Wall -mno-red-zone -nostdlib -static -O0
-SOURCES = ret3.cpp square.cpp fibb.cpp
+SOURCES = ret3.cpp square.cpp fibb.cpp sum.cpp
 TARGETS = $(SOURCES:.cpp=)
 
 all: $(TARGETS) # This is first target. It is used when no params passed to “make”
