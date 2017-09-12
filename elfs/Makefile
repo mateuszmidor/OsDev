@@ -1,0 +1,18 @@
+# comments begin with pound sign.
+CXX = g++ # an alias. You can specify any number of aliases
+CF = -Wall -mno-red-zone -nostdlib -static -O0
+ 
+all: ret3 # This is first target. It is used when no params passed to “make”
+
+ret3: ret3.o 
+	$(CXX) $(CF) ret3.o -o ret3 # command builds ‘ret3’
+
+ret3.o : ret3.cpp
+	$(CXX) $(CF) -c ret3.cpp
+
+# indicate that following target doesnt update any file called "clean"
+.PHONY: clean
+
+clean:
+	rm -rf *o ret3 # remove all object files and ‘ret3’ itself
+	@echo Removed all build results # @echo prints out text
