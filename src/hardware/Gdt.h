@@ -15,13 +15,14 @@ namespace hardware {
 
 /**
  * @brief   Indexes for segment selectors in Global Descriptor Table, 64 bit long mode
+ * @note    The order KERNEL CODE, KERNEL DATA, USER DATA, USER CODE is enforced by "syscall/sysret" x86-64 instructions
  */
 enum Gate64 : u16 {
     GDT_NULL = 0,         // obligatory NULL  segment selector
     GDT_KERNEL_CODE = 1,  // segment selector for kernel-space code
     GDT_KERNEL_DATA = 2,  // segment selector for kernel-space data
-    GDT_USER_CODE = 3,    // segment selector for user-space code
-    GDT_USER_DATA = 4,    // segment selector for user-space data
+    GDT_USER_DATA = 3,    // segment selector for user-space data
+    GDT_USER_CODE = 4,    // segment selector for user-space code
     GDT_TSS = 5,          // segment selector for task state segment lower 8 bytes
     GDT_TSS_EXTENSION = 6,// segment selector for task state segment upper 8 bytes that hold upper 32 bits of base address of TSS struct
     GDT_MAX               // represents the segment selectors count
@@ -109,10 +110,10 @@ class Gdt {
 public:
     void reinstall_gdt();
     static u64 get_null_segment_selector() { return gate_to_segment_selector(Gate64::GDT_NULL); };
-    static u64 get_user_code_segment_selector() { return gate_to_segment_selector(Gate64::GDT_USER_CODE) | 0x03; };   // "| 0x03" to point out that this is ring 3 selector
-    static u64 get_user_data_segment_selector() { return gate_to_segment_selector(Gate64::GDT_USER_DATA) | 0x03; };   // "| 0x03" to point out that this is ring 3 selector
     static u64 get_kernel_code_segment_selector() { return gate_to_segment_selector(Gate64::GDT_KERNEL_CODE); };
     static u64 get_kernel_data_segment_selector() { return gate_to_segment_selector(Gate64::GDT_KERNEL_DATA); };      // GDT_NULL probably can be used here as there is no ds in kernel space long mode
+    static u64 get_user_data_segment_selector() { return gate_to_segment_selector(Gate64::GDT_USER_DATA) | 0x03; };   // "| 0x03" to point out that this is ring 3 selector
+    static u64 get_user_code_segment_selector() { return gate_to_segment_selector(Gate64::GDT_USER_CODE) | 0x03; };   // "| 0x03" to point out that this is ring 3 selector
     static u64 get_tss_segment_selector() { return gate_to_segment_selector(Gate64::GDT_TSS); };
 
 private:
