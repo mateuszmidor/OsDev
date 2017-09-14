@@ -29,14 +29,17 @@ extern "C" void handle_syscall();
  * @brief   "syscall" handler. This is called from syscalls.S
  * @note    This is run in kernel space, using kernel stack
  */
-extern "C" void on_syscall(u64 sys_call_num)  {
+extern "C" s64 on_syscall(u64 sys_call_num)  {
     SysCallManager& mngr = SysCallManager::instance();
     KernelLog& klog = KernelLog::instance();
 
     klog.format("syscall_handler: % \n", sys_call_num);
+
     if (sys_call_num == 60) {
 //        Task::exit();   // not sure if interrupt from syscall is the right way to go...
     }
+
+    return 0;
 }
 
 

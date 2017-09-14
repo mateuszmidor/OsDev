@@ -18,7 +18,7 @@ handle_syscall:
     push %rdx
     push %rcx
     push %rbx
-    push %rax
+    //push %rax // rax is syscall result value
 
     // remember user stack pointer
     mov %rsp, (user_rsp)
@@ -33,7 +33,7 @@ handle_syscall:
     // restore user stack
     mov (user_rsp), %rsp
 
-    pop %rax
+    //pop %rax
     pop %rbx
     pop %rcx
     pop %rdx
