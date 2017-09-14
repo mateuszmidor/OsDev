@@ -15,6 +15,15 @@ using utils::KernelLog;
 
 static KernelLog& klog = KernelLog::instance();
 
+extern "C" size_t strlen(char const * str) {
+    size_t result = 0;
+    while (str[result]) {
+        result++;
+    }
+
+    return result;
+}
+
 void* kmalloc(size_t size) {
     memory::MemoryManager& mm = memory::MemoryManager::instance();
     return mm.alloc(size);

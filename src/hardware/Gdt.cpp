@@ -64,6 +64,12 @@ void Gdt::setup_global_descriptor_table() {
     gdt[Gate64::GDT_TSS_EXTENSION]= make_extended_tss_entry(base);
 }
 
+/**
+ * @brief   Install new GDT that allows use space
+ * @note    __noinline__ is needed so that the compiler doesnt throw "jump_to_new_gdt already defined"
+ *          when compiling under -O2
+ */
+__attribute__((__noinline__))
 void Gdt::install_global_descriptor_table() {
     GdtSizeAddress gdt_size_address;
     gdt_size_address.address = (u64) (gdt.data());

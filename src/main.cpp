@@ -130,10 +130,12 @@ void activate_legacy_sse() {
  * @note    We are starting with just stack in place, no dynamic memory available, no global objects constructed yet
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
-    // 0. initialize multiboot2 info from the data provided by the boot loader
-    Multiboot2::initialize(multiboot2_info_ptr);
+    // 0. activate the SSE so the kernel code compiled under -O2 can actually run
+    activate_legacy_sse();
 
-    // 1. setup dynamic memory manager. This must be done before global constructors are run since global constructors may require dynamic memory
+    // 1. initialize multiboot2 info from the data provided by the boot loader, then setup dynamic memory manager.
+    // This must be done before global constructors are run since global constructors may require dynamic memory
+    Multiboot2::initialize(multiboot2_info_ptr);
     MemoryManager::install_allocation_policy<BumpAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
 
     // 2. run constructors of global objects
@@ -164,7 +166,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // 8. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
-    activate_legacy_sse();
 
     // 9. configure vga text mode
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
