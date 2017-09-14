@@ -8,10 +8,17 @@
 #include "kstd.h"
 #include "Gdt.h"
 /**
- * @brief   Statically allocated kernel stack (the top of it)
+ * @brief   Statically allocated normal kernel stack (the top of it)
  * @see     boot.S
  */
 extern u8 kernel_stack_top[];
+
+/**
+ * @brief   Kernel stack that is guaranteed to be valid; for handling Non-maskable Interrupts, Dobule faults and Machine Checks
+ *          Used by the means of Interrupt Stack Tables
+ * @see     https://software.intel.com/sites/default/files/managed/7c/f1/253668-sdm-vol-3a.pdf, 6.14.5 Interrupt Stack Table
+ */
+u8 kernel_stack_safe[1*4096];
 
 namespace hardware {
 
@@ -32,8 +39,12 @@ void Gdt::setup_task_state_segment() {
     // clear entire structure
     memset(&tss, 0, sizeof(tss));
 
-    // set kernel stack pointer for ring0
+    // set normal kernel stack pointer for ring0
     tss.rsp0 = (u64)kernel_stack_top;
+
+    // set emergency kernel stack for handling emergency situation exceptions
+    tss.ist1 = (u64)kernel_stack_safe + sizeof(kernel_stack_safe);
+
 
     // set io ports bitmap to deny any port access from rings other than ring0
     memset(&tss.io_map, 0xFF, sizeof(tss.io_map));

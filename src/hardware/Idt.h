@@ -26,8 +26,8 @@ struct IdtEntryOptions {
     u16 min_privilege_level         : 2;    // 3 for user space
     u16 present                     : 1;    // 1 for true
 
-    IdtEntryOptions(u8 privilege = 0, bool is_present = false) {
-        interrupt_stack_table_index = 0;
+    IdtEntryOptions(u8 privilege = 0, bool is_present = false, u8 ist_index = 0) {
+        interrupt_stack_table_index = ist_index;
         reserved = 0;
         type = 14;
         always_0 = 0;
@@ -69,7 +69,7 @@ public:
     void reinstall_idt();
 
 private:
-    IdtEntry make_entry(u64 handler_pointer, u8 min_privilege_level = 0);
+    IdtEntry make_entry(u64 handler_pointer, u8 ist_index = 0, u8 min_privilege_level = 0);
     void setup_interrupt_descriptor_table();
     void install_interrupt_descriptor_table();
 
