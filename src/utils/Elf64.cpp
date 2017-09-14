@@ -134,7 +134,8 @@ u64 Elf64::load_into_current_addressspace(void* elf64_data) {
     Elf64_Phdr* segment = (Elf64_Phdr*)((char*)elf64_data + hdr->e_phoff);
     for (auto i = 0; i < hdr->e_phnum; i++) {
         if (segment->p_type == 1) { // PT_LOAD
-            memcpy((u8*)segment->p_vaddr, (u8*)elf64_data + segment->p_offset, segment->p_filesz);
+            memset((u8*)segment->p_vaddr, 0, segment->p_memsz); // clear memory in case file size < memory size
+            memcpy((u8*)segment->p_vaddr, (u8*)elf64_data + segment->p_offset, segment->p_filesz); // copy segment
         }
 
         segment++;
