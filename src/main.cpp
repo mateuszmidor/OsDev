@@ -100,6 +100,31 @@ void task_init(u64 unused) {
 }
 
 /**
+ * @brief   Activate the legacy SSE
+ * @see     http://developer.amd.com/wordpress/media/2012/10/24593_APM_v21.pdf, 11.3.1  Enabling Legacy SSE Instruction Execution
+ */
+void activate_legacy_sse() {
+    asm volatile (
+            // enable FX SAVE/FXRSTOR (CR4 bit 9)
+            "mov %%cr4, %%rax                     \n;"
+            "or $0x200, %%rax                     \n;"
+            "mov %%rax, %%cr4                     \n;"
+
+            // disable emulate coprocessor (CR0 bit 2)
+            "mov %%cr0, %%rax                     \n;"
+            "and $0xFFFFFFFFFFFFFFFB, %%rax       \n;"
+            "mov %%rax, %%cr0                     \n;"
+
+            // enable monitor coprocessor (CR0 bit 1)
+            "mov %%cr0, %%rax                     \n;"
+            "or $0x2, %%rax                       \n;"
+            "mov %%rax, %%cr0                     \n;"
+            :
+            :
+            : "%rax"
+    );
+}
+/**
  * @name    kmain
  * @brief   Kernel entry point, we jump here right from long_mode_init.S
  * @note    We are starting with just stack in place, no dynamic memory available, no global objects constructed yet
@@ -139,6 +164,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // 8. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
+    activate_legacy_sse();
 
     // 9. configure vga text mode
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
