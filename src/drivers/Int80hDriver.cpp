@@ -1,11 +1,12 @@
 /**
- *   @file: SysCallDriver.cpp
+ *   @file: Int80hDriver.cpp
  *
  *   @date: Aug 31, 2017
  * @author: Mateusz Midor
  */
 
-#include "SysCallDriver.h"
+#include "Int80hDriver.h"
+
 #include "TaskManager.h"
 #include "KernelLog.h"
 
@@ -15,11 +16,11 @@ using namespace multitasking;
 
 namespace drivers {
 
-s16 SysCallDriver::handled_interrupt_no() {
-    return Interrupts::SysCall;
+s16 Int80hDriver::handled_interrupt_no() {
+    return Interrupts::Int80h;
 }
 
-hardware::CpuState* SysCallDriver::on_interrupt(hardware::CpuState* cpu_state) {
+hardware::CpuState* Int80hDriver::on_interrupt(hardware::CpuState* cpu_state) {
     TaskManager& mngr = TaskManager::instance();
     switch (cpu_state->rax) {
     case 1: // sys_exit
@@ -30,7 +31,7 @@ hardware::CpuState* SysCallDriver::on_interrupt(hardware::CpuState* cpu_state) {
     }
 }
 
-hardware::CpuState* SysCallDriver::task_exit(u64 exit_code) {
+hardware::CpuState* Int80hDriver::task_exit(u64 exit_code) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     auto current = mngr.get_current_task();

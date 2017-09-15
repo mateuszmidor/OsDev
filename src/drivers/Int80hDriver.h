@@ -1,21 +1,21 @@
 /**
- *   @file: SysCallDriver.h
+ *   @file: Int80hDriver.h
  *
  *   @date: Aug 31, 2017
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_DRIVERS_SYSCALLDRIVER_H_
-#define SRC_DRIVERS_SYSCALLDRIVER_H_
+#ifndef SRC_DRIVERS_INT80HDRIVER_H_
+#define SRC_DRIVERS_INT80HDRIVER_H_
 
 #include "DeviceDriver.h"
 
 namespace drivers {
 
-class SysCallDriver: public DeviceDriver {
+class Int80hDriver: public DeviceDriver {
 public:
-    SysCallDriver() {}
-    virtual ~SysCallDriver() {}
+    Int80hDriver() {}
+    virtual ~Int80hDriver() {}
 
     static s16 handled_interrupt_no();
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
@@ -26,4 +26,4 @@ private:
 
 } /* namespace drivers */
 
-#endif /* SRC_DRIVERS_SYSCALLDRIVER_H_ */
+#endif /* SRC_DRIVERS_INT80HDRIVER_H_ */

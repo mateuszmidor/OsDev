@@ -25,7 +25,7 @@ enum Interrupts : u16 {
     PrimaryAta      = IRQ_BASE + 14,
     SecondaryAta    = IRQ_BASE + 15,
 
-    SysCall         = 0x80,             // IRQ_BASE not considered here as int 0x80 is not being called by hw but by the user sofware
+    Int80h         = 0x80,             // IRQ_BASE not considered here as int 0x80 is not being called by hw but by the user sofware
     Vga             = 0xFF,             // fake interrupt no; Vga sends no interrupts but it is needed to fit in InterruptManager interface
     IRQ_MAX         = 0x100
 };

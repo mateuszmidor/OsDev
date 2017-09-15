@@ -104,7 +104,7 @@ void Idt::setup_interrupt_descriptor_table() {
     idt[Interrupts::Mouse]          = make_entry((u64) (handle_interrupt_no_0x2C));         // mouse
     idt[Interrupts::PrimaryAta]     = make_entry((u64) (handle_interrupt_no_0x2E));         // primary ata bus
     idt[Interrupts::SecondaryAta]   = make_entry((u64) (handle_interrupt_no_0x2F));         // secondary ata bus
-    idt[Interrupts::SysCall]        = make_entry((u64) (handle_interrupt_no_0x80), 0, 3);   // "int 0x80"; regular kernel stack, min privilege=user space
+    idt[Interrupts::Int80h]        = make_entry((u64) (handle_interrupt_no_0x80), 0, 3);   // "int 0x80"; regular kernel stack, min privilege=user space
 }
 
 void Idt::install_interrupt_descriptor_table() {

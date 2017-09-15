@@ -19,7 +19,6 @@
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "PitDriver.h"
-#include "SysCallDriver.h"
 #include "PCIController.h"
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
@@ -30,12 +29,14 @@
 #include "MemoryManager.h"
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
+#include "Sse.h"
 #include "_demos/Demo.h"
 #include "_demos/VgaDemo.h"
 #include "_demos/Fat32Demo.h"
 #include "_demos/MouseDemo.h"
 #include "_demos/MultitaskingDemo.h"
 #include "_demos/CpuSpeedDemo.h"
+#include "drivers/Int80hDriver.h"
 
 
 using std::make_shared;
@@ -63,7 +64,7 @@ auto keyboard           = make_shared<KeyboardDriver> (scs1);
 auto mouse              = make_shared<MouseDriver>();
 auto pit                = make_shared<PitDriver>();
 auto ata_primary_bus    = make_shared<AtaPrimaryBusDriver>();
-auto sys_call           = make_shared<SysCallDriver>();
+auto int80h             = make_shared<Int80hDriver>();
 
 
 /**
@@ -98,38 +99,13 @@ void task_init(u64 unused) {
 }
 
 /**
- * @brief   Activate the legacy SSE
- * @see     http://developer.amd.com/wordpress/media/2012/10/24593_APM_v21.pdf, 11.3.1  Enabling Legacy SSE Instruction Execution
- */
-void activate_legacy_sse() {
-    asm volatile (
-            // enable FX SAVE/FXRSTOR (CR4 bit 9)
-            "mov %%cr4, %%rax                     \n;"
-            "or $0x200, %%rax                     \n;"
-            "mov %%rax, %%cr4                     \n;"
-
-            // disable emulate coprocessor (CR0 bit 2)
-            "mov %%cr0, %%rax                     \n;"
-            "and $0xFFFFFFFFFFFFFFFB, %%rax       \n;"
-            "mov %%rax, %%cr0                     \n;"
-
-            // enable monitor coprocessor (CR0 bit 1)
-            "mov %%cr0, %%rax                     \n;"
-            "or $0x2, %%rax                       \n;"
-            "mov %%rax, %%cr0                     \n;"
-            :
-            :
-            : "%rax"
-    );
-}
-/**
  * @name    kmain
  * @brief   Kernel entry point, we jump here right from long_mode_init.S
  * @note    We are starting with just stack in place, no dynamic memory available, no global objects constructed yet
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
     // 0. activate the SSE so the kernel code compiled under -O2 can actually run
-    activate_legacy_sse();
+    Sse::activate_legacy_sse();
 
     // 1. initialize multiboot2 info from the data provided by the boot loader, then setup dynamic memory manager.
     // This must be done before global constructors are run since global constructors may require dynamic memory
@@ -152,7 +128,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(mouse);
     driver_manager.install_driver(pit);
     driver_manager.install_driver(ata_primary_bus);
-    driver_manager.install_driver(sys_call);
+    driver_manager.install_driver(int80h);
 
     // 6. install exceptions
     exception_manager.install_handler(make_shared<PageFaultHandler>());
