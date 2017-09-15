@@ -1,6 +1,6 @@
 # comments begin with pound sign.
 CXX = g++ # an alias. You can specify any number of aliases
-CF = -Wall -mno-red-zone -nostdlib -static -O0
+CF = -std=c++98 -Wall -mno-red-zone -nostartfiles -static -O0
 SOURCES = ret3.cpp square.cpp fibb.cpp sum.cpp
 TARGETS = $(SOURCES:.cpp=)
 
