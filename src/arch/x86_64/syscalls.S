@@ -18,7 +18,7 @@ handle_syscall:
     push %rdx
     push %rcx
     push %rbx
-    //push %rax // rax is syscall result value
+    // %rax will contain syscall result value so no need to remember it
 
     // remember user stack pointer
     mov %rsp, (user_rsp)
@@ -26,14 +26,23 @@ handle_syscall:
     // switch to kernel stack
     mov $kernel_stack_top, %rsp
 
-    // set syscall number as first function argument
+    // set 5 syscalls params as function args no. 2, 3, 4, 5, 6
+    // see http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64 and https://en.wikipedia.org/wiki/X86_calling_conventions "System V AMD64"
+    mov %r8, %r9
+    mov %r10, %r8
+    mov %rdx, %rcx
+    mov %rsi, %rdx
+    mov %rdi, %rsi
+
+    // set syscall number as function arg no. 1
     mov %rax, %rdi
+
+    // call C++ syscall handler, result value comes back on %rax
     call on_syscall
 
     // restore user stack
     mov (user_rsp), %rsp
 
-    //pop %rax
     pop %rbx
     pop %rcx
     pop %rdx

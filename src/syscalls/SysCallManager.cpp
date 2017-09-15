@@ -29,11 +29,59 @@ extern "C" void handle_syscall();
  * @brief   "syscall" handler. This is called from syscalls.S
  * @note    This is run in kernel space, using kernel stack
  */
-extern "C" s64 on_syscall(u64 sys_call_num)  {
+extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5)  {
     SysCallManager& mngr = SysCallManager::instance();
     KernelLog& klog = KernelLog::instance();
 
     klog.format("syscall_handler: % \n", sys_call_num);
+    switch (sys_call_num) {
+    case 0: // read (fd, buff, count)
+        return 0;
+
+    case 1: // write (fd, buff, count)
+        if (arg1 == 2) // stderr
+            klog.format("% [%]\n", (char*) arg2, arg3);
+        break;
+
+    case 2: // open
+        return 3;
+
+    case 3: // close
+        return 0;
+
+    case 9: // mmap
+        return 7*1024*1024;
+
+    case 12: // brk
+        return 7*1024*1024;
+
+    case 15: // sigprocmask
+        return 0;
+
+    case 20: // writev
+        return  10; // 10 bytes written
+
+    case 21: // access
+        return -1;
+
+    case 59: //  sys_execve
+        return 0;
+
+    case 63: // uname
+        return 0;
+
+    case 90: // readlink
+        return 32;
+
+    case 158: // arch_prctl
+        return 0;
+
+    case 231: // exit_group
+        return 3;
+
+    case 234: // tgkil
+        return 0;//
+    }
 
     if (sys_call_num == 60) {
 //        Task::exit();   // not sure if interrupt from syscall is the right way to go...
