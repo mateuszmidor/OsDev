@@ -73,8 +73,6 @@ void corner_counter(u64 arg) {
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
         u64 i = 0;
 
-        asm volatile ("syscall" : :"a"(60));  //syscall exit
-
         while (true) {
             s8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };

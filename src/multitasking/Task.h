@@ -23,7 +23,7 @@ struct Task {
     void wait_until_finished();
     static void idle(u64 arg = 0);
     static void yield();
-    static void exit();
+    static void exit(u64 result_code = 0);
 
     volatile bool is_terminated;
     TaskEntryPoint entrypoint;

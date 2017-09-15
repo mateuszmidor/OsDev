@@ -55,11 +55,11 @@ void Task::idle(u64 arg) {
 }
 
 void Task::yield() {
-    asm("hlt");
+    asm volatile("hlt");
 }
 
-void Task::exit() {
-    asm("mov $1, %rax; int $0x80");
+void Task::exit(u64 result_code) {
+    asm volatile("int $0x80" : : "a"(1), "b"(result_code));
 }
 
 } /* namespace multitasking */
