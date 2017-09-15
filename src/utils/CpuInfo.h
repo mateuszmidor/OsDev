@@ -13,14 +13,31 @@
 
 namespace utils {
 
+struct CpuMultimediaExtensions {
+    bool sse    = false;
+    bool sse2   = false;
+    bool sse3   = false;
+    bool ssse3  = false;
+    bool sse4_1 = false;
+    bool sse4_2 = false;
+    bool sse4a  = false;
+    bool sse5   = false;
+    bool avx    = false;
+
+    kstd::string to_string() const;
+};
+
 class CpuInfo {
 public:
     u32 get_peak_mhz() const;
     kstd::string get_vendor() const;
+    CpuMultimediaExtensions get_multimedia_extensions() const;
     void print_to_klog() const;
 
 private:
     u64 rtdsc() const;
+    void __cpuid(int* cpuinfo, int info) const;
+    unsigned long long _xgetbv(unsigned int index) const;
 };
 
 } // namespace utils

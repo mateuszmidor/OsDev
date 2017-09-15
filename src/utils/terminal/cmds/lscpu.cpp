@@ -12,7 +12,7 @@ namespace cmds {
 
 void lscpu::run() {
     utils::CpuInfo cpu_info;
-    env->printer->format("CPU: % @ %MHz\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz());
+    env->printer->format("CPU: % @ %MHz, %\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz(), cpu_info.get_multimedia_extensions().to_string());
 }
 
 } /* namespace cmds */
