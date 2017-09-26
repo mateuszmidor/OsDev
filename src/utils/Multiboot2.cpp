@@ -115,8 +115,18 @@ void Multiboot2::initialize(void *multiboot2_info_ptr) {
  * @return  First byte of memory available for use
  */
 size_t Multiboot2::get_available_memory_first_byte() {
-    // seems that GRUB2 puts multiboot2 data after all elf sections, so let's return first byte after multiboot2 data
-    return (size_t)multiboot2_info_addr + multiboot2_info_totalsize;
+    size_t first_free_byte = bmi->lower * 1024;
+
+    for (u32 i = 0; i < esh_count; i++) {
+        size_t last_occupied_byte = esh[i]->sh_addr + esh[i]->sh_size;
+        if (first_free_byte <= last_occupied_byte)
+            first_free_byte = last_occupied_byte + 1;
+    }
+
+    if (first_free_byte <= multiboot2_info_addr + multiboot2_info_totalsize)
+        first_free_byte = multiboot2_info_addr + multiboot2_info_totalsize + 1;
+
+    return first_free_byte;
 }
 
 /**
