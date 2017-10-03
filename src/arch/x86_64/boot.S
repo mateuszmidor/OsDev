@@ -168,21 +168,28 @@ check_long_mode:
 set_up_page_tables:
     # map first P4 entry to P3 table
     mov $p3_table, %eax
-    sub $0xC0000000, %eax
+    subl $0xC0000000, %eax
     or $0b111, %eax       # present + writable + user space accessible
-    mov %eax, ($p4_table- KVIRT_BASE)
+    mov $p4_table, %edx
+    subl $0xC0000000, %edx
+    mov %eax, (%edx)
 
     # map first P3 entry to P2 table
     mov $p2_table, %eax
-    sub $0xC0000000, %eax
+    subl $0xC0000000, %eax
     or $0b111, %eax       # present + writable + user space accessible
-    mov %eax, ($p3_table- KVIRT_BASE)
-    //mov %eax, (p3_table + 24)
+    mov $p3_table, %edx
+    subl $0xC0000000, %edx
+    mov %eax, (%edx)
+
+    #mov $p3_table, %edx
+    #sub $0xC0000000, %edx
+    #mov %eax, 24(%edx)
 
     # map each P2 entry to a huge 2MiB page
     mov $0, %ecx
     mov $p2_table, %edx
-    sub $0xC0000000, %edx
+    subl $0xC0000000, %edx
 
     .map_p2_table:
         # map ecx-th P2 entry to a huge page that starts at address 2MiB*ecx
@@ -204,7 +211,7 @@ set_up_page_tables:
 enable_paging:
     # load P4 to cr3 register (cpu uses this to access the P4 table)
     mov $p4_table, %eax
-    sub $0xC0000000, %eax
+    subl $0xC0000000, %eax
     mov %eax, %cr3
 
     # enable PAE-flag in cr4 (Physical Address Extension)
@@ -223,6 +230,9 @@ mov  %cr3, %edx
     or $0x80000000, %eax
     mov %eax, %cr0
 
+   # movl $0x2f4b2f4f, 0x000B8000
+    hlt
+
     ret
 
 
@@ -237,14 +247,14 @@ mov  %cr3, %edx
 .lcomm p4_table, 4096
 .lcomm p3_table, 4096
 .lcomm p2_table, 4096
-
+.global p4_table
+.global p3_table
+.global p2_table
 
 # create stack memory
 kernel_stack_bottom:
     .lcomm STACK_DATA, 4*4096
 kernel_stack_top:
-.global kernel_stack_top
-.equ kernel_stack_top_hh, kernel_stack_top - 0xC0000000
 .section .rodata
 
 # Global Descriptor Table for 64bit longmode
