@@ -44,6 +44,8 @@ _start:
     # load cs with gdt64_code_offset by doing far return (retf) to $long_mode_start
     push $gdt64_code_offset # push new value of code segment offset in GDT (CS)
     push $long_mode_start   # push return address
+
+
     retf                    # pop EIP, pop CS; effectively far jumping to $long_mode_start
 
 /**
@@ -250,11 +252,11 @@ gdt64:
     .quad 0 # start with zero-entry
 gdt64_code:
     .quad 0x20980000000000 # then code segment entry; USER_SEGMENT(44) | PRESENT(47) | EXECUTABLE(43) | LONG_MODE(53)
-gdt64_struct_pointer:
-    .word gdt64_struct_pointer - gdt64 - 1  # GDT length -1
+_gdt64_struct_pointer:
+    .word _gdt64_struct_pointer - gdt64 - 1  # GDT length -1
     .quad gdt64                             # GDT address
 .equ gdt64_code_offset, gdt64_code - gdt64  # GDT code segment offset in gdt64 struct
-
+.equ gdt64_struct_pointer, _gdt64_struct_pointer - KVIRT_BASE
 
 HELLO_MSG: .asciz "Hello in PhobOS protected mode 32bit!"
 
