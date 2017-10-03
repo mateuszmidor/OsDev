@@ -16,12 +16,12 @@ long_mode_start:
     mov %ax, %gs
 
     # print hello message to screen
-    mov $HELLO_MSG, %rsi
+    movabs $HELLO_MSG, %rsi
     call print_string
 
 
     # enter c++ generated main routine, dsi should still hold multiboot2 information pointer so it's passed as 1st parameter
-    call kmain
+    #call kmain
     hlt
 
 /**

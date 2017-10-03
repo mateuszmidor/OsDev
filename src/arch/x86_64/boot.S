@@ -6,11 +6,12 @@
 */
 .code32
 .section .text
-.global start
 .extern long_mode_start
-start:
+.global _start
+.equ KVIRT_BASE, 0xC0000000
+_start:
     # setup stack
-    movl $kernel_stack_top, %esp
+    movl $kernel_stack_top - KVIRT_BASE, %esp
 
     # store multiboot2 info struct pointer in edi so it then gets passed to kmain function
     mov %ebx, %edi
@@ -32,8 +33,13 @@ start:
     call set_up_page_tables
     call enable_paging
 
+    movl $0x2f4b2f4f, 0xb8000
+    hlt
+
     # load global descriptor table that contains our only one 64bit code selector
     lgdt gdt64_struct_pointer
+
+
 
     # load cs with gdt64_code_offset by doing far return (retf) to $long_mode_start
     push $gdt64_code_offset # push new value of code segment offset in GDT (CS)
@@ -52,7 +58,7 @@ print:
 
     .loop:
         # fetch one character
-        movb (%esi), %dl
+        movb -KVIRT_BASE(%esi), %dl
 
         # check if \0
         cmp $0, %dl
@@ -162,23 +168,28 @@ check_long_mode:
 set_up_page_tables:
     # map first P4 entry to P3 table
     mov $p3_table, %eax
+    sub $0xC0000000, %eax
     or $0b111, %eax       # present + writable + user space accessible
-    mov %eax, p4_table
+    mov %eax, ($p4_table- KVIRT_BASE)
 
     # map first P3 entry to P2 table
     mov $p2_table, %eax
+    sub $0xC0000000, %eax
     or $0b111, %eax       # present + writable + user space accessible
-    mov %eax, p3_table
+    mov %eax, ($p3_table- KVIRT_BASE)
+    //mov %eax, (p3_table + 24)
 
     # map each P2 entry to a huge 2MiB page
     mov $0, %ecx
+    mov $p2_table, %edx
+    sub $0xC0000000, %edx
 
     .map_p2_table:
         # map ecx-th P2 entry to a huge page that starts at address 2MiB*ecx
         mov $0x200000, %eax     # 2MiB
         mul %ecx                # start address of ecx-th page
         or $0b10000111, %eax    # present + writable + user space accessible + huge
-        mov %eax, p2_table(, %ecx, 8) # map ecx-th entry; memory[p2_table + ecx * 8] = eax
+        mov %eax, (%edx, %ecx, 8) # map ecx-th entry; memory[p2_table + ecx * 8] = eax
 
         inc %ecx                # increase counter
         cmp $512, %ecx          # if counter == 512, the whole P2 table is mapped
@@ -193,6 +204,7 @@ set_up_page_tables:
 enable_paging:
     # load P4 to cr3 register (cpu uses this to access the P4 table)
     mov $p4_table, %eax
+    sub $0xC0000000, %eax
     mov %eax, %cr3
 
     # enable PAE-flag in cr4 (Physical Address Extension)
@@ -205,7 +217,7 @@ enable_paging:
     rdmsr
     or $256, %eax # 1 << 8
     wrmsr
-
+mov  %cr3, %edx
     # enable paging in the cr0 register
     mov %cr0, %eax
     or $0x80000000, %eax
@@ -232,7 +244,7 @@ kernel_stack_bottom:
     .lcomm STACK_DATA, 4*4096
 kernel_stack_top:
 .global kernel_stack_top
-
+.equ kernel_stack_top_hh, kernel_stack_top - 0xC0000000
 .section .rodata
 
 # Global Descriptor Table for 64bit longmode

@@ -3,7 +3,7 @@ kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 hdd := build/hdd.vdi
 
-GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
+GCCPARAMS = -std=c++11 -fPIC -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
 GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem -Isrc/filesystem/fat32 -Isrc/hardware -Isrc/multitasking \
 			  -Isrc/memory -Isrc/syscalls -Isrc/utils -Isrc/utils/terminal
 
@@ -12,8 +12,8 @@ grub_cfg := src/arch/$(arch)/grub.cfg
 assembly_source_files := $(wildcard src/arch/$(arch)/*.S)
 assembly_object_files := $(patsubst src/arch/$(arch)/%.S, \
 	build/arch/$(arch)/%.o, $(assembly_source_files))
-	
-c_source_files :=  $(wildcard src/*.cpp) \
+c_source_files := 	
+c_source_files_ :=  $(wildcard src/*.cpp) \
                    $(wildcard src/cpu/*.cpp) \
                    $(wildcard src/drivers/*.cpp) \
                    $(wildcard src/cpuexceptions/*.cpp) \
