@@ -5,13 +5,13 @@
     Once we switch to 64bit long mode, we can use .code64
 */
 .code32
+.equ KVIRT_BASE, 0xC0000000
 .section .text
 .extern long_mode_start
 .global _start
-.equ KVIRT_BASE, 0xC0000000
 _start:
     # setup stack
-    movl $kernel_stack_top - KVIRT_BASE, %esp
+    movl $kernel_stack_top, %esp
 
     # store multiboot2 info struct pointer in edi so it then gets passed to kmain function
     mov %ebx, %edi
@@ -33,7 +33,7 @@ _start:
     call set_up_page_tables
     call enable_paging
 
-    movl $0x2f4b2f4f, 0xb8000
+    movl $0x2f4b2f4f, 0xC00B8000
     hlt
 
     # load global descriptor table that contains our only one 64bit code selector
@@ -168,35 +168,24 @@ check_long_mode:
 set_up_page_tables:
     # map first P4 entry to P3 table
     mov $p3_table, %eax
-    subl $0xC0000000, %eax
     or $0b111, %eax       # present + writable + user space accessible
-    mov $p4_table, %edx
-    subl $0xC0000000, %edx
-    mov %eax, (%edx)
+    mov %eax, p4_table
 
     # map first P3 entry to P2 table
     mov $p2_table, %eax
-    subl $0xC0000000, %eax
     or $0b111, %eax       # present + writable + user space accessible
-    mov $p3_table, %edx
-    subl $0xC0000000, %edx
-    mov %eax, (%edx)
-
-    #mov $p3_table, %edx
-    #sub $0xC0000000, %edx
-    #mov %eax, 24(%edx)
+    mov %eax, (p3_table + 0)    # map first GB of virt mem - p3 entry no. 0
+    mov %eax, (p3_table + 24)   # map fourth GB of virt mem - p3 entry no. 3
 
     # map each P2 entry to a huge 2MiB page
     mov $0, %ecx
-    mov $p2_table, %edx
-    subl $0xC0000000, %edx
 
     .map_p2_table:
         # map ecx-th P2 entry to a huge page that starts at address 2MiB*ecx
         mov $0x200000, %eax     # 2MiB
         mul %ecx                # start address of ecx-th page
         or $0b10000111, %eax    # present + writable + user space accessible + huge
-        mov %eax, (%edx, %ecx, 8) # map ecx-th entry; memory[p2_table + ecx * 8] = eax
+        mov %eax, p2_table(, %ecx, 8) # map ecx-th entry; memory[p2_table + ecx * 8] = eax
 
         inc %ecx                # increase counter
         cmp $512, %ecx          # if counter == 512, the whole P2 table is mapped
@@ -211,7 +200,6 @@ set_up_page_tables:
 enable_paging:
     # load P4 to cr3 register (cpu uses this to access the P4 table)
     mov $p4_table, %eax
-    subl $0xC0000000, %eax
     mov %eax, %cr3
 
     # enable PAE-flag in cr4 (Physical Address Extension)
@@ -224,14 +212,11 @@ enable_paging:
     rdmsr
     or $256, %eax # 1 << 8
     wrmsr
-mov  %cr3, %edx
+
     # enable paging in the cr0 register
     mov %cr0, %eax
     or $0x80000000, %eax
     mov %eax, %cr0
-
-   # movl $0x2f4b2f4f, 0x000B8000
-    hlt
 
     ret
 
@@ -244,17 +229,20 @@ mov  %cr3, %edx
 .align 4096
 
 # 4 level page tables for long mode, each has 512 entries of 8 byte pointer
-.lcomm p4_table, 4096
-.lcomm p3_table, 4096
-.lcomm p2_table, 4096
-.global p4_table
-.global p3_table
-.global p2_table
+.lcomm _p4_table, 4096
+.lcomm _p3_table, 4096
+.lcomm _p2_table, 4096
+.equ p4_table, _p4_table - KVIRT_BASE
+.equ p3_table, _p3_table - KVIRT_BASE
+.equ p2_table, _p2_table - KVIRT_BASE
 
 # create stack memory
-kernel_stack_bottom:
+_kernel_stack_bottom:
     .lcomm STACK_DATA, 4*4096
-kernel_stack_top:
+_kernel_stack_top:
+.equ kernel_stack_top, _kernel_stack_top - KVIRT_BASE
+
+
 .section .rodata
 
 # Global Descriptor Table for 64bit longmode
