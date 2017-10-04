@@ -1,6 +1,6 @@
 ENTRY(_start)
 
-KERNEL_BASE = 0xC0000000;
+KERNEL_BASE = 0xFFFFFFFF80000000; /* -2GB in 64bit address space, so 32bit signed relative addressing can reach the kernel data */
 SECTIONS {
     . = KERNEL_BASE + 0x00100000;
 

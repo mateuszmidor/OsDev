@@ -3,16 +3,17 @@ kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 hdd := build/hdd.vdi
 
-GCCPARAMS = -std=c++11 -fPIC -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
+GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
 GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem -Isrc/filesystem/fat32 -Isrc/hardware -Isrc/multitasking \
 			  -Isrc/memory -Isrc/syscalls -Isrc/utils -Isrc/utils/terminal
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
 assembly_source_files := $(wildcard src/arch/$(arch)/*.S)
-assembly_object_files := $(patsubst src/arch/$(arch)/%.S, \
-	build/arch/$(arch)/%.o, $(assembly_source_files))
-c_source_files := 	
+assembly_object_files := $(patsubst src/arch/$(arch)/%.S, build/arch/$(arch)/%.o, $(assembly_source_files))
+c_source_files := src/kmain.cpp
+
+
 c_source_files_ :=  $(wildcard src/*.cpp) \
                    $(wildcard src/cpu/*.cpp) \
                    $(wildcard src/drivers/*.cpp) \
@@ -28,8 +29,7 @@ c_source_files_ :=  $(wildcard src/*.cpp) \
                    $(wildcard src/utils/terminal/cmds/*.cpp) \
                    $(wildcard src/_demos/*.cpp)
                    
-c_object_files := $(patsubst src/%.cpp, \
-	build/%.o, $(c_source_files))
+c_object_files := $(patsubst src/%.cpp, build/%.o, $(c_source_files))
 
 .PHONY: all clean run iso
 
@@ -70,7 +70,7 @@ $(kernel): $(assembly_object_files) $(c_object_files) $(linker_script)
 # compile assembly files
 build/arch/$(arch)/%.o: src/arch/$(arch)/%.S
 	@mkdir -p $(shell dirname $@)
-	@as --64 $< -o $@
+	@as --64 --gdwarf-2 $< -o $@
 	
 # compile c++ files
 build/%.o: src/%.cpp

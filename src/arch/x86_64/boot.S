@@ -5,13 +5,13 @@
     Once we switch to 64bit long mode, we can use .code64
 */
 .code32
-.equ KVIRT_BASE, 0xC0000000
+.equ KVIRT_BASE, 0xFFFFFFFF80000000 # -2GB in 64bit address space, so 32bit signed relative addressing can reach the kernel data
 .section .text
 .extern long_mode_start
 .global _start
 _start:
     # setup stack
-    movl $kernel_stack_top, %esp
+    mov $kernel_stack_top, %esp
 
     # store multiboot2 info struct pointer in edi so it then gets passed to kmain function
     mov %ebx, %edi
@@ -33,20 +33,14 @@ _start:
     call set_up_page_tables
     call enable_paging
 
-    movl $0x2f4b2f4f, 0xC00B8000
-    hlt
-
     # load global descriptor table that contains our only one 64bit code selector
     lgdt gdt64_struct_pointer
 
-
-
     # load cs with gdt64_code_offset by doing far return (retf) to $long_mode_start
-    push $gdt64_code_offset # push new value of code segment offset in GDT (CS)
-    push $long_mode_start   # push return address
+    push $gdt64_code_offset             # push new value of code segment offset in GDT (CS)
+    push $long_mode_start - KVIRT_BASE  # push return address, use physical address as we are still in 32 bit mode
+    retf                                # pop EIP, pop CS; effectively far jumping to $long_mode_start
 
-
-    retf                    # pop EIP, pop CS; effectively far jumping to $long_mode_start
 
 /**
     print
@@ -60,7 +54,7 @@ print:
 
     .loop:
         # fetch one character
-        movb -KVIRT_BASE(%esi), %dl
+        movb (%esi), %dl
 
         # check if \0
         cmp $0, %dl
@@ -106,7 +100,7 @@ check_cpuid:
     pop %eax
 
     # Copy to ECX as well for comparing later on
-    movl %eax, %ecx
+    mov %eax, %ecx
 
     # Flip the ID bit, 0x200000 = 1 << 21
     xorl $0x200000, %eax
@@ -142,13 +136,13 @@ check_cpuid:
 */
 check_long_mode:
     # test if extended processor info in available
-    movl $0x80000000, %eax  # implicit argument for cpuid
+    mov $0x80000000, %eax  # implicit argument for cpuid
     cpuid                   # get highest supported argument
     cmpl $0x80000001, %eax  # it needs to be at least 0x80000001
     jb .no_long_mode        # if it's less, the CPU is too old for long mode
 
     # use extended info to test if long mode is available
-    movl $0x80000001, %eax  # argument for extended processor info
+    mov $0x80000001, %eax  # argument for extended processor info
     cpuid                   # returns various feature bits in ecx and edx
     test $0x20000000, %edx  # test if the LM-bit is set in the D-register, 0x20000000 = 2 << 29
     jz .no_long_mode        # If it's not set, there is no long mode
@@ -161,7 +155,7 @@ check_long_mode:
 
 /**
     set_up_page_tables
-    Setup page tables to map first 1GiB of RAM before going into long mode.
+    Setup page tables to map first 1GiB and -2GiB(higher half kernel) of 64 bit virtual address space to first GiB of RAM before going into long mode.
     Use huge pages (2MiB); so we only need to configure P4 (1 entry), P3 (1 entry), P2 (512 entries) page tables.
     P2 maps directly to a 2MiB page that is indexed with 21 remaining bits of the address, see:
     http://wiki.osdev.org/Page_Tables#2_MiB_pages_2
@@ -170,14 +164,15 @@ check_long_mode:
 set_up_page_tables:
     # map first P4 entry to P3 table
     mov $p3_table, %eax
-    or $0b111, %eax       # present + writable + user space accessible
-    mov %eax, p4_table
+    or $0b111, %eax                 # present + writable + user space accessible
+    mov %eax, (p4_table + 0 * 8)    # map first 512 GB block of virt mem - p4 entry no. 0
+    mov %eax, (p4_table + 511 * 8)  # map last 512 GB block of virt mem - p4 entry no. 511
 
     # map first P3 entry to P2 table
     mov $p2_table, %eax
-    or $0b111, %eax       # present + writable + user space accessible
-    mov %eax, (p3_table + 0)    # map first GB of virt mem - p3 entry no. 0
-    mov %eax, (p3_table + 24)   # map fourth GB of virt mem - p3 entry no. 3
+    or $0b111, %eax                 # present + writable + user space accessible
+    mov %eax, (p3_table + 0 * 8)    # map 1-st GB of virt mem - p3 entry no. 0
+    mov %eax, (p3_table +  510 * 8) # map 511-th GB of virt mem - p3 entry no. 510
 
     # map each P2 entry to a huge 2MiB page
     mov $0, %ecx
@@ -223,7 +218,6 @@ enable_paging:
     ret
 
 
-
 # zero-initialized data section
 .section .bss
 
@@ -243,25 +237,31 @@ _kernel_stack_bottom:
     .lcomm STACK_DATA, 4*4096
 _kernel_stack_top:
 .equ kernel_stack_top, _kernel_stack_top - KVIRT_BASE
-
+.global _kernel_stack_top
 
 .section .rodata
 
 # Global Descriptor Table for 64bit longmode
-gdt64:
+_gdt64:
+.equ gdt64, _gdt64 - KVIRT_BASE
     .quad 0 # start with zero-entry
-gdt64_code:
+_gdt64_code:
     .quad 0x20980000000000 # then code segment entry; USER_SEGMENT(44) | PRESENT(47) | EXECUTABLE(43) | LONG_MODE(53)
 _gdt64_struct_pointer:
-    .word _gdt64_struct_pointer - gdt64 - 1  # GDT length -1
+    .word _gdt64_struct_pointer - _gdt64 - 1  # GDT length -1
     .quad gdt64                             # GDT address
-.equ gdt64_code_offset, gdt64_code - gdt64  # GDT code segment offset in gdt64 struct
+.equ gdt64_code_offset, _gdt64_code - _gdt64  # GDT code segment offset in gdt64 struct
+.global gdt64_code_offset
 .equ gdt64_struct_pointer, _gdt64_struct_pointer - KVIRT_BASE
 
-HELLO_MSG: .asciz "Hello in PhobOS protected mode 32bit!"
+_HELLO_MSG: .asciz "Hello in PhobOS protected mode 32bit!"
+.equ HELLO_MSG, _HELLO_MSG - KVIRT_BASE
 
 # ERROR CODE CONSTANTS
-ERROR_NO_KERNEL_LOADED: .asciz "Kernel not properly loaded by GRUB"
-ERROR_NO_CPUID: .asciz "CPUID not supported"
-ERROR_NO_LONGMODE: .asciz "Long mode not supported"
+_ERROR_NO_KERNEL_LOADED: .asciz "Kernel not properly loaded by GRUB"
+.equ ERROR_NO_KERNEL_LOADED, _ERROR_NO_KERNEL_LOADED - KVIRT_BASE
+_ERROR_NO_CPUID: .asciz "CPUID not supported"
+.equ ERROR_NO_CPUID, _ERROR_NO_CPUID - KVIRT_BASE
+_ERROR_NO_LONGMODE: .asciz "Long mode not supported"
+.equ ERROR_NO_LONGMODE, _ERROR_NO_LONGMODE - KVIRT_BASE
 
