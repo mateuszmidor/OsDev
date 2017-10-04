@@ -6,6 +6,7 @@
 */
 .code32
 .equ KVIRT_BASE, 0xFFFFFFFF80000000 # -2GB in 64bit address space, so 32bit signed relative addressing can reach the kernel data
+.global KVIRT_BASE
 .section .text
 .extern long_mode_start
 .global _start

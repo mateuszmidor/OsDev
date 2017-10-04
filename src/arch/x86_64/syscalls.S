@@ -1,7 +1,7 @@
 .section .text
 
 .extern on_syscall
-.extern kernel_stack_top
+.extern _kernel_stack_top
 .global handle_syscall
 handle_syscall:
     push %r15
@@ -24,7 +24,7 @@ handle_syscall:
     mov %rsp, (user_rsp)
 
     // switch to kernel stack
-    mov $kernel_stack_top, %rsp
+    mov $_kernel_stack_top, %rsp
 
     // set 5 syscalls params as function args no. 2, 3, 4, 5, 6
     // see http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64 and https://en.wikipedia.org/wiki/X86_calling_conventions "System V AMD64"

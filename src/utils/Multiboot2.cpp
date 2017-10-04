@@ -8,6 +8,8 @@
 #include "kstd.h"
 #include "Multiboot2.h"
 
+extern u64 KVIRT_BASE;
+
 using namespace kstd;
 namespace utils {
 
@@ -133,7 +135,7 @@ size_t Multiboot2::get_available_memory_first_byte() {
  * @return  Last byte of memory available for use
  */
 size_t Multiboot2::get_available_memory_last_byte() {
-    return bmi->upper * 1024;
+    return  get_available_memory_first_byte() + 1024*1024*64; // 64mb //bmi->upper * 1024 + KVIRT_BASE; // TODO: real mem size
 }
 
 /**

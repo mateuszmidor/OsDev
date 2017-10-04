@@ -61,7 +61,7 @@ private:
     void write_registers(u8* registers) const;
     u8* get_framebuffer_segment() const;
 
-    VgaCharacter* const vga                             {(VgaCharacter*)0xb8000};
+    VgaCharacter* const vga                             {(VgaCharacter*)0xFFFFFFFF800b8000};
     u16 width                                           {80};  // in characters (text mode)
     u16 height                                          {25};  // in characters (text mode)
     // text mode

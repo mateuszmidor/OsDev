@@ -12,6 +12,7 @@ Credits to the authors!
 # Features
  + GRUB2 bootable
  + 64 bit kernel
+ + higher-half (linux-like, kernel starts at virt. 0xFFFFFFFF80000000)
  + multitasking
  + kernel/user space
  + dynamic memory (simple bump allocator for now)

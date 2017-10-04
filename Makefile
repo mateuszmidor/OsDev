@@ -3,7 +3,8 @@ kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 hdd := build/hdd.vdi
 
-GCCPARAMS = -std=c++11 -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
+# "-mcmodel=kernel" means the kernel should be located in negative -2GB of the virtual address space
+GCCPARAMS = -std=c++11 -mcmodel=kernel -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
 GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem -Isrc/filesystem/fat32 -Isrc/hardware -Isrc/multitasking \
 			  -Isrc/memory -Isrc/syscalls -Isrc/utils -Isrc/utils/terminal
 
@@ -11,10 +12,8 @@ linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
 assembly_source_files := $(wildcard src/arch/$(arch)/*.S)
 assembly_object_files := $(patsubst src/arch/$(arch)/%.S, build/arch/$(arch)/%.o, $(assembly_source_files))
-c_source_files := src/kmain.cpp
 
-
-c_source_files_ :=  $(wildcard src/*.cpp) \
+c_source_files :=  $(wildcard src/*.cpp) \
                    $(wildcard src/cpu/*.cpp) \
                    $(wildcard src/drivers/*.cpp) \
                    $(wildcard src/cpuexceptions/*.cpp) \
