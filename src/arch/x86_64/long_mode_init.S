@@ -6,7 +6,7 @@
 .section .text
 .global long_mode_start
 .extern gdt64_code_offset
-.extern KVIRT_BASE
+.extern KERNEL_VIRTUAL_BASE
 .extern kmain
 long_mode_start:
     # load 0 into all data segment registers
@@ -23,7 +23,7 @@ long_mode_start:
 
     # enter c++ generated main routine using its absolute address - we start to execute higher half kernel here
     # %dsi holds multiboot2 information pointer so it's passed as 1st parameter due to SYSTEMV x64 ABI
-    add $KVIRT_BASE, %rsp
+    add $KERNEL_VIRTUAL_BASE, %rsp
     movabs $kmain, %rax
     call *%rax
 

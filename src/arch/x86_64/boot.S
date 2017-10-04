@@ -6,7 +6,6 @@
 */
 .code32
 .equ KVIRT_BASE, 0xFFFFFFFF80000000 # -2GB in 64bit address space, so 32bit signed relative addressing can reach the kernel data
-.global KVIRT_BASE
 .section .text
 .extern long_mode_start
 .global _start
@@ -241,6 +240,9 @@ _kernel_stack_top:
 .global _kernel_stack_top
 
 .section .rodata
+KERNEL_VIRTUAL_BASE:
+    .quad KVIRT_BASE
+    .global KERNEL_VIRTUAL_BASE
 
 # Global Descriptor Table for 64bit longmode
 _gdt64:

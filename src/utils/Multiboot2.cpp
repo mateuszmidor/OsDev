@@ -8,7 +8,7 @@
 #include "kstd.h"
 #include "Multiboot2.h"
 
-extern u64 KVIRT_BASE;
+extern u64 KERNEL_VIRTUAL_BASE;
 
 using namespace kstd;
 namespace utils {
@@ -117,9 +117,12 @@ void Multiboot2::initialize(void *multiboot2_info_ptr) {
  * @return  First byte of memory available for use
  */
 size_t Multiboot2::get_available_memory_first_byte() {
-    size_t first_free_byte = bmi->lower * 1024;
+    size_t first_free_byte = bmi->lower * 1024 + KERNEL_VIRTUAL_BASE;   // convert physical to virtual; elf sections use virtual
 
     for (u32 i = 0; i < esh_count; i++) {
+        if ((esh[i]->sh_flags & 0x2) != 0x2) // consider section onfly ifit has flag ALLOC meaning it resides in ram
+            continue;
+
         size_t last_occupied_byte = esh[i]->sh_addr + esh[i]->sh_size;
         if (first_free_byte <= last_occupied_byte)
             first_free_byte = last_occupied_byte + 1;
@@ -128,14 +131,15 @@ size_t Multiboot2::get_available_memory_first_byte() {
     if (first_free_byte <= multiboot2_info_addr + multiboot2_info_totalsize)
         first_free_byte = multiboot2_info_addr + multiboot2_info_totalsize + 1;
 
-    return first_free_byte;
+    size_t result = first_free_byte - KERNEL_VIRTUAL_BASE;  // convert virtual to physical
+    return result;
 }
 
 /**
  * @return  Last byte of memory available for use
  */
 size_t Multiboot2::get_available_memory_last_byte() {
-    return  get_available_memory_first_byte() + 1024*1024*64; // 64mb //bmi->upper * 1024 + KVIRT_BASE; // TODO: real mem size
+    return bmi->upper * 1024 ;
 }
 
 /**
