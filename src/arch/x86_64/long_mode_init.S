@@ -22,8 +22,9 @@ long_mode_start:
     call print_string
 
     # enter c++ generated main routine using its absolute address - we start to execute higher half kernel here
-    # %dsi holds multiboot2 information pointer so it's passed as 1st parameter due to SYSTEMV x64 ABI
-    add $KERNEL_VIRTUAL_BASE, %rsp
+    # %rdi holds multiboot2 information pointer so it's passed as 1st parameter according to SYSTEMV x64 ABI
+    add KERNEL_VIRTUAL_BASE, %rsp  # make stack pointer a higher half pointer
+    add KERNEL_VIRTUAL_BASE, %rdi  # make multiboot2 info pointer a higher half pointer
     movabs $kmain, %rax
     call *%rax
 
@@ -35,7 +36,7 @@ long_mode_start:
     %esi - null terminated string address
 */
 print_string:
-    # %edi = vga text buffer address, save it and restore upon return
+    # %rdi = vga text buffer address, save it and restore upon return
     push %rdi
 
     mov $0xFFFFFFFF800b80A0, %rdi # second line in 80-cols 2-byte character vga text buffer
