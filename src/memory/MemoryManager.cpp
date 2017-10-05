@@ -7,6 +7,12 @@
 
 #include "MemoryManager.h"
 
+/**
+ * @brief   Virtual memory address where the kernel is mapped
+ * @see     boot.S
+ */
+extern size_t KERNEL_VIRTUAL_BASE;
+
 namespace memory {
 
 MemoryManager MemoryManager::_instance;
@@ -17,17 +23,24 @@ MemoryManager& MemoryManager::instance() {
 }
 
 /**
- * @brief   Allocate and return a memory block, or return nullptr on failure
+ * @brief   Allocate and return a memory block virtual address, or return nullptr on failure
  */
-void* MemoryManager::alloc(size_t size) const {
-    return allocation_policy->alloc(size);
+void* MemoryManager::virt_alloc(size_t size) const {
+    if (size_t physical_addr = (size_t)allocation_policy->alloc(size))
+        return (void*)(physical_addr + KERNEL_VIRTUAL_BASE);
+    else
+        return nullptr;
 }
 
 /**
- * @brief   Release memory block at "address"
+ * @brief   Release memory block located at virtual address
  */
-void MemoryManager::free(void* address) const {
-    allocation_policy->free(address);
+void MemoryManager::virt_free(void* virtual_address) const {
+    if (!virtual_address)
+        return;
+
+    size_t physical_addr = (size_t)virtual_address - KERNEL_VIRTUAL_BASE;
+    allocation_policy->free((void*)physical_addr);
 }
 
 /**

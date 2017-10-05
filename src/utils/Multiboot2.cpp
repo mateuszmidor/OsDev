@@ -8,7 +8,11 @@
 #include "kstd.h"
 #include "Multiboot2.h"
 
-extern u64 KERNEL_VIRTUAL_BASE;
+/**
+ * @brief   Virtual memory address where the kernel is mapped
+ * @see     boot.S
+ */
+extern size_t KERNEL_VIRTUAL_BASE;
 
 using namespace kstd;
 namespace utils {
