@@ -4,10 +4,9 @@
 */
 .code64
 .section .text
-.global long_mode_start
-.extern gdt64_code_offset
 .extern KERNEL_VIRTUAL_BASE
 .extern kmain
+.global long_mode_start
 long_mode_start:
     # load 0 into all data segment registers
     mov $0, %ax
@@ -21,19 +20,18 @@ long_mode_start:
     mov $HELLO_MSG, %rsi
     call print_string
 
-    # enter c++ generated main routine using its absolute address - we start to execute higher half kernel here
+    # enter c++ main routine using its absolute address - we start to execute higher half kernel here
     # %rdi holds multiboot2 information pointer so it's passed as 1st parameter according to SYSTEMV x64 ABI
-    add KERNEL_VIRTUAL_BASE, %rsp  # make stack pointer a higher half pointer
-    add KERNEL_VIRTUAL_BASE, %rdi  # make multiboot2 info pointer a higher half pointer
-    movabs $kmain, %rax
-    call *%rax
-
-    hlt
+    add KERNEL_VIRTUAL_BASE, %rsp   # make stack pointer a higher half pointer
+    add KERNEL_VIRTUAL_BASE, %rdi   # make multiboot2 info pointer a higher half pointer
+    movabs $kmain, %rax             # load absolute address of kmain
+    call *%rax                      # jump to higher half kernel
+    hlt                             # in case that kmain returns for some reason :)
 
 /**
     print_string
     Put a string to the screen.
-    %esi - null terminated string address
+    %rsi - null terminated string address
 */
 print_string:
     # %rdi = vga text buffer address, save it and restore upon return

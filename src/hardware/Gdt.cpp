@@ -11,7 +11,7 @@
  * @brief   Statically allocated normal kernel stack (the top of it)
  * @see     boot.S
  */
-extern u8 _kernel_stack_top[];
+extern u8 kernel_stack_top[];
 
 /**
  * @brief   Kernel stack that is guaranteed to be valid; for handling Non-maskable Interrupts, Dobule faults and Machine Checks
@@ -40,7 +40,7 @@ void Gdt::setup_task_state_segment() {
     memset(&tss, 0, sizeof(tss));
 
     // set normal kernel stack pointer for ring0
-    tss.rsp0 = (u64)_kernel_stack_top;
+    tss.rsp0 = (u64)kernel_stack_top;
 
     // set emergency kernel stack for handling emergency situation exceptions
     tss.ist1 = (u64)kernel_stack_safe + sizeof(kernel_stack_safe);

@@ -2,7 +2,7 @@ ENTRY(_start)
 
 KERNEL_BASE = 0xFFFFFFFF80000000; /* -2GB in 64bit address space, so 32bit signed relative addressing can reach the kernel data */
 SECTIONS {
-    . = KERNEL_BASE + 0x00100000;
+    . = KERNEL_BASE + 0x00100000; /* Kernel starts at 1MB offset */
 
     .text : AT(ADDR(.text) - KERNEL_BASE) {
         *(.multiboot_header)

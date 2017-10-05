@@ -60,8 +60,7 @@ HandleInterrupt 0x21    # keyboard
 HandleInterrupt 0x2C    # mouse
 HandleInterrupt 0x2E    # primary ata hdd
 HandleInterrupt 0x2F    # secondary ata hdd
-
-HandleInterrupt 0x80    # sys call
+HandleInterrupt 0x80    # int80 old-style syscall
 
 .extern _ZN8hardware16InterruptManager12on_interruptEhPNS_8CpuStateE
 handle_interrupt:
@@ -87,7 +86,7 @@ handle_interrupt:
     mov (interrupt_number), %rdi    # interrupt number as first param
     mov %rsp, %rsi                  # stack pointer (holding CpuState struct) as second param
     call _ZN8hardware16InterruptManager12on_interruptEhPNS_8CpuStateE
-    mov %rax, %rsp  # set stack pointer to the one returned from on_interrupt
+    mov %rax, %rsp                  # set stack pointer to the one returned from on_interrupt
 
     # restore scratch registers from CpuState struct
     pop %rax
@@ -105,7 +104,7 @@ handle_interrupt:
     pop %r13
     pop %r14
     pop %r15
-    add $8, %rsp # pop CpuState::error_code from stack
+    add $8, %rsp    # pop CpuState::error_code from stack
 .global ignore_interrupt
 ignore_interrupt:
     # return from interrupt handler
