@@ -12,6 +12,13 @@ namespace hardware {
 
 InterruptManager InterruptManager::_instance;
 
+/**
+ * @brief   This "C" style function simply forwards calls from interrupts.S to InterruptManager instance
+ */
+extern "C" hardware::CpuState* on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state) {
+    InterruptManager& mngr = InterruptManager::instance();
+    return mngr.on_interrupt(interrupt_no, cpu_state);
+}
 
 InterruptManager& InterruptManager::instance() {
     return _instance;
@@ -24,24 +31,22 @@ void InterruptManager::config_interrupts() {
 
 /**
  * @name    on_interrupt
- * @brief   Interrupt/CPU exception handler. This is called from interrupts.S
+ * @brief   Interrupt/CPU exception handler
  * @param   interrupt_no Number of CPU exception/PIC interrupt (offset by IRQ_BASE) being handled
  * @param   cpu_state Pointer to the stack holding current cpu::CpuState struct
  * @return  Pointer to stack pointer holding destination cpu::CpuState struct (for task switching)
- * @note    STATIC FUNCTION
  */
 hardware::CpuState* InterruptManager::on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state) {
-    InterruptManager &mngr = InterruptManager::instance();
     hardware::CpuState* new_cpu_state;
 
     // if its PIC interrupt
     if (interrupt_no >= Interrupts::IRQ_BASE) {
-        new_cpu_state = mngr.interrupt_handler(interrupt_no, cpu_state);
-        mngr.ack_interrupt_handled(interrupt_no);
+        new_cpu_state = interrupt_handler(interrupt_no, cpu_state);
+        ack_interrupt_handled(interrupt_no);
     }
     // if its CPU exception
     else
-        new_cpu_state = mngr.exception_handler(interrupt_no, cpu_state);
+        new_cpu_state = exception_handler(interrupt_no, cpu_state);
 
     return new_cpu_state;
 }
@@ -55,7 +60,7 @@ void InterruptManager::ack_interrupt_handled(u8 interrupt_no) {
 
 void InterruptManager::config_and_activate_exceptions_and_interrupts() {
     config_interrupts();
-    __asm__("sti");
+    asm("sti");
 }
 
 void InterruptManager::set_interrupt_handler(const InterruptHandler &h) {

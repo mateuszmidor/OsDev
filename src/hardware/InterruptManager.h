@@ -29,6 +29,8 @@ public:
     void set_interrupt_handler(const InterruptHandler &h);
     void set_exception_handler(const ExceptionHandler &h);
 
+    hardware::CpuState* on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state);
+
     u16 disable_interrupts();
     void enable_interrupts(u16 mask);
 
@@ -42,7 +44,6 @@ private:
     hardware::Port8bitSlow pic_slave_data   {0xA1};
 
     InterruptManager() {}
-    static hardware::CpuState* on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state);
     void ack_interrupt_handled(u8 interrupt_no);
     void config_interrupts();
     void setup_programmable_interrupt_controllers();
