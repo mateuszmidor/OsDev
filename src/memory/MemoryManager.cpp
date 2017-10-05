@@ -6,12 +6,7 @@
  */
 
 #include "MemoryManager.h"
-
-/**
- * @brief   Virtual memory address where the kernel is mapped
- * @see     boot.S
- */
-extern size_t KERNEL_VIRTUAL_BASE;
+#include "HigherHalf.h"
 
 namespace memory {
 
@@ -27,7 +22,7 @@ MemoryManager& MemoryManager::instance() {
  */
 void* MemoryManager::virt_alloc(size_t size) const {
     if (size_t physical_addr = (size_t)allocation_policy->alloc(size))
-        return (void*)(physical_addr + KERNEL_VIRTUAL_BASE);
+        return (void*)HigherHalf::phys_to_virt(physical_addr);
     else
         return nullptr;
 }
@@ -39,7 +34,7 @@ void MemoryManager::virt_free(void* virtual_address) const {
     if (!virtual_address)
         return;
 
-    size_t physical_addr = (size_t)virtual_address - KERNEL_VIRTUAL_BASE;
+    size_t physical_addr = HigherHalf::virt_to_phys(virtual_address);
     allocation_policy->free((void*)physical_addr);
 }
 
