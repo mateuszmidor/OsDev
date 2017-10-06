@@ -18,6 +18,20 @@ MemoryManager& MemoryManager::instance() {
 }
 
 /**
+ * @brief   Allocate and return a memory block physical address, or return nullptr on failure
+ */
+void* MemoryManager::phys_alloc(size_t size) const {
+    return allocation_policy->alloc(size);
+}
+
+/**
+ * @brief   Release memory block located at physical address
+ */
+void MemoryManager::phys_free(void* address) const {
+    allocation_policy->free(address);
+}
+
+/**
  * @brief   Allocate and return a memory block virtual address, or return nullptr on failure
  */
 void* MemoryManager::virt_alloc(size_t size) const {

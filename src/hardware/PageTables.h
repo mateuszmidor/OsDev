@@ -24,12 +24,20 @@ enum PageAttr {
     HUGE_PAGE       = 128,  // page is 2MB (if used in pde) or 1GB (if used in pdpt) instead of standard 4096 bytes
 };
 
+struct PageTables64 {
+    u64  pml4[512];         // Page Map Level 4
+    u64  pdpt[512];         // Page Directory Pointer Table
+    u64  pde_kernel[512];   // Page Directory Entry for 2MB pages; map kernel
+    u64  pde_user[512];     // Page Directory Entry for 2MB pages; map elf
+};
+
 /**
  * @brief   This class configures paging for kernel
  */
 class PageTables {
 public:
     static void remap_kernel_higher_half();
+    static void map_elf_address_space_at(char* phys_addr, size_t num_bytes);
 
 private:
     static u64  pml4[];     // Page Map Level 4

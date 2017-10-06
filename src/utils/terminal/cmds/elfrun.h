@@ -18,6 +18,7 @@ public:
     void run() override;
 
 private:
+    static char* elf_physical_addr;
 };
 
 } /* namespace cmds */

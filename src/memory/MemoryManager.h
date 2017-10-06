@@ -19,8 +19,13 @@ namespace memory {
 class MemoryManager {
 public:
     static MemoryManager& instance();
+
+    void* phys_alloc(size_t size) const;
+    void phys_free(void* address) const;
+
     void* virt_alloc(size_t size) const;
     void virt_free(void* address) const;
+
     size_t get_free_memory_in_bytes() const;
     size_t get_total_memory_in_bytes() const;
 
