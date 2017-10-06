@@ -202,10 +202,10 @@ u8* VgaDriver::get_framebuffer_segment() const {
     u8 segment_no = (graphics_controller_data_port.read() >> 2) & 0x03;
     switch(segment_no) {
         default:
-        case 0: return (u8*)0x00000;
-        case 1: return (u8*)0xA0000;
-        case 2: return (u8*)0xB0000;
-        case 3: return (u8*)0xB8000;
+        case 0: return (u8*)0xFFFFFFFF80000000;
+        case 1: return (u8*)0xFFFFFFFF800A0000;
+        case 2: return (u8*)0xFFFFFFFF800B0000;
+        case 3: return (u8*)0xFFFFFFFF800B8000;
     }
 }
 
