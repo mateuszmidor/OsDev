@@ -30,6 +30,7 @@
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
 #include "Sse.h"
+#include "PageTables.h"
 #include "_demos/Demo.h"
 #include "_demos/VgaDemo.h"
 #include "_demos/Fat32Demo.h"
@@ -104,8 +105,9 @@ void task_init(u64 unused) {
  * @note    We are starting with just stack in place, no dynamic memory available, no global objects constructed yet
  */
 extern "C" void kmain(void *multiboot2_info_ptr) {
-    // 0. activate the SSE so the kernel code compiled under -O2 can actually run
+    // 0. activate the SSE so the kernel code compiled under -O2 can actually run, remap the kernel to higher half
     Sse::activate_legacy_sse();
+    PageTables::remap_kernel_higher_half();
 
     // 1. initialize multiboot2 info from the data provided by the boot loader, then setup dynamic memory manager.
     // This must be done before global constructors are run since global constructors may require dynamic memory

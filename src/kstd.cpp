@@ -26,12 +26,12 @@ extern "C" size_t strlen(char const * str) {
 
 void* kmalloc(size_t size) {
     memory::MemoryManager& mm = memory::MemoryManager::instance();
-    return mm.alloc(size);
+    return mm.virt_alloc(size);
 }
 
 void kfree(void* address) {
     memory::MemoryManager& mm = memory::MemoryManager::instance();
-    mm.free(address);
+    mm.virt_free(address);
 }
 
 

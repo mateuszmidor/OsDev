@@ -6,6 +6,7 @@
  */
 
 #include "MemoryManager.h"
+#include "HigherHalf.h"
 
 namespace memory {
 
@@ -17,17 +18,38 @@ MemoryManager& MemoryManager::instance() {
 }
 
 /**
- * @brief   Allocate and return a memory block, or return nullptr on failure
+ * @brief   Allocate and return a memory block physical address, or return nullptr on failure
  */
-void* MemoryManager::alloc(size_t size) const {
+void* MemoryManager::phys_alloc(size_t size) const {
     return allocation_policy->alloc(size);
 }
 
 /**
- * @brief   Release memory block at "address"
+ * @brief   Release memory block located at physical address
  */
-void MemoryManager::free(void* address) const {
+void MemoryManager::phys_free(void* address) const {
     allocation_policy->free(address);
+}
+
+/**
+ * @brief   Allocate and return a memory block virtual address, or return nullptr on failure
+ */
+void* MemoryManager::virt_alloc(size_t size) const {
+    if (size_t physical_addr = (size_t)allocation_policy->alloc(size))
+        return (void*)HigherHalf::phys_to_virt(physical_addr);
+    else
+        return nullptr;
+}
+
+/**
+ * @brief   Release memory block located at virtual address
+ */
+void MemoryManager::virt_free(void* virtual_address) const {
+    if (!virtual_address)
+        return;
+
+    size_t physical_addr = HigherHalf::virt_to_phys(virtual_address);
+    allocation_policy->free((void*)physical_addr);
 }
 
 /**

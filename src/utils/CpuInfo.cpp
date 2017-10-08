@@ -169,6 +169,7 @@ void CpuInfo::__cpuid(int* cpuinfo, int info) const {
         "xchg %%ebx, %%edi;"
         :"=a" (cpuinfo[0]), "=D" (cpuinfo[1]), "=c" (cpuinfo[2]), "=d" (cpuinfo[3])
         :"0" (info)
+        :"%rbx" // this missing used to cause page fault at 2054MB in lscpu terminal command
     );
 }
 

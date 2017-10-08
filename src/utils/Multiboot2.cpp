@@ -8,11 +8,15 @@
 #include "kstd.h"
 #include "Multiboot2.h"
 
+#include "../memory/HigherHalf.h"
+
+
 using namespace kstd;
+using namespace memory;
 namespace utils {
 
-unsigned long long Multiboot2::multiboot2_info_addr;
-unsigned int Multiboot2::multiboot2_info_totalsize;
+size_t Multiboot2::multiboot2_info_addr;
+size_t Multiboot2::multiboot2_info_totalsize;
 BasicMemInfo* Multiboot2::bmi;
 CommandLine* Multiboot2::cmd;
 BootLoader* Multiboot2::bl;
@@ -30,7 +34,7 @@ unsigned int Multiboot2::esh_count;
  *          This is necessary to eg. obtain memory range available for use
  */
 void Multiboot2::initialize(void *multiboot2_info_ptr) {
-    multiboot2_info_addr = (unsigned long long)multiboot2_info_ptr;
+    multiboot2_info_addr = (size_t)multiboot2_info_ptr;
     char *tag_ptr = (char*)multiboot2_info_ptr;
 
     // read the always present Multiboot2 global tag
@@ -96,6 +100,9 @@ void Multiboot2::initialize(void *multiboot2_info_ptr) {
             char *entry_ptr = tag_ptr +  sizeof(Elf64Sections);
             for (int i = 0; i < esh_count; i++) {
                 Elf64_Shdr *eshp = (Elf64_Shdr*)entry_ptr;
+
+                // sh_addr is given as physical address. Need to convert it to higher half kernel virtual address so that it can be accessed
+                eshp->sh_addr = HigherHalf::phys_to_virt(eshp->sh_addr);
                 esh[i] = eshp;
                 entry_ptr += sizeof(Elf64_Shdr);
             }
@@ -115,9 +122,12 @@ void Multiboot2::initialize(void *multiboot2_info_ptr) {
  * @return  First byte of memory available for use
  */
 size_t Multiboot2::get_available_memory_first_byte() {
-    size_t first_free_byte = bmi->lower * 1024;
+    size_t first_free_byte = HigherHalf::phys_to_virt(bmi->lower * 1024);   // convert physical to virtual; elf sections use virtual
 
     for (u32 i = 0; i < esh_count; i++) {
+        if ((esh[i]->sh_flags & Elf64_SHF::ALLOC) != Elf64_SHF::ALLOC) // consider section only if it has flag ALLOC, meaning it resides in ram
+            continue;
+
         size_t last_occupied_byte = esh[i]->sh_addr + esh[i]->sh_size;
         if (first_free_byte <= last_occupied_byte)
             first_free_byte = last_occupied_byte + 1;
@@ -126,14 +136,14 @@ size_t Multiboot2::get_available_memory_first_byte() {
     if (first_free_byte <= multiboot2_info_addr + multiboot2_info_totalsize)
         first_free_byte = multiboot2_info_addr + multiboot2_info_totalsize + 1;
 
-    return first_free_byte;
+    return HigherHalf::virt_to_phys(first_free_byte);   // return physical address
 }
 
 /**
  * @return  Last byte of memory available for use
  */
 size_t Multiboot2::get_available_memory_last_byte() {
-    return bmi->upper * 1024;
+    return bmi->upper * 1024 ;
 }
 
 /**

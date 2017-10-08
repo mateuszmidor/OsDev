@@ -67,7 +67,7 @@ struct Elf64_Ehdr {
 struct Elf64_Shdr {
     Elf64_Word      sh_name;        // Section  name offset in section header names table, see   Elf64_Ehdr::e_shstrndx
     Elf64_Word      sh_type;        // Section  type
-    Elf64_Xword     sh_flags;       // Section  attributes
+    Elf64_Xword     sh_flags;       // Section  attributes; see Elf64_SHF
     Elf64_Addr      sh_addr;        // Virtual  address  in  memory
     Elf64_Off       sh_offset;      // Offset  in  file
     Elf64_Xword     sh_size;        // Size  of  section
@@ -76,6 +76,16 @@ struct Elf64_Shdr {
     Elf64_Xword     sh_addralign;   // Address  alignment  boundary
     Elf64_Xword     sh_entsize;     // Size  of  entries;  if  section  has  table
 } __attribute__((packed));
+
+/**
+ * @brief   ELF64 section header flags
+ * @see     https://www.uclibc.org/docs/elf-64-gen.pdf, Table 9. Section Attributes, sh_flags
+ */
+enum Elf64_SHF {
+    WRITE   = 1,    // Section contains writable data
+    ALLOC   = 2,    // Section is allocated in RAM
+    EXEC    = 4     // Section contains executable instructions
+};
 
 /**
  * @brief   ELF64 program header

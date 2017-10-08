@@ -98,8 +98,8 @@ public:
 private:
     Multiboot2() = delete;  // don't instantiate this class
 
-    static unsigned long long multiboot2_info_addr;
-    static unsigned int multiboot2_info_totalsize;
+    static size_t multiboot2_info_addr;
+    static size_t multiboot2_info_totalsize;
     static BasicMemInfo* bmi;
     static CommandLine* cmd;
     static BootLoader* bl;

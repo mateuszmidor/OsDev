@@ -26,25 +26,6 @@ namespace syscalls {
 extern "C" void handle_syscall();
 
 
-struct utsname {
-    char* sysname;    /* Operating system name (e.g., "Linux") */
-    char* nodename;   /* Name within "some implementation-defined
-                          network" */
-    char* release;    /* Operating system release (e.g., "2.6.28") */
-    char* version;    /* Operating system version */
-    char* machine;    /* Hardware identifier */
-//#ifdef _GNU_SOURCE
-//    char domainname[]; /* NIS or YP domain name */
-//#endif
-};
-
-utsname uname {
-        .sysname = "phobos",
-        .nodename = "node",
-        .release = "r0.1",
-        .version = "0.1",
-        .machine = "pc"
-};
 /**
  * @brief   "syscall" handler. This is called from syscalls.S
  * @note    This is run in kernel space, using kernel stack
@@ -92,7 +73,6 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
         return 0;
 
     case 63: // uname
-        memcpy((char*)arg1, &uname, sizeof(uname));
         return 0;
 
     case 90: // readlink
