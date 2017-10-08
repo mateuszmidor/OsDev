@@ -74,6 +74,13 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
     }
 
     current_task = (current_task + 1) % num_tasks;
+    u64 pml4_physical_address = tasks[current_task]->pml4_phys_addr;
+    asm volatile (
+            "mov %%rax, %%cr3       ;"
+            :
+            : "a"(pml4_physical_address)
+            :
+    );
     return tasks[current_task]->cpu_state;
 }
 

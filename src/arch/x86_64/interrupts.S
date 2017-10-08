@@ -81,6 +81,8 @@ handle_interrupt:
     push %rcx
     push %rbx
     push %rax
+    mov %cr3, %rax
+    push %rax
 
     # handle interrupt/exception
     mov (interrupt_number), %rdi    # interrupt number as first param
@@ -89,6 +91,7 @@ handle_interrupt:
     mov %rax, %rsp                  # set stack pointer to the one returned from on_interrupt
 
     # restore scratch registers from CpuState struct
+    pop %rax    # pop %cr3 value; no need to load it though as it is already loaded by on_interrupt so we can access our stack
     pop %rax
     pop %rbx
     pop %rcx

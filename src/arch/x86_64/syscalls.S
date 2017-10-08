@@ -18,7 +18,8 @@ handle_syscall:
     push %rdx
     push %rcx
     push %rbx
-    // %rax will contain syscall result value so no need to remember it
+    // push %rax; rax will contain syscall result value so no need to remember it
+    // push %cr3; not needed for syscall
 
     // remember user stack pointer
     mov %rsp, (user_rsp)
@@ -43,6 +44,8 @@ handle_syscall:
     // restore user stack
     mov (user_rsp), %rsp
 
+    // pop %cr3; not needed for syscall
+    // pop %rax; dont override the on_syscall result value
     pop %rbx
     pop %rcx
     pop %rdx

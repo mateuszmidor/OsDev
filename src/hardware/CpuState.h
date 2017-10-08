@@ -17,9 +17,10 @@ namespace hardware {
  * See: https://os.phil-opp.com/handling-exceptions/
  */
 struct CpuState {
-    CpuState(u64 rip = 0, u64 rsp = 0, u64 task_arg = 0, bool user_space = false);
+    CpuState(u64 rip = 0, u64 rsp = 0, u64 task_arg = 0, bool user_space = false, u64 pml4_phys_addr = 0);
 
     // this first part we save/restore manually
+    u64 cr3;
     u64 rax;
     u64 rbx;
     u64 rcx;
@@ -37,6 +38,7 @@ struct CpuState {
     u64 r13;
     u64 r14;
     u64 r15;
+
 
     // this second part is filled by CPU as part of exception/interrupt protocol
     // see https://os.phil-opp.com/handling-exceptions/

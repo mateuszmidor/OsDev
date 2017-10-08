@@ -17,8 +17,8 @@ public:
     using CmdBase::CmdBase;
     void run() override;
 
-private:
     static char* elf_physical_addr;
+private:
 };
 
 } /* namespace cmds */

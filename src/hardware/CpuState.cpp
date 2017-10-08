@@ -17,7 +17,7 @@ namespace hardware {
  * @param task_arg      Value for RDI register (function first argument in SYSTEM V ABI)
  * @param user_space    Should the iretq jump to user space(true) or to kernel space(false), this effectively defines cs (code segment) and ss (stack segment)
  */
-CpuState::CpuState(u64 rip, u64 rsp, u64 task_arg, bool user_space) {
+CpuState::CpuState(u64 rip, u64 rsp, u64 task_arg, bool user_space, u64 pml4_phys_addr) {
     rax = 0;
     rbx = 0;
     rcx = 0;
@@ -35,7 +35,7 @@ CpuState::CpuState(u64 rip, u64 rsp, u64 task_arg, bool user_space) {
     r13 = 0;
     r14 = 0;
     r15 = 0;
-
+    cr3 = pml4_phys_addr == 0 ? 0xBAD00000BAD00000 : pml4_phys_addr;
     error_code  = 0;                                        // this is returned from CPU exceptions that come with error_code, otherwise just 0
     this->rip   = rip;                                      // this is return address for iretq instruction in interrupt handler in interrupts.S
     rflags      = 0x202;                                    // 1000000010; INTERRUPTS | BIT_1 (always set)

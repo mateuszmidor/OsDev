@@ -51,7 +51,7 @@ void PageTables::remap_kernel_higher_half() {
  * @param   num_bytes How long is the elf physical memory chunk
  * @note    Temporary solution until proper frame allocator and memory manager is developed
  */
-void PageTables::map_elf_address_space_at(char* phys_addr, size_t num_bytes) {
+u64 PageTables::map_elf_address_space_at(char* phys_addr, size_t num_bytes) {
     // get 4k aligned physical addr to allocate page tables struct
     size_t phys_addr_align4k = ((size_t)phys_addr + 4095) & 0xFFFFFFFFFFFFF000; // align to 4KB
 
@@ -91,5 +91,11 @@ void PageTables::map_elf_address_space_at(char* phys_addr, size_t num_bytes) {
             : "a"(pml4_physical_address)
             :
     );
+
+    return pml4_physical_address;
+}
+
+u64 PageTables::get_pml4_phys_addr() {
+    return HigherHalf::virt_to_phys(pml4);
 }
 } /* namespace hardware */

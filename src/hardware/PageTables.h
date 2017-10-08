@@ -37,8 +37,8 @@ struct PageTables64 {
 class PageTables {
 public:
     static void remap_kernel_higher_half();
-    static void map_elf_address_space_at(char* phys_addr, size_t num_bytes);
-
+    static u64 map_elf_address_space_at(char* phys_addr, size_t num_bytes);
+    static u64 get_pml4_phys_addr();
 private:
     static u64  pml4[];     // Page Map Level 4
     static u64  pdpt[];     // Page Directory Pointer Table

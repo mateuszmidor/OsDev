@@ -6,6 +6,7 @@
  */
 
 #include "Task.h"
+#include "PageTables.h"
 
 using namespace hardware;
 namespace multitasking {
@@ -19,8 +20,8 @@ namespace multitasking {
                         ^
                   here is rsp when first time jumping from interrupt to task function
 */
-Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_space) :
-        entrypoint(entrypoint), name(name), arg(arg), is_user_space(user_space), cpu_state(0) {
+Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_space, u64 pml4_phys_addr) :
+        entrypoint(entrypoint), name(name), arg(arg), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0) {
 }
 
 /**
@@ -30,13 +31,16 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_spac
 void Task::prepare(TaskExitPoint exitpoint) {
     const u64 STACK_END = (u64)stack + sizeof(stack);
 
+    if (pml4_phys_addr == 0)
+        pml4_phys_addr = PageTables::get_pml4_phys_addr(); // use kernel address space
+
     // prepare task epilogue ie. where to return from task function
     TaskEpilogue* task_epilogue = (TaskEpilogue*)(STACK_END - sizeof(TaskEpilogue));
     new (task_epilogue) TaskEpilogue {(u64)exitpoint};
 
     // prepare task cpu state to setup cpu register with
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
-    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg, is_user_space};
+    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg, is_user_space, pml4_phys_addr};
 
     is_terminated = false;
 }
