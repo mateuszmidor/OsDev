@@ -41,7 +41,7 @@ CpuState* PageFaultHandler::on_exception(CpuState* cpu_state) {
                     faulty_address, faulty_address /1024 / 1024,  faulty_address /1024 / 1024 / 1024, current->name.c_str());
         return mngr.kill_current_task();
     }
-//
+
     return cpu_state;
 }
 
@@ -54,8 +54,8 @@ bool PageFaultHandler::alloc_frame(size_t virtual_address) {
     u16 pde_index = (virtual_address >> 21) & 511;
 
     u64* pml4_virt_addr = (u64*)memory::HigherHalf::phys_to_virt(current->pml4_phys_addr);
-    u64* pdpt_virt_addr = (u64*)memory::HigherHalf::phys_to_virt(pml4_virt_addr[pml4_index]);
-    u64* pde_virt_addr = (u64*)memory::HigherHalf::phys_to_virt(pdpt_virt_addr[pdpt_index]);
+    u64* pdpt_virt_addr = (u64*)memory::HigherHalf::phys_to_virt(pml4_virt_addr[pml4_index] & ~4095); // & ~4095 to remove page flags
+    u64* pde_virt_addr =  (u64*)memory::HigherHalf::phys_to_virt(pdpt_virt_addr[pdpt_index] & ~4095); // & ~4095 to remove page flags
 
     size_t frame_phys_addr = memory::FrameAllocator::alloc_frame();
     if (frame_phys_addr == 0)
@@ -63,12 +63,7 @@ bool PageFaultHandler::alloc_frame(size_t virtual_address) {
 
     pde_virt_addr[pde_index] =  frame_phys_addr | PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::USER_ACCESSIBLE | PageAttr::HUGE_PAGE;
 
-    //asm volatile("invlpg (%0)" ::"r" (virtual_address) : "memory");
-
-    asm volatile (
-            "mov %%cr3, %%rax       ;"
-            "mov %%rax, %%cr3       ;"
-            : : : "%rax");
+    asm volatile("invlpg (%0)" ::"r" (virtual_address) : "memory");
 
     return true;
 }
