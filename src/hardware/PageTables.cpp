@@ -84,9 +84,10 @@ void PageTables::prepare_elf_page_tables(size_t num_bytes, size_t user_phys_addr
     size_t num_pages = num_bytes / 0x200000 + 1;
     pt->pml4[0] = HigherHalf::virt_to_phys(pt->pdpt) | PRESENT_WRITABLE_USERSPACE;
     pt->pdpt[0] = HigherHalf::virt_to_phys(pt->pde_user) | PRESENT_WRITABLE_USERSPACE;
-    for (u16 i = 0; i < num_pages; i++)
+    // specific frame allocation will happen in PageFault handler
+//    for (u16 i = 0; i < num_pages; i++)
         // later when using 4k pages maybe dont map the nullptr address to catch nullptrs?
-        pt->pde_user[i] = (0x200000 * i + user_phys_address_align2m) | PRESENT_WRITABLE_USERSPACE | PageAttr::HUGE_PAGE;
+//        pt->pde_user[i] = (0x200000 * i + user_phys_address_align2m) | PRESENT_WRITABLE_USERSPACE | PageAttr::HUGE_PAGE;
 }
 
 /**

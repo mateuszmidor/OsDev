@@ -8,6 +8,7 @@
 #ifndef SRC_CPUEXCEPTIONS_PAGEFAULTHANDLER_H_
 #define SRC_CPUEXCEPTIONS_PAGEFAULTHANDLER_H_
 
+#include  <stddef.h>
 #include "ExceptionHandler.h"
 
 namespace cpuexceptions {
@@ -15,6 +16,7 @@ namespace cpuexceptions {
 class PageFaultHandler: public ExceptionHandler {
     s16 handled_exception_no() override;
     hardware::CpuState* on_exception(hardware::CpuState* cpu_state) override;
+    bool alloc_frame(size_t virtual_address);
 };
 
 } /* namespace cpuexceptions */
