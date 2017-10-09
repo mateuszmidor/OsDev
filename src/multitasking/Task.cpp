@@ -7,7 +7,9 @@
 
 #include "Task.h"
 #include "PageTables.h"
+#include "HigherHalf.h"
 #include "MemoryManager.h"
+#include "FrameAllocator.h"
 
 using namespace hardware;
 namespace multitasking {
@@ -32,6 +34,21 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_spac
         this->stack_addr = (u64)memory::MemoryManager::instance().virt_alloc(DEFAULT_STACK_SIZE);
         this->stack_size = DEFAULT_STACK_SIZE;
     }
+}
+
+Task::~Task() {
+    // dont remove kernel address space :)
+    if (!is_user_space)
+        return;
+
+    u64* pml4_virt_addr = (u64*)memory::HigherHalf::phys_to_virt(pml4_phys_addr);
+    u64* pdpt_virt_addr = (u64*)memory::HigherHalf::phys_to_virt(pml4_virt_addr[0] & ~4095); // & ~4095 to remove page flags
+    u64* pde_virt_addr =  (u64*)memory::HigherHalf::phys_to_virt(pdpt_virt_addr[0] & ~4095); // & ~4095 to remove page flags
+
+    // scan 0..1GB of virtual memory
+    for (u32 i = 0; i < 512; i++)
+        if (pde_virt_addr[i] != 0)
+            memory::FrameAllocator::free_frame(pde_virt_addr[i]);
 }
 
 /**
