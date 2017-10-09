@@ -6,6 +6,7 @@
  */
 
 #include "TaskManager.h"
+#include "PageTables.h"
 
 using namespace hardware;
 
@@ -101,7 +102,7 @@ hardware::CpuState* TaskManager::kill_current_task() {
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
     current_task = (current_task + 1) % num_tasks;
     u64 pml4_physical_address = tasks[current_task]->pml4_phys_addr;
-    asm("mov %%rax, %%cr3" : : "a" (pml4_physical_address));
+    PageTables::load_address_space(pml4_physical_address);
 
     return tasks[current_task]->cpu_state;
 }

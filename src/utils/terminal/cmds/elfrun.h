@@ -17,7 +17,6 @@ public:
     using CmdBase::CmdBase;
     void run() override;
 
-    static char* elf_physical_addr;
 private:
 };
 

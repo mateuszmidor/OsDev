@@ -24,8 +24,8 @@ namespace cmds {
  * @brief   Because multitasking::Task only takes 1 u64 argument, we pack (entry point address, argc, argv) in a struct and pass it to the Task
  */
 struct RunElfParams {
-    RunElfParams(const Fat32Entry& e) : elf(e) , entry_point(0), argc(0), argv(0), pml4_phys_addr(0) {}
-    Fat32Entry elf;
+    RunElfParams(const Fat32Entry& e) : elf_file(e) , entry_point(0), argc(0), argv(0), pml4_phys_addr(0) {}
+    Fat32Entry elf_file;
     u64 pml4_phys_addr;
     u64 entry_point;
     u64 argc;
@@ -53,25 +53,28 @@ struct RunElfParams {
     __builtin_unreachable();
 }
 
-// this kernel task runs with user memory address space so can load elf into this space
-// later the elf task preamble would load the elf, once system exposes virtual filesystem api
+/**
+ * @brief   ELF loader kernel task that runs already in the task address space
+ *          and thus is able to load the elf program segments into memory at virtual addresses starting at "0"
+ *
+ */
 void load_and_run_elf(u64 arg) {
     RunElfParams* run_env = (RunElfParams*)arg;
 
-    // load elf file data
-    u32 size = run_env->elf.get_size();
+    // read elf file data
+    Fat32Entry& elf_file = run_env->elf_file;
+    u32 size = elf_file.get_size();
     char* buff = new char[size];
-    run_env->elf.read(buff, size);
+    elf_file.read(buff, size);
 
     // copy file sections into address space
     run_env->entry_point = Elf64::load_into_current_addressspace(buff);
 
-    char** argv = (char**)run_env->argv;
-    auto task = std::make_shared<Task>(run_elf_in_current_addressspace, argv[0], arg, true, run_env->pml4_phys_addr);
+    auto task = std::make_shared<Task>(run_elf_in_current_addressspace, elf_file.get_name(), arg, true, run_env->pml4_phys_addr);
     TaskManager& task_manager = TaskManager::instance();
     task_manager.add_task(task);
 
-    // free elf file data
+    // free elf_file file data
     delete[] buff;
 }
 /**
@@ -89,7 +92,6 @@ char** string_vec_to_argv(const vector<string>& src_vec) {
     return argv;
 }
 
-char* elfrun::elf_physical_addr = nullptr;
 void elfrun::run() {
     if (env->volumes.empty()) {
         env->printer->format("elfrun: no volumes installed\n");
@@ -116,12 +118,11 @@ void elfrun::run() {
     }
 
 
-    // prepare address space for the process; since currently no multiple elfs can be run at the same time, always reuse the same chunk of memory
+    // prepare address space for the process
     // notice that task stack pointer is still in kernel address space, same to main() argv
     // this will change as the kernel develops
     const size_t ELF_REQUIRED_MEM = 1024*1024*10;  // 10 MB should suffice for our tiny elfs
-   // if (!elfrun::elf_physical_addr)
-        elf_physical_addr = (char*)MemoryManager::instance().phys_alloc(ELF_REQUIRED_MEM);
+    char* elf_physical_addr = (char*)MemoryManager::instance().phys_alloc(ELF_REQUIRED_MEM);
 
     if (!elf_physical_addr) {
         env->printer->format("elfrun: not enough memory to run elf\n");
@@ -137,7 +138,7 @@ void elfrun::run() {
     run_env->argc = (u64)env->cmd_args.size() - 1; // no "elfrun" command
     run_env->argv = (u64)string_vec_to_argv(env->cmd_args);
 
-    // run elf loader with environment pointer as an arg
+    // run elf_file loader with environment pointer as an arg
     auto task = std::make_shared<Task>(load_and_run_elf, "elf_loader", (u64)run_env, false, pml4_phys_addr);
     TaskManager& task_manager = TaskManager::instance();
     task_manager.add_task(task);

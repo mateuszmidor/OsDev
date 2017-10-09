@@ -32,7 +32,7 @@ void Task::prepare(TaskExitPoint exitpoint) {
     const u64 STACK_END = (u64)stack + sizeof(stack);
 
     if (pml4_phys_addr == 0)
-        pml4_phys_addr = PageTables::get_pml4_phys_addr(); // use kernel address space
+        pml4_phys_addr = PageTables::get_kernel_pml4_phys_addr(); // use kernel address space
 
     // prepare task epilogue ie. where to return from task function
     TaskEpilogue* task_epilogue = (TaskEpilogue*)(STACK_END - sizeof(TaskEpilogue));

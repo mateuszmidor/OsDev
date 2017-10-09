@@ -107,7 +107,7 @@ void task_init(u64 unused) {
 extern "C" void kmain(void *multiboot2_info_ptr) {
     // 0. activate the SSE so the kernel code compiled under -O2 can actually run, remap the kernel to higher half
     Sse::activate_legacy_sse();
-    PageTables::remap_kernel_higher_half();
+    PageTables::map_and_load_kernel_address_space_at_memory_start();
 
     // 1. initialize multiboot2 info from the data provided by the boot loader, then setup dynamic memory manager.
     // This must be done before global constructors are run since global constructors may require dynamic memory
