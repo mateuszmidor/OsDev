@@ -31,6 +31,8 @@ public:
 
 private:
     TaskManager() {}
+    hardware::CpuState* pick_next_task_and_load_address_space();
+
     static TaskManager _instance;
 
     std::array<TaskPtr, 256> tasks;

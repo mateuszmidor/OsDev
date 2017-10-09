@@ -73,15 +73,8 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
             tasks[current_task]->cpu_state = cpu_state;     // cpu state is already allocated and stored on task stack, just remember the pointer
     }
 
-    current_task = (current_task + 1) % num_tasks;
-    u64 pml4_physical_address = tasks[current_task]->pml4_phys_addr;
-    asm volatile (
-            "mov %%rax, %%cr3       ;"
-            :
-            : "a"(pml4_physical_address)
-            :
-    );
-    return tasks[current_task]->cpu_state;
+    // return next task to switch to
+    return pick_next_task_and_load_address_space();
 }
 
 /**
@@ -99,7 +92,17 @@ hardware::CpuState* TaskManager::kill_current_task() {
     num_tasks--;
 
     // return next task to switch to
-    current_task = (current_task) % num_tasks;
+    return pick_next_task_and_load_address_space();
+}
+
+/**
+ * @brief   Choose next task to run and load its page table level4 into cr3
+ */
+CpuState* TaskManager::pick_next_task_and_load_address_space() {
+    current_task = (current_task + 1) % num_tasks;
+    u64 pml4_physical_address = tasks[current_task]->pml4_phys_addr;
+    asm("mov %%rax, %%cr3" : : "a" (pml4_physical_address));
+
     return tasks[current_task]->cpu_state;
 }
 } // namespace multitasking {
