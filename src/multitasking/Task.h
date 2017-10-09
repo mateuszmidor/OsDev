@@ -18,7 +18,7 @@ using TaskEntryPoint = void (*)(u64 arg);
 using TaskExitPoint = void (*)();
 
 struct Task {
-    Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0, bool user_space = false, u64 pml4_phys_addr = 0);
+    Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0, bool user_space = false, u64 pml4_phys_addr = 0, u64 stack_addr = 0, u64 stack_size = 0);
     void prepare(TaskExitPoint exitpoint);
     void wait_until_finished();
     static void idle(u64 arg = 0);
@@ -31,7 +31,8 @@ struct Task {
     u64 arg;
     bool is_user_space;
     u64 pml4_phys_addr;
-    u8  stack[2*4096];
+    u64 stack_addr; // virtual address in task address space (pml4_phys_addr)
+    u64 stack_size;
     hardware::CpuState* cpu_state;
 };
 

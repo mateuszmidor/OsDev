@@ -11,6 +11,7 @@
 #include "TaskManager.h"
 #include "PageTables.h"
 #include "MemoryManager.h"
+#include "HigherHalf.h"
 
 using namespace kstd;
 using namespace utils;
@@ -19,7 +20,7 @@ using namespace filesystem;
 using namespace multitasking;
 namespace cmds {
 
-
+const size_t ELF_REQUIRED_MEM = 1024*1024*10;  // 10 MB should suffice for our tiny elfs
 /**
  * @brief   Because multitasking::Task only takes 1 u64 argument, we pack (entry point address, argc, argv) in a struct and pass it to the Task
  */
@@ -69,8 +70,10 @@ void load_and_run_elf(u64 arg) {
 
     // copy file sections into address space
     run_env->entry_point = Elf64::load_into_current_addressspace(buff);
+    u64 ELF_STACK_SIZE = 4 * 4096;
+    u64 elf_stack =  ELF_REQUIRED_MEM - ELF_STACK_SIZE; // use top of the elf memory for the stack
 
-    auto task = std::make_shared<Task>(run_elf_in_current_addressspace, elf_file.get_name(), arg, true, run_env->pml4_phys_addr);
+    auto task = std::make_shared<Task>(run_elf_in_current_addressspace, elf_file.get_name(), arg, true, run_env->pml4_phys_addr, elf_stack, ELF_STACK_SIZE);
     TaskManager& task_manager = TaskManager::instance();
     task_manager.add_task(task);
 
@@ -92,6 +95,11 @@ char** string_vec_to_argv(const vector<string>& src_vec) {
     return argv;
 }
 
+/**
+ * ELF image is organized as follows:
+ * 0...x -> process image
+ * ELF_REQUIRED_MEM - stack size -> process stack
+ */
 void elfrun::run() {
     if (env->volumes.empty()) {
         env->printer->format("elfrun: no volumes installed\n");
@@ -119,17 +127,15 @@ void elfrun::run() {
 
 
     // prepare address space for the process
-    // notice that task stack pointer is still in kernel address space, same to main() argv
+    // notice that task main() argv is allocated in kernel space
     // this will change as the kernel develops
-    const size_t ELF_REQUIRED_MEM = 1024*1024*10;  // 10 MB should suffice for our tiny elfs
     char* elf_physical_addr = (char*)MemoryManager::instance().phys_alloc(ELF_REQUIRED_MEM);
-
     if (!elf_physical_addr) {
         env->printer->format("elfrun: not enough memory to run elf\n");
         return;
     }
 
-    // create and switch to elf address space. since kernel space is mapped as well, we can continue executing kernel code
+    // create elf address space mapping, elf_loader will use this address space and load elf segments into it
     u64 pml4_phys_addr = hardware::PageTables::map_elf_address_space_at(elf_physical_addr, ELF_REQUIRED_MEM);
 
     // prepare elf run environment
@@ -138,7 +144,7 @@ void elfrun::run() {
     run_env->argc = (u64)env->cmd_args.size() - 1; // no "elfrun" command
     run_env->argv = (u64)string_vec_to_argv(env->cmd_args);
 
-    // run elf_file loader with environment pointer as an arg
+    // run elf_file loader in target elf address space, with environment pointer as an arg
     auto task = std::make_shared<Task>(load_and_run_elf, "elf_loader", (u64)run_env, false, pml4_phys_addr);
     TaskManager& task_manager = TaskManager::instance();
     task_manager.add_task(task);
