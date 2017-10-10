@@ -1,3 +1,5 @@
+#include <sys/types.h>  // ssize_t
+
 using s8    = signed char;
 using u8    = unsigned char;
 using s16   = signed short;
