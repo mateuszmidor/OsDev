@@ -108,4 +108,19 @@ void PageTables::load_address_space(size_t pml4_physical_address) {
             :
     );
 }
+
+/**
+ * @brief   Get Kernel space virtual address of page in "pml4_phys_addr" address space that contains "virtual_address"
+ */
+u64* PageTables::get_page_for_virt_address(size_t virtual_address, size_t pml4_phys_addr) {
+    u16 pml4_index = (virtual_address >> 39) & 511;
+    u16 pdpt_index = (virtual_address >> 30) & 511;
+    u16 pde_index = (virtual_address >> 21) & 511;
+
+    u64* pml4_virt_addr = (u64*)HigherHalf::phys_to_virt(pml4_phys_addr);
+    u64* pdpt_virt_addr = (u64*)HigherHalf::phys_to_virt(pml4_virt_addr[pml4_index] & ~4095); // & ~4095 to remove page flags
+    u64* pde_virt_addr =  (u64*)HigherHalf::phys_to_virt(pdpt_virt_addr[pdpt_index] & ~4095); // & ~4095 to remove page flags
+    return  &pde_virt_addr[pde_index];
+}
+
 } /* namespace hardware */

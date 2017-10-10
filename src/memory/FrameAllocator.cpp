@@ -18,7 +18,7 @@ void FrameAllocator::init(size_t first_available_memory_byte, size_t last_availa
     for (u32 i = 0; i < first_index; i++)
         frame_bitmap[i] = true;
 
-    for (u32 i = last_index + 1; i <  get_total_frames_count(); i++)
+    for (u32 i = last_index + 1; i < get_total_frames_count(); i++)
         frame_bitmap[i] = true;
 }
 
