@@ -12,6 +12,7 @@
 #include "PageTables.h"
 #include "MemoryManager.h"
 #include "HigherHalf.h"
+#include "FrameAllocator.h"
 
 using namespace kstd;
 using namespace utils;
@@ -129,14 +130,14 @@ void elfrun::run() {
     // prepare address space for the process
     // notice that task main() argv is allocated in kernel space
     // this will change as the kernel develops
-    char* elf_physical_addr = (char*)MemoryManager::instance().phys_alloc(ELF_REQUIRED_MEM);
-    if (!elf_physical_addr) {
+    ssize_t pml4_phys_addr = FrameAllocator::alloc_consecutive_frames(sizeof(hardware::PageTables64));
+    if (pml4_phys_addr < 0) {
         env->printer->format("elfrun: not enough memory to run elf\n");
         return;
     }
 
     // create elf address space mapping, elf_loader will use this address space and load elf segments into it
-    u64 pml4_phys_addr = hardware::PageTables::map_elf_address_space_at(elf_physical_addr, ELF_REQUIRED_MEM);
+    hardware::PageTables::map_elf_address_space(pml4_phys_addr);
 
     // prepare elf run environment
     RunElfParams* run_env = new RunElfParams(e);

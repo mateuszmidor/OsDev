@@ -37,7 +37,7 @@ struct PageTables64 {
 class PageTables {
 public:
     static void map_and_load_kernel_address_space_at_memory_start();
-    static size_t map_elf_address_space_at(char* phys_addr, size_t num_bytes);
+    static void map_elf_address_space(size_t pml4_phys_addr);
     static size_t get_kernel_pml4_phys_addr();
     static void load_address_space(size_t pml4_physical_address);
     static u64* get_page_for_virt_address(size_t virtual_address, size_t pml4_phys_addr);
@@ -46,7 +46,7 @@ private:
     static PageTables64 kernel_page_tables;
 
     static void prepare_higher_half_kernel_page_tables(PageTables64& pt);
-    static void prepare_elf_page_tables(size_t num_bytes, size_t user_phys_address_align2m, PageTables64* pt);
+    static void prepare_elf_page_tables(PageTables64* pt);
 };
 
 } /* namespace hardware */

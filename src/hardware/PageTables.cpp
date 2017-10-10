@@ -32,36 +32,26 @@ void PageTables::map_and_load_kernel_address_space_at_memory_start() {
 
 /**
  * @brief   Map virtual address space 0..num_bytes-1 to physical phys_addr..phys_addr+num_bytes-1
- * @param   phys_addr Where the elf physical memory starts
- * @param   num_bytes How long is the elf physical memory chunk
- * @return  New Page Map Level 4 (page tables root) physical address
+ * @param   pml4_phys_addr Physical address of the already allocated PageTables64
  * @note    Temporary solution until proper frame allocator and memory manager is developed
  */
-size_t PageTables::map_elf_address_space_at(char* phys_addr, size_t num_bytes) {
-    // get 4k aligned physical addr to allocate page tables struct
-    size_t page_tables_phys_addr_align4k = ((size_t)phys_addr + 4095) & 0xFFFFFFFFFFFFF000; // align to 4KB as page tables must be 4K aligned
-
+void PageTables::map_elf_address_space(size_t pml4_phys_addr) {
     // we need to use kernel virtual addresses for configuring the pages, since no lower 1gb identity mapping exists
-    size_t page_tables_virt_addr_align4k = HigherHalf::phys_to_virt(page_tables_phys_addr_align4k);
+    size_t page_tables_virt_addr = HigherHalf::phys_to_virt(pml4_phys_addr);
 
     // alloc page tables at 4k aligned virtual address
-    PageTables64* pt = new ((void*)page_tables_virt_addr_align4k)PageTables64;
+    PageTables64* pt = new ((void*)page_tables_virt_addr)PageTables64;
 
     // zero the page tables
     memset(pt, 0, sizeof(PageTables64));
-
-    // elf contents memory starts just after the page tables
-    size_t elf_contents_phys_address = page_tables_phys_addr_align4k + sizeof(PageTables64);
-    size_t elf_contents_phys_address_align2m = (elf_contents_phys_address + 2097151) & 0xFFFFFFFFFFE00000; // align to 2MB since huge pages are 2MB aligned
 
     // map kernel virtual address space at -2GB
     prepare_higher_half_kernel_page_tables(*pt);
 
     // map user elf virtual address space at 1GB
-    prepare_elf_page_tables(num_bytes, elf_contents_phys_address_align2m, pt);
+    prepare_elf_page_tables(pt);
 
     size_t pml4_physical_address = HigherHalf::virt_to_phys(pt->pml4);
-    return pml4_physical_address;
 }
 
 /**
@@ -76,18 +66,13 @@ void PageTables::prepare_higher_half_kernel_page_tables(PageTables64& pt) {
 }
 
 /**
- * @brief   Fill PageTables64 with mapping of 0..num_bytes virt addresses to user_phys_address_align2m phys addresses
- * @note    user_phys_address_align2m is 2MB aligned as we use HUGE pages
+ * @brief   Fill PageTables64 pml4 and pdpt tables with mapping of lower 1GB virtual memory
  */
-void PageTables::prepare_elf_page_tables(size_t num_bytes, size_t user_phys_address_align2m, PageTables64* pt) {
+void PageTables::prepare_elf_page_tables(PageTables64* pt) {
     const u16 PRESENT_WRITABLE_USERSPACE = PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::USER_ACCESSIBLE;
-    size_t num_pages = num_bytes / 0x200000 + 1;
     pt->pml4[0] = HigherHalf::virt_to_phys(pt->pdpt) | PRESENT_WRITABLE_USERSPACE;
     pt->pdpt[0] = HigherHalf::virt_to_phys(pt->pde_user) | PRESENT_WRITABLE_USERSPACE;
-    // specific frame allocation will happen in PageFault handler
-//    for (u16 i = 0; i < num_pages; i++)
-        // later when using 4k pages maybe dont map the nullptr address to catch nullptrs?
-//        pt->pde_user[i] = (0x200000 * i + user_phys_address_align2m) | PRESENT_WRITABLE_USERSPACE | PageAttr::HUGE_PAGE;
+    // specific frame allocation in pde_user for the lower 1GB will happen in PageFault handler
 }
 
 /**
