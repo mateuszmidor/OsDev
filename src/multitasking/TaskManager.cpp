@@ -90,6 +90,8 @@ hardware::CpuState* TaskManager::kill_current_task() {
     // remove current task from the list
     for (u16 i = current_task; i < num_tasks -1; i++)
         tasks[i] = tasks[i+1];
+
+    tasks[num_tasks-1] = nullptr;
     num_tasks--;
 
     // return next task to switch to

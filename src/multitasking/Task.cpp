@@ -54,6 +54,7 @@ Task::~Task() {
         }
 
     // release the page table itself
+    klog.format("Releasing mem frame no. %\n", pml4_phys_addr / memory::FrameAllocator::get_frame_size());
     memory::FrameAllocator::free_consecutive_frames(pml4_phys_addr, sizeof(PageTables64));
 }
 
