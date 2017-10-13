@@ -38,7 +38,6 @@
 #include "_demos/MultitaskingDemo.h"
 #include "_demos/CpuSpeedDemo.h"
 #include "drivers/Int80hDriver.h"
-#include "FrameAllocator.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -112,7 +111,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 1. initialize multiboot2 info from the data provided by the boot loader, then setup dynamic memory manager.
     // This must be done before global constructors are run since global constructors may require dynamic memory
     Multiboot2::initialize(multiboot2_info_ptr);
-    FrameAllocator::init(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
     MemoryManager::install_allocation_policy<BumpAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
 
     // 2. run constructors of global objects

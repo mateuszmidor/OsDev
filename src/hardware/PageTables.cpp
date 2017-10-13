@@ -50,8 +50,6 @@ void PageTables::map_elf_address_space(size_t pml4_phys_addr) {
 
     // map user elf virtual address space at 1GB
     prepare_elf_page_tables(pt);
-
-    size_t pml4_physical_address = HigherHalf::virt_to_phys(pt->pml4);
 }
 
 /**
@@ -59,10 +57,11 @@ void PageTables::map_elf_address_space(size_t pml4_phys_addr) {
  */
 void PageTables::prepare_higher_half_kernel_page_tables(PageTables64& pt) {
     const u16 PRESENT_WRITABLE_USERSPACE = PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::USER_ACCESSIBLE;
-    pt.pml4[511] = HigherHalf::virt_to_phys(pt.pdpt) | PRESENT_WRITABLE_USERSPACE;
-    pt.pdpt[510] = HigherHalf::virt_to_phys(pt.pde_kernel) | PRESENT_WRITABLE_USERSPACE;
+    pt.pml4[511] = HigherHalf::virt_to_phys(pt.pdpt) | PRESENT_WRITABLE_USERSPACE;          // last 512 GB chunk
+    pt.pdpt[510] = HigherHalf::virt_to_phys(pt.pde_kernel1) | PRESENT_WRITABLE_USERSPACE;    // -2BG..-1GB chunk
+    pt.pdpt[511] = HigherHalf::virt_to_phys(pt.pde_kernel2) | PRESENT_WRITABLE_USERSPACE;    // -1GB..0GB chunk
     for (u16 i = 0; i < 512; i++)
-        pt.pde_kernel[i] = (0x200000 * i) | PRESENT_WRITABLE_USERSPACE | PageAttr::HUGE_PAGE;
+        pt.pde_kernel1[i] = (0x200000 * i) | PRESENT_WRITABLE_USERSPACE | PageAttr::HUGE_PAGE;   // 2MB chunk
 }
 
 /**

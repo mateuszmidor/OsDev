@@ -1,3 +1,4 @@
+#include <cstddef>      // size_t
 #include <sys/types.h>  // ssize_t
 
 using s8    = signed char;

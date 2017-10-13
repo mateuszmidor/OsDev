@@ -60,6 +60,7 @@ struct RunElfParams {
  *          and thus is able to load the elf program segments into memory at virtual addresses starting at "0"
  *
  */
+
 void load_and_run_elf(u64 arg) {
     RunElfParams* run_env = (RunElfParams*)arg;
 
@@ -69,18 +70,31 @@ void load_and_run_elf(u64 arg) {
     char* buff = new char[size];
     elf_file.read(buff, size);
 
+    const auto tasks =  TaskManager::instance().get_tasks();
+    Task* curr_task = TaskManager::instance().get_current_task().get();
+    auto cpu_state = curr_task->cpu_state;
+    size_t pml4 = run_env->pml4_phys_addr;
+    size_t buff_page = *hardware::PageTables::get_page_for_virt_address((size_t)buff, pml4);
+    size_t task_page = *hardware::PageTables::get_page_for_virt_address((size_t)curr_task, pml4);
+    size_t entrypoint_page = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
+    char* entrypoint = (char*)(4*1024*1024);
+    *entrypoint = 0x01;
+    size_t entrypoint_page2 = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
+
     // copy file sections into address space
     run_env->entry_point = Elf64::load_into_current_addressspace(buff);
     u64 ELF_STACK_SIZE = 4 * 4096;
     u64 elf_stack =  ELF_REQUIRED_MEM - ELF_STACK_SIZE; // use top of the elf memory for the stack
 
     auto task = std::make_shared<Task>(run_elf_in_current_addressspace, elf_file.get_name(), arg, true, run_env->pml4_phys_addr, elf_stack, ELF_STACK_SIZE);
+
     TaskManager& task_manager = TaskManager::instance();
     task_manager.add_task(task);
 
     // free elf_file file data
     delete[] buff;
 }
+
 /**
  * @brief   Convert vector<string> into char*[]
  */
@@ -130,13 +144,17 @@ void elfrun::run() {
     // prepare address space for the process
     // notice that task main() argv is allocated in kernel space
     // this will change as the kernel develops
-    ssize_t pml4_phys_addr = FrameAllocator::alloc_consecutive_frames(sizeof(hardware::PageTables64));
-    if (pml4_phys_addr < 0) {
+    MemoryManager& mm = MemoryManager::instance();
+
+
+    size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(hardware::PageTables64));
+    if (!pml4_phys_addr) {
         env->printer->format("elfrun: not enough memory to run elf\n");
         return;
     }
 
     // create elf address space mapping, elf_loader will use this address space and load elf segments into it
+    // this will cause problems as BumpAllocator doesnt know that virtual addressess corresponding to these pages are already in use...
     hardware::PageTables::map_elf_address_space(pml4_phys_addr);
 
     // prepare elf run environment

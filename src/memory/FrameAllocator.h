@@ -8,7 +8,6 @@
 #ifndef SRC_MEMORY_FRAMEALLOCATOR_H_
 #define SRC_MEMORY_FRAMEALLOCATOR_H_
 
-#include  <stddef.h>
 #include "types.h"
 
 namespace memory {

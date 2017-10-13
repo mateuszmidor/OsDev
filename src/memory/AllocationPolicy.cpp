@@ -12,8 +12,8 @@ namespace memory {
 /**
  * Constructor.
  * @brief   Set contiguous memory address range which is available for allocation
- * @param   first_byte  The first byte available for allocation
- * @param   last_byte   The last byte available for allocation
+ * @param   first_byte  The first byte of physical memory available for allocation
+ * @param   last_byte   The last byte of physical memory available for allocation
  */
 AllocationPolicy::AllocationPolicy(size_t first_byte, size_t last_byte) {
     available_memory_first_byte = first_byte;

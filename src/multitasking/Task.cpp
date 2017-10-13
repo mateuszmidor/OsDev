@@ -9,7 +9,6 @@
 #include "PageTables.h"
 #include "HigherHalf.h"
 #include "MemoryManager.h"
-#include "FrameAllocator.h"
 #include "KernelLog.h"
 
 using namespace hardware;
@@ -32,7 +31,7 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_spac
     }
     else {
         u64 DEFAULT_STACK_SIZE = 2 * 4096;
-        this->stack_addr = (u64)memory::MemoryManager::instance().virt_alloc(DEFAULT_STACK_SIZE);
+        this->stack_addr = (u64)new char[DEFAULT_STACK_SIZE];
         this->stack_size = DEFAULT_STACK_SIZE;
     }
 }
@@ -42,20 +41,21 @@ Task::~Task() {
     if (!is_user_space || pml4_phys_addr == PageTables::get_kernel_pml4_phys_addr())
         return;
 
-    u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, pml4_phys_addr); // task virtual address spaces start at virt address 0
+    u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, pml4_phys_addr); // task virtual address space starts at virt address 0
 
     // scan 0..1GB of virtual memory
     utils::KernelLog& klog = utils::KernelLog::instance();
+    memory::MemoryManager& mngr = memory::MemoryManager::instance();
     klog.format("~Task, removing address space...\n");
     for (u32 i = 0; i < 512; i++)
         if (pde_virt_addr[i] != 0) {
-            klog.format("Releasing mem frame no. %\n", pde_virt_addr[i] / memory::FrameAllocator::get_frame_size());
-            memory::FrameAllocator::free_frame(pde_virt_addr[i]);
+            klog.format("Releasing mem frame\n");
+            mngr.free_frames((void*)pde_virt_addr[i], 1); // 1 byte will always correspond to just 1 frame
         }
 
     // release the page table itself
-    klog.format("Releasing mem frame no. %\n", pml4_phys_addr / memory::FrameAllocator::get_frame_size());
-    memory::FrameAllocator::free_consecutive_frames(pml4_phys_addr, sizeof(PageTables64));
+    klog.format("Releasing mem frames of PageTables64\n");
+    mngr.free_frames((void*)pml4_phys_addr, sizeof(PageTables64));
 }
 
 /**

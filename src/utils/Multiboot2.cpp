@@ -119,7 +119,7 @@ void Multiboot2::initialize(void *multiboot2_info_ptr) {
 }
 
 /**
- * @return  First byte of memory available for use
+ * @return  First byte of physical memory available for use
  */
 size_t Multiboot2::get_available_memory_first_byte() {
     size_t first_free_byte = HigherHalf::phys_to_virt(bmi->lower * 1024);   // convert physical to virtual; elf sections use virtual
@@ -140,7 +140,7 @@ size_t Multiboot2::get_available_memory_first_byte() {
 }
 
 /**
- * @return  Last byte of memory available for use
+ * @return  Last byte of physical memory available for use
  */
 size_t Multiboot2::get_available_memory_last_byte() {
     return bmi->upper * 1024 ;

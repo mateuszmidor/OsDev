@@ -18,38 +18,41 @@ MemoryManager& MemoryManager::instance() {
 }
 
 /**
- * @brief   Allocate and return a memory block physical address, or return nullptr on failure
+ * @brief   Allocate a contiguous, frame-size aligned block of physical memory that can hold "size" bytes, or return nullptr on failure
+ * @note    Allocated memory chunk physical address on success, nullptr on failure
  */
-void* MemoryManager::phys_alloc(size_t size) const {
-    return allocation_policy->alloc(size);
+void* MemoryManager::alloc_frames(size_t size) const {
+    ssize_t phys_addr = FrameAllocator::alloc_consecutive_frames(size);
+    if (phys_addr == -1)
+        return nullptr;
+    else
+        return (void*)phys_addr;
 }
 
 /**
- * @brief   Release memory block located at physical address
+ * @brief   Release memory block of size "size" located at physical address
+ *          A number of frames necessary to hold "size" bytes will be freed
  */
-void MemoryManager::phys_free(void* address) const {
-    allocation_policy->free(address);
+void MemoryManager::free_frames(void* address, size_t size) const {
+    FrameAllocator::free_consecutive_frames((size_t)address, size);
 }
 
 /**
  * @brief   Allocate and return a memory block virtual address, or return nullptr on failure
+ * @note    Memory frames will be allocated by PageFaulHandler
  */
-void* MemoryManager::virt_alloc(size_t size) const {
-    if (size_t physical_addr = (size_t)allocation_policy->alloc(size))
-        return (void*)HigherHalf::phys_to_virt(physical_addr);
-    else
-        return nullptr;
+void* MemoryManager::alloc_virt_memory(size_t size) const {
+    return allocation_policy->alloc_bytes(size);
 }
 
 /**
  * @brief   Release memory block located at virtual address
  */
-void MemoryManager::virt_free(void* virtual_address) const {
+void MemoryManager::free_virt_memory(void* virtual_address) const {
     if (!virtual_address)
         return;
 
-    size_t physical_addr = HigherHalf::virt_to_phys(virtual_address);
-    allocation_policy->free((void*)physical_addr);
+    allocation_policy->free_bytes((void*)virtual_address);
 }
 
 /**

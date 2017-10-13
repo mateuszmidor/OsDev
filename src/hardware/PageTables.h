@@ -27,8 +27,9 @@ enum PageAttr {
 struct PageTables64 {
     u64  pml4[512];         // Page Map Level 4
     u64  pdpt[512];         // Page Directory Pointer Table
-    u64  pde_kernel[512];   // Page Directory Entry for 2MB pages; map kernel
-    u64  pde_user[512];     // Page Directory Entry for 2MB pages; map elf
+    u64  pde_kernel1[512];  // Page Directory Entry for 2MB pages; identity map kernel [-2GB..-1GB] virt -> [0GB..1GB] phys
+    u64  pde_kernel2[512];  // Page Directory Entry for 2MB pages; map kernel -1GB..0GB -> mapped by PageFaultHandler
+    u64  pde_user[512];     // Page Directory Entry for 2MB pages; identity map elf [0GB..1GB] virt -> [0GB..1GB] phys
 };
 
 /**
