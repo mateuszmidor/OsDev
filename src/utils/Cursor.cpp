@@ -68,7 +68,7 @@ void Cursor::update_vga_cursor() {
         vga->set_cursor_pos(cursor_x, cursor_y);
 }
 
-std::shared_ptr<VgaDriver> Cursor::get_vga() {
+VgaDriver* Cursor::get_vga() {
     if (vga)
         return vga;
 

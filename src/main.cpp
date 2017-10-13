@@ -50,8 +50,7 @@ using namespace syscalls;
 using namespace utils;
 using namespace demos;
 
-Gdt gdt;
-PCIController pcic;
+
 MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();
 TaskManager& task_manager           = TaskManager::instance();
@@ -59,13 +58,16 @@ DriverManager& driver_manager       = DriverManager::instance();
 ExceptionManager& exception_manager = ExceptionManager::instance();
 InterruptManager& interrupt_manager = InterruptManager::instance();
 SysCallManager& syscall_manager     = SysCallManager::instance();
-KeyboardScanCodeSet1 scs1;
-auto keyboard           = make_shared<KeyboardDriver> (scs1);
-auto mouse              = make_shared<MouseDriver>();
-auto pit                = make_shared<PitDriver>();
-auto ata_primary_bus    = make_shared<AtaPrimaryBusDriver>();
-auto int80h             = make_shared<Int80hDriver>();
-
+Gdt                     gdt;
+PCIController           pcic;
+KeyboardScanCodeSet1    scs1;
+KeyboardDriver          keyboard(scs1);
+MouseDriver             mouse;
+PitDriver               pit;
+AtaPrimaryBusDriver     ata_primary_bus;
+VgaDriver               vga;
+Int80hDriver            int80h;
+PageFaultHandler        page_fault;
 
 /**
  *  Little counter in the right-top corner
@@ -120,24 +122,25 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     gdt.reinstall_gdt();
 
     // 4. prepare drivers
-    pit->set_channel0_hz(20);
-    pit->set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
+    pit.set_channel0_hz(20);
+    pit.set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
 
     // 5. install drivers
-    pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
-    driver_manager.install_driver(keyboard);
-    driver_manager.install_driver(mouse);
-    driver_manager.install_driver(pit);
-    driver_manager.install_driver(ata_primary_bus);
-    driver_manager.install_driver(int80h);
+    //pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
+    driver_manager.install_driver(&keyboard);
+    driver_manager.install_driver(&mouse);
+    driver_manager.install_driver(&pit);
+    driver_manager.install_driver(&ata_primary_bus);
+    driver_manager.install_driver(&vga);
+    driver_manager.install_driver(&int80h);
 
     // 6. install exceptions
-    exception_manager.install_handler(make_shared<PageFaultHandler>());
+    exception_manager.install_handler(&page_fault);     // this guy allows dynamic memory allocation
 
     // 7. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
-    interrupt_manager.config_and_activate_exceptions_and_interrupts();
+    interrupt_manager.config_and_activate_exceptions_and_interrupts(); // Dynamic memory "new" available from here, as page_fault handler installed and active
 
     // 8. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();

@@ -32,8 +32,8 @@ public:
 
 private:
     void update_vga_cursor();
-    std::shared_ptr<drivers::VgaDriver> get_vga();
-    std::shared_ptr<drivers::VgaDriver> vga;
+    drivers::VgaDriver* get_vga();
+    drivers::VgaDriver* vga;
     u16 left, top, right, bottom;   // printable area description
     u16 cursor_x, cursor_y;         // current cursor position limited by [left, top, right, bottom]
 };

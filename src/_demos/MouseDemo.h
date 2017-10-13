@@ -25,7 +25,7 @@ private:
     s16 mouse_x = 360;
     s16 mouse_y = 200;
     drivers::EgaColor pen_color = drivers::EgaColor::LightRed;
-    std::shared_ptr<drivers::VgaDriver> vga;
+    drivers::VgaDriver* vga;
 };
 
 } /* namespace demos */

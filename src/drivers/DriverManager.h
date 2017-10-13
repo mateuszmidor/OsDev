@@ -9,14 +9,12 @@
 #define SRC_DRIVERS_DRIVERMANAGER_H_
 
 #include <array>
-#include <memory>
-#include "DeviceDriver.h"
-
 #include "CpuState.h"
+#include "UnhandledDeviceDriver.h"
 
 namespace drivers {
 
-using DeviceDriverPtr = std::shared_ptr<DeviceDriver>;
+using DeviceDriverPtr = DeviceDriver*;
 
 class DriverManager {
 public:
@@ -27,21 +25,22 @@ public:
     virtual ~DriverManager();
 
     template <class DrvType>
-    void install_driver(std::shared_ptr<DrvType> drv) {
+    void install_driver(DrvType* drv) {
         auto interrupt_no = DrvType::handled_interrupt_no();
         drivers[interrupt_no] = drv;
     }
 
     template <class DrvType>
-    std::shared_ptr<DrvType> get_driver() {
+    DrvType* get_driver() {
         auto interrupt_no = DrvType::handled_interrupt_no();
-        return std::static_pointer_cast<DrvType>(drivers[interrupt_no]);
+        return (DrvType*)drivers[interrupt_no];
     }
 
     hardware::CpuState* on_interrupt(u8 interrupt_no, hardware::CpuState* cpu_state) const;
 
 private:
     static DriverManager _instance;
+    static UnhandledDeviceDriver unhandled_device_driver;
 
     DriverManager();
 

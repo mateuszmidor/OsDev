@@ -15,13 +15,14 @@ namespace utils {
 
 LimitedAreaScreenPrinter::LimitedAreaScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
     left(left), top(top), right(right), bottom(bottom),
-    cursor(left, top, right, bottom) {
+    cursor(left, top, right, bottom),
+    vga(nullptr ){
 
     printable_area_width = right - left + 1;  // +1 because if right=1 and left=0 it makes 2 columns
     printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
 }
 
-std::shared_ptr<VgaDriver> LimitedAreaScreenPrinter::get_vga() {
+VgaDriver* LimitedAreaScreenPrinter::get_vga() {
     if (vga)
         return vga;
 

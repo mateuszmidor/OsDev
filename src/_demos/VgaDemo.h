@@ -8,7 +8,6 @@
 #ifndef SRC__DEMOS_VGADEMO_H_
 #define SRC__DEMOS_VGADEMO_H_
 
-#include <memory>
 #include "VgaDriver.h"
 
 namespace demos {
@@ -22,7 +21,7 @@ private:
     void on_mouse_move(s8 dx, s8 dy);
     s16 mouse_x, mouse_y;
     drivers::EgaColor pen_color = drivers::EgaColor::LightRed;
-    std::shared_ptr<drivers::VgaDriver> vga;
+    drivers::VgaDriver* vga;
 };
 
 } /* namespace demos */

@@ -8,7 +8,6 @@
 #ifndef SRC_UTILS_LIMITEDAREASCREENPRINTER_H_
 #define SRC_UTILS_LIMITEDAREASCREENPRINTER_H_
 
-#include <memory>
 #include "types.h"
 #include "kstd.h"
 #include "VgaDriver.h"
@@ -49,10 +48,10 @@ protected:
     drivers::VgaCharacter& at(u16 x, u16 y);
     void putc(const char c);
     void putc_into_vga(const char c);
-    std::shared_ptr<drivers::VgaDriver> get_vga();
+    drivers::VgaDriver* get_vga();
 
 private:
-    std::shared_ptr<drivers::VgaDriver> vga;
+    drivers::VgaDriver* vga;
 };
 
 } /* namespace utils */

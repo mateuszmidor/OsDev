@@ -171,7 +171,7 @@ DeviceDriverPtr PCIController::get_driver(PCIDeviceDescriptor &dev, drivers::Dri
         switch (dev.subclass_id) {
         case 0x00:  // vga
             //klog.format("[Generic VGA]");
-            driver_manager.install_driver(std::make_shared<drivers::VgaDriver>());
+//            driver_manager.install_driver(std::make_shared<drivers::VgaDriver>());
             break;
         }
     }

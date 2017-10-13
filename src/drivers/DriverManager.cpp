@@ -6,13 +6,13 @@
  */
 
 #include "DriverManager.h"
-#include "UnhandledDeviceDriver.h"
 
 using namespace hardware;
 
 namespace drivers {
 
 DriverManager DriverManager::_instance;
+UnhandledDeviceDriver DriverManager::unhandled_device_driver(0xFF); // TODO: handle unhandled devices some better way
 
 DriverManager& DriverManager::instance() {
     return _instance;
@@ -23,7 +23,7 @@ DriverManager::~DriverManager() {
 
 DriverManager::DriverManager() {
     for (int i = 0; i < drivers.size(); i++)
-        drivers[i] = std::make_shared<UnhandledDeviceDriver>(i);
+        drivers[i] = &unhandled_device_driver;
 }
 
 CpuState* DriverManager::on_interrupt(u8 interrupt_no, CpuState* cpu_state) const {

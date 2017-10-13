@@ -47,20 +47,20 @@ CpuState* PageFaultHandler::on_exception(CpuState* cpu_state) {
     auto current = mngr.get_current_task();
 
     u64 faulty_address = get_faulty_address();
-    u64* faulty_page = PageTables::get_page_for_virt_address(faulty_address, current->pml4_phys_addr);
+    u64* faulty_page = PageTables::get_page_for_virt_address(faulty_address, cpu_state->cr3);// current->pml4_phys_addr);
 
     // check if PageFault caused by Page Non Present
     PageFaultActualReason pf_reason = page_fault_reason(*faulty_page, cpu_state->error_code);
     if (pf_reason != PageFaultActualReason::PAGE_NOT_PRESENT) {
-        klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". %. KILLING] ",
-                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current->name.c_str(), PF_REASON[pf_reason]);
+//        klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". %. KILLING] ",
+//                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current->name.c_str(), PF_REASON[pf_reason]);
         return mngr.kill_current_task();
     }
 
     // try alloc the page
     if (!alloc_page(faulty_address, faulty_page)) {
-        klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". Could not alloc frame. KILLING] ",
-                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current->name.c_str());
+//        klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". Could not alloc frame. KILLING] ",
+//                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current->name.c_str());
         return mngr.kill_current_task();
     }
 

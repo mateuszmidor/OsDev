@@ -9,13 +9,12 @@
 #define SRC_CPUEXCEPTIONS_EXCEPTIONMANAGER_H_
 
 #include <array>
-#include <memory>
 #include "InterruptNumbers.h"
-#include "ExceptionHandler.h"
+#include "UnhandledExceptionHandler.h"
 
 namespace cpuexceptions {
 
-using ExceptionHandlerPtr = std::shared_ptr<ExceptionHandler>;
+using ExceptionHandlerPtr = ExceptionHandler*;
 class ExceptionManager {
 public:
     static ExceptionManager &instance();
@@ -28,6 +27,7 @@ public:
 private:
     ExceptionManager();
     static ExceptionManager _instance;
+    static UnhandledExceptionHandler unhandled_exception_handler;
     std::array<ExceptionHandlerPtr, hardware::Interrupts::EXC_MAX> handlers; // this array maps exception_no to handler
 };
 

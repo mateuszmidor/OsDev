@@ -6,7 +6,6 @@
  */
 
 #include "ExceptionManager.h"
-#include "UnhandledExceptionHandler.h"
 #include "CpuState.h"
 
 using namespace hardware;
@@ -14,7 +13,7 @@ using namespace hardware;
 namespace cpuexceptions {
 
 ExceptionManager ExceptionManager::_instance;
-
+UnhandledExceptionHandler ExceptionManager::unhandled_exception_handler(0xFF); // TODO: handle unhandled exceptions in a better way
 
 ExceptionManager &ExceptionManager::instance() {
     return _instance;
@@ -22,7 +21,7 @@ ExceptionManager &ExceptionManager::instance() {
 
 ExceptionManager::ExceptionManager() {
     for (u16 i = 0; i < handlers.size(); i++)
-        handlers[i] = std::make_shared<UnhandledExceptionHandler>(i);
+        handlers[i] = &unhandled_exception_handler;
 }
 
 void ExceptionManager::install_handler(ExceptionHandlerPtr handler) {
