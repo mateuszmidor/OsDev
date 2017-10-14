@@ -29,22 +29,27 @@ void TaskManager::on_task_finished() {
 /**
  * @brief   Add new task to the list of scheduler tasks
  * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
+ * @return  Newly added task id
  */
-bool TaskManager::add_task(TaskPtr task) {
+u32 TaskManager::add_task(const Task& task) {
     if (num_tasks == tasks.size())
-        return false;
+        return 0;
 
-    task->prepare(TaskManager::on_task_finished);
+    u32 tid = current_task_id;
+    tasks[num_tasks] = task;
+    tasks[num_tasks].prepare(tid, TaskManager::on_task_finished);
 
-    tasks[num_tasks++] = task;
-    return true;
+    num_tasks++; // first insert, then increment in case task schedule run in between
+    current_task_id++;
+
+    return tid;
 }
 
-TaskPtr TaskManager::get_current_task() const {
+Task& TaskManager::get_current_task() {
     return tasks[current_task];
 }
 
-const std::array<TaskPtr, 256>& TaskManager::get_tasks() const {
+const std::array<Task, 16>& TaskManager::get_tasks() const {
     return tasks;
 }
 
@@ -66,12 +71,12 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
         return cpu_state;
 
     if (current_task >= 0) {
-        if (tasks[current_task]->is_user_space) {
-            tasks[current_task]->cpu_state = (CpuState*) (cpu_state->rsp - sizeof(CpuState)); // allocate cpu state on the current task stack
-            *(tasks[current_task]->cpu_state) = *cpu_state; // copy cpu state from kernel stack to task stack
+        if (tasks[current_task].is_user_space) {
+            tasks[current_task].cpu_state = (CpuState*) (cpu_state->rsp - sizeof(CpuState)); // allocate cpu state on the current task stack
+            *(tasks[current_task].cpu_state) = *cpu_state; // copy cpu state from kernel stack to task stack
         }
         else
-            tasks[current_task]->cpu_state = cpu_state;     // cpu state is already allocated and stored on task stack, just remember the pointer
+            tasks[current_task].cpu_state = cpu_state;     // cpu state is already allocated and stored on task stack, just remember the pointer
     }
 
     // return next task to switch to
@@ -84,14 +89,11 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
  */
 hardware::CpuState* TaskManager::kill_current_task() {
-    // mark task as terminated
-    tasks[current_task]->is_terminated = true;
-
     // remove current task from the list
     for (u16 i = current_task; i < num_tasks -1; i++)
         tasks[i] = tasks[i+1];
 
-    tasks[num_tasks-1] = nullptr;
+    tasks[num_tasks-1] = Task();
     num_tasks--;
 
     // return next task to switch to
@@ -99,13 +101,30 @@ hardware::CpuState* TaskManager::kill_current_task() {
 }
 
 /**
+ * @brief   Wait for task until it is terminated
+ */
+void TaskManager::wait(u32 task_id) const {
+    bool done = false;
+
+    while (!done) {
+        done = true;
+        for (u32 i = 0; i < num_tasks; i++) {
+            if (tasks[i].task_id == task_id) {
+                done = false;
+                Task::yield();
+            }
+        }
+    }
+}
+
+/**
  * @brief   Choose next task to run and load its page table level4 into cr3
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
     current_task = (current_task + 1) % num_tasks;
-    u64 pml4_physical_address = tasks[current_task]->pml4_phys_addr;
+    u64 pml4_physical_address = tasks[current_task].pml4_phys_addr;
     PageTables::load_address_space(pml4_physical_address);
 
-    return tasks[current_task]->cpu_state;
+    return tasks[current_task].cpu_state;
 }
 } // namespace multitasking {

@@ -32,15 +32,15 @@ private:
 
 struct Command {
     kstd::string            name;
-    multitasking::TaskPtr   task;
+    multitasking::Task      task;
 };
 
 class CommandCollection {
 public:
     CommandCollection();
-    multitasking::TaskPtr get(const kstd::string& cmd_name);
+    multitasking::Task* get(const kstd::string& cmd_name);
     std::tuple<bool, kstd::string> filter(const kstd::string& pattern);
-    void install(const kstd::string name, multitasking::TaskPtr task);
+    void install(const kstd::string name, multitasking::Task task);
 
 private:
     kstd::vector<Command> commands;

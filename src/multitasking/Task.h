@@ -8,7 +8,6 @@
 #ifndef SRC_MULTITASKING_TASK_H_
 #define SRC_MULTITASKING_TASK_H_
 
-#include <memory>
 #include "kstd.h"
 #include "CpuState.h"
 
@@ -18,15 +17,15 @@ using TaskEntryPoint = void (*)(u64 arg);
 using TaskExitPoint = void (*)();
 
 struct Task {
+    Task();
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0, bool user_space = false, u64 pml4_phys_addr = 0, u64 stack_addr = 0, u64 stack_size = 0);
     virtual ~Task();
-    void prepare(TaskExitPoint exitpoint);
-    void wait_until_finished();
+    void prepare(u32 tid, TaskExitPoint exitpoint);
     static void idle(u64 arg = 0);
     static void yield();
     static void exit(u64 result_code = 0);
 
-    volatile bool is_terminated;
+    u32 task_id;
     TaskEntryPoint entrypoint;
     kstd::string name;
     u64 arg;
@@ -41,7 +40,6 @@ struct TaskEpilogue {
     u64 rip;    // rip cpu register value for retq instruction on task function exit
 } __attribute__((packed));
 
-using TaskPtr = std::shared_ptr<Task>;
 
 } /* namespace multitasking */
 

@@ -23,8 +23,8 @@ public:
     }
 
     template <class T>
-    static std::shared_ptr<multitasking::Task> make_demo(const kstd::string& name, u64 arg = 0, bool user_space = false) {
-        return std::make_shared<multitasking::Task>(make_demo_<T>, name, arg, user_space);
+    static multitasking::Task make_demo(const kstd::string& name, u64 arg = 0, bool user_space = false) {
+        return multitasking::Task(make_demo_<T>, name, arg, user_space);
     }
 };
 

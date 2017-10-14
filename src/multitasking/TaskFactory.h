@@ -19,8 +19,8 @@ public:
      * @brief   Makes a shared_ptr<Task> object from a class that exposes Constructor(u64 arg) and void run()
      */
     template <class T>
-    static std::shared_ptr<multitasking::Task> make(const kstd::string& name, u64 arg = 0, bool user_space = false) {
-        return std::make_shared<Task>(make_<T>, name, arg, user_space);
+    static Task make(const kstd::string& name, u64 arg = 0, bool user_space = false) {
+        return Task(make_<T>, name, arg, user_space);
     }
 
 private:

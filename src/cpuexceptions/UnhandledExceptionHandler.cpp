@@ -68,8 +68,8 @@ CpuState* UnhandledExceptionHandler::on_exception(CpuState* cpu_state) {
                 EXCEPTION_NAMES[exception_no],
                 exception_no,
                 cpu_state->rip,
-                current->name.c_str(),
-                current->is_user_space ? "User" : "Kernel",
+                current.name.c_str(),
+                current.is_user_space ? "User" : "Kernel",
                 cpu_state->error_code);
 
     return mngr.kill_current_task();

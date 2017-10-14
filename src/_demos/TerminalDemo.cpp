@@ -54,13 +54,13 @@ const string& CommandHistory::get_next() {
 CommandCollection::CommandCollection() {
 }
 
-multitasking::TaskPtr CommandCollection::get(const kstd::string& cmd_name) {
+multitasking::Task* CommandCollection::get(const kstd::string& cmd_name) {
     auto filt = [&cmd_name](const Command& cmd) { return cmd.name == cmd_name; };
     auto found = std::find_if(commands.begin(), commands.end(), filt);
     if (found != commands.end())
-        return found->task;
+        return &found->task;
     else
-        return TaskPtr();
+        return nullptr;
 }
 
 /**
@@ -84,7 +84,7 @@ std::tuple<bool, string> CommandCollection::filter(const string& pattern) {
         return std::make_tuple(true, kstd::join_string(" ", found));
 }
 
-void CommandCollection::install(const string name, multitasking::TaskPtr task) {
+void CommandCollection::install(const string name, multitasking::Task task) {
     commands.push_back(Command{name, task});
 }
 
@@ -103,8 +103,8 @@ static void cmd_cpuinfo(u64 arg) {
 const string TerminalDemo::PROMPT {"> "};
 TerminalDemo::TerminalDemo() :
         printer(0, 0, 89, 29) {
-    cmd_collection.install("log", std::make_shared<Task>(cmd_log, "log", (u64)&printer));
-    cmd_collection.install("cpuinfo", std::make_shared<Task>(cmd_cpuinfo, "cpuinfo", (u64)&printer));
+    cmd_collection.install("log", Task(cmd_log, "log", (u64)&printer));
+    cmd_collection.install("cpuinfo", Task(cmd_cpuinfo, "cpuinfo", (u64)&printer));
 }
 
 void TerminalDemo::run(u64 arg) {
@@ -244,8 +244,8 @@ void TerminalDemo::process_cmd(const string& cmd) {
 
     if (auto task = cmd_collection.get(cmd)) {
         TaskManager& task_manager = TaskManager::instance();
-        task_manager.add_task(task);
-        task->wait_until_finished();
+        u32 tid = task_manager.add_task(*task);
+        task_manager.wait(tid);
         cmd_history.append(cmd);
     }
     else

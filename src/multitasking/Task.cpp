@@ -14,7 +14,9 @@
 using namespace hardware;
 namespace multitasking {
 
-
+Task::Task() :
+        entrypoint(nullptr), name("newtask"), arg(0), is_user_space(false), pml4_phys_addr(0), cpu_state(0), stack_addr(0), stack_size(0), task_id(-1) {
+}
 
 /**
  * Constructor.
@@ -24,7 +26,7 @@ namespace multitasking {
                   here is rsp when first time jumping from interrupt to task function
 */
 Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) :
-        entrypoint(entrypoint), name(name), arg(arg), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0) {
+        entrypoint(entrypoint), name(name), arg(arg), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(-1) {
     if (stack_addr != 0) {
         this->stack_addr = stack_addr;
         this->stack_size = stack_size;
@@ -38,7 +40,13 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_spac
 
 Task::~Task() {
     // dont remove kernel address space :)
-    if (!is_user_space || pml4_phys_addr == PageTables::get_kernel_pml4_phys_addr())
+    if (!is_user_space )
+        return;
+
+    if (pml4_phys_addr == 0)
+        return;
+
+    if (pml4_phys_addr == PageTables::get_kernel_pml4_phys_addr())
         return;
 
     u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, pml4_phys_addr); // task virtual address space starts at virt address 0
@@ -62,7 +70,7 @@ Task::~Task() {
  * @brief   Setup cpu state and return address on the task stack befor running the task
  * @param   exitpoint Address of a function that the task should return to upon exit
  */
-void Task::prepare(TaskExitPoint exitpoint) {
+void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
     const u64 STACK_END = (u64)stack_addr + stack_size;
 
     if (pml4_phys_addr == 0)
@@ -76,15 +84,7 @@ void Task::prepare(TaskExitPoint exitpoint) {
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
     new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg, is_user_space, pml4_phys_addr};
 
-    is_terminated = false;
-}
-
-/**
- * is_terminated is set by TaskManager::kill_current_task
- */
-void Task::wait_until_finished() {
-    while (!is_terminated)
-        Task::yield();
+    task_id = tid;
 }
 
 void Task::idle(u64 arg) {

@@ -34,8 +34,8 @@ hardware::CpuState* Int80hDriver::on_interrupt(hardware::CpuState* cpu_state) {
 hardware::CpuState* Int80hDriver::task_exit(u64 exit_code) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
-    auto current = mngr.get_current_task();
-    klog.format("[% task \"%\" exits with code %]\n\n", current->is_user_space ? "User" : "Kernel", current->name.c_str(), exit_code);
+    const Task& current = mngr.get_current_task();
+    klog.format("[% task \"%\" exits with code %]\n\n", current.is_user_space ? "User" : "Kernel", current.name.c_str(), exit_code);
     return mngr.kill_current_task();
 }
 

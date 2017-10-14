@@ -13,13 +13,13 @@ using namespace multitasking;
 
 namespace terminal {
 
-TaskPtr CommandCollection::get(const kstd::string& cmd_name) {
+Task* CommandCollection::get(const kstd::string& cmd_name) {
     auto filt = [&cmd_name](const Command& cmd) { return cmd.name == cmd_name; };
     auto found = std::find_if(commands.begin(), commands.end(), filt);
     if (found != commands.end())
-        return found->task;
+        return &found->task;
     else
-        return TaskPtr();
+        return nullptr;
 }
 
 /**
@@ -43,7 +43,7 @@ std::tuple<bool, string> CommandCollection::filter(const string& pattern) {
         return std::make_tuple(true, kstd::join_string(" ", found));
 }
 
-void CommandCollection::install(const string name, TaskPtr task) {
+void CommandCollection::install(const string name, const Task& task) {
     commands.push_back(Command{name, task});
 }
 

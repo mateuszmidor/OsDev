@@ -70,23 +70,23 @@ void load_and_run_elf(u64 arg) {
     char* buff = new char[size];
     elf_file.read(buff, size);
 
-    const auto tasks =  TaskManager::instance().get_tasks();
-    Task* curr_task = TaskManager::instance().get_current_task().get();
-    auto cpu_state = curr_task->cpu_state;
-    size_t pml4 = run_env->pml4_phys_addr;
-    size_t buff_page = *hardware::PageTables::get_page_for_virt_address((size_t)buff, pml4);
-    size_t task_page = *hardware::PageTables::get_page_for_virt_address((size_t)curr_task, pml4);
-    size_t entrypoint_page = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
-    char* entrypoint = (char*)(4*1024*1024);
-    *entrypoint = 0x01;
-    size_t entrypoint_page2 = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
+//    const auto tasks =  TaskManager::instance().get_tasks();
+//    Task* curr_task = TaskManager::instance().get_current_task().get();
+//    auto cpu_state = curr_task->cpu_state;
+//    size_t pml4 = run_env->pml4_phys_addr;
+//    size_t buff_page = *hardware::PageTables::get_page_for_virt_address((size_t)buff, pml4);
+//    size_t task_page = *hardware::PageTables::get_page_for_virt_address((size_t)curr_task, pml4);
+//    size_t entrypoint_page = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
+//    char* entrypoint = (char*)(4*1024*1024);
+//    *entrypoint = 0x01;
+//    size_t entrypoint_page2 = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
 
     // copy file sections into address space
     run_env->entry_point = Elf64::load_into_current_addressspace(buff);
     u64 ELF_STACK_SIZE = 4 * 4096;
     u64 elf_stack =  ELF_REQUIRED_MEM - ELF_STACK_SIZE; // use top of the elf memory for the stack
 
-    auto task = std::make_shared<Task>(run_elf_in_current_addressspace, elf_file.get_name(), arg, true, run_env->pml4_phys_addr, elf_stack, ELF_STACK_SIZE);
+    Task task(run_elf_in_current_addressspace, elf_file.get_name(), arg, true, run_env->pml4_phys_addr, elf_stack, ELF_STACK_SIZE);
 
     TaskManager& task_manager = TaskManager::instance();
     task_manager.add_task(task);
@@ -164,7 +164,7 @@ void elfrun::run() {
     run_env->argv = (u64)string_vec_to_argv(env->cmd_args);
 
     // run elf_file loader in target elf address space, with environment pointer as an arg
-    auto task = std::make_shared<Task>(load_and_run_elf, "elf_loader", (u64)run_env, false, pml4_phys_addr);
+    Task task(load_and_run_elf, "elf_loader", (u64)run_env, false, pml4_phys_addr);
     TaskManager& task_manager = TaskManager::instance();
     task_manager.add_task(task);
 }

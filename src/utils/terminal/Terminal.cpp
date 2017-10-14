@@ -216,12 +216,12 @@ void Terminal::process_cmd(const string& cmd) {
         return;
 
     auto cmd_args = kstd::split_string<vector<string>>(cmd, ' ');
-    if (auto task = cmd_collection.get(cmd_args[0])) {
+    if (Task* task = cmd_collection.get(cmd_args[0])) {
         env.cmd_args = cmd_args;
 
         TaskManager& task_manager = TaskManager::instance();
-        task_manager.add_task(task);
-        task->wait_until_finished();
+        u32 tid = task_manager.add_task(*task);
+        task_manager.wait(tid);
         cmd_history.append(cmd);
     }
     else
