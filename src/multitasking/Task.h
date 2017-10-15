@@ -19,7 +19,6 @@ using TaskExitPoint = void (*)();
 struct Task {
     Task();
     Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0, bool user_space = false, u64 pml4_phys_addr = 0, u64 stack_addr = 0, u64 stack_size = 0);
-    virtual ~Task();
     void prepare(u32 tid, TaskExitPoint exitpoint);
     static void idle(u64 arg = 0);
     static void yield();

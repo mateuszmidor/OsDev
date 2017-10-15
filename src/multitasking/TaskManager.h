@@ -9,7 +9,6 @@
 #define SRC_TASKMANAGER_H_
 
 #include <array>
-#include <memory>
 #include "kstd.h"
 #include "Task.h"
 
@@ -35,6 +34,7 @@ public:
 private:
     TaskManager() {}
     hardware::CpuState* pick_next_task_and_load_address_space();
+    void release_address_space(Task& task);
 
     static TaskManager _instance;
 

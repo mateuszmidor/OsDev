@@ -9,7 +9,6 @@
 #define SRC_DRIVERS_KEYBOARDDRIVER_H_
 
 #include <functional>
-#include <memory>
 #include "DeviceDriver.h"
 #include "KeyboardScanCodeSet.h"
 

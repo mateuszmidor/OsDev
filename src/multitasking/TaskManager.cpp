@@ -7,6 +7,8 @@
 
 #include "TaskManager.h"
 #include "PageTables.h"
+#include "KernelLog.h"
+#include "MemoryManager.h"
 
 using namespace hardware;
 
@@ -89,6 +91,8 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
  */
 hardware::CpuState* TaskManager::kill_current_task() {
+    release_address_space(tasks[current_task]);
+
     // remove current task from the list
     for (u16 i = current_task; i < num_tasks -1; i++)
         tasks[i] = tasks[i+1];
@@ -98,6 +102,30 @@ hardware::CpuState* TaskManager::kill_current_task() {
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
+}
+
+void TaskManager::release_address_space(Task& task) {
+    if (task.pml4_phys_addr == 0)
+        return;
+
+    if (task.pml4_phys_addr == PageTables::get_kernel_pml4_phys_addr()) // dont remove kernel address space :)
+        return;
+
+    u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, task.pml4_phys_addr); // task virtual address space starts at virt address 0
+
+    // scan 0..1GB of virtual memory
+    utils::KernelLog& klog = utils::KernelLog::instance();
+    memory::MemoryManager& mngr = memory::MemoryManager::instance();
+    klog.format("Rmoving address space of task %\n", task.name);
+    for (u32 i = 0; i < 512; i++)
+        if (pde_virt_addr[i] != 0) {
+            klog.format("  Releasing mem frame\n");
+            mngr.free_frames((void*)pde_virt_addr[i], 1); // 1 byte will always correspond to just 1 frame
+        }
+
+    // release the page table itself
+    klog.format("  Releasing mem frames of PageTables64\n");
+    mngr.free_frames((void*)task.pml4_phys_addr, sizeof(PageTables64));
 }
 
 /**

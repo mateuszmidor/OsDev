@@ -9,7 +9,6 @@
 #define SRC_MULTITASKING_TASKFACTORY_H_
 
 #include "Task.h"
-#include <memory>
 
 namespace multitasking {
 

@@ -11,7 +11,6 @@
 #include "ScrollableScreenPrinter.h"
 #include "KeyboardDriver.h"
 #include "Task.h"
-#include <memory>
 #include <tuple>
 #include "kstd.h"
 

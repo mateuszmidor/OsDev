@@ -15,7 +15,6 @@
 #include "CommandCollection.h"
 #include "TaskFactory.h"
 #include "kstd.h"
-#include <memory>
 #include <tuple>
 
 namespace terminal {

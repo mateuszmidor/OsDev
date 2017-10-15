@@ -35,7 +35,6 @@
 #include "cmds/elfinfo.h"
 #include "cmds/elfrun.h"
 #include <algorithm>
-#include <memory>
 
 using namespace kstd;
 using namespace utils;

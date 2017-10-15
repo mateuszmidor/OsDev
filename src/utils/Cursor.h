@@ -8,7 +8,6 @@
 #ifndef SRC_UTILS_CURSOR_H_
 #define SRC_UTILS_CURSOR_H_
 
-#include <memory>
 #include "types.h"
 #include "kstd.h"
 #include "VgaDriver.h"

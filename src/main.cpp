@@ -5,7 +5,6 @@
  * @author: Mateusz Midor
  */
 
-#include <memory>
 #include "GlobalConstructorsRunner.h"
 #include "Gdt.h"
 #include "KernelLog.h"

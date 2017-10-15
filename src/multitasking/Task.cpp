@@ -38,34 +38,6 @@ Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_spac
     }
 }
 
-Task::~Task() {
-    // dont remove kernel address space :)
-    if (!is_user_space )
-        return;
-
-    if (pml4_phys_addr == 0)
-        return;
-
-    if (pml4_phys_addr == PageTables::get_kernel_pml4_phys_addr())
-        return;
-
-    u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, pml4_phys_addr); // task virtual address space starts at virt address 0
-
-    // scan 0..1GB of virtual memory
-    utils::KernelLog& klog = utils::KernelLog::instance();
-    memory::MemoryManager& mngr = memory::MemoryManager::instance();
-    klog.format("~Task, removing address space...\n");
-    for (u32 i = 0; i < 512; i++)
-        if (pde_virt_addr[i] != 0) {
-            klog.format("Releasing mem frame\n");
-            mngr.free_frames((void*)pde_virt_addr[i], 1); // 1 byte will always correspond to just 1 frame
-        }
-
-    // release the page table itself
-    klog.format("Releasing mem frames of PageTables64\n");
-    mngr.free_frames((void*)pml4_phys_addr, sizeof(PageTables64));
-}
-
 /**
  * @brief   Setup cpu state and return address on the task stack befor running the task
  * @param   exitpoint Address of a function that the task should return to upon exit

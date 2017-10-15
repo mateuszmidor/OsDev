@@ -40,7 +40,7 @@ public:
         FrameAllocator::init(first_phys_byte, last_phys_byte);
         static char storage[sizeof(AllocationPolicyType)]; // policy is stored here since no dynamic memory is available yet, but we're just working on it :)
 
-        size_t dynamic_start = 0xFFFFFFFFC0000000 + first_phys_byte; // kernel dynamic memory starts from -1GB
+        size_t dynamic_start = 0xFFFFFFFFC0000000;// + first_phys_byte; // kernel dynamic memory starts from -1GB
         size_t dynamic_end = 0xFFFFFFFFC0000000 + last_phys_byte;
         allocation_policy = new (storage) AllocationPolicyType(dynamic_start, dynamic_end);
     }

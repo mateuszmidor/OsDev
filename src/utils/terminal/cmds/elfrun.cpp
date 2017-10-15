@@ -11,109 +11,31 @@
 #include "TaskManager.h"
 #include "PageTables.h"
 #include "MemoryManager.h"
-#include "HigherHalf.h"
-#include "FrameAllocator.h"
 
 using namespace kstd;
 using namespace utils;
 using namespace memory;
 using namespace filesystem;
 using namespace multitasking;
+
 namespace cmds {
 
-const size_t ELF_REQUIRED_MEM = 1024*1024*10;  // 10 MB should suffice for our tiny elfs
 /**
- * @brief   Because multitasking::Task only takes 1 u64 argument, we pack (entry point address, argc, argv) in a struct and pass it to the Task
+ * @brief   Because multitasking::Task only takes 1 u64 argument, we pack run environment in a struct and pass it to the Task
  */
 struct RunElfParams {
-    RunElfParams(const Fat32Entry& e) : elf_file(e) , entry_point(0), argc(0), argv(0), pml4_phys_addr(0) {}
-    Fat32Entry elf_file;
+    RunElfParams() : entry_point(0), argc(0), argv(0), pml4_phys_addr(0), elf_file_data(0) {}
+    u8* elf_file_data;
     u64 pml4_phys_addr;
     u64 entry_point;
     u64 argc;
-    u64 argv;
+    char** argv;
 };
-
-/**
- * @brief   Prepare execution environment(argc and argv for "main" function) and jump to main function
- * @note    RunElfParams and all pointers in it will leak;
- *          in the future they will be allocated in the process address space and cleaned up with it when process is done
- * @note    This function never returns; instead int 0x80 for sys_exit is called from within the elf itself
- */
-[[noreturn]] void run_elf_in_current_addressspace(u64 arg) {
-    RunElfParams* params = (RunElfParams*)arg;
-
-    asm volatile(
-            "mov %0, %%rdi       \n;"   // argc
-            "mov %1, %%rsi       \n;"   // argv
-            "jmp *%2             \n;"   // jump to "main" function address
-            :
-            : "g"(params->argc), "g"(params->argv), "g"(params->entry_point)
-            : "%rsi", "%rdi"
-    );
-
-    __builtin_unreachable();
-}
-
-/**
- * @brief   ELF loader kernel task that runs already in the task address space
- *          and thus is able to load the elf program segments into memory at virtual addresses starting at "0"
- *
- */
-
-void load_and_run_elf(u64 arg) {
-    RunElfParams* run_env = (RunElfParams*)arg;
-
-    // read elf file data
-    Fat32Entry& elf_file = run_env->elf_file;
-    u32 size = elf_file.get_size();
-    char* buff = new char[size];
-    elf_file.read(buff, size);
-
-//    const auto tasks =  TaskManager::instance().get_tasks();
-//    Task* curr_task = TaskManager::instance().get_current_task().get();
-//    auto cpu_state = curr_task->cpu_state;
-//    size_t pml4 = run_env->pml4_phys_addr;
-//    size_t buff_page = *hardware::PageTables::get_page_for_virt_address((size_t)buff, pml4);
-//    size_t task_page = *hardware::PageTables::get_page_for_virt_address((size_t)curr_task, pml4);
-//    size_t entrypoint_page = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
-//    char* entrypoint = (char*)(4*1024*1024);
-//    *entrypoint = 0x01;
-//    size_t entrypoint_page2 = *hardware::PageTables::get_page_for_virt_address(4*1024*1024, pml4);
-
-    // copy file sections into address space
-    run_env->entry_point = Elf64::load_into_current_addressspace(buff);
-    u64 ELF_STACK_SIZE = 4 * 4096;
-    u64 elf_stack =  ELF_REQUIRED_MEM - ELF_STACK_SIZE; // use top of the elf memory for the stack
-
-    Task task(run_elf_in_current_addressspace, elf_file.get_name(), arg, true, run_env->pml4_phys_addr, elf_stack, ELF_STACK_SIZE);
-
-    TaskManager& task_manager = TaskManager::instance();
-    task_manager.add_task(task);
-
-    // free elf_file file data
-    delete[] buff;
-}
-
-/**
- * @brief   Convert vector<string> into char*[]
- */
-char** string_vec_to_argv(const vector<string>& src_vec) {
-    u8 argc = src_vec.size() - 1;   // no first ("elfrun" cmd) item
-    char** argv = new char* [argc];
-    for (u8 i = 0; i < argc; i++) {
-        const string& src = src_vec[i + 1];
-        argv[i] = new char[src.length() + 1]; // +1 for null terminator
-        memcpy(argv[i], src.c_str(), src.length() + 1); // +1 for null terminator
-    }
-
-    return argv;
-}
 
 /**
  * ELF image is organized as follows:
  * 0...x -> process image
- * ELF_REQUIRED_MEM - stack size -> process stack
+ * ELF_VIRTUAL_MEM_BYTES - stack size -> process stack
  */
 void elfrun::run() {
     if (env->volumes.empty()) {
@@ -141,32 +63,87 @@ void elfrun::run() {
     }
 
 
-    // prepare address space for the process
-    // notice that task main() argv is allocated in kernel space
-    // this will change as the kernel develops
     MemoryManager& mm = MemoryManager::instance();
-
-
-    size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(hardware::PageTables64));
+    size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(hardware::PageTables64)); // must be physical, continuous address space
     if (!pml4_phys_addr) {
         env->printer->format("elfrun: not enough memory to run elf\n");
         return;
     }
 
     // create elf address space mapping, elf_loader will use this address space and load elf segments into it
-    // this will cause problems as BumpAllocator doesnt know that virtual addressess corresponding to these pages are already in use...
     hardware::PageTables::map_elf_address_space(pml4_phys_addr);
 
     // prepare elf run environment
-    RunElfParams* run_env = new RunElfParams(e);
+    RunElfParams* run_env = new RunElfParams;
     run_env->pml4_phys_addr = pml4_phys_addr;
-    run_env->argc = (u64)env->cmd_args.size() - 1; // no "elfrun" command
-    run_env->argv = (u64)string_vec_to_argv(env->cmd_args);
+    run_env->argc = env->cmd_args.size() - 1; // no "elfrun" command
+    run_env->argv = string_vec_to_argv(env->cmd_args); // should take userspace allocator
 
-    // run elf_file loader in target elf address space, with environment pointer as an arg
+    // read elf file data
+    u32 size = e.get_size();
+    run_env->elf_file_data = new u8[size];
+    e.read(run_env->elf_file_data, size);
+
+    // run task loaded in task target address space
     Task task(load_and_run_elf, "elf_loader", (u64)run_env, false, pml4_phys_addr);
     TaskManager& task_manager = TaskManager::instance();
-    task_manager.add_task(task);
+    u32 tid = task_manager.add_task(task);
 }
 
+/**
+ * @brief   ELF loader kernel task that runs already in the task address space
+ *          and thus is able to load the elf program segments into memory at virtual addresses starting at "0"
+ *
+ */
+void elfrun::load_and_run_elf(u64 arg) {
+    RunElfParams* run_env = (RunElfParams*)arg;
+
+    // copy file sections into address space
+    run_env->entry_point = Elf64::load_into_current_addressspace(run_env->elf_file_data);
+    delete run_env->elf_file_data; // data copied and no longer needed
+
+    // prepare elf task stack
+    const u64 ELF_STACK_SIZE = 4 * 4096;
+    const u64 ELF_STACK =  ELF_VIRTUAL_MEM_BYTES - ELF_STACK_SIZE; // use top of the elf virtual memory for the stack
+
+    Task task(run_elf_in_current_addressspace, run_env->argv[0], arg, true, run_env->pml4_phys_addr, ELF_STACK, ELF_STACK_SIZE);
+    TaskManager& task_manager = TaskManager::instance();
+    task_manager.add_task(task);
+
+    // page tables are shared by elf_loader and the actual user task to be run. make sure they are not wiped out upon elf_load erexit
+    task_manager.get_current_task().pml4_phys_addr = 0;
+}
+
+/**
+ * @brief   Prepare execution environment(argc and argv for "main" function) and jump to main function
+ * @note    RunElfParams and all pointers in it will leak;
+ *          in the future they will be allocated in the process address space and cleaned up with it when process is done
+ * @note    This function never returns; instead int 0x80 for sys_exit is called from within the elf itself
+ */
+[[noreturn]] void elfrun::run_elf_in_current_addressspace(u64 arg) {
+    RunElfParams* params = (RunElfParams*)arg;
+
+    asm volatile(
+            "jmp *%0\n;"   // jump to "main" function address
+            :
+            : "g"(params->entry_point), "D"(params->argc), "S"(params->argv)
+    );
+
+    __builtin_unreachable();
+}
+
+/**
+ * @brief   Convert vector<string> into char*[]
+ */
+char** elfrun::string_vec_to_argv(const vector<string>& src_vec) {
+    u8 argc = src_vec.size() - 1;   // no first ("elfrun" cmd) item
+    char** argv = new char* [argc];
+    for (u8 i = 0; i < argc; i++) {
+        const string& src = src_vec[i + 1];
+        argv[i] = new char[src.length() + 1]; // +1 for null terminator
+        memcpy(argv[i], src.c_str(), src.length() + 1); // +1 for null terminator
+    }
+
+    return argv;
+}
 } /* namespace cmds */

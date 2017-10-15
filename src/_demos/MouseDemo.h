@@ -8,7 +8,6 @@
 #ifndef SRC__DEMOS_MOUSEDEMO_H_
 #define SRC__DEMOS_MOUSEDEMO_H_
 
-#include <memory>
 #include "VgaDriver.h"
 
 namespace demos {

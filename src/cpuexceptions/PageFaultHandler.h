@@ -31,14 +31,15 @@ enum PageFaultActualReason {
     PRIVILEGE_VIOLATION,
     RESERVED_WRITE_VIOLATION,
     INSTRUCTION_FETCH,
-    UNKNOWN_PROTECTION_VIOLATION
+    UNKNOWN_PROTECTION_VIOLATION,
+    INVALID_ADDRESS_SPACE
 };
 
 
 class PageFaultHandler: public ExceptionHandler {
     s16 handled_exception_no() override;
     hardware::CpuState* on_exception(hardware::CpuState* cpu_state) override;
-    PageFaultActualReason page_fault_reason(u64 violated_page, u64 error_code) const;
+    PageFaultActualReason page_fault_reason(u64* violated_page_addr, u64 error_code) const;
     bool alloc_page(size_t virtual_address, u64* page_virt_addr) const;
     size_t get_faulty_address();
 

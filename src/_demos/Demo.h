@@ -8,7 +8,6 @@
 #ifndef SRC__DEMOS_DEMO_H_
 #define SRC__DEMOS_DEMO_H_
 
-#include <memory>
 #include "kstd.h"
 #include "Task.h"
 

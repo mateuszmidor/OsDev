@@ -8,8 +8,6 @@
 #ifndef SRC__DEMOS_FAT32DEMO_H_
 #define SRC__DEMOS_FAT32DEMO_H_
 
-#include <memory>
-
 #include "VolumeFat32.h"
 #include "KernelLog.h"
 #include "kstd.h"
