@@ -112,6 +112,7 @@ public:
     static kstd::string section_header_to_string(const char* section_names, Elf64_Shdr* section_header);
     static kstd::string segment_header_to_string(Elf64_Phdr* segment_header);
     static u64 load_into_current_addressspace(void* elf64_data);
+    static s64 get_available_memory_first_byte(void* elf64_data);
 };
 
 } /* namespace utils */

@@ -143,4 +143,24 @@ u64 Elf64::load_into_current_addressspace(void* elf64_data) {
 
     return hdr->e_entry;
 }
+
+/**
+ * @brief   Get first unused virtual mem byte after loading elf with load_into_current_addressspace
+ */
+s64 Elf64::get_available_memory_first_byte(void* elf64_data) {
+    u64 highest_byte = 0;
+    Elf64_Ehdr* hdr = (Elf64_Ehdr*) elf64_data;
+
+    Elf64_Phdr* segment = (Elf64_Phdr*)((char*)elf64_data + hdr->e_phoff);
+    for (auto i = 0; i < hdr->e_phnum; i++) {
+        if (segment->p_type == 1) { // PT_LOAD
+            u64 segment_highest_bytes = segment->p_vaddr + segment->p_memsz;
+            if (segment_highest_bytes > highest_byte)
+                highest_byte = segment_highest_bytes;
+        }
+
+        segment++;
+    }
+    return highest_byte + 1;
+}
 } /* namespace utils */
