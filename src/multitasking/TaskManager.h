@@ -15,7 +15,7 @@
 namespace multitasking {
 
 class TaskManager {
-    static constexpr u16 MAX_TASKS = 16;
+    static constexpr u16 MAX_TASKS = 32;
 
 public:
     static TaskManager& instance();

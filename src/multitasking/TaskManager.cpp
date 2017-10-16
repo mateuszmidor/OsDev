@@ -51,7 +51,7 @@ Task& TaskManager::get_current_task() {
     return tasks[current_task];
 }
 
-const std::array<Task, 16>& TaskManager::get_tasks() const {
+const std::array<Task, TaskManager::MAX_TASKS>& TaskManager::get_tasks() const {
     return tasks;
 }
 

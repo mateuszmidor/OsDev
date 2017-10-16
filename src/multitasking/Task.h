@@ -13,26 +13,78 @@
 
 namespace multitasking {
 
-using TaskEntryPoint = void (*)(u64 arg);
+using TaskEntryPoint0 = void (*)();
+using TaskEntryPoint1 = void (*)(u64 arg1);
+using TaskEntryPoint2 = void (*)(u64 arg1, u64 arg2);
 using TaskExitPoint = void (*)();
 
 struct Task {
     Task();
-    Task(TaskEntryPoint entrypoint, kstd::string name = "ktask", u64 arg = 0, bool user_space = false, u64 pml4_phys_addr = 0, u64 stack_addr = 0, u64 stack_size = 0);
+    Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size);
     void prepare(u32 tid, TaskExitPoint exitpoint);
-    static void idle(u64 arg = 0);
+
+
+    /**
+     * @brief   Create user space task (runs in protection ring3), with provided address space and stack
+     * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
+     * @note    Make sure that entrypoint and stack is accessible from that address space
+     */
+    template <class EntrypointT>
+    static Task make_user_task(EntrypointT entrypoint, const char name[], u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) {
+        return Task(
+                    (TaskEntryPoint2)entrypoint,
+                    name,
+                    0,              // task func arg 1
+                    0,              // task func arg 2
+                    true,           // user space = true
+                    pml4_phys_addr,
+                    stack_addr,
+                    stack_size
+                );
+
+    }
+
+    /**
+     * @brief   Create kernel space task (runs in protection ring0), with kernel address space and default stack
+     * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
+     */
+    template <class EntrypointT>
+    static Task make_kernel_task(EntrypointT entrypoint, const char name[]) {
+        return Task(
+                    (TaskEntryPoint2)entrypoint,
+                    name,
+                    0,              // task func arg 1
+                    0,              // task func arg 2
+                    false,          // user space = false
+                    0,              // use kernel address space
+                    0,              // create default stack...
+                    0               // ...of default size
+                );
+    }
+
+
+    static void idle();
     static void yield();
     static void exit(u64 result_code = 0);
 
-    u32 task_id;
-    TaskEntryPoint entrypoint;
-    kstd::string name;
-    u64 arg1;
-    u64 arg2;
-    bool is_user_space;
-    u64 pml4_phys_addr;
-    u64 stack_addr; // virtual address in task address space (pml4_phys_addr)
-    u64 stack_size;
+
+    template <class T>
+    Task& set_arg1(T value) { arg1 = (u64) value; return *this; }
+
+    template <class T>
+    Task& set_arg2(T value) { arg2 = (u64) value; return *this; }
+
+
+    static const u64    DEFAULT_STACK_SIZE = 2 * 4096;
+    u32                 task_id;                    // set by TaskManager when first adding the task
+    TaskEntryPoint2     entrypoint;     // covers TaskEntryPoint0 and TaskEntryPoint1
+    kstd::string        name;
+    u64                 arg1;
+    u64                 arg2;
+    bool                is_user_space;
+    u64                 pml4_phys_addr;
+    u64                 stack_addr;
+    u64                 stack_size;
     hardware::CpuState* cpu_state;
 };
 

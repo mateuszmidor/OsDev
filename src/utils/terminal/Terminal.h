@@ -36,8 +36,8 @@ private:
     void print_klog();
 
     template <class T>
-    void install_cmd(const kstd::string& cmd, bool user_space = false) {
-        cmd_collection.install(cmd, multitasking::TaskFactory::make<T>(cmd, (u64)&env, user_space));
+    void install_cmd(const kstd::string& cmd) {
+        cmd_collection.install(cmd, multitasking::TaskFactory::make_kernel_task<T>(cmd, (u64)&env));
     }
 
     static const kstd::string PROMPT;

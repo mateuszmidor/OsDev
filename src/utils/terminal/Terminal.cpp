@@ -52,31 +52,28 @@ Terminal::Terminal(u64 arg) :
     env.printer = &printer;
     env.klog = &klog;
 
-    // user space
-
-
-    // kernel space, to be moved to user space once system call interface is complete
-    install_cmd<cmds::pwd>("pwd", false);
-    install_cmd<cmds::log>("klog", false);
-    install_cmd<cmds::lscpu>("lscpu", false);
-    install_cmd<cmds::ps>("ps", false);
-    install_cmd<cmds::free>("free", false);
-    install_cmd<cmds::lspci>("lspci", false);
-    install_cmd<cmds::date>("date", false);
-    install_cmd<cmds::mb2>("mb2", false);
-    install_cmd<cmds::elfinfo>("elfinfo", false);
-    install_cmd<cmds::elfrun>("elfrun", false);
-    install_cmd<cmds::df>("df", false);
-    install_cmd<cmds::ls>("ls", false);
-    install_cmd<cmds::cat>("cat", false);
-    install_cmd<cmds::cd>("cd", false);
-    install_cmd<cmds::rm>("rm", false);
-    install_cmd<cmds::mv>("mv", false);
-    install_cmd<cmds::echo>("echo", false);
-    install_cmd<cmds::mkdir>("mkdir", false);
-    install_cmd<cmds::tail>("tail", false);
-    install_cmd<cmds::trunc>("trunc", false);
-    install_cmd<cmds::test_fat32>("test_fat32", false);
+    // the commands will later be run as elf programs in user space
+    install_cmd<cmds::pwd>("pwd");
+    install_cmd<cmds::log>("klog");
+    install_cmd<cmds::lscpu>("lscpu");
+    install_cmd<cmds::ps>("ps");
+    install_cmd<cmds::free>("free");
+    install_cmd<cmds::lspci>("lspci");
+    install_cmd<cmds::date>("date");
+    install_cmd<cmds::mb2>("mb2");
+    install_cmd<cmds::elfinfo>("elfinfo");
+    install_cmd<cmds::elfrun>("elfrun");
+    install_cmd<cmds::df>("df");
+    install_cmd<cmds::ls>("ls");
+    install_cmd<cmds::cat>("cat");
+    install_cmd<cmds::cd>("cd");
+    install_cmd<cmds::rm>("rm");
+    install_cmd<cmds::mv>("mv");
+    install_cmd<cmds::echo>("echo");
+    install_cmd<cmds::mkdir>("mkdir");
+    install_cmd<cmds::tail>("tail");
+    install_cmd<cmds::trunc>("trunc");
+    install_cmd<cmds::test_fat32>("test_fat32");
 }
 
 void Terminal::run() {

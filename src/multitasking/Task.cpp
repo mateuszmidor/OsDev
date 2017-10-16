@@ -14,8 +14,9 @@
 using namespace hardware;
 namespace multitasking {
 
+
 Task::Task() :
-        entrypoint(nullptr), name("newtask"), arg1(0), arg2(0), is_user_space(false), pml4_phys_addr(0), cpu_state(0), stack_addr(0), stack_size(0), task_id(-1) {
+        entrypoint(nullptr), name("newtask"), arg1(0), arg2(0), is_user_space(false), pml4_phys_addr(0), cpu_state(0), stack_addr(0), stack_size(0), task_id(0) {
 }
 
 /**
@@ -23,18 +24,27 @@ Task::Task() :
  * Task stack is constructed as follows:
    0|FREE STACK|CpuState|TaskEpilogue|STACK_MAX
                         ^
-                  here is rsp when first time jumping from interrupt to task function
+                  here is rsp when first time jumping from interrupt to task function. So on return the function takes ret addr from TaskEpilogue.
+
+  @param    entrypoint      Task main function address
+  @param    arg1, arg2      Task main function param 1 and 2
+  @param    pml4_phys_addr  Page tables root (PHYSICAL ADDRESS). Defines task address space.
+                            If != 0, make sure the entrypoint and stack will be accessible from this address space
+  @param    stack_addr      Virtual address of task stack
+  @param    stack_size      Task stack size in bytes
 */
-Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) :
-        entrypoint(entrypoint), name(name), arg1(arg), arg2(0), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(-1) {
-    if (stack_addr != 0) {
-        this->stack_addr = stack_addr;
-        this->stack_size = stack_size;
-    }
-    else {
-        u64 DEFAULT_STACK_SIZE = 2 * 4096;
+Task::Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) :
+        entrypoint(entrypoint), name(name), arg1(arg1), arg2(arg2), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(0) {
+
+    // create default task stack (mostly for kernel tasks)
+    if (stack_addr == 0) {
         this->stack_addr = (u64)new char[DEFAULT_STACK_SIZE];
         this->stack_size = DEFAULT_STACK_SIZE;
+    }
+    // use provided stack (mostly for user tasks)
+    else {
+        this->stack_addr = stack_addr;
+        this->stack_size = stack_size;
     }
 }
 
@@ -59,7 +69,7 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
     task_id = tid;
 }
 
-void Task::idle(u64 arg) {
+void Task::idle() {
     while (true)
         yield();
 }

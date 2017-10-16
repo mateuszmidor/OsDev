@@ -71,7 +71,7 @@ PageFaultHandler        page_fault;
 /**
  *  Little counter in the right-top corner
  */
-void corner_counter(u64 arg) {
+void corner_counter() {
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
         u64 i = 0;
 
@@ -87,16 +87,16 @@ void corner_counter(u64 arg) {
 /**
  * Here we enter multitasking
  */
-void task_init(u64 unused) {
-    task_manager.add_task(Task(Task::idle, "idle"));
+void task_init() {
+    task_manager.add_task(Task::make_kernel_task(Task::idle, "idle"));
 
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_a_demo", 'A'));
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
 //    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal", 0));
+    task_manager.add_task(TaskFactory::make_kernel_task<terminal::Terminal>("terminal", 0));
     task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0));
-    task_manager.add_task(Task(corner_counter, "corner_counter", 0));
+    task_manager.add_task(Task::make_kernel_task(corner_counter, "corner_counter"));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
 }
 
@@ -150,6 +150,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
         vga_drv->set_text_mode_90_30();
 
     // 10. start multitasking
-    task_manager.add_task(Task(task_init, "init"));
+    task_manager.add_task(Task::make_kernel_task(task_init, "init"));
     Task::idle();
 }

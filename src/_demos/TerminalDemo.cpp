@@ -103,8 +103,9 @@ static void cmd_cpuinfo(u64 arg) {
 const string TerminalDemo::PROMPT {"> "};
 TerminalDemo::TerminalDemo() :
         printer(0, 0, 89, 29) {
-    cmd_collection.install("log", Task(cmd_log, "log", (u64)&printer));
-    cmd_collection.install("cpuinfo", Task(cmd_cpuinfo, "cpuinfo", (u64)&printer));
+
+    cmd_collection.install("log", Task::make_kernel_task(cmd_log, "log").set_arg1(&printer));
+    cmd_collection.install("cpuinfo", Task::make_kernel_task(cmd_cpuinfo, "cpuinfo").set_arg1(&printer));
 }
 
 void TerminalDemo::run(u64 arg) {

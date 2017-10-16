@@ -15,11 +15,11 @@ namespace multitasking {
 class TaskFactory {
 public:
     /**
-     * @brief   Makes a shared_ptr<Task> object from a class that exposes Constructor(u64 arg) and void run()
+     * @brief   Makes a Task object from a class that exposes Constructor(u64 arg) and void run()
      */
     template <class T>
-    static Task make(const kstd::string& name, u64 arg = 0, bool user_space = false) {
-        return Task(make_<T>, name, arg, user_space);
+    static Task make_kernel_task(const kstd::string& name, u64 arg = 0) {
+        return Task::make_kernel_task(make_<T>, name.c_str()).set_arg1(arg);
     }
 
 private:
