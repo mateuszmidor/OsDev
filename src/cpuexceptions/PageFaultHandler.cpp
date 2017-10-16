@@ -124,6 +124,11 @@ PageFaultActualReason PageFaultHandler::page_fault_reason(u64* violated_page_add
     return PageFaultActualReason::UNKNOWN_PROTECTION_VIOLATION;
 }
 
+/**
+ * @brief   Allocate missing page.
+ *          Give WRITABLE and USER_ACCESSIBLE permissions, as the privilege is already tested on pml4 and pdpt levels.
+ *          This can change in future to provide more detailed control eg for elf readonly and read/write data sections.
+ */
 bool PageFaultHandler::alloc_page(size_t virtual_address, u64* page_virt_addr) const {
     size_t frame_phys_addr = memory::FrameAllocator::alloc_frame();
     if (frame_phys_addr == -1)

@@ -94,9 +94,9 @@ void task_init(u64 unused) {
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
 //    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal", 0, false));
-    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0, true));
-    task_manager.add_task(Task(corner_counter, "corner_counter", 0, true));
+    task_manager.add_task(TaskFactory::make<terminal::Terminal>("terminal", 0));
+    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0));
+    task_manager.add_task(Task(corner_counter, "corner_counter", 0));
 //    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
 }
 

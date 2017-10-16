@@ -15,7 +15,7 @@ using namespace hardware;
 namespace multitasking {
 
 Task::Task() :
-        entrypoint(nullptr), name("newtask"), arg(0), is_user_space(false), pml4_phys_addr(0), cpu_state(0), stack_addr(0), stack_size(0), task_id(-1) {
+        entrypoint(nullptr), name("newtask"), arg1(0), arg2(0), is_user_space(false), pml4_phys_addr(0), cpu_state(0), stack_addr(0), stack_size(0), task_id(-1) {
 }
 
 /**
@@ -26,7 +26,7 @@ Task::Task() :
                   here is rsp when first time jumping from interrupt to task function
 */
 Task::Task(TaskEntryPoint entrypoint, kstd::string name, u64 arg, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) :
-        entrypoint(entrypoint), name(name), arg(arg), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(-1) {
+        entrypoint(entrypoint), name(name), arg1(arg), arg2(0), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(-1) {
     if (stack_addr != 0) {
         this->stack_addr = stack_addr;
         this->stack_size = stack_size;
@@ -54,7 +54,7 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
 
     // prepare task cpu state to setup cpu register with
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
-    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg, is_user_space, pml4_phys_addr};
+    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg1, arg2, is_user_space, pml4_phys_addr};
 
     task_id = tid;
 }

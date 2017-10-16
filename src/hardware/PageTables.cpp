@@ -50,33 +50,35 @@ void PageTables::map_elf_address_space(size_t pml4_phys_addr) {
 }
 
 /**
- * @brief Fill PageTables64 with mapping of -2..-1GB virt addresses to 0..1GB phys addresses
+ * @brief   Fill PageTables64 with mapping of -2..-1GB virt addresses to 0..1GB phys addresses
+ * @note    Kernel memory is not accessible from user space
  */
 void PageTables::prepare_higher_half_kernel_page_tables(PageTables64& pt) {
-    const u16 PRESENT_WRITABLE_USERSPACE = PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::USER_ACCESSIBLE;
-
+    const u16 PRESENT_WRITABLE = PageAttr::PRESENT | PageAttr::WRITABLE;
+    const u16 PRESENT_WRITABLE_HUGE = PRESENT_WRITABLE | PageAttr::HUGE_PAGE;
     // prepare kernel virtual address space in -2..0GB.
-    pt.pml4[511] = HigherHalf::virt_to_phys(pt.pdpt) | PRESENT_WRITABLE_USERSPACE;                  // last 512 GB chunk
-    pt.pdpt[510] = HigherHalf::virt_to_phys(pt.pde_kernel_static) | PRESENT_WRITABLE_USERSPACE;     // -2BG..-1GB chunk
-    pt.pdpt[511] = HigherHalf::virt_to_phys(pt.pde_kernel_dynamic) | PRESENT_WRITABLE_USERSPACE;    // -1GB..0GB chunk
+    pt.pml4[511] = HigherHalf::virt_to_phys(pt.pdpt)                | PRESENT_WRITABLE;         // last 512 GB chunk
+    pt.pdpt[510] = HigherHalf::virt_to_phys(pt.pde_kernel_static)   | PRESENT_WRITABLE;         // -2BG..-1GB chunk
+    pt.pdpt[511] = HigherHalf::virt_to_phys(pt.pde_kernel_dynamic)  | PRESENT_WRITABLE;         // -1GB..0GB chunk
     for (u16 i = 0; i < 512; i++)
-        pt.pde_kernel_static[i] = (0x200000 * i) | PRESENT_WRITABLE_USERSPACE | PageAttr::HUGE_PAGE;    // map static memory pages
+        pt.pde_kernel_static[i] = (0x200000 * i)                    | PRESENT_WRITABLE_HUGE;    // map static memory pages
 }
 
 /**
  * @brief   Fill PageTables64 pml4 and pdpt tables with mapping of lower 1GB virtual memory
  */
 void PageTables::prepare_elf_page_tables(PageTables64& pt) {
-    const u16 PRESENT_WRITABLE_USERSPACE = PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::USER_ACCESSIBLE;
+    const u16 PRESENT_WRITABLE = PageAttr::PRESENT | PageAttr::WRITABLE;
+    const u16 PRESENT_WRITABLE_USERSPACE = PRESENT_WRITABLE | PageAttr::USER_ACCESSIBLE;
 
-    // prepare elf virtual address space of 0..1GB
-    pt.pml4[0] = HigherHalf::virt_to_phys(pt.pdpt) | PRESENT_WRITABLE_USERSPACE;
-    pt.pdpt[0] = HigherHalf::virt_to_phys(pt.pde_user) | PRESENT_WRITABLE_USERSPACE;
+    // prepare elf virtual address space of 0..1GB as user accessible
+    pt.pml4[0] = HigherHalf::virt_to_phys(pt.pdpt)                                  | PRESENT_WRITABLE_USERSPACE;
+    pt.pdpt[0] = HigherHalf::virt_to_phys(pt.pde_user)                              | PRESENT_WRITABLE_USERSPACE;
 
     // prepare kernel virtual address space in -2..0GB. This is necessary so syscall handlers can use kernel addresses
-    pt.pml4[511] = HigherHalf::virt_to_phys(kernel_page_tables.pdpt) | PRESENT_WRITABLE_USERSPACE;                  // last 512 GB chunk
-    pt.pdpt[510] = HigherHalf::virt_to_phys(kernel_page_tables.pde_kernel_static) | PRESENT_WRITABLE_USERSPACE;     // -2BG..-1GB chunk
-    pt.pdpt[511] = HigherHalf::virt_to_phys(kernel_page_tables.pde_kernel_dynamic) | PRESENT_WRITABLE_USERSPACE;    // -1GB..0GB chunk
+    pt.pml4[511] = HigherHalf::virt_to_phys(kernel_page_tables.pdpt)                | PRESENT_WRITABLE;     // last 512 GB chunk
+    pt.pdpt[510] = HigherHalf::virt_to_phys(kernel_page_tables.pde_kernel_static)   | PRESENT_WRITABLE;     // -2BG..-1GB chunk
+    pt.pdpt[511] = HigherHalf::virt_to_phys(kernel_page_tables.pde_kernel_dynamic)  | PRESENT_WRITABLE;     // -1GB..0GB chunk
     // specific frame allocation in pde_user for the lower 1GB will happen in PageFault handler
 }
 

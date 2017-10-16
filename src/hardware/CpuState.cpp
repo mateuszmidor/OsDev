@@ -17,14 +17,14 @@ namespace hardware {
  * @param task_arg      Value for RDI register (function first argument in SYSTEM V ABI)
  * @param user_space    Should the iretq jump to user space(true) or to kernel space(false), this effectively defines cs (code segment) and ss (stack segment)
  */
-CpuState::CpuState(u64 rip, u64 rsp, u64 task_arg, bool user_space, u64 pml4_phys_addr) {
+CpuState::CpuState(u64 rip, u64 rsp, u64 task_arg1, u64 task_arg2, bool user_space, u64 pml4_phys_addr) {
     rax = 0;
     rbx = 0;
     rcx = 0;
     rdx = 0;
 
-    rsi = 0;
-    rdi = task_arg;         // argument passed to the task function in RDI according to SYSTEM V x64 ABI
+    rdi = task_arg1;        // first argument passed to the task function in RDI according to SYSTEM V x64 ABI
+    rsi = task_arg2;        // second argument passed to the task function in RDI according to SYSTEM V x64 ABI
     rbp = 0;
 
     r8 = 0;

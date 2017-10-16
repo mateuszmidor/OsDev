@@ -27,7 +27,8 @@ struct Task {
     u32 task_id;
     TaskEntryPoint entrypoint;
     kstd::string name;
-    u64 arg;
+    u64 arg1;
+    u64 arg2;
     bool is_user_space;
     u64 pml4_phys_addr;
     u64 stack_addr; // virtual address in task address space (pml4_phys_addr)
