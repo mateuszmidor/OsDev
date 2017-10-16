@@ -28,6 +28,7 @@
 #include "MemoryManager.h"
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
+#include "VfsManager.h"
 #include "Sse.h"
 #include "PageTables.h"
 #include "_demos/Demo.h"
@@ -48,7 +49,7 @@ using namespace memory;
 using namespace syscalls;
 using namespace utils;
 using namespace demos;
-
+using namespace filesystem;
 
 MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();
@@ -57,6 +58,7 @@ DriverManager& driver_manager       = DriverManager::instance();
 ExceptionManager& exception_manager = ExceptionManager::instance();
 InterruptManager& interrupt_manager = InterruptManager::instance();
 SysCallManager& syscall_manager     = SysCallManager::instance();
+VfsManager& vfs_manager             = VfsManager::instance();
 Gdt                     gdt;
 PCIController           pcic;
 KeyboardScanCodeSet1    scs1;
@@ -144,6 +146,9 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
 
     // 8. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
+
+    // install filesystem root "/"
+    vfs_manager.install_root();
 
     // 9. configure vga text mode
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
