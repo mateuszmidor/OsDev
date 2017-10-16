@@ -5,10 +5,9 @@
  * @author: Mateusz Midor
  */
 
-#include "unistd.h"
 #include "string.h"
-#include "stdio.h"
 #include "_start.h"
+#include "syscalls.h"
 
 
 /**
