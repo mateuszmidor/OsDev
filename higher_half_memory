@@ -1,0 +1,4 @@
+Higher half kernel is mapped into -2GB..0GB of virtual address space.
+    -2GB..-1GB is used for kernel static memory filled by bootloader. It is identity mapped to physical 0GB..1GB
+    -1GB..0GB is used for kernel dynamic memory. It is dynamically mapped by PageFaultHandler
+User memory is mapped into 0GB..1GB of virtual address space. It is dynamically mapped by PageFaultHandler
