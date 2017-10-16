@@ -12,7 +12,7 @@ using namespace drivers;
 namespace utils {
 
 Cursor::Cursor(u16 left, u16 top, u16 right, u16 bottom) :
-        left(left), top(top), right(right), bottom(bottom), cursor_x(left), cursor_y(top) {
+        left(left), top(top), right(right), bottom(bottom), cursor_x(left), cursor_y(top), vga(nullptr) {
 }
 
 u16 Cursor::get_x() const {
