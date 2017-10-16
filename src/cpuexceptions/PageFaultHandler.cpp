@@ -65,8 +65,9 @@ CpuState* PageFaultHandler::on_exception(CpuState* cpu_state) {
         return mngr.kill_current_task();
     }
 
-    klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". New frame allocated] \n",
-                faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current.name.c_str());
+    // This triggers recursive page faulting, dont use
+//    klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". New frame allocated] \n",
+//                faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current.name.c_str());
 
     // resume task execution from where the exception occurred
     return cpu_state;
