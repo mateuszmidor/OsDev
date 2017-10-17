@@ -23,7 +23,11 @@ public:
     VfsManager operator=(const VfsManager&) = delete;
     VfsManager operator=(VfsManager&&) = delete;
     void install_root();
+
     VfsEntryPtr get_entry(const UnixPath& unix_path);
+    VfsEntryPtr create_entry(const UnixPath& unix_path, bool is_directory) const;
+    bool delete_entry(const UnixPath& unix_path) const;
+    bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const;
 
 private:
     VfsManager() : klog(utils::KernelLog::instance()) {}

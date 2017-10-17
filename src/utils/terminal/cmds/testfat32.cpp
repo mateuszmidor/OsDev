@@ -12,56 +12,53 @@ using namespace filesystem;
 namespace cmds {
 
 void test_fat32::run() {
-    env->printer->format("test_fat32: not implemented\n");
-//    if (env->volumes.empty())
-//        env->printer->format("No volumes installed\n");
-//
-//    auto v = *env->volume;
-//
-//
-//    if (env->cmd_args.size() != 2) {
-//        env->printer->format("test_fat32: please specify action: -clean, -gen, -rem\n");
-//    }
-//
-//    if (env->cmd_args[1] == "-clean")
-//        cleanup(v);
-//
-//    if (env->cmd_args[1] == "-gen")
-//        generate(v);
-//
-//    if (env->cmd_args[1] == "-rem")
-//        remove(v);
-}
-
-void test_fat32::cleanup(VolumeFat32& v) {
-    for (u16 i = 1; i < 16; i++) {
-          string name = string("/FILE_") +kstd::to_str(i);
-          v.delete_entry(name);
+    if (env->cmd_args.size() != 2) {
+        env->printer->format("test_fat32: please specify action: -clean, -gen, -rem\n");
     }
 
-    v.delete_entry("/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
-    v.delete_entry("/LEVEL1/LEVEL2/LEVEL3");
-    v.delete_entry("/LEVEL1/LEVEL2/LEVEL2.TXT");
-    v.delete_entry("/LEVEL1/LEVEL2");
-    v.delete_entry("/LEVEL1/LEVEL1.TXT");
-    v.delete_entry("/LEVEL1");
-    v.delete_entry("/TMP/TMP1.TXT");
-    v.delete_entry("/TMP/TMP2.TXT");
-    v.delete_entry("/TMP");
-    v.delete_entry("/TO_BE_~1");
+    if (env->cmd_args[1] == "-clean")
+        cleanup();
+
+    if (env->cmd_args[1] == "-gen")
+        generate();
+
+    if (env->cmd_args[1] == "-rem")
+        remove();
 }
 
-void test_fat32::generate(VolumeFat32& v) {
-            for (u16 i = 1; i <= NUM_ENTRIES; i++) {
-                  string name = string("/F_") +kstd::to_str(i);
-                  v.create_entry(name, false);
-            }
+void test_fat32::cleanup() {
+    VfsManager& vfs = env->vfs_manager;
+
+    for (u16 i = 1; i < 16; i++) {
+          string name = env->cwd + string("/FILE_") +kstd::to_str(i);
+          vfs.delete_entry(name);
+    }
+
+    vfs.delete_entry(env->cwd + "/LEVEL1/LEVEL2/LEVEL3/LEVEL3.TXT");
+    vfs.delete_entry(env->cwd + "/LEVEL1/LEVEL2/LEVEL3");
+    vfs.delete_entry(env->cwd + "/LEVEL1/LEVEL2/LEVEL2.TXT");
+    vfs.delete_entry(env->cwd + "/LEVEL1/LEVEL2");
+    vfs.delete_entry(env->cwd + "/LEVEL1/LEVEL1.TXT");
+    vfs.delete_entry(env->cwd + "/LEVEL1");
+    vfs.delete_entry(env->cwd + "/TMP/TMP1.TXT");
+    vfs.delete_entry(env->cwd + "/TMP/TMP2.TXT");
+    vfs.delete_entry(env->cwd + "/TMP");
+    vfs.delete_entry(env->cwd + "/TO_BE_~1");
 }
 
-void test_fat32::remove(VolumeFat32& v) {
-            for (u16 i = 1; i <= NUM_ENTRIES; i++) {
-                  string name = string("/F_") +kstd::to_str(i);
-                  v.delete_entry(name);
-            }
+void test_fat32::generate() {
+    VfsManager& vfs = env->vfs_manager;
+    for (u16 i = 1; i <= NUM_ENTRIES; i++) {
+          string name = string(env->cwd + "/F_") +kstd::to_str(i);
+          vfs.create_entry(name, false);
+    }
+}
+
+void test_fat32::remove() {
+    VfsManager& vfs = env->vfs_manager;
+    for (u16 i = 1; i <= NUM_ENTRIES; i++) {
+          string name = string(env->cwd + "/F_") +kstd::to_str(i);
+          vfs.delete_entry(name);
+    }
 }
 } /* namespace cmds */

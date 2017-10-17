@@ -64,6 +64,18 @@ VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
     return e;
 }
 
+VfsEntryPtr VfsManager::create_entry(const UnixPath& unix_path, bool is_directory) const {
+    return nullptr;
+}
+
+bool VfsManager::delete_entry(const UnixPath& unix_path) const {
+    return false;
+}
+
+bool VfsManager::move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const {
+    return false;
+}
+
 /**
  * @brief   Get entry in "parent_dir"
  * @param   name Entry name. Case sensitive
