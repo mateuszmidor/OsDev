@@ -31,6 +31,11 @@ void VfsManager::install_root() {
 }
 
 VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
+    if (!root) {
+        klog.format("VfsManager::get_entry: no root is installed\n");
+        return nullptr;
+    }
+
     if (!unix_path.is_valid_absolute_path()) {
         klog.format("VfsManager::get_entry: path '%' is empty or it is not an absolute path\n", unix_path);
         return nullptr;
