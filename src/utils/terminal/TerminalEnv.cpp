@@ -17,37 +17,14 @@ using namespace filesystem;
 namespace terminal {
 
 TerminalEnv::TerminalEnv() :
-    printer(nullptr) {
+    printer(nullptr), vfs_manager(VfsManager::instance()) {
 
-    auto& driver_manager = DriverManager::instance();
-    auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
-    if (!ata_primary_bus)
-        return;
-
-    if (ata_primary_bus->master_hdd.is_present()) {
-        install_volumes(ata_primary_bus->master_hdd);
-    }
-
-    if (ata_primary_bus->slave_hdd.is_present()) {
-        install_volumes(ata_primary_bus->slave_hdd);
-    }
-
-    if (!volumes.empty()) {
+    if (vfs_manager.get_entry("/mnt"))
+        cwd = "/mnt";
+    else if (vfs_manager.get_entry("/"))
         cwd = "/";
-        volume = &volumes.back();
-    }
-    else {
-        cwd = "[NO VOLUMES]";
-        volume = nullptr;
-    }
-}
+    else
+        cwd = "[NO FILESYSTEM ROOT IS INSTALLED]";
 
-void TerminalEnv::install_volumes(AtaDevice& hdd) {
-    if (!MassStorageMsDos::verify(hdd))
-        return;
-
-    MassStorageMsDos ms(hdd);
-    for (auto& v : ms.get_volumes())
-        volumes.push_back(v);
 }
 } /* namespace terminal */

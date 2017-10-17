@@ -15,33 +15,27 @@ using namespace filesystem;
 namespace cmds {
 
 void elfinfo::run() {
-    if (env->volumes.empty()) {
-        env->printer->format("elfinfo: no volumes installed\n");
-        return;
-    }
-
     if (env->cmd_args.size() < 2) {
         env->printer->format("elfinfo: please specify file name\n");
         return;
     }
 
     string filename = env->cwd + "/" + env->cmd_args[1];
-    VolumeFat32* v = env->volume;
-    auto e = v->get_entry(filename);
+    VfsEntryPtr e = env->vfs_manager.get_entry(filename);
     if (!e) {
         env->printer->format("elfinfo: file % doesnt exist\n", filename);
         return;
     }
 
-    if (e.is_directory()) {
+    if (e->is_directory()) {
         env->printer->format("elfinfo: % is a directory\n", filename);
         return;
     }
 
 
-    u32 size = e.get_size();
+    u32 size = e->get_size();
     char* buff = new char[size];
-    e.read(buff, size);
+    e->read(buff, size);
     env->printer->format("% \n", Elf64::to_string(buff));
 
     delete[] buff;

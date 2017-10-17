@@ -12,24 +12,25 @@ using namespace filesystem;
 namespace cmds {
 
 void test_fat32::run() {
-    if (env->volumes.empty())
-        env->printer->format("No volumes installed\n");
-
-    auto v = *env->volume;
-
-
-    if (env->cmd_args.size() != 2) {
-        env->printer->format("test_fat32: please specify action: -clean, -gen, -rem\n");
-    }
-
-    if (env->cmd_args[1] == "-clean")
-        cleanup(v);
-
-    if (env->cmd_args[1] == "-gen")
-        generate(v);
-
-    if (env->cmd_args[1] == "-rem")
-        remove(v);
+    env->printer->format("test_fat32: not implemented\n");
+//    if (env->volumes.empty())
+//        env->printer->format("No volumes installed\n");
+//
+//    auto v = *env->volume;
+//
+//
+//    if (env->cmd_args.size() != 2) {
+//        env->printer->format("test_fat32: please specify action: -clean, -gen, -rem\n");
+//    }
+//
+//    if (env->cmd_args[1] == "-clean")
+//        cleanup(v);
+//
+//    if (env->cmd_args[1] == "-gen")
+//        generate(v);
+//
+//    if (env->cmd_args[1] == "-rem")
+//        remove(v);
 }
 
 void test_fat32::cleanup(VolumeFat32& v) {

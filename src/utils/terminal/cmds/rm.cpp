@@ -18,25 +18,26 @@ using namespace filesystem;
 namespace cmds {
 
 void rm::run() {
-    if (env->volumes.empty()) {
-        env->printer->format("cat: no volumes installed\n");
-        return;
-    }
-
-    if (env->cmd_args.size() < 2) {
-        env->printer->format("rm: please specify file name\n");
-        return;
-    }
-
-    string path = env->cmd_args[1];
-    string absolute_path;
-
-    if (env->cwd.back() == '/')
-        absolute_path = format("%%", env->cwd, path);
-    else
-        absolute_path = format("%/%", env->cwd, path);
-
-    if (!env->volume->delete_entry(absolute_path))
-        env->printer->format("rm: unable to remove %\n", absolute_path);
+    env->printer->format("rm: not implemented\n");
+//    if (env->volumes.empty()) {
+//        env->printer->format("rm: no volumes installed\n");
+//        return;
+//    }
+//
+//    if (env->cmd_args.size() < 2) {
+//        env->printer->format("rm: please specify file name\n");
+//        return;
+//    }
+//
+//    string path = env->cmd_args[1];
+//    string absolute_path;
+//
+//    if (env->cwd.back() == '/')
+//        absolute_path = format("%%", env->cwd, path);
+//    else
+//        absolute_path = format("%/%", env->cwd, path);
+//
+//    if (!env->volume->delete_entry(absolute_path))
+//        env->printer->format("rm: unable to remove %\n", absolute_path);
 }
 } /* namespace cmds */

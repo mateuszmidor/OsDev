@@ -58,7 +58,10 @@ void ls::run() {
 
     string path;
     if (env->cmd_args.size() == 2)
-        path = env->cwd + "/" + env->cmd_args[1];
+        if (env->cmd_args[1][0] == '/')
+            path = env->cmd_args[1];
+        else
+            path = env->cwd + "/" + env->cmd_args[1];
     else
         path = env->cwd;
 

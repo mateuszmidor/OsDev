@@ -18,7 +18,6 @@ using namespace filesystem;
 
 namespace cmds {
 
-filesystem::VolumeFat32* cd::prev_volume = nullptr;
 kstd::string cd::prev_cwd = "";
 
 
@@ -38,8 +37,7 @@ void cd::run() {
 
 void cd::navigate_back() {
     // first check if there is a known previous location
-    if (prev_volume) {
-        std::swap(env->volume, prev_volume);
+    if (!prev_cwd.empty()) {
         std::swap(env->cwd, prev_cwd);
     }
 }
@@ -58,7 +56,6 @@ void cd::navigate_path(const string& path) {
 }
 
 void cd::store_last_location() {
-    prev_volume = env->volume;
     prev_cwd = env->cwd;
 }
 
@@ -73,8 +70,6 @@ void cd::cd_volume_directory(const string& absolute_path) {
     string volume;
     string path;
     split_volume_path(absolute_path, volume, path);
-
-    select_volume_by_name(volume);
 
     if (!path.empty())
         cd_directory(path);
@@ -97,13 +92,13 @@ void cd::split_volume_path(const string& location, string& volume, string& path)
 void cd::cd_directory(const string& path) {
     string absolute_path = format("%/%", env->cwd, path);
     string normalized_absolute_path = format("/%", normalize_path(absolute_path)); // absolute path must start with "/"
-    auto e = env->volume->get_entry(normalized_absolute_path);
+    VfsEntryPtr e = env->vfs_manager.get_entry(normalized_absolute_path);
     if (!e) {
         env->printer->format("cd: directory '%' doesnt exist\n", normalized_absolute_path);
         return;
     }
 
-    if (!e.is_directory()) {
+    if (!e->is_directory()) {
         env->printer->format("cd: '%' is not directory\n", normalized_absolute_path);
         return;
     }
@@ -133,17 +128,6 @@ string cd::normalize_path(const string& path) const {
 
     }
     return join_string("/", out);
-}
-
-void cd::select_volume_by_name(const kstd::string& name) {
-    for (auto& v : env->volumes)
-        if (v.get_label() == name) {
-            env->cwd = "/";
-            env->volume = &v;
-            return;
-        }
-
-    env->printer->format("cd: no volume named '%'\n", name);
 }
 
 } /* namespace cmds */

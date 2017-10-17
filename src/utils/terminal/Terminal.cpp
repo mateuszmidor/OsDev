@@ -83,7 +83,7 @@ void Terminal::run() {
     // task main loop
     while(true) {
         // print prompt
-        printer.format("/%% %", env.volume->get_label(), env.cwd, PROMPT);
+        printer.format("% %", env.cwd, PROMPT);
 
         // get command
         string cmd = get_line();
@@ -155,7 +155,7 @@ void Terminal::process_key(Key key) {
             string filter_result;
             std::tie(multiple_results, filter_result) = cmd_collection.filter(edit_line);
             if (multiple_results)
-                printer.format("\n  %\n/%% %%", filter_result, env.volume->get_label(),env.cwd, PROMPT, edit_line);
+                printer.format("\n  %\n% %%", filter_result, env.cwd, PROMPT, edit_line);
             else
                 suggest_cmd(filter_result);
             break;
