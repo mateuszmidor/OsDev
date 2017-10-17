@@ -8,6 +8,7 @@
 #ifndef SRC_FILESYSTEM_VFSENTRY_H_
 #define SRC_FILESYSTEM_VFSENTRY_H_
 
+#include <memory>
 #include <functional>
 #include "kstd.h"
 
@@ -21,8 +22,10 @@ enum class VfsEnumerateResult {
     ENUMERATION_FAILED      // could not enumerate eg. because entry is not a directory or is not initialized
 };
 
+
 class VfsEntry;
-using OnVfsEntryFound = std::function<bool(VfsEntry& e)>;
+using VfsEntryPtr = std::shared_ptr<VfsEntry>;
+using OnVfsEntryFound = std::function<bool(VfsEntryPtr e)>;
 
 /**
  * @brief   This class is an interface for Virtual File System entry (file or directory)
@@ -36,7 +39,6 @@ public:
     virtual bool is_directory() const = 0;
     virtual u32 get_size() const = 0;
     virtual const kstd::string& get_name() const = 0;
-    virtual VfsEntry* clone() const = 0;
 };
 
 } /* namespace filesystem */

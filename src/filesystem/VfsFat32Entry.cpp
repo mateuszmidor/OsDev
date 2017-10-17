@@ -9,7 +9,11 @@
 
 namespace filesystem {
 
-VfsFat32Entry::VfsFat32Entry(const Fat32Entry& e) : entry(e), name(e.get_name()) {
+VfsFat32Entry::VfsFat32Entry(const Fat32Entry& e, const kstd::string custom_name) : entry(e) {
+    if (custom_name.empty())
+        name = e.get_name();
+    else
+        name = custom_name;
 }
 
 VfsFat32Entry::~VfsFat32Entry() {
@@ -38,7 +42,7 @@ VfsEnumerateResult VfsFat32Entry::enumerate_entries(const OnVfsEntryFound& on_en
         return VfsEnumerateResult::ENUMERATION_FAILED;
 
     auto on_fat_entry = [&](const Fat32Entry& e) -> bool {
-        VfsFat32Entry entry(e);
+        VfsEntryPtr entry = std::make_shared<VfsFat32Entry>(e);
         return on_entry(entry);
     };
 
@@ -46,10 +50,6 @@ VfsEnumerateResult VfsFat32Entry::enumerate_entries(const OnVfsEntryFound& on_en
         return VfsEnumerateResult::ENUMERATION_STOPPED;
 
     return VfsEnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
-}
-
-VfsEntry* VfsFat32Entry::clone() const {
-    return new VfsFat32Entry(*this);
 }
 
 void VfsFat32Entry::set_custom_name(const kstd::string& name) {

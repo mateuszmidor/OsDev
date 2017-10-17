@@ -21,25 +21,23 @@ VfsManager& VfsManager::instance() {
 }
 
 void VfsManager::install_root() {
-    root.name = "/";
-    root.is_dir = true;
+    std::shared_ptr<VfsPseudoEntry> pseudo_root = std::make_shared<VfsPseudoEntry>("/", true);
 
-    VfsPseudoEntry* mnt = new VfsPseudoEntry;
-    mnt->name = "mnt";
-    mnt->is_dir = true;
-    root.entries.push_back(mnt);
+    VfsEntryPtr mnt = std::make_shared<VfsPseudoEntry>("mnt", true);
+    pseudo_root->entries.push_back(mnt);
+    root = pseudo_root;
 
     install_ata_devices();
 }
 
-VfsEntry* VfsManager::get_entry(const UnixPath& unix_path) {
+VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
     if (!unix_path.is_valid_absolute_path()) {
         klog.format("VfsManager::get_entry: path '%' is empty or it is not an absolute path\n", unix_path);
         return nullptr;
     }
 
     // start at root...
-    VfsEntry* e = &root;
+    VfsEntryPtr e = root;
 
     // ...and descend down the path to the very last entry
     auto normalized_unix_path = unix_path.normalize(); // this takes care of '.' and '..'
@@ -50,7 +48,7 @@ VfsEntry* VfsManager::get_entry(const UnixPath& unix_path) {
             return nullptr;   // path segment is not a directory. this is error
         }
 
-        e = get_entry_for_name(*e, path_segment);
+        e = get_entry_for_name(e, path_segment);
         if (!e) {
             klog.format("VfsManager::get_entry: entry '%' does not exist\n", path_segment);
             return nullptr;   // path segment does not exist. this is error
@@ -66,21 +64,20 @@ VfsEntry* VfsManager::get_entry(const UnixPath& unix_path) {
  * @param   name Entry name. Case sensitive
  * @return  Valid entry if exists, empty entry otherwise
  */
-VfsEntry* VfsManager::get_entry_for_name(VfsEntry& parent_dir, const string& name) {
-    VfsEntry* result = nullptr;
-    auto on_entry = [&](VfsEntry& e) -> bool {
-        if (e.get_name() == name) {
-            result = e.clone();
+VfsEntryPtr VfsManager::get_entry_for_name(VfsEntryPtr parent_dir, const string& name) {
+    VfsEntryPtr result;
+    auto on_entry = [&](VfsEntryPtr e) -> bool {
+        if (e->get_name() == name) {
+            result = e;
             return false;   // entry found. stop enumeration
         }
         else
             return true;    // continue searching for entry
     };
 
-    parent_dir.enumerate_entries(on_entry);
+    parent_dir->enumerate_entries(on_entry);
     return result;
 }
-
 
 void VfsManager::install_ata_devices() {
     auto& driver_manager = DriverManager::instance();
@@ -101,11 +98,10 @@ void VfsManager::install_volumes(AtaDevice& hdd) {
     if (!MassStorageMsDos::verify(hdd))
         return;
 
-    VfsPseudoEntry* mnt = (VfsPseudoEntry*)get_entry("/mnt");
+    std::shared_ptr<VfsPseudoEntry> mnt = std::static_pointer_cast<VfsPseudoEntry>(get_entry("/mnt"));
     MassStorageMsDos ms(hdd);
     for (auto& v : ms.get_volumes()) {
-        VfsFat32Entry* drive = new VfsFat32Entry(v.get_entry("/"));
-        drive->set_custom_name(v.get_label());
+        VfsEntryPtr drive = std::make_shared<VfsFat32Entry>(v.get_entry("/"), v.get_label());
         mnt->entries.push_back(drive);
     }
 }

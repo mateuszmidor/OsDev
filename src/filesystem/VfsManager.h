@@ -23,18 +23,18 @@ public:
     VfsManager operator=(const VfsManager&) = delete;
     VfsManager operator=(VfsManager&&) = delete;
     void install_root();
-    VfsEntry* get_entry(const UnixPath& unix_path);
+    VfsEntryPtr get_entry(const UnixPath& unix_path);
 
 private:
     VfsManager() : klog(utils::KernelLog::instance()) {}
-    VfsEntry* get_entry_for_name(VfsEntry& parent_dir, const kstd::string& name);
+    VfsEntryPtr get_entry_for_name(VfsEntryPtr parent_dir, const kstd::string& name);
 
     void install_ata_devices();
     void install_volumes(drivers::AtaDevice& hdd);
     static VfsManager _instance;
 
     utils::KernelLog&       klog;
-    VfsPseudoEntry          root;
+    VfsEntryPtr             root;
 };
 
 } /* namespace filesystem */

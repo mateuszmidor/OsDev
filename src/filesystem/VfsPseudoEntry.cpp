@@ -9,12 +9,10 @@
 
 namespace filesystem {
 
-VfsPseudoEntry::VfsPseudoEntry() {
+VfsPseudoEntry::VfsPseudoEntry(kstd::string name, bool is_dir) : name(name), is_dir(is_dir) {
 }
 
 VfsPseudoEntry::~VfsPseudoEntry() {
-    for (VfsEntry* e : entries)
-        delete e;
 }
 
 bool VfsPseudoEntry::is_directory() const {
@@ -39,8 +37,8 @@ VfsEnumerateResult VfsPseudoEntry::enumerate_entries(const OnVfsEntryFound& on_e
     if (!is_dir)
         return VfsEnumerateResult::ENUMERATION_FAILED;
 
-    for (VfsEntry* e : entries) {
-        if (!on_entry(*e)) {
+    for (VfsEntryPtr e : entries) {
+        if (!on_entry(e)) {
             return VfsEnumerateResult::ENUMERATION_STOPPED;
         }
     }
@@ -48,8 +46,4 @@ VfsEnumerateResult VfsPseudoEntry::enumerate_entries(const OnVfsEntryFound& on_e
     return VfsEnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
 }
 
-VfsEntry* VfsPseudoEntry::clone() const {
-    VfsEntry* e = const_cast<VfsPseudoEntry*>(this);
-    return e;
-}
 } /* namespace filesystem */

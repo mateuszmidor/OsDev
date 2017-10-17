@@ -47,12 +47,11 @@ namespace cmds {
 //}
 
 void ls::run() {
-
-    OnVfsEntryFound on_entry = [&](const VfsEntry& e) -> bool {
-        if (e.is_directory())
-            env->printer->format("[%]\n", e.get_name());
+    OnVfsEntryFound on_entry = [&](VfsEntryPtr e) -> bool {
+        if (e->is_directory())
+            env->printer->format("[%]\n", e->get_name());
         else
-            env->printer->format("% - %B\n", e.get_name(), e.get_size());
+            env->printer->format("% - %B\n", e->get_name(), e->get_size());
 
         return true;
     };
@@ -64,7 +63,7 @@ void ls::run() {
         path = env->cwd;
 
     VfsManager& vfs = VfsManager::instance();
-    VfsEntry* e = vfs.get_entry(path);
+    VfsEntryPtr e = vfs.get_entry(path);
 
     if (!e) {
         env->printer->format("ls: path '%' does not exist\n", path);
