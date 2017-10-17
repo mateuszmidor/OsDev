@@ -258,4 +258,15 @@ string format(char const *fmt) {
     return string(fmt);
 }
 
+// split string into [HEAD - delimiter - TAIL]
+// return HEAD, s = TAIL
+string snap_head(string& s, char delimiter) {
+    auto pivot = s.find(delimiter);
+    if (pivot == string::npos)
+        pivot = s.length() - 1;
+
+    string result = s.substr(0, pivot);
+    s = s.substr(pivot + 1, s.length());
+    return result;
+}
 } // namespace kstd

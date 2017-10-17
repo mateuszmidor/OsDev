@@ -13,6 +13,7 @@
 #include "KernelLog.h"
 #include "UnixPath.h"
 #include "VfsPseudoEntry.h"
+#include "VfsMountPoint.h"
 #include "kstd.h"
 
 namespace filesystem {
@@ -31,10 +32,11 @@ public:
 
 private:
     VfsManager() : klog(utils::KernelLog::instance()) {}
-    VfsEntryPtr get_entry_for_name(VfsEntryPtr parent_dir, const kstd::string& name);
+    VfsEntryPtr get_entry_for_name(VfsEntryPtr parent_dir, const kstd::string& name) const;
 
     void install_ata_devices();
     void install_volumes(drivers::AtaDevice& hdd);
+    VfsMountPointPtr get_mountpoint_path(kstd::string& path) const;
     static VfsManager _instance;
 
     utils::KernelLog&       klog;

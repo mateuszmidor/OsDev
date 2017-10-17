@@ -18,7 +18,7 @@ namespace filesystem {
  */
 class VfsFat32Entry: public VfsEntry {
 public:
-    VfsFat32Entry(const Fat32Entry& e, const kstd::string custom_name = "");
+    VfsFat32Entry(const Fat32Entry& e);
     ~VfsFat32Entry() override;
 
     // [common interface]
@@ -39,7 +39,6 @@ public:
 
 private:
     Fat32Entry      entry;
-    kstd::string    name;   // custom name for entry, so eg volume root can have particular name "DATA" instead of just "/"
 };
 
 } /* namespace filesystem */

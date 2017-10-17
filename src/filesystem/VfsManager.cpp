@@ -9,6 +9,7 @@
 #include "DriverManager.h"
 #include "VfsManager.h"
 #include "VfsFat32Entry.h"
+#include "VfsFat32MountPoint.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -65,7 +66,12 @@ VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
 }
 
 VfsEntryPtr VfsManager::create_entry(const UnixPath& unix_path, bool is_directory) const {
-    return nullptr;
+    string path = unix_path;
+    VfsMountPointPtr mount_point = get_mountpoint_path(path);
+    if (mount_point)
+        return mount_point->create_entry(path, is_directory);
+    else
+        return nullptr;
 }
 
 bool VfsManager::delete_entry(const UnixPath& unix_path) const {
@@ -81,7 +87,7 @@ bool VfsManager::move_entry(const UnixPath& unix_path_from, const UnixPath& unix
  * @param   name Entry name. Case sensitive
  * @return  Valid entry if exists, empty entry otherwise
  */
-VfsEntryPtr VfsManager::get_entry_for_name(VfsEntryPtr parent_dir, const string& name) {
+VfsEntryPtr VfsManager::get_entry_for_name(VfsEntryPtr parent_dir, const string& name) const {
     VfsEntryPtr result;
     auto on_entry = [&](VfsEntryPtr e) -> bool {
         if (e->get_name() == name) {
@@ -116,10 +122,33 @@ void VfsManager::install_volumes(AtaDevice& hdd) {
         return;
 
     std::shared_ptr<VfsPseudoEntry> mnt = std::static_pointer_cast<VfsPseudoEntry>(get_entry("/mnt"));
+    if (!mnt)
+        return;
+
     MassStorageMsDos ms(hdd);
     for (auto& v : ms.get_volumes()) {
-        VfsEntryPtr drive = std::make_shared<VfsFat32Entry>(v.get_entry("/"), v.get_label());
+        VfsEntryPtr drive = std::make_shared<VfsFat32MountPoint>(v);
         mnt->entries.push_back(drive);
     }
+}
+
+VfsMountPointPtr VfsManager::get_mountpoint_path(kstd::string& path) const {
+    VfsEntryPtr e = root;
+    do  {
+        string segment = snap_head(path, '/');
+        if (segment.empty())
+            continue;
+
+        e = get_entry_for_name(e, segment);
+        if (!e)
+            return nullptr;
+
+        if (e->is_mount_point()) {
+            path = "/" + path;  // return absolute path
+            return std::static_pointer_cast<VfsMountPoint>(e);
+        }
+    } while (!path.empty());
+
+    return nullptr;
 }
 } /* namespace filesystem */

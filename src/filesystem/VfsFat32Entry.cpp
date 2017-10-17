@@ -9,11 +9,7 @@
 
 namespace filesystem {
 
-VfsFat32Entry::VfsFat32Entry(const Fat32Entry& e, const kstd::string custom_name) : entry(e) {
-    if (custom_name.empty())
-        name = e.get_name();
-    else
-        name = custom_name;
+VfsFat32Entry::VfsFat32Entry(const Fat32Entry& e) : entry(e) {
 }
 
 VfsFat32Entry::~VfsFat32Entry() {
@@ -28,7 +24,7 @@ u32 VfsFat32Entry::get_size() const {
 }
 
 const kstd::string& VfsFat32Entry::get_name() const {
-    return name;
+    return entry.get_name();
 }
 
 u32 VfsFat32Entry::read(void* data, u32 count) {
@@ -68,7 +64,4 @@ VfsEnumerateResult VfsFat32Entry::enumerate_entries(const OnVfsEntryFound& on_en
     return VfsEnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
 }
 
-void VfsFat32Entry::set_custom_name(const kstd::string& name) {
-    this->name = name;
-}
 } /* namespace filesystem */

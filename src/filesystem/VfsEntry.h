@@ -35,6 +35,8 @@ public:
     VfsEntry() {};
     virtual ~VfsEntry() {}
 
+    virtual bool is_mount_point() { return false; }
+
     // [common interface]
     virtual bool is_directory() const = 0;
     virtual const kstd::string& get_name() const = 0;
