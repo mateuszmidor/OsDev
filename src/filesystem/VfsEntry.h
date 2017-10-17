@@ -24,16 +24,19 @@ enum class VfsEnumerateResult {
 class VfsEntry;
 using OnVfsEntryFound = std::function<bool(VfsEntry& e)>;
 
+/**
+ * @brief   This class is an interface for Virtual File System entry (file or directory)
+ */
 class VfsEntry {
 public:
-    VfsEntry();
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry);
-    operator bool() const;
-    bool operator!() const;
+    VfsEntry() {};
+    virtual ~VfsEntry() {}
 
-    kstd::string            name;
-    bool                    is_dir = false;
-    kstd::vector<VfsEntry*> entries;
+    virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;
+    virtual bool is_directory() const = 0;
+    virtual u32 get_size() const = 0;
+    virtual const kstd::string& get_name() const = 0;
+    virtual VfsEntry* clone() const = 0;
 };
 
 } /* namespace filesystem */
