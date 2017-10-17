@@ -51,7 +51,6 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // copy elf sections into address space and remember where free virtual memory starts
     u64 entry_point = utils::Elf64::load_into_current_addressspace(elf_file_data);
     u64 free_virtual_mem_start = utils::Elf64::get_available_memory_first_byte(elf_file_data);
-    delete[] elf_file_data; // data copied and no longer needed
 
     // free to use user space memory is between elf image last byte and elf stack first byte
     BumpAllocationPolicy userspace_allocator(free_virtual_mem_start, ELF_VIRTUAL_MEM_BYTES - ELF_STACK_SIZE);
