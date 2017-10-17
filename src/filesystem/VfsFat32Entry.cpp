@@ -31,6 +31,22 @@ const kstd::string& VfsFat32Entry::get_name() const {
     return name;
 }
 
+u32 VfsFat32Entry::read(void* data, u32 count) {
+    return entry.read(data, count);
+}
+
+u32 VfsFat32Entry::write(const void* data, u32 count) {
+    return entry.write(data, count);
+}
+
+bool VfsFat32Entry::seek(u32 new_position) {
+    return entry.seek(new_position);
+}
+
+bool VfsFat32Entry::truncate(u32 new_size) {
+    return entry.truncate(new_size);
+}
+
 /**
  * @brief   Enumerate directory contents
  * @param   on_entry Callback called for every valid element in the directory

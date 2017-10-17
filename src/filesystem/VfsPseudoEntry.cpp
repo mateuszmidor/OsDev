@@ -23,6 +23,22 @@ u32 VfsPseudoEntry::get_size() const {
     return size;
 }
 
+u32 VfsPseudoEntry::read(void* data, u32 count) {
+    return 0;
+}
+
+u32 VfsPseudoEntry::write(const void* data, u32 count) {
+    return 0;
+}
+
+bool VfsPseudoEntry::seek(u32 new_position) {
+    return false;
+}
+
+bool VfsPseudoEntry::truncate(u32 new_size) {
+    return false;
+}
+
 const kstd::string& VfsPseudoEntry::get_name() const {
     return name;
 }

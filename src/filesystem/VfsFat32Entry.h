@@ -21,9 +21,18 @@ public:
     VfsFat32Entry(const Fat32Entry& e, const kstd::string custom_name = "");
     ~VfsFat32Entry() override;
 
+    // [common interface]
     bool is_directory() const override;
+    const kstd::string& get_name() const;
+
+    // [file interface]
     u32 get_size() const override;
-    const kstd::string& get_name() const override;
+    u32 read(void* data, u32 count) override;
+    u32 write(const void* data, u32 count) override;
+    bool seek(u32 new_position) override;
+    bool truncate(u32 new_size) override;
+
+    // [directory interface]
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
 
     void set_custom_name(const kstd::string& name);

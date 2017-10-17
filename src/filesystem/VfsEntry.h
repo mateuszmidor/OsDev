@@ -35,10 +35,19 @@ public:
     VfsEntry() {};
     virtual ~VfsEntry() {}
 
-    virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;
+    // [common interface]
     virtual bool is_directory() const = 0;
-    virtual u32 get_size() const = 0;
     virtual const kstd::string& get_name() const = 0;
+
+    // [file interface]
+    virtual u32 get_size() const = 0;
+    virtual u32 read(void* data, u32 count) = 0;
+    virtual u32 write(const void* data, u32 count) = 0;
+    virtual bool seek(u32 new_position) = 0;
+    virtual bool truncate(u32 new_size) = 0;
+
+    // [directory interface]
+    virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;
 };
 
 } /* namespace filesystem */
