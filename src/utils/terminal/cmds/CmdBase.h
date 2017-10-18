@@ -17,7 +17,7 @@ public:
     CmdBase(u64 arg);
     virtual ~CmdBase() {}
     virtual void run() = 0;
-    kstd::string make_absolute_filename(const kstd::string relative_filename) const;
+    kstd::string make_absolute_filename(const kstd::string& relative_filename) const;
 
 protected:
     terminal::TerminalEnv* env;

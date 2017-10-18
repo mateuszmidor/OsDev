@@ -23,8 +23,6 @@ private:
     void navigate_path(const kstd::string& path);
     void cd_root();
     void navigate_back();
-    void cd_volume_directory(const kstd::string& path);
-    void split_volume_path(const kstd::string& location, kstd::string& volume, kstd::string& path) const;
     void cd_directory(const kstd::string& path);
     kstd::string normalize_path(const kstd::string& path) const;
     void store_last_location();

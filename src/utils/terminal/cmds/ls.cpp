@@ -22,7 +22,11 @@ void ls::run() {
         return true;
     };
 
-    string path = make_absolute_filename(env->cmd_args[1]);
+    string path;
+    if (env->cmd_args.size() == 1)
+        path = env->cwd;
+    else
+        path = make_absolute_filename(env->cmd_args[1]);
 
     VfsManager& vfs = VfsManager::instance();
     VfsEntryPtr e = vfs.get_entry(path);
