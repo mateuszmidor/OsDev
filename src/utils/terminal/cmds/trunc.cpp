@@ -17,7 +17,7 @@ void trunc::run() {
         return;
     }
 
-    string filename = env->cwd + "/" + env->cmd_args[1];
+    string filename = make_absolute_filename(env->cmd_args[1]);
     u32 new_size = kstd::str_to_long(env->cmd_args[2].c_str());
 
     VfsEntryPtr e = env->vfs_manager.get_entry(filename);

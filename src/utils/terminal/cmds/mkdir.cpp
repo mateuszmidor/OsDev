@@ -16,7 +16,7 @@ void mkdir::run() {
         return;
     }
 
-    string dirname = env->cwd + "/" + env->cmd_args[1];
+    string dirname = make_absolute_filename(env->cmd_args[1]);
 
     if (!env->vfs_manager.create_entry(dirname, true)) {
         env->printer->format("mkdir: could not create directory '%'\n", dirname);

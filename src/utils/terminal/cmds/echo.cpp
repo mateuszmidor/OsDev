@@ -17,7 +17,7 @@ void echo::run() {
         return;
     }
 
-    string filename = env->cwd + "/" + env->cmd_args[1];
+    string filename = make_absolute_filename(env->cmd_args[1]);
     VfsEntryPtr e = env->vfs_manager.create_entry(filename, false);
     if (!e) {
         env->printer->format("echo: couldn't create file '%'\n", filename);

@@ -18,8 +18,8 @@ void mv::run() {
         return;
     }
 
-    string from = env->cwd + "/" + env->cmd_args[1];
-    string to = env->cwd + "/" + env->cmd_args[2];
+    string from = make_absolute_filename(env->cmd_args[1]);
+    string to = make_absolute_filename(env->cmd_args[2]);
     if (!env->vfs_manager.move_entry(from, to))
         env->printer->format("mv: couldn't move entry from '%' to '%'\n", from, to);
 }

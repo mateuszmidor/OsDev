@@ -23,15 +23,9 @@ void rm::run() {
         return;
     }
 
-    string path = env->cmd_args[1];
-    string absolute_path;
+    string filename = make_absolute_filename(env->cmd_args[1]);
 
-    if (env->cwd.back() == '/')
-        absolute_path = format("%%", env->cwd, path);
-    else
-        absolute_path = format("%/%", env->cwd, path);
-
-    if (!env->vfs_manager.delete_entry(absolute_path))
-        env->printer->format("rm: unable to remove %\n", absolute_path);
+    if (!env->vfs_manager.delete_entry(filename))
+        env->printer->format("rm: unable to remove %\n", filename);
 }
 } /* namespace cmds */

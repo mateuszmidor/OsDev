@@ -18,7 +18,7 @@ void cat::run() {
         return;
     }
 
-    string filename = env->cwd + "/" + env->cmd_args[1];
+    string filename = make_absolute_filename(env->cmd_args[1]);
     VfsEntryPtr e = env->vfs_manager.get_entry(filename);
     if (!e) {
         env->printer->format("cat: file % doesnt exist\n", filename);
