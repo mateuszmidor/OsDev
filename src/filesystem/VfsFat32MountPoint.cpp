@@ -60,11 +60,17 @@ VfsEnumerateResult VfsFat32MountPoint::enumerate_entries(const OnVfsEntryFound& 
 }
 
 VfsEntryPtr VfsFat32MountPoint::get_entry(const UnixPath& unix_path) {
-    return std::make_shared<VfsFat32Entry>(volume.get_entry(unix_path));
+    if (auto e = volume.get_entry(unix_path))
+        return std::make_shared<VfsFat32Entry>(e);
+    else
+        return nullptr;
 }
 
 VfsEntryPtr VfsFat32MountPoint::create_entry(const UnixPath& unix_path, bool is_directory) const {
-    return std::make_shared<VfsFat32Entry>(volume.create_entry(unix_path, is_directory));
+    if (auto e = volume.create_entry(unix_path, is_directory))
+        return std::make_shared<VfsFat32Entry>(e);
+    else
+        return nullptr;
 }
 
 bool VfsFat32MountPoint::delete_entry(const UnixPath& unix_path) const {
