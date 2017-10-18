@@ -22,4 +22,7 @@ const kstd::string& KernelLog::get_text() const {
     return log_str;
 }
 
+void KernelLog::clear() {
+    log_str.clear();
+}
 } // namespace utils
