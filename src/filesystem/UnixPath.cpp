@@ -11,12 +11,11 @@ using namespace kstd;
 namespace filesystem {
 
 UnixPath::UnixPath(const char path[]) :
-    path(path) {
-
+    path(normalize(path)) {
 }
 
 UnixPath::UnixPath(const string& path) :
-    path(path) {
+    path(normalize(path)) {
 }
 
 bool UnixPath::is_valid_absolute_path() const {
@@ -41,9 +40,9 @@ UnixPath::operator string() const {
  * @brief   Normalize complex unix-like path eg. /user/home/../data/./   into /user/home/data
  *          In generale, this method takes care of '.' and '..' in the path
  */
-UnixPath UnixPath::normalize() const {
+string UnixPath::normalize(const kstd::string& path) const {
     if (path.empty())
-        return UnixPath("");
+        return {};
 
     auto segments = split_string<vector<string>>(path, '/');
     vector<string> out;

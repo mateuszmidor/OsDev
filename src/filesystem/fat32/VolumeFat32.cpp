@@ -78,8 +78,7 @@ Fat32Entry VolumeFat32::get_entry(const UnixPath& unix_path) const {
     Fat32Entry e = get_root_dentry();
 
     // ...and descend down the path to the very last entry
-    auto normalized_unix_path = unix_path.normalize(); // this takes care of '.' and '..'
-    auto segments = kstd::split_string<vector<string>>(normalized_unix_path, '/');
+    auto segments = kstd::split_string<vector<string>>(unix_path, '/');
     for (const auto& path_segment : segments) {
         if (!e.is_dir) {
             klog.format("VolumeFat32::get_entry: entry '%' is not a directory\n", e.name);

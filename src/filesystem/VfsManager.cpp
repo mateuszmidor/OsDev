@@ -22,24 +22,21 @@ VfsManager& VfsManager::instance() {
 }
 
 /**
- * @brief   Install elementary filesystem entries under "/", including available ata devices/volumes
+ * @brief   Install elementary filesystem entries under "/", including available ata volumes
  */
 void VfsManager::install_root() {
-    std::shared_ptr<VfsPseudoEntry> pseudo_root = std::make_shared<VfsPseudoEntry>("/", true);
-
-    VfsEntryPtr mnt = std::make_shared<VfsPseudoEntry>("mnt", true);
-    pseudo_root->entries.push_back(mnt);
-    root = pseudo_root;
-
-    install_ata_devices();
+    VfsPseudoEntryPtr mnt = std::make_shared<VfsPseudoEntry>("mnt", true);
+    root = std::make_shared<VfsPseudoEntry>("/", true);
+    root->entries.push_back(mnt);
+    install_ata_devices(mnt);
 }
 
 /**
- * @brief   Get any entry currently available in virtual file system
+ * @brief   Get any entry that exists in virtual file system
  * @param   unix_path Absolute entry path starting at root "/"
  * @return  Pointer to entry if found, nullptr otherwise
  */
-VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
+VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) const {
     if (!root) {
         klog.format("VfsManager::get_entry: no root is installed\n");
         return nullptr;
@@ -54,8 +51,7 @@ VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
     VfsEntryPtr e = root;
 
     // ...and descend down the path to the very last entry
-    auto normalized_unix_path = unix_path.normalize(); // this takes care of '.' and '..'
-    auto segments = kstd::split_string<vector<string>>(normalized_unix_path, '/');
+    auto segments = kstd::split_string<vector<string>>(unix_path, '/');
     for (const auto& path_segment : segments) {
         if (!e->is_directory()) {
             klog.format("VfsManager::get_entry: entry '%' is not a directory\n", e->get_name());
@@ -75,13 +71,14 @@ VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
 
 /**
  * @brief   Create new file/directory for given unix path
+ * @param   unix_path Absolute entry path starting at root "/"
  * @return  Entry pointer if created successfully, nullptr entry otherwise
  */
 VfsEntryPtr VfsManager::create_entry(const UnixPath& unix_path, bool is_directory) const {
-    string path = unix_path;
-    VfsMountPointPtr mount_point = get_mountpoint_path(path);
+    string mountpoint_path = unix_path;
+    VfsMountPointPtr mount_point = get_mountpoint_path(mountpoint_path);
     if (mount_point)
-        return mount_point->create_entry(path, is_directory);
+        return mount_point->create_entry(mountpoint_path, is_directory);
     else {
         klog.format("VfsManager::create_entry: unmodifiable filesystem: %\n", unix_path);
         return nullptr;
@@ -90,13 +87,14 @@ VfsEntryPtr VfsManager::create_entry(const UnixPath& unix_path, bool is_director
 
 /**
  * @brief   Delete file or empty directory
+ * @param   unix_path Absolute entry path starting at root "/"
  * @return  True on successful deletion, False otherwise
  */
 bool VfsManager::delete_entry(const UnixPath& unix_path) const {
-    string path = unix_path;
-    VfsMountPointPtr mount_point = get_mountpoint_path(path);
+    string mountpoint_path = unix_path;
+    VfsMountPointPtr mount_point = get_mountpoint_path(mountpoint_path);
     if (mount_point)
-        return mount_point->delete_entry(path);
+        return mount_point->delete_entry(mountpoint_path);
     else {
         klog.format("VfsManager::delete_entry: unmodifiable filesystem: %\n", unix_path);
         return false;
@@ -110,30 +108,86 @@ bool VfsManager::delete_entry(const UnixPath& unix_path) const {
  * @return  True on success, False otherwise
  */
 bool VfsManager::move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const {
-    string path_from = unix_path_from;
-    VfsMountPointPtr mount_point_from = get_mountpoint_path(path_from);
+    string mountpoint_path_from = unix_path_from;
+    VfsMountPointPtr mount_point_from = get_mountpoint_path(mountpoint_path_from);
     if (!mount_point_from) {
-        klog.format("VfsManager::move_entry: unmodifiable filesystem: %\n", unix_path_from);
+        klog.format("VfsManager::move_entry: unmodifiable src filesystem: %\n", unix_path_from);
         return false;
     }
 
-    string path_to = unix_path_to;
-    VfsMountPointPtr mount_point_to = get_mountpoint_path(path_to);
+    string mountpoint_path_to = unix_path_to;
+    VfsMountPointPtr mount_point_to = get_mountpoint_path(mountpoint_path_to);
     if (!mount_point_to) {
-        klog.format("VfsManager::move_entry: unmodifiable filesystem: %\n", unix_path_to);
+        klog.format("VfsManager::move_entry: unmodifiable dst filesystem: %\n", unix_path_to);
         return false;
     }
 
-    // check if move within same mount point
-    if (mount_point_from == mount_point_to)
-        return mount_point_from->move_entry(path_from, path_to);
+    // check if move within same mount point, this is more optimal scenario
+    if (mount_point_from == mount_point_to) {
+        klog.format("VfsManager::move_entry: moving within same mountpoint: % -> %\n", unix_path_from, unix_path_to);
+        return mount_point_from->move_entry(mountpoint_path_from, mountpoint_path_to);
+    }
 
+    // nope, move between different mountpoints
+    klog.format("VfsManager::move_entry: moving between 2 mountpoint: % -> %\n", unix_path_from, unix_path_to);
+    if (copy_entry(unix_path_from, unix_path_to))
+        return mount_point_from->delete_entry(mountpoint_path_from);
+    else
+        return false;
+}
 
-    // nope, move betweed different mountpoints
-    // copy_entry(unix_path_from, unix_path_to);
-    // mount_point_from->delete_entry(unix_path_from);
+/**
+ * @brief   Copy file within virtual filesystem. Copying entire directories not available; use make_entry(is_dir=true) + copy_entry
+ * @param   unix_path_from Absolute source entry path
+ * @param   unix_path_to Absolute destination path/destination directory to copy the entry into
+ * @return  True on success, False otherwise
+ */
+bool VfsManager::copy_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const {
+    // source must exist
+    VfsEntryPtr src = get_entry(unix_path_from);
+    if (!src) {
+        klog.format("VfsManager::copy_entry: source doesnt exist: %\n", unix_path_from);
+        return false;
+    }
 
-    return false;
+    // source must be a file not a directory
+    if (src->is_directory()) {
+        klog.format("VfsManager::copy_entry: source is a directory. Use create_entry + copy_entry: %\n", unix_path_from);
+        return false;
+    }
+
+    // destination must have its managing mountpoint
+    string mountpoint_path_to = unix_path_to;
+    VfsMountPointPtr mount_point_to = get_mountpoint_path(mountpoint_path_to);
+    if (!mount_point_to) {
+        klog.format("VfsManager::copy_entry: unmodifiable dst filesystem: %\n", unix_path_to);
+        return false;
+    }
+
+    // check if unix_path_to describes destination directory or full destination path including filename
+    UnixPath final_path_to;
+    VfsEntryPtr dst = mount_point_to->get_entry(mountpoint_path_to);
+    if (dst && dst->is_directory())
+        final_path_to = format("%/%", unix_path_to, unix_path_from.extract_file_name());
+    else
+        final_path_to = unix_path_to;
+
+    // create actual dest entry
+    dst = create_entry(final_path_to, src->is_directory());
+    if (!dst) {
+        klog.format("VfsManager::copy_entry: can't create dst entry '%'\n", final_path_to);
+        return false;
+    }
+
+    // dest entry created, just copy contents
+    const u32 BUFF_SIZE = 1024;
+    char buff[BUFF_SIZE]; // static to make sure recursive calls dont exhaust task stack
+    u32 count;
+    while ((count = src->read(buff, BUFF_SIZE)) > 0) {
+        dst->write(buff, count);
+    }
+
+    return true;
 }
 
 /**
@@ -157,47 +211,67 @@ VfsEntryPtr VfsManager::get_entry_for_name(VfsEntryPtr parent_dir, const string&
 }
 
 /**
- * @brief   Install all devices under primary and secondary ata bus in "/mnt"
+ * @brief   Install all ata devices/volumes under "parent"
  */
-void VfsManager::install_ata_devices() {
+void VfsManager::install_ata_devices(VfsPseudoEntryPtr parent) {
     auto& driver_manager = DriverManager::instance();
+
     auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
     if (!ata_primary_bus)
         return;
 
     if (ata_primary_bus->master_hdd.is_present()) {
-        install_volumes(ata_primary_bus->master_hdd);
+        install_volumes(ata_primary_bus->master_hdd, parent);
     }
 
     if (ata_primary_bus->slave_hdd.is_present()) {
-        install_volumes(ata_primary_bus->slave_hdd);
+        install_volumes(ata_primary_bus->slave_hdd, parent);
+    }
+
+    auto ata_secondary_bus = driver_manager.get_driver<AtaSecondaryBusDriver>();
+    if (!ata_secondary_bus)
+        return;
+
+    if (ata_secondary_bus->master_hdd.is_present()) {
+        install_volumes(ata_secondary_bus->master_hdd, parent);
+    }
+
+    if (ata_secondary_bus->slave_hdd.is_present()) {
+        install_volumes(ata_secondary_bus->slave_hdd, parent);
     }
 }
 
-void VfsManager::install_volumes(AtaDevice& hdd) {
+/**
+ * @brief   Install all volumes available in "hdd" under "parent"
+ */
+void VfsManager::install_volumes(AtaDevice& hdd, VfsPseudoEntryPtr parent) {
     if (!MassStorageMsDos::verify(hdd))
         return;
 
-    std::shared_ptr<VfsPseudoEntry> mnt = std::static_pointer_cast<VfsPseudoEntry>(get_entry("/mnt"));
-    if (!mnt)
+    if (!parent)
         return;
 
     MassStorageMsDos ms(hdd);
     for (auto& v : ms.get_volumes()) {
         VfsEntryPtr drive = std::make_shared<VfsFat32MountPoint>(v);
-        mnt->entries.push_back(drive);
+        parent->entries.push_back(drive);
     }
 }
 
 /**
- * @brief   Get mountpoint installed on the "path", cut "path" to start at the mountpoint
+ * @brief   Get mountpoint installed on the "path" and cut "path" to start at the mountpoint
  *          eg. for /mnt/USB/pictures/logo.jpg
- *              mountpoint would be USB and path would be /pictures/logo.jpg
- * @param   path Absolute path
+ *              mountpoint would be USB and resulting path would be /pictures/logo.jpg
+ * @param   path Absolute unix path
  * @return  Mountpoint if found, nullptr otherwise
  * @note    Path without mountpoint is unmodifiable as there is no manager that can modify it
  */
 VfsMountPointPtr VfsManager::get_mountpoint_path(kstd::string& path) const {
+    if (!root) {
+        klog.format("VfsManager::get_mountpoint_path: no root is installed\n");
+        return nullptr;
+    }
+
     VfsEntryPtr e = root;
     do  {
         string path_segment = snap_head(path, '/');

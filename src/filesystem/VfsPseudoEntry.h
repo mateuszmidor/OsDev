@@ -41,6 +41,8 @@ public:
     kstd::vector<VfsEntryPtr>   entries;
 };
 
+using VfsPseudoEntryPtr = std::shared_ptr<VfsPseudoEntry>;
+
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_VFSPSEUDOENTRY_H_ */
