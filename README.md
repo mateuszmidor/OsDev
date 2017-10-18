@@ -12,11 +12,12 @@ Credits to the authors!
 # Features
  + GRUB2 bootable
  + 64 bit kernel
- + memory paging
+ + memory paging (2MB pages) and on-page-fault allocator
  + dynamic memory (simple bump allocator for now)
  + higher-half (linux-like, kernel starts at virt. 0xFFFFFFFF80000000)
  + multitasking
  + kernel/user space
+ + ELF64 support (-static -nostdlib) - can exit with return value; system calls to be implemented
  + MBR/Fat32 driver (no long names)
  + PS/2 mouse driver
  + Keyboard driver
