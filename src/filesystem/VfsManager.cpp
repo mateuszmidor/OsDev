@@ -115,6 +115,12 @@ bool VfsManager::move_entry(const UnixPath& unix_path_from, const UnixPath& unix
         return false;
     }
 
+    // check if moving mountpoint itself, cant do that
+    if (mountpoint_path_from == "/") {
+        klog.format("VfsManager::move_entry: can't move mountpoint just like that :) %\n", unix_path_from);
+        return false;
+    }
+
     string mountpoint_path_to = unix_path_to;
     VfsMountPointPtr mount_point_to = get_mountpoint_path(mountpoint_path_to);
     if (!mount_point_to) {

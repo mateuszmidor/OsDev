@@ -35,8 +35,6 @@ public:
     // [directory interface]
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
 
-    void set_custom_name(const kstd::string& name);
-
 private:
     Fat32Entry      entry;
 };

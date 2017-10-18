@@ -16,32 +16,8 @@ VfsFat32MountPoint::VfsFat32MountPoint(const VolumeFat32& volume) : volume(volum
 VfsFat32MountPoint::~VfsFat32MountPoint() {
 }
 
-bool VfsFat32MountPoint::is_directory() const {
-    return root.is_directory();
-}
-
-u32 VfsFat32MountPoint::get_size() const {
-    return root.get_size();
-}
-
 const kstd::string& VfsFat32MountPoint::get_name() const {
     return name;
-}
-
-u32 VfsFat32MountPoint::read(void* data, u32 count) {
-    return root.read(data, count);
-}
-
-u32 VfsFat32MountPoint::write(const void* data, u32 count) {
-    return root.write(data, count);
-}
-
-bool VfsFat32MountPoint::seek(u32 new_position) {
-    return root.seek(new_position);
-}
-
-bool VfsFat32MountPoint::truncate(u32 new_size) {
-    return root.truncate(new_size);
 }
 
 /**

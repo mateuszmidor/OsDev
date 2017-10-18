@@ -14,11 +14,21 @@
 namespace filesystem {
 
 /**
- * @brief   This class is a Virtual File System mount point interface
+ * @brief   This class is a Virtual File System mount point interface. Such a mount point manages entire subtree, eg entire filesystem volume
  */
 class VfsMountPoint: public VfsEntry {
 public:
-    bool is_mount_point() override { return true; }
+
+    // [common interface]
+    bool is_directory() const override          { return true; }
+    bool is_mount_point() const override        { return true; }
+
+    // [file interface - not applicable for mountpoint]
+    u32 get_size() const override               { return 0; }
+    u32 read(void* data, u32 count) override    { return 0; }
+    u32 write(const void* data, u32 count)      { return 0; }
+    bool seek(u32 new_position) override        { return false; }
+    bool truncate(u32 new_size) override        { return false; };
 
     // [volume interface]
     virtual VfsEntryPtr get_entry(const UnixPath& unix_path) = 0;

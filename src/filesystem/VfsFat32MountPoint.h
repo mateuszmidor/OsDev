@@ -13,21 +13,16 @@
 
 namespace filesystem {
 
+/**
+ * @brief   This class is Fat32 implementation for Virtual File System mountpoint that manages entire volume
+ */
 class VfsFat32MountPoint: public VfsMountPoint {
 public:
     VfsFat32MountPoint(const VolumeFat32& volume);
     virtual ~VfsFat32MountPoint();
 
     // [common interface]
-    bool is_directory() const override;
     const kstd::string& get_name() const;
-
-    // [file interface]
-    u32 get_size() const override;
-    u32 read(void* data, u32 count) override;
-    u32 write(const void* data, u32 count) override;
-    bool seek(u32 new_position) override;
-    bool truncate(u32 new_size) override;
 
     // [directory interface]
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
@@ -39,9 +34,9 @@ public:
     bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const override;
 
 private:
-    const VolumeFat32&    volume; // volume comes from
-    Fat32Entry      root;
-    kstd::string    name;
+    const VolumeFat32&  volume; // volume comes from
+    Fat32Entry          root;
+    kstd::string        name;
 };
 
 } /* namespace filesystem */
