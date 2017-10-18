@@ -34,6 +34,7 @@
 #include "cmds/mb2.h"
 #include "cmds/elfinfo.h"
 #include "cmds/elfrun.h"
+#include "cmds/cp.h"
 #include <algorithm>
 
 using namespace kstd;
@@ -69,6 +70,7 @@ Terminal::Terminal(u64 arg) :
     install_cmd<cmds::cd>("cd");
     install_cmd<cmds::rm>("rm");
     install_cmd<cmds::mv>("mv");
+    install_cmd<cmds::cp>("cp");
     install_cmd<cmds::echo>("echo");
     install_cmd<cmds::mkdir>("mkdir");
     install_cmd<cmds::tail>("tail");
