@@ -236,7 +236,7 @@ string join_string(string separator, const C& elements) {
     return result;
 }
 
-string snap_head(string& s, char delimiter);
+string snap_head(string& str, char delimiter);
 }; // namespace kstd
 
 #endif /* SRC_KSTD_H_ */
