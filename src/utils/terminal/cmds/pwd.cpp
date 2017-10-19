@@ -10,9 +10,6 @@
 namespace cmds {
 
 void pwd::run() {
-    if (env->volumes.empty())
-        env->printer->format("No volumes installed\n");
-    else
-        env->printer->format("/%%\n", env->volume->get_label(), env->cwd);
+    env->printer->format("%\n", env->cwd);
 }
 } /* namespace cmds */

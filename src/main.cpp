@@ -5,19 +5,18 @@
  * @author: Mateusz Midor
  */
 
+#include "kstd.h"
 #include "GlobalConstructorsRunner.h"
 #include "Gdt.h"
 #include "KernelLog.h"
 #include "Multiboot2.h"
-#include "CpuInfo.h"
 #include "KeyboardScanCodeSet.h"
 #include "InterruptManager.h"
-#include "kstd.h"
-#include "types.h"
 #include "DriverManager.h"
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "PitDriver.h"
+#include "Int80hDriver.h"
 #include "PCIController.h"
 #include "ExceptionManager.h"
 #include "VgaDriver.h"
@@ -28,6 +27,7 @@
 #include "MemoryManager.h"
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
+#include "VfsManager.h"
 #include "Sse.h"
 #include "PageTables.h"
 #include "_demos/Demo.h"
@@ -36,7 +36,6 @@
 #include "_demos/MouseDemo.h"
 #include "_demos/MultitaskingDemo.h"
 #include "_demos/CpuSpeedDemo.h"
-#include "drivers/Int80hDriver.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -48,7 +47,7 @@ using namespace memory;
 using namespace syscalls;
 using namespace utils;
 using namespace demos;
-
+using namespace filesystem;
 
 MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();
@@ -57,6 +56,7 @@ DriverManager& driver_manager       = DriverManager::instance();
 ExceptionManager& exception_manager = ExceptionManager::instance();
 InterruptManager& interrupt_manager = InterruptManager::instance();
 SysCallManager& syscall_manager     = SysCallManager::instance();
+VfsManager& vfs_manager             = VfsManager::instance();
 Gdt                     gdt;
 PCIController           pcic;
 KeyboardScanCodeSet1    scs1;
@@ -145,11 +145,14 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 8. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
 
-    // 9. configure vga text mode
+    // 9. install filesystem root "/"
+    vfs_manager.install_root();
+
+    // 10. configure vga text mode
     if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
         vga_drv->set_text_mode_90_30();
 
-    // 10. start multitasking
+    // 11. start multitasking
     task_manager.add_task(Task::make_kernel_task(task_init, "init"));
     Task::idle();
 }

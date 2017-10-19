@@ -12,18 +12,13 @@ using namespace filesystem;
 namespace cmds {
 
 void echo::run() {
-    if (env->volumes.empty()) {
-        env->printer->format("echo: no volumes installed\n");
-        return;
-    }
-
     if (env->cmd_args.size() < 2) {
         env->printer->format("echo: please specify file name\n");
         return;
     }
-    string filename = env->cwd + "/" + env->cmd_args[1];
-    VolumeFat32* v = env->volume;
-    auto e = v->create_entry(filename, false);
+
+    string filename = make_absolute_filename(env->cmd_args[1]);
+    VfsEntryPtr e = env->vfs_manager.create_entry(filename, false);
     if (!e) {
         env->printer->format("echo: couldn't create file '%'\n", filename);
         return;
@@ -43,12 +38,11 @@ void echo::run() {
         number_str += "#";
     }
 
-
     env->klog->format("echo: writing % bytes of data\n", number_str.length());
-    e.write(number_str.data(), number_str.length());
+    e->write(number_str.data(), number_str.length());
 
     number_str = "!!!";
     env->klog->format("echo: writing '!!!' at the end\n", number_str.length());
-    e.write(number_str.data(), number_str.length());
+    e->write(number_str.data(), number_str.length());
 }
 } /* namespace cmds */

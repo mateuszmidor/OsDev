@@ -16,6 +16,7 @@ class KernelLog {
 public:
     static KernelLog& instance();
     const kstd::string& get_text() const;
+    void clear();
 
     /**
      * @name    format

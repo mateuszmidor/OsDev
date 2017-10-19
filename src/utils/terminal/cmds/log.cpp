@@ -10,6 +10,18 @@
 namespace cmds {
 
 void log::run() {
-    env->printer->format("%\n", env->klog->get_text());
+    if (env->cmd_args.size() == 1) {
+        env->printer->format("%\n", env->klog->get_text());
+        return;
+    }
+
+    // given a parameter
+    const kstd::string action = env->cmd_args[1];
+    if (action == "-clear")
+       env->klog->clear();
+    else
+       env->printer->format("log: invalid command %\n", action);
+
+
 }
 } /* namespace cmds */

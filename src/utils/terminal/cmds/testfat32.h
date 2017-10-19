@@ -18,9 +18,9 @@ public:
     void run() override;
 
 private:
-    void cleanup(filesystem::VolumeFat32& v);
-    void generate(filesystem::VolumeFat32& v);
-    void remove(filesystem::VolumeFat32& v);
+    void cleanup();
+    void generate();
+    void remove();
 
     static const u32 NUM_ENTRIES = 256;
 };

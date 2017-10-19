@@ -258,4 +258,19 @@ string format(char const *fmt) {
     return string(fmt);
 }
 
+// cuts off head of the str that ends with "delimiter" or returns whole str if no "delimiter" found
+// can return empty string in case str starts with delimiter
+string snap_head(string& str, char delimiter) {
+    auto pivot = str.find(delimiter);
+
+    // last segment?
+    if (pivot == string::npos)
+        return std::move(str); // move clears str
+
+    string result = str.substr(0, pivot);
+    str = str.substr(pivot + 1, str.length());
+
+    return result;
+}
+
 } // namespace kstd
