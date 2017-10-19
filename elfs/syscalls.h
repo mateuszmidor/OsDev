@@ -8,6 +8,11 @@
 #ifndef ELFS_SYSCALLS_H_
 #define ELFS_SYSCALLS_H_
 
+#include <cstddef>      // size_t
+#include <sys/types.h>  // ssize_t
+
+namespace syscalls {
+
 using syscall_res = unsigned long long;
 using syscall_arg = unsigned long long;
 
@@ -30,9 +35,23 @@ syscall_res syscall(unsigned int syscall_no,
     return result;
 }
 
-int write(int fd, const char str[], unsigned int len) {
-    return syscall(1, (syscall_arg)fd, syscall_arg(str), syscall_arg(len));
+ssize_t read(int fd, void* buf, size_t count) {
+    return syscall(0, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
 }
+
+ssize_t write(int fd, const void* buf, size_t count) {
+    return syscall(1, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
+}
+
+int open(const char* absolute_path, int flags = 0) {
+    return syscall(2, (syscall_arg)absolute_path, (syscall_arg)flags);
+}
+
+int close(int fd) {
+    return syscall(3, (syscall_arg)fd);
+}
+
+} // namespace syscalls
 
 
 

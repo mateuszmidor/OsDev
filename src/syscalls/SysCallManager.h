@@ -38,6 +38,9 @@ public:
     static SysCallManager& instance();
 
     void config_and_activate_syscalls();
+    s32 file_open(const char* name, u32 flags, u32 mode);
+    s32 file_close(u32 fd);
+    ssize_t file_read(int fd, void *buf, size_t count);
 
 private:
     static SysCallManager _instance;
@@ -45,6 +48,7 @@ private:
     SysCallManager() {}
     SysCallManager operator=(const SysCallManager&) = delete;
     SysCallManager operator=(SysCallManager&&) = delete;
+
 };
 
 } /* namespace syscalls */

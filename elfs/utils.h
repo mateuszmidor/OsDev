@@ -8,6 +8,9 @@
 #ifndef ELFS_UTILS_H_
 #define ELFS_UTILS_H_
 
+#include <string.h>
+#include "syscalls.h"
+
 /**
  * @brief   Convert string to long
  */
@@ -75,6 +78,14 @@ void long_to_str(long long num, unsigned char base, char buff_12_chars[12]) {
         start++;
         end--;
     }
+}
+
+void print(const char str[], size_t count) {
+    syscalls::write(2, str, count);
+}
+
+void print(const char str[]) {
+   print(str, strlen(str));
 }
 
 #endif /* ELFS_UTILS_H_ */

@@ -8,10 +8,11 @@
 #include "Task.h"
 #include "PageTables.h"
 #include "HigherHalf.h"
-#include "MemoryManager.h"
+#include "VfsManager.h"
 #include "KernelLog.h"
 
 using namespace hardware;
+using namespace filesystem;
 namespace multitasking {
 
 
@@ -67,6 +68,48 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
     new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg1, arg2, is_user_space, pml4_phys_addr};
 
     task_id = tid;
+}
+
+/**
+ * @brief   Get file with given absolute "name", associate file descriptor to it and return the descriptor
+ * @return  Descriptor number on success, -1 otherwise
+ */
+s32 Task::open_file(const char name[]) {
+    VfsEntryPtr entry;
+    for (u32 i = 5; i < files.size(); i++)
+        if (!files[i]) {
+            if ((entry = VfsManager::instance().get_entry(name)) && (!entry->is_directory())) {
+                files[i] = entry;
+                return i;
+            } else
+                return -1; // cant get such file
+        }
+    return -1; // open file limit reached
+}
+
+/**
+ * @brief   Close file associated with "fd" file descriptor
+ * @return  0 if valid "fd" provided, -1 otherwise
+ */
+s32 Task::close_file(u32 fd) {
+    if (fd >= files.size())
+        return -1;
+
+    if (!files[fd])
+        return -1;
+
+    files[fd].reset();
+    return 0;
+}
+
+s64 Task::read_file(u32 fd, void *buf, u64 count) {
+    if (fd >= files.size())
+        return 0;
+
+    if (!files[fd])
+        return 0;
+
+    return files[fd]->read(buf, count);
 }
 
 void Task::idle() {

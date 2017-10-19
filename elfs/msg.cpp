@@ -16,6 +16,6 @@
  */
 int main(int argc, char* argv[]) {
     const char STR[] = "Hello from user space 'msg' binary!!";
-    write(2, STR, strlen(STR));
+    syscalls::write(2, STR, strlen(STR));
     return 0;
 }

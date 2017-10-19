@@ -8,8 +8,10 @@
 #ifndef SRC_MULTITASKING_TASK_H_
 #define SRC_MULTITASKING_TASK_H_
 
+#include <array>
 #include "kstd.h"
 #include "CpuState.h"
+#include "VfsEntry.h"
 
 namespace multitasking {
 
@@ -22,6 +24,9 @@ struct Task {
     Task();
     Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size);
     void prepare(u32 tid, TaskExitPoint exitpoint);
+    s32 open_file(const char name[]);
+    s32 close_file(u32 fd);
+    s64 read_file(u32 fd, void *buf, u64 count);
 
 
     /**
@@ -76,7 +81,7 @@ struct Task {
 
 
     static const u64    DEFAULT_STACK_SIZE = 2 * 4096;
-    u32                 task_id;                    // set by TaskManager when first adding the task
+    u32                 task_id;        // set by TaskManager when first adding the task
     TaskEntryPoint2     entrypoint;     // covers TaskEntryPoint0 and TaskEntryPoint1
     kstd::string        name;
     u64                 arg1;
@@ -86,6 +91,8 @@ struct Task {
     u64                 stack_addr;
     u64                 stack_size;
     hardware::CpuState* cpu_state;
+
+    std::array<filesystem::VfsEntryPtr, 16> files;  // per-task list of open files. This should be later made per-process. TODO: concurrent access to the same file. How?
 };
 
 struct TaskEpilogue {

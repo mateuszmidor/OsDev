@@ -8,7 +8,7 @@
 #include "Gdt.h"
 #include "KernelLog.h"
 #include "SysCallManager.h"
-#include "Task.h"
+#include "TaskManager.h"
 
 using namespace utils;
 using namespace multitasking;
@@ -29,6 +29,7 @@ extern "C" void handle_syscall();
 /**
  * @brief   "syscall" handler. This is called from syscalls.S
  * @note    This is run in kernel space, using kernel stack
+ * @see     http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
  */
 extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5)  {
     SysCallManager& mngr = SysCallManager::instance();
@@ -36,19 +37,19 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
 
     klog.format("syscall_handler: % \n", sys_call_num);
     switch (sys_call_num) {
-    case 0: // read (fd, buff, count)
-        return 0;
+    case 0: // read (unsigned int fd char *buf   size_t count)
+        return mngr.file_read(arg1, (char*)arg2, arg3);
 
     case 1: // write (fd, buff, count)
         if (arg1 == 2) // stderr
-            klog.format("% [%]\n", (char*) arg2, arg3);
+            klog.format("%\n", (char*)arg2);
         break;
 
-    case 2: // open
-        return 3;
+    case 2: // open(const char* name, int flags, int mode)
+        return mngr.file_open((char*)arg1, arg2, arg3);
 
     case 3: // close
-        return 0;
+        return mngr.file_close(arg1);
 
     case 9: // mmap
         return 10*1024*1024;
@@ -155,4 +156,21 @@ void SysCallManager::config_and_activate_syscalls() {
     );
 }
 
+s32 SysCallManager::file_open(const char* name, u32 flags, u32 mode) {
+    TaskManager& mngr = TaskManager::instance();
+    Task& current = mngr.get_current_task();
+    return current.open_file(name);
+}
+
+s32 SysCallManager::file_close(u32 fd) {
+    TaskManager& mngr = TaskManager::instance();
+    Task&  current = mngr.get_current_task();
+    return current.close_file(fd);
+}
+
+ssize_t SysCallManager::file_read(int fd, void *buf, size_t count) {
+    TaskManager& mngr = TaskManager::instance();
+    Task&  current = mngr.get_current_task();
+    return current.read_file(fd, buf, count);
+}
 } /* namespace syscalls */
