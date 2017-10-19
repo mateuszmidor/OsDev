@@ -17,7 +17,9 @@ namespace terminal {
 TerminalEnv::TerminalEnv() :
     printer(nullptr), klog(nullptr), vfs_manager(VfsManager::instance()) {
 
-    if (vfs_manager.get_entry("/mnt"))
+    if (vfs_manager.get_entry("/mnt/PHOBOS_D"))
+        cwd = "/mnt/PHOBOS_D";
+    else if (vfs_manager.get_entry("/mnt"))
         cwd = "/mnt";
     else if (vfs_manager.get_entry("/"))
         cwd = "/";
