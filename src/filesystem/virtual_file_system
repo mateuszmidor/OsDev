@@ -1,0 +1,3 @@
+Virtual File System is a tree made of VfsEntry nodes, which represent files/directories.
+VfsManager holds the root node "/" and manages the tree by means of get/create/copy/move/delete actions.
+To mount an actual physical filesystem under the root, you need to add VfsMountPoint, which exposes get/create/move/delete actions of specific filesystem to the VfsManager.

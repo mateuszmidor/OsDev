@@ -8,13 +8,13 @@
 #ifndef SRC_FILESYSTEM_VFSFAT32ENTRY_H_
 #define SRC_FILESYSTEM_VFSFAT32ENTRY_H_
 
-#include "Fat32Entry.h"
 #include "VfsEntry.h"
+#include "fat32/Fat32Entry.h"
 
 namespace filesystem {
 
 /**
- * @brief   This class is Fat32Entry implementation for Virtual File System entry
+ * @brief   This class is VfsEntry adapter for Fat32Entry, so Fat32Entry can be used in VFS
  */
 class VfsFat32Entry: public VfsEntry {
 public:

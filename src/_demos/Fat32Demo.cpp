@@ -7,7 +7,7 @@
 
 #include "Fat32Demo.h"
 
-#include "MassStorageMsDos.h"
+#include "fat32/MassStorageMsDos.h"
 #include "KernelLog.h"
 #include "DriverManager.h"
 

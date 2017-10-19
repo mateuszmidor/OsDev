@@ -6,10 +6,9 @@
  */
 
 #include "df.h"
-#include "VolumeFat32.h"
 #include "kstd.h"
-#include "MassStorageMsDos.h"
 #include "DriverManager.h"
+#include "fat32/MassStorageMsDos.h"
 
 using namespace kstd;
 using namespace utils;

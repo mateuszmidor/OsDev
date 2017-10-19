@@ -27,12 +27,12 @@ const kstd::string& VfsFat32MountPoint::get_name() const {
  *          ENUMERATION_STOPPED if enumeration stopped by on_entry() returning false
  */
 VfsEnumerateResult VfsFat32MountPoint::enumerate_entries(const OnVfsEntryFound& on_entry) {
-    auto on_fat_entry = [&](const Fat32Entry& e) -> bool {
+    auto on_fat32_entry = [&](const Fat32Entry& e) -> bool {
         VfsEntryPtr entry = std::make_shared<VfsFat32Entry>(e);
         return on_entry(entry);
     };
 
-    return (VfsEnumerateResult) root.enumerate_entries(on_fat_entry);
+    return (VfsEnumerateResult) root.enumerate_entries(on_fat32_entry);
 }
 
 VfsEntryPtr VfsFat32MountPoint::get_entry(const UnixPath& unix_path) {

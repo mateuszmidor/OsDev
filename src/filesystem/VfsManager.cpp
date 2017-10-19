@@ -5,11 +5,11 @@
  * @author: Mateusz Midor
  */
 
-#include "MassStorageMsDos.h"
+#include "fat32/MassStorageMsDos.h"
+#include "adapters/VfsFat32Entry.h"
+#include "adapters/VfsFat32MountPoint.h"
 #include "DriverManager.h"
 #include "VfsManager.h"
-#include "VfsFat32Entry.h"
-#include "VfsFat32MountPoint.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -25,8 +25,8 @@ VfsManager& VfsManager::instance() {
  * @brief   Install elementary filesystem entries under "/", including available ata volumes
  */
 void VfsManager::install_root() {
-    VfsPseudoEntryPtr mnt = std::make_shared<VfsPseudoEntry>("mnt", true);
-    root = std::make_shared<VfsPseudoEntry>("/", true);
+    VfsRamEntryPtr mnt = std::make_shared<VfsRamEntry>("mnt", true);
+    root = std::make_shared<VfsRamEntry>("/", true);
     root->entries.push_back(mnt);
     install_ata_devices(mnt);
 }
@@ -219,7 +219,7 @@ VfsEntryPtr VfsManager::get_entry_for_name(VfsEntryPtr parent_dir, const string&
 /**
  * @brief   Install all ata devices/volumes under "parent"
  */
-void VfsManager::install_ata_devices(VfsPseudoEntryPtr parent) {
+void VfsManager::install_ata_devices(VfsRamEntryPtr parent) {
     auto& driver_manager = DriverManager::instance();
 
     auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
@@ -250,7 +250,7 @@ void VfsManager::install_ata_devices(VfsPseudoEntryPtr parent) {
 /**
  * @brief   Install all volumes available in "hdd" under "parent"
  */
-void VfsManager::install_volumes(AtaDevice& hdd, VfsPseudoEntryPtr parent) {
+void VfsManager::install_volumes(AtaDevice& hdd, VfsRamEntryPtr parent) {
     if (!MassStorageMsDos::verify(hdd))
         return;
 

@@ -9,12 +9,12 @@
 #define SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_
 
 #include "VfsMountPoint.h"
-#include "VolumeFat32.h"
+#include "fat32/VolumeFat32.h"
 
 namespace filesystem {
 
 /**
- * @brief   This class is Fat32 implementation for Virtual File System mountpoint that manages entire volume
+ * @brief   This class is VfsMountPoint adapter for Fat32Volume, so Fat32Volume can be mounted in VFS
  */
 class VfsFat32MountPoint: public VfsMountPoint {
 public:
@@ -34,7 +34,7 @@ public:
     bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const override;
 
 private:
-    const VolumeFat32&  volume; // volume comes from
+    const VolumeFat32&  volume; // volume comes from MassStorageMsDos which got it from AtaDevice that is being held by AtaPrimaryBusDriver/AtaSecondaryBusDriver :)
     Fat32Entry          root;
     kstd::string        name;
 };

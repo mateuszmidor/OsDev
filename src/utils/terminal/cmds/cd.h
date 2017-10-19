@@ -28,7 +28,6 @@ private:
     void store_last_location();
 
     // for navigating "back". Maybe should be stored in TerminalEnv?
-    static filesystem::VolumeFat32* prev_volume;
     static kstd::string prev_cwd;
 };
 

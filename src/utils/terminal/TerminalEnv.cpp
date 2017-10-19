@@ -6,8 +6,6 @@
  */
 
 #include "TerminalEnv.h"
-
-#include "MassStorageMsDos.h"
 #include "DriverManager.h"
 
 using namespace kstd;
