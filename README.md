@@ -1,10 +1,11 @@
 # PhobOS
-This is a study project for operating systems development for x86.
+This is a study project for operating systems development for x86-64.
 Based on:  
  + http://wyoos.org  
  + http://wiki.osdev.org
  + http://www.jamesmolloy.co.uk/tutorial_html  
  + http://os.phil-opp.com/multiboot-kernel.html  
+ + http://developer.amd.com/wordpress/media/2012/10/24593_APM_v21.pdf
  + https://www.intel.com/content/dam/support/us/en/documents/processors/pentium4/sb/25366821.pdf  
  
 Credits to the authors!  
@@ -14,10 +15,11 @@ Credits to the authors!
  + 64 bit kernel
  + memory paging (2MB pages) and on-page-fault allocator
  + dynamic memory (simple bump allocator for now)
- + higher-half (linux-like, kernel starts at virt. 0xFFFFFFFF80000000)
+ + higher-half (kernel mapped at virt. 0xFFFFFFFF80000000; dynamic memory allocation starts at virt. 0xFFFFFFFFC0000000)
  + multitasking
- + kernel/user space
+ + kernel/user space (with kernel memory protected from user-space access)
  + ELF64 support (-static -nostdlib) - can exit with return value; system calls to be implemented
+ + virtual filesystem
  + MBR/Fat32 driver (no long names)
  + PS/2 mouse driver
  + Keyboard driver
