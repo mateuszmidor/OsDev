@@ -45,6 +45,8 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     case SyscallNumbers::FILE_WRITE: // write (fd, buff, count)
         if (arg1 == 2) // stderr
             klog.format("%\n", (char*)arg2);
+        else
+            return mngr.file_write(arg1, (const char*)arg2, arg3);
         break;
 
     case SyscallNumbers::FILE_OPEN: // open(const char* name, int flags, int mode)
@@ -174,5 +176,11 @@ ssize_t SysCallManager::file_read(int fd, void *buf, size_t count) {
     TaskManager& mngr = TaskManager::instance();
     Task&  current = mngr.get_current_task();
     return current.read_file(fd, buf, count);
+}
+
+ssize_t SysCallManager::file_write(int fd, const void *buf, size_t count) {
+    TaskManager& mngr = TaskManager::instance();
+    Task&  current = mngr.get_current_task();
+    return current.write_file(fd, buf, count);
 }
 } /* namespace syscalls */

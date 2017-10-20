@@ -41,6 +41,7 @@ public:
     s32 file_open(const char* name, u32 flags, u32 mode);
     s32 file_close(u32 fd);
     ssize_t file_read(int fd, void *buf, size_t count);
+    ssize_t file_write(int fd, const void *buf, size_t count);
 
 private:
     static SysCallManager _instance;
