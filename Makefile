@@ -6,7 +6,7 @@ hdd := build/hdd.vdi
 # "-mcmodel=kernel" means the kernel should be located in negative -2GB of the virtual address space
 GCCPARAMS = -std=c++11 -mcmodel=kernel -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3
 GCCINCLUDES = -Isrc -Isrc/cpu -Isrc/cpuexceptions -Isrc/drivers -Isrc/filesystem -Isrc/filesystem -Isrc/hardware -Isrc/multitasking \
-			  -Isrc/memory -Isrc/syscalls -Isrc/userspace -Isrc/utils -Isrc/utils/terminal
+			  -Isrc/memory -Isrc/syscalls -Isrc/userspace -Isrc/utils -Isrc/utils/terminal -Isrc/middlespace
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg

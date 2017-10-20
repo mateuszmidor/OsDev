@@ -76,7 +76,7 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
  */
 s32 Task::open_file(const char name[]) {
     VfsEntryPtr entry;
-    for (u32 i = 5; i < files.size(); i++)
+    for (u32 i = 0; i < files.size(); i++)
         if (!files[i]) {
             if ((entry = VfsManager::instance().get_entry(name)) && (!entry->is_directory())) {
                 files[i] = entry;

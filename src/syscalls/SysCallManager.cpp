@@ -9,9 +9,11 @@
 #include "KernelLog.h"
 #include "SysCallManager.h"
 #include "TaskManager.h"
+#include "SyscallNumbers.h"
 
 using namespace utils;
 using namespace multitasking;
+using namespace middlespace;
 namespace syscalls {
 
 /**
@@ -37,18 +39,18 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
 
     klog.format("syscall_handler: % \n", sys_call_num);
     switch (sys_call_num) {
-    case 0: // read (unsigned int fd char *buf   size_t count)
+    case SyscallNumbers::FILE_READ: // read (unsigned int fd char *buf   size_t count)
         return mngr.file_read(arg1, (char*)arg2, arg3);
 
-    case 1: // write (fd, buff, count)
+    case SyscallNumbers::FILE_WRITE: // write (fd, buff, count)
         if (arg1 == 2) // stderr
             klog.format("%\n", (char*)arg2);
         break;
 
-    case 2: // open(const char* name, int flags, int mode)
+    case SyscallNumbers::FILE_OPEN: // open(const char* name, int flags, int mode)
         return mngr.file_open((char*)arg1, arg2, arg3);
 
-    case 3: // close
+    case SyscallNumbers::FILE_CLOSE: // close
         return mngr.file_close(arg1);
 
     case 9: // mmap
