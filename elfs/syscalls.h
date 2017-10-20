@@ -52,6 +52,11 @@ int close(int fd) {
     return syscall(middlespace::SyscallNumbers::FILE_CLOSE, (syscall_arg)fd);
 }
 
+int usleep(unsigned int usec) {
+    asm volatile("mov $0, %rax; int $0x80");    // yield, this is to be madeover in future
+    return 0;
+}
+
 } // namespace syscalls
 
 
