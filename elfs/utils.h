@@ -8,8 +8,12 @@
 #ifndef ELFS_UTILS_H_
 #define ELFS_UTILS_H_
 
+#include <errno.h>
 #include <string.h>
 #include "syscalls.h"
+
+
+int stdout_fd = 0;
 
 /**
  * @brief   Convert string to long
@@ -80,12 +84,27 @@ void long_to_str(long long num, unsigned char base, char buff_12_chars[12]) {
     }
 }
 
+void _print(int fd, const char str[], size_t len) {
+    while (len > 0) {
+        ssize_t written = syscalls::write(fd, str, len);
+        if (written == -EWOULDBLOCK)
+            syscalls::usleep(0);
+        else {
+            str += written;
+            len -= written;
+        }
+    }
+}
+
 void print(const char str[], size_t count) {
-    syscalls::write(2, str, count);
+    if (stdout_fd == 0)
+        stdout_fd = syscalls::open("/dev/stdout");
+    _print(stdout_fd, str, count);
 }
 
 void print(const char str[]) {
    print(str, strlen(str));
 }
+
 
 #endif /* ELFS_UTILS_H_ */

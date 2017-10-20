@@ -106,6 +106,12 @@ bool Terminal::init() {
     }
 
     keyboard->set_on_key_press([&](Key key) { on_key_press(key); });
+
+    stdout = filesystem::VfsManager::instance().get_entry("/dev/stdout");
+    if (!stdout) {
+        klog.format("VgaDemo::run: no /dev/stdout \n");
+        return false;
+    }
     printer.clear_screen();
 
     return true;
@@ -115,6 +121,7 @@ string Terminal::get_line() {
     Key key;
     do  {
         key = get_key();
+
         process_key(key);
     } while (key != Key::Enter);
 
@@ -122,9 +129,18 @@ string Terminal::get_line() {
 }
 
 Key Terminal::get_key() {
+    u32 BUFF_SIZE = 512;
+    char buff[BUFF_SIZE];
+
     // wait until last_key is set by keyboard interrupt. Keys might be missed if stroking faster than Terminal gets CPU time :)
-    while (last_key == Key::INVALID)
+    while (last_key == Key::INVALID) {
+        u32 count;
+        while ((count = stdout->read(buff, BUFF_SIZE - 1)) > 0) {
+            buff[count] = '\0';
+            printer.format("%", buff);
+        }
         Task::yield();
+    }
 
     Key key = last_key;
     last_key = Key::INVALID;

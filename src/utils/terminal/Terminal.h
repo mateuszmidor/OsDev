@@ -8,7 +8,7 @@
 #ifndef SRC_UTILS_TERMINAL_TERMINAL_H_
 #define SRC_UTILS_TERMINAL_TERMINAL_H_
 
-
+#include "VfsManager.h"
 #include "TerminalEnv.h"
 #include "KeyboardDriver.h"
 #include "CommandHistory.h"
@@ -50,6 +50,8 @@ private:
     utils::KernelLog& klog;
     utils::ScrollableScreenPrinter printer;
     TerminalEnv env;
+
+    filesystem::VfsEntryPtr stdout;
 };
 
 } /* namespace terminal */
