@@ -7,17 +7,20 @@
 
 
 #include "_start.h"
+#include "utils.h"
+#include <string>
 
 /**
  * @brief   Entry point
  * @return  0 if buffer properly initialized to 0, first nonzero entry otherwise
  */
+char msg1[] = "this is a pretty long message";
+char msg2[] = "coming from dynamic memory";
 int main(int argc, char* argv[]) {
-    char* buff = new char[1024 * 1024 * 8];
-
-    buff[0] = 'A';
-    buff[sizeof(buff) - 1] = 'Z';
-
+    std::string a = msg1;
+    std::string b = msg2;
+    std::string concat = a + ", " + b;
+    print(concat.c_str());
     return 0;
 }
 

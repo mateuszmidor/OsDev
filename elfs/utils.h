@@ -14,6 +14,33 @@
 
 
 int stdout_fd = 0;
+size_t bump_addr = 128*1024*1024;
+
+void* umalloc(size_t size) {
+    auto old_bump_addr = bump_addr;
+    bump_addr+= size;
+    return (void*)old_bump_addr;
+}
+
+void ufree(void* address) {
+}
+
+
+void* operator new(size_t size) {
+    return umalloc(size);
+}
+
+void* operator new[](size_t size) {
+    return umalloc(size);
+}
+
+void operator delete[](void* ptr) noexcept {
+    ufree(ptr);
+}
+
+void operator delete(void *ptr) noexcept {
+    ufree(ptr);
+}
 
 /**
  * @brief   Convert string to long
