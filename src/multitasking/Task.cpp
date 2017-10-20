@@ -112,6 +112,16 @@ s64 Task::read_file(u32 fd, void *buf, u64 count) {
     return files[fd]->read(buf, count);
 }
 
+s64 Task::write_file(u32 fd, const void *buf, u64 count) {
+    if (fd >= files.size())
+        return 0;
+
+    if (!files[fd])
+        return 0;
+
+    return files[fd]->write(buf, count);
+}
+
 void Task::idle() {
     while (true)
         yield();

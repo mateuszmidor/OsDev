@@ -27,6 +27,7 @@ struct Task {
     s32 open_file(const char name[]);
     s32 close_file(u32 fd);
     s64 read_file(u32 fd, void *buf, u64 count);
+    s64 write_file(u32 fd, const void *buf, u64 count);
 
 
     /**
