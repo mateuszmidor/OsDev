@@ -52,6 +52,19 @@ int close(int fd) {
     return syscall(middlespace::SyscallNumbers::FILE_CLOSE, (syscall_arg)fd);
 }
 
+void vga_cursor_setvisible(bool visible) {
+    syscall(middlespace::SyscallNumbers::VGA_CURSOR_SETVISIBLE, (syscall_arg)visible);
+}
+
+void vga_cursor_setpos(unsigned int x, unsigned int y) {
+    syscall(middlespace::SyscallNumbers::VGA_CURSOR_SETPOS, (syscall_arg)x, (syscall_arg)y);
+}
+
+void vga_setat(unsigned int x, unsigned int y, unsigned short c) {
+    syscall(middlespace::SyscallNumbers::VGA_SET_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)c);
+}
+
+
 int usleep(unsigned int usec) {
     asm volatile("mov $0, %rax; int $0x80");    // yield, this is to be madeover in future
     return 0;

@@ -10,8 +10,11 @@
 #include "SysCallManager.h"
 #include "TaskManager.h"
 #include "SyscallNumbers.h"
+#include "DriverManager.h"
+#include "VgaDriver.h"
 
 using namespace utils;
+using namespace drivers;
 using namespace multitasking;
 using namespace middlespace;
 namespace syscalls {
@@ -54,6 +57,18 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
 
     case SyscallNumbers::FILE_CLOSE: // close
         return mngr.file_close(arg1);
+
+    case SyscallNumbers::VGA_CURSOR_SETVISIBLE:
+        mngr.vga_cursor_setvisible((bool)arg1);
+        break;
+
+    case SyscallNumbers::VGA_CURSOR_SETPOS:
+        mngr.vga_cursor_setpos(arg1, arg2);
+        break;
+
+    case SyscallNumbers::VGA_SET_AT:
+        mngr.vga_setat(arg1, arg2, arg3);
+        break;
 
     case 9: // mmap
         return 10*1024*1024;
@@ -182,5 +197,27 @@ ssize_t SysCallManager::file_write(int fd, const void *buf, size_t count) {
     TaskManager& mngr = TaskManager::instance();
     Task&  current = mngr.get_current_task();
     return current.write_file(fd, buf, count);
+}
+
+void SysCallManager::vga_cursor_setvisible(bool visible) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        drv->set_cursor_visible(visible);
+    }
+}
+
+void SysCallManager::vga_cursor_setpos(u8 x, u8 y) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        drv->set_cursor_pos(x, y);
+    }
+}
+
+void SysCallManager::vga_setat(u8 x, u8 y, u16 c) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        VgaCharacter* vc = (VgaCharacter*)&c;
+        drv->at(x, y) = *vc;
+    }
 }
 } /* namespace syscalls */
