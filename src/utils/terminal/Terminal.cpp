@@ -8,8 +8,6 @@
 #include "Terminal.h"
 #include "ScrollableScreenPrinter.h"
 #include "KernelLog.h"
-#include "DriverManager.h"
-#include "KeyboardDriver.h"
 #include "TaskManager.h"
 #include "CpuInfo.h"
 
@@ -97,23 +95,20 @@ void Terminal::run() {
 
 bool Terminal::init() {
     auto& klog = KernelLog::instance();
-    auto& driver_manager = DriverManager::instance();
 
-    auto keyboard = driver_manager.get_driver<KeyboardDriver>();
+    keyboard = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
     if (!keyboard) {
-        klog.format("VgaDemo::run: no KeyboardDriver\n");
+        klog.format("Terminal::init: no /dev/keyboard \n");
         return false;
     }
-
-    keyboard->set_on_key_press([&](Key key) { on_key_press(key); });
 
     stdout = filesystem::VfsManager::instance().get_entry("/dev/stdout");
     if (!stdout) {
-        klog.format("VgaDemo::run: no /dev/stdout \n");
+        klog.format("Terminal::init: no /dev/stdout \n");
         return false;
     }
-    printer.clear_screen();
 
+    printer.clear_screen();
     return true;
 }
 
@@ -121,7 +116,6 @@ string Terminal::get_line() {
     Key key;
     do  {
         key = get_key();
-
         process_key(key);
     } while (key != Key::Enter);
 
@@ -133,7 +127,7 @@ Key Terminal::get_key() {
     char buff[BUFF_SIZE];
 
     // wait until last_key is set by keyboard interrupt. Keys might be missed if stroking faster than Terminal gets CPU time :)
-    while (last_key == Key::INVALID) {
+    while (!(keyboard->read(&last_key, sizeof(last_key))) > 0) {
         u32 count;
         while ((count = stdout->read(buff, BUFF_SIZE - 1)) > 0) {
             buff[count] = '\0';
@@ -249,11 +243,5 @@ void Terminal::print_klog() {
     printer.format("%\n", klog.get_text());
 }
 
-/**
- * Executed from keyboard interrupt
- */
-void Terminal::on_key_press(Key key) {
-    last_key = key;
-}
 
 } /* namespace terminal */

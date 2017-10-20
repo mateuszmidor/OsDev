@@ -26,11 +26,14 @@ VfsManager& VfsManager::instance() {
  */
 void VfsManager::install_root() {
     root = std::make_shared<VfsRamEntry>("/", true);
-
     VfsRamEntryPtr dev = std::make_shared<VfsRamEntry>("dev", true);
+    root->entries.push_back(dev);
+
+    VfsRamEntryPtr keyboard = std::make_shared<VfsRamEntry>("keyboard", false);
+    dev->entries.push_back(keyboard);
+
     VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
     dev->entries.push_back(stdout);
-    root->entries.push_back(dev);
 
     VfsRamEntryPtr mnt = std::make_shared<VfsRamEntry>("mnt", true);
     root->entries.push_back(mnt);

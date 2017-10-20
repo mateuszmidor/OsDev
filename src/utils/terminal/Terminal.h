@@ -8,14 +8,13 @@
 #ifndef SRC_UTILS_TERMINAL_TERMINAL_H_
 #define SRC_UTILS_TERMINAL_TERMINAL_H_
 
+#include "KeyboardScanCodeSet.h"
 #include "VfsManager.h"
 #include "TerminalEnv.h"
-#include "KeyboardDriver.h"
 #include "CommandHistory.h"
 #include "CommandCollection.h"
 #include "TaskFactory.h"
 #include "kstd.h"
-#include <tuple>
 
 namespace terminal {
 
@@ -26,7 +25,6 @@ public:
 
 private:
     bool init();
-    void on_key_press(drivers::Key key);
     void process_key(drivers::Key key);
     kstd::string get_line();
     drivers::Key get_key();
@@ -51,6 +49,7 @@ private:
     utils::ScrollableScreenPrinter printer;
     TerminalEnv env;
 
+    filesystem::VfsEntryPtr keyboard;
     filesystem::VfsEntryPtr stdout;
 };
 
