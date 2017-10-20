@@ -25,8 +25,8 @@ public:
 
     // [file interface - not applicable for mountpoint]
     u32 get_size() const override               { return 0; }
-    u32 read(void* data, u32 count) override    { return 0; }
-    u32 write(const void* data, u32 count)      { return 0; }
+    s64 read(void* data, u32 count) override    { return 0; }
+    s64 write(const void* data, u32 count)      { return 0; }
     bool seek(u32 new_position) override        { return false; }
     bool truncate(u32 new_size) override        { return false; };
 

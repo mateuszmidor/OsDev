@@ -27,11 +27,11 @@ const kstd::string& VfsFat32Entry::get_name() const {
     return entry.get_name();
 }
 
-u32 VfsFat32Entry::read(void* data, u32 count) {
+s64 VfsFat32Entry::read(void* data, u32 count) {
     return entry.read(data, count);
 }
 
-u32 VfsFat32Entry::write(const void* data, u32 count) {
+s64 VfsFat32Entry::write(const void* data, u32 count) {
     return entry.write(data, count);
 }
 

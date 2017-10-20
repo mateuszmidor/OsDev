@@ -27,8 +27,8 @@ public:
 
     // [file interface]
     u32 get_size() const override;
-    u32 read(void* data, u32 count) override;
-    u32 write(const void* data, u32 count) override;
+    s64 read(void* data, u32 count) override;
+    s64 write(const void* data, u32 count) override;
     bool seek(u32 new_position) override;
     bool truncate(u32 new_size) override;
 

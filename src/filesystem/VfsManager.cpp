@@ -25,8 +25,14 @@ VfsManager& VfsManager::instance() {
  * @brief   Install elementary filesystem entries under "/", including available ata volumes
  */
 void VfsManager::install_root() {
-    VfsRamEntryPtr mnt = std::make_shared<VfsRamEntry>("mnt", true);
     root = std::make_shared<VfsRamEntry>("/", true);
+
+    VfsRamEntryPtr dev = std::make_shared<VfsRamEntry>("dev", true);
+    VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
+    dev->entries.push_back(stdout);
+    root->entries.push_back(dev);
+
+    VfsRamEntryPtr mnt = std::make_shared<VfsRamEntry>("mnt", true);
     root->entries.push_back(mnt);
     install_ata_devices(mnt);
 }
