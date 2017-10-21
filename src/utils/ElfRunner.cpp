@@ -14,7 +14,7 @@
 using namespace kstd;
 using namespace memory;
 using namespace multitasking;
-namespace userspace {
+namespace utils {
 
 /**
  * @brief   Run elf as user task

@@ -7,6 +7,7 @@ GCCINCLUDES = -I../src/middlespace
 TARGETS = $(SOURCES:.cpp=)
 
 all: $(TARGETS) # This is first target. It is used when no params passed to “make”
+	$(MAKE) -C terminal
 
 %: %.cpp
 	$(CXX) $(CF) $(GCCINCLUDES) $< -o $@
@@ -14,6 +15,7 @@ all: $(TARGETS) # This is first target. It is used when no params passed to “m
 
 install: $(TARGETS)
 	@cp $^ ../p2
+	$(MAKE) install -C terminal
 	@sync
 	 
 # indicate that following target doesnt update any file called "clean"

@@ -23,7 +23,7 @@
 #include "TaskManager.h"
 #include "TaskFactory.h"
 #include "PageFaultHandler.h"
-#include "Terminal.h"
+//#include "Terminal.h"
 #include "MemoryManager.h"
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
@@ -31,11 +31,12 @@
 #include "Sse.h"
 #include "PageTables.h"
 #include "_demos/Demo.h"
-#include "_demos/VgaDemo.h"
-#include "_demos/Fat32Demo.h"
+//#include "_demos/VgaDemo.h"
+//#include "_demos/Fat32Demo.h"
 #include "_demos/MouseDemo.h"
-#include "_demos/MultitaskingDemo.h"
-#include "_demos/CpuSpeedDemo.h"
+//#include "_demos/MultitaskingDemo.h"
+//#include "_demos/CpuSpeedDemo.h"
+#include "ElfRunner.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -94,10 +95,32 @@ void task_init() {
 //    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
 //    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
 //    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(TaskFactory::make_kernel_task<terminal::Terminal>("terminal", 0));
+//    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
+//    task_manager.add_task(TaskFactory::make_kernel_task<terminal::Terminal>("terminal", 0));
     task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0));
     task_manager.add_task(Task::make_kernel_task(corner_counter, "corner_counter"));
-//    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
+
+
+    VfsEntryPtr e = vfs_manager.get_entry("/mnt/PHOBOS_D/TERMINAL");
+    if (!e) {
+        return;
+    }
+
+    if (e->is_directory()) {
+        return;
+    }
+
+    // read elf file data
+    u32 size = e->get_size();
+    u8* elf_data = new u8[size];
+    e->read(elf_data, size);
+
+    // run the elf
+    utils::ElfRunner runner;
+    if (!runner.run(elf_data, {"TERMINAL"}))
+        klog.format("elfrun: not enough memory to run elf\n");
+
+    delete[] elf_data;
 }
 
 /**

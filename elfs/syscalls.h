@@ -17,7 +17,7 @@ namespace syscalls {
 using syscall_res = unsigned long long;
 using syscall_arg = unsigned long long;
 
-syscall_res syscall(unsigned int syscall_no,
+inline syscall_res syscall(unsigned int syscall_no,
         syscall_arg arg1 = 0,
         syscall_arg arg2 = 0,
         syscall_arg arg3 = 0,
@@ -36,36 +36,36 @@ syscall_res syscall(unsigned int syscall_no,
     return result;
 }
 
-ssize_t read(int fd, void* buf, size_t count) {
+inline ssize_t read(int fd, void* buf, size_t count) {
     return syscall(middlespace::SyscallNumbers::FILE_READ, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
 }
 
-ssize_t write(int fd, const void* buf, size_t count) {
+inline ssize_t write(int fd, const void* buf, size_t count) {
     return syscall(middlespace::SyscallNumbers::FILE_WRITE, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
 }
 
-int open(const char* absolute_path, int flags = 0) {
+inline int open(const char* absolute_path, int flags = 0) {
     return syscall(middlespace::SyscallNumbers::FILE_OPEN, (syscall_arg)absolute_path, (syscall_arg)flags);
 }
 
-int close(int fd) {
+inline int close(int fd) {
     return syscall(middlespace::SyscallNumbers::FILE_CLOSE, (syscall_arg)fd);
 }
 
-void vga_cursor_setvisible(bool visible) {
+inline void vga_cursor_setvisible(bool visible) {
     syscall(middlespace::SyscallNumbers::VGA_CURSOR_SETVISIBLE, (syscall_arg)visible);
 }
 
-void vga_cursor_setpos(unsigned int x, unsigned int y) {
+inline void vga_cursor_setpos(unsigned int x, unsigned int y) {
     syscall(middlespace::SyscallNumbers::VGA_CURSOR_SETPOS, (syscall_arg)x, (syscall_arg)y);
 }
 
-void vga_setat(unsigned int x, unsigned int y, unsigned short c) {
+inline void vga_setat(unsigned int x, unsigned int y, unsigned short c) {
     syscall(middlespace::SyscallNumbers::VGA_SET_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)c);
 }
 
 
-int usleep(unsigned int usec) {
+inline int usleep(unsigned int usec) {
     asm volatile("mov $0, %rax; int $0x80");    // yield, this is to be madeover in future
     return 0;
 }

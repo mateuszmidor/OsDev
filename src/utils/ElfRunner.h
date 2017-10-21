@@ -11,7 +11,7 @@
 #include "kstd.h"
 #include "BumpAllocationPolicy.h"
 
-namespace userspace {
+namespace utils {
 
 /**
  * @brief   This class runs elfs from kernel address space

@@ -9,7 +9,6 @@
 #define SRC_DRIVERS_KEYBOARDSCANCODESET_H_
 
 #include <array>
-#include "kstd.h"
 #include "types.h"
 
 namespace drivers {
