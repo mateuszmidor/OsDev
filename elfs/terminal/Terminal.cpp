@@ -38,6 +38,7 @@
 using namespace ustd;
 using namespace utils;
 using namespace drivers;
+using namespace cmds;
 //using namespace multitasking;
 
 namespace terminal {
@@ -162,13 +163,13 @@ void Terminal::process_key(Key key) {
         }
 
         case Key::Tab: {
-//            bool multiple_results;
-//            string filter_result;
-//            std::tie(multiple_results, filter_result) = cmd_collection.filter(edit_line);
-//            if (multiple_results)
-//                printer.format("\n  %\n% %%", filter_result, env.cwd, PROMPT, edit_line);
-//            else
-//                suggest_cmd(filter_result);
+            bool multiple_results;
+            string filter_result;
+            std::tie(multiple_results, filter_result) = cmd_collection.filter(edit_line);
+            if (multiple_results)
+                printer.format("\n  %\n% %%", filter_result, env.cwd, PROMPT, edit_line);
+            else
+                suggest_cmd(filter_result);
             break;
         }
 
@@ -223,15 +224,12 @@ void Terminal::process_cmd(const string& cmd) {
         return;
 
     auto cmd_args = ustd::split_string<vector<string>>(cmd, ' ');
-//    if (Task* task = cmd_collection.get(cmd_args[0])) {
-//        env.cmd_args = cmd_args;
-//
-//        TaskManager& task_manager = TaskManager::instance();
-//        u32 tid = task_manager.add_task(*task);
-//        task_manager.wait(tid);
-//        cmd_history.append(cmd);
-//    }
-//    else
+    if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
+        env.cmd_args = cmd_args;
+        task->run();
+        cmd_history.append(cmd);
+    }
+    else
         printer.format("Unknown command: %\n", cmd);
 
     edit_line.clear();

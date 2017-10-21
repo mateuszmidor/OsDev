@@ -34,7 +34,7 @@ private:
 
     template <class T>
     void install_cmd(const ustd::string& cmd) {
-        auto task = new T((u64)&env);
+        cmds::CmdBase* task = new T((u64)&env);
         cmd_collection.install(cmd, task);
     }
 

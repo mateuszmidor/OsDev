@@ -18,16 +18,15 @@ struct Command {
     ustd::string        name;
     cmds::CmdBase*      task;
 
-    ~Command() {
-        delete task;
+    Command(const ustd::string& name, cmds::CmdBase* task): name(name), task(task) {
     }
 };
 
 class CommandCollection {
 public:
-    cmds::CmdBase* get(const ustd::string& cmd_name);
+    cmds::CmdBase* get(const ustd::string& cmd_name) const;
     std::tuple<bool, ustd::string> filter(const ustd::string& pattern);
-    void install(const ustd::string name, const cmds::CmdBase* cmd);
+    void install(const ustd::string name, cmds::CmdBase* cmd);
 
 private:
     ustd::vector<Command> commands;

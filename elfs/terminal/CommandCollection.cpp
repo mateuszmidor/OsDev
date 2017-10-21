@@ -9,17 +9,15 @@
 #include <algorithm>
 
 using namespace ustd;
-using namespace multitasking;
-
+using namespace cmds;
 namespace terminal {
 
-Task* CommandCollection::get(const ustd::string& cmd_name) {
-    auto filt = [&cmd_name](const Command& cmd) { return cmd.name == cmd_name; };
-    auto found = std::find_if(commands.begin(), commands.end(), filt);
-    if (found != commands.end())
-        return &found->task;
-    else
-        return nullptr;
+CmdBase* CommandCollection::get(const ustd::string& cmd_name) const {
+    for (const Command& cmd : commands)
+        if (cmd.name == cmd_name)
+            return cmd.task;
+
+    return nullptr;
 }
 
 /**
@@ -30,7 +28,6 @@ Task* CommandCollection::get(const ustd::string& cmd_name) {
  */
 std::tuple<bool, string> CommandCollection::filter(const string& pattern) {
     ustd::vector<string> found;
-    auto filt = [&pattern](const Command& c) { return c.name.find(pattern) != string::npos; };
     for (const Command& c : commands)
         if (c.name.find(pattern) == 0)
             found.push_back(c.name);
@@ -43,8 +40,8 @@ std::tuple<bool, string> CommandCollection::filter(const string& pattern) {
         return std::make_tuple(true, ustd::join_string(" ", found));
 }
 
-void CommandCollection::install(const string name, const Task& task) {
-    commands.push_back(Command{name, task});
+void CommandCollection::install(const string name, CmdBase* task) {
+    commands.emplace_back(name, task);
 }
 
 } /* namespace terminal */
