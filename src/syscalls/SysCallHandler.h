@@ -31,6 +31,8 @@ public:
     void vga_cursor_setpos(u8 x, u8 y);
     void vga_setat(u8 x, u8 y, u16 c);
 
+    s64 elf_run(const char absolute_filename[], const char* nullterm_argv[]);
+
 private:
     multitasking::Task& current() const;
 };

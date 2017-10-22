@@ -28,8 +28,8 @@ enum SysCallNumbers {
     VGA_CURSOR_SETVISIBLE   = 500,
     VGA_CURSOR_SETPOS       = 501,
     VGA_SET_AT              = 502,
-
     FILE_ENUMERATE          = 600,
+    ELF_RUN                 = 700,
 };
 
 } /* namespace middlespace */

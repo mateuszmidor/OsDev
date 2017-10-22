@@ -29,7 +29,8 @@ extern "C" void handle_syscall();
 
 /**
  * @brief   "syscall" handler. This is called from syscalls.S
- * @note    This is run in kernel space, using kernel stack
+ * @note    This is run in ring0, using kernel stack, but stays in the calling task memory space;
+ *          thus can access both user memory and kernel memory (as kernel memory is mapped in each end every memory space)
  * @see     http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
  */
 SysCallHandler syscall_handler;
@@ -70,6 +71,9 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     case SysCallNumbers::VGA_SET_AT:
         syscall_handler.vga_setat(arg1, arg2, arg3);
         return 0;
+
+    case SysCallNumbers::ELF_RUN:   // (char[] filename, char** argv)
+        return syscall_handler.elf_run((const char*)arg1, (const char**)arg2);
 
     case 9: // mmap
         return 10*1024*1024;

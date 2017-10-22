@@ -69,6 +69,10 @@ inline void vga_setat(unsigned int x, unsigned int y, unsigned short c) {
     syscall(middlespace::SysCallNumbers::VGA_SET_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)c);
 }
 
+inline s64 elf_run(const char absolute_filename[], const char* nullterm_argv[]) {
+    return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)absolute_filename, (syscall_arg)nullterm_argv);
+}
+
 inline int usleep(unsigned int usec) {
     asm volatile("mov $0, %rax; int $0x80");    // yield, change when blocking syscalls and timers are implemented
     return 0;

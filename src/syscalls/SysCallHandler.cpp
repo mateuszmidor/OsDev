@@ -10,8 +10,10 @@
 #include "VfsManager.h"
 #include "DriverManager.h"
 #include "VgaDriver.h"
+#include "ElfRunner.h"
 #include "syscall_errors.h"
 
+using namespace kstd;
 using namespace drivers;
 using namespace filesystem;
 namespace syscalls {
@@ -152,6 +154,41 @@ void SysCallHandler::vga_setat(u8 x, u8 y, u16 c) {
         VgaCharacter* vc = (VgaCharacter*)&c;
         drv->at(x, y) = *vc;
     }
+}
+
+/**
+ * @brief   Run ELF64 format program pointed by "absolute_filename"
+ * @param   absolute_filename Absolute filename starting at root "/"
+ * @param   nullterm_argv List of cstrings, last one == null
+ */
+s64 SysCallHandler::elf_run(const char absolute_filename[], const char* nullterm_argv[]) {
+    VfsEntryPtr e = VfsManager::instance().get_entry(absolute_filename);
+    if (!e)
+        return -ENOENT; // no such file
+
+    if (e->is_directory())
+        return -EISDIR; // is directory
+
+    u32 size = e->get_size();
+    u8* elf_data = new u8[size];
+    if (!elf_data)
+        return -ENOMEM;
+    e->read(elf_data, size);
+
+    vector<string> args;
+    while (*nullterm_argv) {
+        args.push_back(*nullterm_argv);
+        nullterm_argv++;
+    }
+
+    utils::ElfRunner runner;
+    bool run_result = runner.run(elf_data, args);
+    delete[] elf_data;
+
+    if (run_result == true)
+        return 0;
+    else
+        return -ENOMEM;
 }
 
 /**
