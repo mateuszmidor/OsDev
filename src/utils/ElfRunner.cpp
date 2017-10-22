@@ -17,8 +17,8 @@ using namespace multitasking;
 namespace utils {
 
 /**
- * @brief   Run elf as user task
- * @param   elf_data ELF64 file data loaded into kernel memory. This function doesnt free the data.
+ * @brief   Run elf as user task and return immediately
+ * @param   elf_data ELF64 file data loaded into kernel memory. This function finally free the elf_data
  * @param   args User-provided cmd line arguments in kernel memory
  * @return  True if elf_loader run successfuly, False otherwise
  */
@@ -32,25 +32,27 @@ bool ElfRunner::run(u8* elf_data, const kstd::vector<kstd::string>& args) const 
     hardware::PageTables::map_elf_address_space(pml4_phys_addr);
 
     // run elf_loader in target address space, so the elf segments can be loaded
-    Task task = Task::make_kernel_task(load_and_run_elf, "elf_loader").set_arg1(elf_data).set_arg2(&args);
+    auto ownargs = new kstd::vector<kstd::string>(args);
+    Task task = Task::make_kernel_task(load_and_run_elf, "elf_loader").set_arg1(elf_data).set_arg2(ownargs);
     task.pml4_phys_addr = pml4_phys_addr;   // kernel task but in user memory space
 
     TaskManager& task_manager = TaskManager::instance();
-    if (u32 tid = task_manager.add_task(task)) {
-        task_manager.wait(tid); // wait so that the elf_data nor args get freed before being copied to new user address space
+    if (u32 tid = task_manager.add_task(task))
         return true;
-    } else
+    else
         return false;
 }
 
 /**
  * @brief   ELF loader kernel task that runs already in the task address space
  *          and thus is able to load the elf program segments into memory at virtual addresses starting at "0"
+ * @note    This function frees the elf_file_data and args
  */
 void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // copy elf sections into address space and remember where free virtual memory starts
     u64 entry_point = utils::Elf64::load_into_current_addressspace(elf_file_data);
     u64 free_virtual_mem_start = utils::Elf64::get_available_memory_first_byte(elf_file_data);
+    delete[] elf_file_data;
 
     // free to use user space memory is between elf image last byte and elf stack first byte
     BumpAllocationPolicy userspace_allocator(free_virtual_mem_start, ELF_VIRTUAL_MEM_BYTES - ELF_STACK_SIZE);
@@ -58,6 +60,7 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // prepare the target run environment in use memory space
     u64 argc = args->size();
     char** argv = string_vec_to_argv(*args, userspace_allocator);
+    delete[] args;
 
     // run the actual elf task
     TaskManager& task_manager = TaskManager::instance();

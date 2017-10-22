@@ -121,7 +121,6 @@ void task_init() {
     if (!runner.run(elf_data, {"TERMINAL"}))
         klog.format("elfrun: not enough memory to run elf\n");
 
-    delete[] elf_data;
 }
 
 /**
