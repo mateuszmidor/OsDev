@@ -6,8 +6,8 @@
  */
 
 #include "KeyboardScanCodeSet.h"
-#include "KernelLog.h"
-namespace drivers {
+
+namespace middlespace {
 
 
 KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
@@ -212,9 +212,6 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
  * @param   key_code Raw keyboard scan code as received from the keyboard
  */
 const Key KeyboardScanCodeSet1::push_code(u8 key_code) {
-    // debug
-//    KernelLog& klog = KernelLog::instance();
-//    klog.format("0x%\n", kstd::to_str(key_code, 16));
 
     Key result;
 

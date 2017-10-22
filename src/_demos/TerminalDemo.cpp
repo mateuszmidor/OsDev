@@ -17,7 +17,7 @@ using namespace kstd;
 using namespace drivers;
 using namespace multitasking;
 using namespace utils;
-
+using namespace middlespace;
 namespace demos {
 
 CommandHistory::CommandHistory() {

@@ -24,11 +24,6 @@ struct Task {
     Task();
     Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size);
     void prepare(u32 tid, TaskExitPoint exitpoint);
-    s32 open_file(const char name[]);
-    s32 close_file(u32 fd);
-    s64 read_file(u32 fd, void *buf, u64 count);
-    s64 write_file(u32 fd, const void *buf, u64 count);
-
 
     /**
      * @brief   Create user space task (runs in protection ring3), with provided address space and stack

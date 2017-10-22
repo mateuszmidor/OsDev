@@ -49,6 +49,7 @@ using namespace syscalls;
 using namespace utils;
 using namespace demos;
 using namespace filesystem;
+using namespace middlespace;
 
 MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();

@@ -15,7 +15,7 @@
 #include "cmds/pwd.h"
 //#include "cmds/log.h"
 //#include "cmds/lscpu.h"
-//#include "cmds/ls.h"
+#include "cmds/ls.h"
 //#include "cmds/cat.h"
 //#include "cmds/ps.h"
 //#include "cmds/free.h"
@@ -63,7 +63,7 @@ Terminal::Terminal(u64 arg) :
 //    install_cmd<cmds::elfinfo>("elfinfo");
 //    install_cmd<cmds::elfrun>("elfrun");
 //    install_cmd<cmds::df>("df");
-//    install_cmd<cmds::ls>("ls");
+    install_cmd<cmds::ls>("ls");
 //    install_cmd<cmds::cat>("cat");
 //    install_cmd<cmds::cd>("cd");
 //    install_cmd<cmds::rm>("rm");

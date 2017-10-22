@@ -11,7 +11,7 @@
 #include <array>
 #include "types.h"
 
-namespace drivers {
+namespace middlespace {
 
 /**
  * @brief   Key represents any keyboard key.

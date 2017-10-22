@@ -8,9 +8,10 @@
 #ifndef ELFS_SYSCALLS_H_
 #define ELFS_SYSCALLS_H_
 
-#include "SyscallNumbers.h"
 #include <cstddef>      // size_t
 #include <sys/types.h>  // ssize_t
+#include "SysCallNumbers.h"
+#include "FsEntry.h"
 
 namespace syscalls {
 
@@ -37,36 +38,39 @@ inline syscall_res syscall(unsigned int syscall_no,
 }
 
 inline ssize_t read(int fd, void* buf, size_t count) {
-    return syscall(middlespace::SyscallNumbers::FILE_READ, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
+    return syscall(middlespace::SysCallNumbers::FILE_READ, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
 }
 
 inline ssize_t write(int fd, const void* buf, size_t count) {
-    return syscall(middlespace::SyscallNumbers::FILE_WRITE, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
+    return syscall(middlespace::SysCallNumbers::FILE_WRITE, (syscall_arg)fd, (syscall_arg)buf, (syscall_arg)count);
 }
 
 inline int open(const char* absolute_path, int flags = 0) {
-    return syscall(middlespace::SyscallNumbers::FILE_OPEN, (syscall_arg)absolute_path, (syscall_arg)flags);
+    return syscall(middlespace::SysCallNumbers::FILE_OPEN, (syscall_arg)absolute_path, (syscall_arg)flags);
 }
 
 inline int close(int fd) {
-    return syscall(middlespace::SyscallNumbers::FILE_CLOSE, (syscall_arg)fd);
+    return syscall(middlespace::SysCallNumbers::FILE_CLOSE, (syscall_arg)fd);
+}
+
+inline int enumerate(unsigned int fd, middlespace::FsEntry* entries, unsigned int max_enties) {
+    return syscall(middlespace::SysCallNumbers::FILE_ENUMERATE, (syscall_arg)fd, (syscall_arg)entries, (syscall_arg)max_enties);
 }
 
 inline void vga_cursor_setvisible(bool visible) {
-    syscall(middlespace::SyscallNumbers::VGA_CURSOR_SETVISIBLE, (syscall_arg)visible);
+    syscall(middlespace::SysCallNumbers::VGA_CURSOR_SETVISIBLE, (syscall_arg)visible);
 }
 
 inline void vga_cursor_setpos(unsigned int x, unsigned int y) {
-    syscall(middlespace::SyscallNumbers::VGA_CURSOR_SETPOS, (syscall_arg)x, (syscall_arg)y);
+    syscall(middlespace::SysCallNumbers::VGA_CURSOR_SETPOS, (syscall_arg)x, (syscall_arg)y);
 }
 
 inline void vga_setat(unsigned int x, unsigned int y, unsigned short c) {
-    syscall(middlespace::SyscallNumbers::VGA_SET_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)c);
+    syscall(middlespace::SysCallNumbers::VGA_SET_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)c);
 }
 
-
 inline int usleep(unsigned int usec) {
-    asm volatile("mov $0, %rax; int $0x80");    // yield, this is to be madeover in future
+    asm volatile("mov $0, %rax; int $0x80");    // yield, change when blocking syscalls and timers are implemented
     return 0;
 }
 

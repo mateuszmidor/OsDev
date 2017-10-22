@@ -14,14 +14,14 @@
 
 namespace drivers {
 
-using KeyEvent = std::function<void(Key)>;
+using KeyEvent = std::function<void(middlespace::Key)>;
 
 /**
  * @@brief  This class is a keyboard driver. On key stroke it writes Key into /dev/keyboard RAM file and runs on_key_press callback
  */
 class KeyboardDriver : public DeviceDriver {
 public:
-    KeyboardDriver(KeyboardScanCodeSet& scs);
+    KeyboardDriver(middlespace::KeyboardScanCodeSet& scs);
     virtual ~KeyboardDriver();
     void set_on_key_press(const KeyEvent &event);
 
@@ -29,10 +29,10 @@ public:
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
 private:
-    hardware::Port8bit keyboard_data_port;
-    KeyboardScanCodeSet& scan_code_set;
-    KeyEvent on_key_press = [](u8) {    /* do nothing */ };
-    filesystem::VfsEntryPtr keyboard;   /* most recent key is written here */
+    hardware::Port8bit                  keyboard_data_port;
+    middlespace::KeyboardScanCodeSet&   scan_code_set;
+    KeyEvent                            on_key_press = [](u8) { /* do nothing */ };
+    filesystem::VfsEntryPtr             keyboard;   /* most recent key is written here */
 
     void handle_keyboard_interrupt();
 };

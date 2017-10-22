@@ -4,7 +4,7 @@ CFLAGS = -std=c++11 -Wall -mno-red-zone -nostartfiles -static -O0
 SOURCES = TerminalEnv.cpp main.cpp
 INCLUDES = -I. -Icmds -I.. -I../../src/middlespace
 
-COMMANDS := cmds/CmdBase.cpp cmds/pwd.cpp #$(wildcard cmds/*.cpp) 
+COMMANDS := cmds/CmdBase.cpp cmds/pwd.cpp cmds/ls.cpp #$(wildcard cmds/*.cpp) 
 SOURCES = main.cpp TerminalEnv.cpp Cursor.cpp CommandHistory.cpp CommandCollection.cpp \
 			LineBuffer.cpp LimitedAreaScreenPrinter.cpp ScrollableScreenPrinter.cpp \
 			$(COMMANDS) Terminal.cpp
