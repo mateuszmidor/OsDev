@@ -5,13 +5,10 @@
  * @author: Mateusz Midor
  */
 
-#include "ustd.h"
-#include "ElfRunner.h"
 #include "elfrun.h"
+#include "syscalls.h"
 
 using namespace ustd;
-using namespace utils;
-using namespace filesystem;
 
 namespace cmds {
 
@@ -27,27 +24,33 @@ void elfrun::run() {
     }
 
     string filename = make_absolute_filename(env->cmd_args[1]);
-    VfsEntryPtr e = env->vfs_manager.get_entry(filename);
-    if (!e) {
-        env->printer->format("elfrun: file % doesnt exist\n", filename);
-        return;
-    }
 
-    if (e->is_directory()) {
-        env->printer->format("elfrun: % is a directory\n", filename);
-        return;
-    }
+    u32 count = env->cmd_args.size() -1; // no first one
+    const char** nullterm_argv = new const char*[count + 1]; // +1 for list terminating null
+    for (u32 i = 0; i < count; i++)
+        nullterm_argv[i] = env->cmd_args[i+1].c_str();
 
-    // read elf file data
-    u32 size = e->get_size();
-    u8* elf_data = new u8[size];
-    e->read(elf_data, size);
+    nullterm_argv[count] = nullptr;
 
     // run the elf
-    userspace::ElfRunner runner;
-    if (!runner.run(elf_data, vector<string>(env->cmd_args.cbegin() + 1, env->cmd_args.cend())))
-        env->printer->format("elfrun: not enough memory to run elf\n");
-    delete[] elf_data;
+    switch (syscalls::elf_run(filename.c_str(), nullterm_argv)) {
+    case -ENOENT:
+        env->printer->format("elfrun: no such file\n");
+        break;
+
+    case -EISDIR:
+        env->printer->format("elfrun: given filename points to a directory not a file\n");
+        break;
+
+    case -ENOMEM:
+        env->printer->format("elfrun: no enough memory to run ELF\n");
+        break;
+
+    default:
+        break;
+    }
+
+    delete[] nullterm_argv;
 }
 
 } /* namespace cmds */

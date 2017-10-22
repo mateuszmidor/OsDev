@@ -31,13 +31,13 @@
 //#include "cmds/date.h"
 //#include "cmds/mb2.h"
 //#include "cmds/elfinfo.h"
-//#include "cmds/elfrun.h"
+#include "cmds/elfrun.h"
 //#include "cmds/cp.h"
 #include <algorithm>
 
 using namespace ustd;
 using namespace utils;
-using namespace drivers;
+using namespace middlespace;
 using namespace cmds;
 //using namespace multitasking;
 
@@ -61,7 +61,7 @@ Terminal::Terminal(u64 arg) :
 //    install_cmd<cmds::date>("date");
 //    install_cmd<cmds::mb2>("mb2");
 //    install_cmd<cmds::elfinfo>("elfinfo");
-//    install_cmd<cmds::elfrun>("elfrun");
+    install_cmd<cmds::elfrun>("elfrun");
 //    install_cmd<cmds::df>("df");
     install_cmd<cmds::ls>("ls");
 //    install_cmd<cmds::cat>("cat");

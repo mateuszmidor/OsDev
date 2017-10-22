@@ -24,9 +24,9 @@ public:
 
 private:
     bool init();
-    void process_key(drivers::Key key);
+    void process_key(middlespace::Key key);
     ustd::string get_line();
-    drivers::Key get_key();
+    middlespace::Key get_key();
     void suggest_cmd(const ustd::string& cmd);
 
     void process_cmd(const ustd::string& cmd);
@@ -41,7 +41,7 @@ private:
     static const ustd::string PROMPT;
 
     ustd::string edit_line;
-    drivers::Key last_key = drivers::Key::INVALID;
+    middlespace::Key last_key = middlespace::Key::INVALID;
     CommandHistory cmd_history;
     CommandCollection cmd_collection;
 
