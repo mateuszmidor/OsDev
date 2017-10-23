@@ -118,7 +118,7 @@ void task_init() {
 
     // run the elf
     utils::ElfRunner runner;
-    if (!runner.run(elf_data, {"TERMINAL"}))
+    if (!runner.run(elf_data, new vector<string>{"TERMINAL"}))
         klog.format("elfrun: not enough memory to run elf\n");
 
 }

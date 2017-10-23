@@ -18,7 +18,7 @@ namespace utils {
  */
 class ElfRunner {
 public:
-    bool run(u8* elf_data, const kstd::vector<kstd::string>& argv) const;
+    s32 run(u8* elf_data, kstd::vector<kstd::string>* argv) const;
 
 private:
     static void load_and_run_elf(u8* elf_file_data, kstd::vector<kstd::string>* args);

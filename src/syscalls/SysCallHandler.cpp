@@ -175,20 +175,14 @@ s64 SysCallHandler::elf_run(const char absolute_filename[], const char* nullterm
         return -ENOMEM;
     e->read(elf_data, size);
 
-    vector<string> args;
+    vector<string>* args = new vector<string>;
     while (*nullterm_argv) {
-        args.push_back(*nullterm_argv);
+        args->push_back(*nullterm_argv);
         nullterm_argv++;
     }
 
     utils::ElfRunner runner;
-    bool run_result = runner.run(elf_data, args);
-    delete[] elf_data;
-
-    if (run_result == true)
-        return 0;
-    else
-        return -ENOMEM;
+    return runner.run(elf_data, args);
 }
 
 /**

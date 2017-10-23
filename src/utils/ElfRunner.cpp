@@ -18,29 +18,31 @@ namespace utils {
 
 /**
  * @brief   Run elf as user task and return immediately
- * @param   elf_data ELF64 file data loaded into kernel memory. This function finally free the elf_data
- * @param   args User-provided cmd line arguments in kernel memory
- * @return  True if elf_loader run successfuly, False otherwise
+ * @param   elf_data ELF64 file data loaded into kernel memory. This function finally free the "elf_data"
+ * @param   args User-provided cmd line arguments in kernel memory. This function finally free the "args"
+ * @return  Error code on error, 0 on success
  */
-bool ElfRunner::run(u8* elf_data, const kstd::vector<kstd::string>& args) const {
+s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
+    if (!utils::Elf64::is_elf64(elf_data))
+        return -ENOEXEC; // not executable
+
     MemoryManager& mm = MemoryManager::instance();
     size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(hardware::PageTables64)); // must be physical, continuous address space
     if (!pml4_phys_addr)
-        return false;
+        return -ENOMEM;
 
     // create elf address space mapping, elf_loader will use this address space and load elf segments into it
     hardware::PageTables::map_elf_address_space(pml4_phys_addr);
 
     // run elf_loader in target address space, so the elf segments can be loaded
-    auto ownargs = new kstd::vector<kstd::string>(args);
-    Task task = Task::make_kernel_task(load_and_run_elf, "elf_loader").set_arg1(elf_data).set_arg2(ownargs);
+    Task task = Task::make_kernel_task(load_and_run_elf, "elf_loader").set_arg1(elf_data).set_arg2(args);
     task.pml4_phys_addr = pml4_phys_addr;   // kernel task but in user memory space
 
     TaskManager& task_manager = TaskManager::instance();
     if (u32 tid = task_manager.add_task(task))
-        return true;
+        return 0;
     else
-        return false;
+        return -EPERM;  // running new task not permitted at this time
 }
 
 /**
@@ -60,7 +62,7 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // prepare the target run environment in use memory space
     u64 argc = args->size();
     char** argv = string_vec_to_argv(*args, userspace_allocator);
-    delete[] args;
+    delete args;
 
     // run the actual elf task
     TaskManager& task_manager = TaskManager::instance();

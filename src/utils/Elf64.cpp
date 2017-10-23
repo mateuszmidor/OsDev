@@ -124,11 +124,30 @@ string Elf64::segment_header_to_string(Elf64_Phdr* esh) {
 }
 
 /**
+ * @brief   Check if given data is an ELF64
+ */
+bool Elf64::is_elf64(const void* elf64_data) {
+    Elf64_Ehdr* hdr = (Elf64_Ehdr*) elf64_data;
+    const unsigned char* ident = hdr->e_ident;
+
+    if (ident[EI_MAG0] != '\x7f' || ident[EI_MAG1] != 'E' || ident[EI_MAG2] != 'L' || ident[EI_MAG3] != 'F')
+        return false;   // not  ELF file
+
+    if (ident[EI_CLASS] != 2)
+        return false;   // not 64 bit
+
+    return true;
+}
+
+/**
  * @brief   Load ELF64 executable from memory pointed by "elf64_data" into current address space
  * @return  Address of the executable entry point
  * @note    This can only work with statically linked -nostdlib binaries; very early stage of ELF64 support :)
  */
 u64 Elf64::load_into_current_addressspace(void* elf64_data) {
+    if (!is_elf64(elf64_data))
+        return -1;
+
     Elf64_Ehdr* hdr = (Elf64_Ehdr*) elf64_data;
 
     Elf64_Phdr* segment = (Elf64_Phdr*)((char*)elf64_data + hdr->e_phoff);

@@ -46,6 +46,14 @@ void elfrun::run() {
         env->printer->format("elfrun: no enough memory to run ELF\n");
         break;
 
+    case -ENOEXEC:
+        env->printer->format("elfrun: give filename points to non-executable\n");
+        break;
+
+    case -EPERM:
+        env->printer->format("elfrun: task mamanger didnt allow to run new task. Too many tasks is running probably\n");
+        break;
+
     default:
         break;
     }
