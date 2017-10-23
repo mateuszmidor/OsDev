@@ -6,14 +6,13 @@
  */
 
 #include "ExceptionManager.h"
-#include "CpuState.h"
+#include "UnhandledExceptionHandler.h"
 
 using namespace hardware;
 
 namespace cpuexceptions {
 
 ExceptionManager ExceptionManager::_instance;
-UnhandledExceptionHandler ExceptionManager::unhandled_exception_handler(0xFF); // TODO: handle unhandled exceptions in a better way
 
 ExceptionManager &ExceptionManager::instance() {
     return _instance;
@@ -21,7 +20,7 @@ ExceptionManager &ExceptionManager::instance() {
 
 ExceptionManager::ExceptionManager() {
     for (u16 i = 0; i < handlers.size(); i++)
-        handlers[i] = &unhandled_exception_handler;
+        handlers[i] = nullptr;
 }
 
 void ExceptionManager::install_handler(ExceptionHandlerPtr handler) {
@@ -30,7 +29,10 @@ void ExceptionManager::install_handler(ExceptionHandlerPtr handler) {
 }
 
 CpuState* ExceptionManager::on_exception(u8 exception_no, CpuState* cpu_state) const {
-    return handlers[exception_no]->on_exception(cpu_state);
+    if (handlers[exception_no])
+        return handlers[exception_no]->on_exception(cpu_state);
+    else
+        return UnhandledExceptionHandler::on_exception(exception_no, cpu_state);
 }
 
 } /* namespace cpuexceptions */

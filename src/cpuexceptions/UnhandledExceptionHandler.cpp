@@ -49,18 +49,8 @@ const char* UnhandledExceptionHandler::EXCEPTION_NAMES[32] = {
         "Security Exception",
         "Reserved"
 };
-/**
- * Constructor.
- * This is generic handler so you can set the exception_no that it handles so it knows what it handles :)
- */
-UnhandledExceptionHandler::UnhandledExceptionHandler(u8 exception_no) : exception_no(exception_no) {
-}
 
-s16 UnhandledExceptionHandler::handled_exception_no() {
-    return exception_no;
-}
-
-CpuState* UnhandledExceptionHandler::on_exception(CpuState* cpu_state) {
+CpuState* UnhandledExceptionHandler::on_exception(u8 exception_no, CpuState* cpu_state) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     auto current = mngr.get_current_task();

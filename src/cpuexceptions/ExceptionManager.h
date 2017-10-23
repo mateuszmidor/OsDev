@@ -10,7 +10,7 @@
 
 #include <array>
 #include "InterruptNumbers.h"
-#include "UnhandledExceptionHandler.h"
+#include "ExceptionHandler.h"
 
 namespace cpuexceptions {
 
@@ -27,7 +27,6 @@ public:
 private:
     ExceptionManager();
     static ExceptionManager _instance;
-    static UnhandledExceptionHandler unhandled_exception_handler;
     std::array<ExceptionHandlerPtr, hardware::Interrupts::EXC_MAX> handlers; // this array maps exception_no to handler
 };
 

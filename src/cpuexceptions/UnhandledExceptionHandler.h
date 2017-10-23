@@ -8,19 +8,18 @@
 #ifndef SRC_CPUEXCEPTIONS_UNHANDLEDEXCEPTIONHANDLER_H_
 #define SRC_CPUEXCEPTIONS_UNHANDLEDEXCEPTIONHANDLER_H_
 
-#include "ExceptionHandler.h"
+#include "CpuState.h"
 
 namespace cpuexceptions {
 
-class UnhandledExceptionHandler: public ExceptionHandler {
+/**
+ * @brief   This is a generic exception handler; for exceptions that have no specific handler associated
+ */
+class UnhandledExceptionHandler {
 public:
-    UnhandledExceptionHandler(u8 exception_no);
-    ~UnhandledExceptionHandler() override {}
-    s16 handled_exception_no() override;
-    hardware::CpuState* on_exception(hardware::CpuState* cpu_state) override;
+    static hardware::CpuState* on_exception(u8 exception_no, hardware::CpuState* cpu_state);
 
 private:
-    u8 exception_no;
     static const char* EXCEPTION_NAMES[];
 };
 
