@@ -23,4 +23,5 @@ install: $(TARGETS)
 
 clean:
 	rm -rf $(OBJECTS) $(TARGETS)	# remove all build produsts
+	$(MAKE) clean -C terminal
 	@echo Removed all build results # @echo prints out text
