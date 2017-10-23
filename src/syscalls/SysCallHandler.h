@@ -30,7 +30,8 @@ public:
     void vga_cursor_setvisible(bool visible);
     void vga_cursor_setpos(u8 x, u8 y);
     void vga_setat(u8 x, u8 y, u16 c);
-
+    void vga_flush_buffer(const u16* buff);
+    void vga_get_width_height(u16* width, u16* height);
     s64 elf_run(const char absolute_filename[], const char* nullterm_argv[]);
 
 private:

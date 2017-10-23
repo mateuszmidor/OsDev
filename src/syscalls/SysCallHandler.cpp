@@ -156,6 +156,25 @@ void SysCallHandler::vga_setat(u8 x, u8 y, u16 c) {
     }
 }
 
+void SysCallHandler::vga_flush_buffer(const u16* buff) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        drv->flush_buffer((VgaCharacter*)buff);
+    }
+}
+
+void SysCallHandler::vga_get_width_height(u16* width, u16* height) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        *width = drv->screen_width();
+        *height = drv->screen_height();
+    }
+    else {
+        *width = 0;
+        *height = 0;
+    }
+}
+
 /**
  * @brief   Run ELF64 format program pointed by "absolute_filename"
  * @param   absolute_filename Absolute filename starting at root "/"

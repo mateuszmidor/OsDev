@@ -69,6 +69,14 @@ inline void vga_setat(unsigned int x, unsigned int y, unsigned short c) {
     syscall(middlespace::SysCallNumbers::VGA_SET_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)c);
 }
 
+inline void vga_flush_buffer(const unsigned short* vga_buffer) {
+    syscall(middlespace::SysCallNumbers::VGA_FLUSH_BUFFER, (syscall_arg)vga_buffer);
+}
+
+inline void vga_get_width_height(unsigned short* width, unsigned short* height) {
+    syscall(middlespace::SysCallNumbers::VGA_GET_WIDTH_HEIGHT, (syscall_arg)width, (syscall_arg)height);
+}
+
 inline s64 elf_run(const char absolute_filename[], const char* nullterm_argv[]) {
     return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)absolute_filename, (syscall_arg)nullterm_argv);
 }

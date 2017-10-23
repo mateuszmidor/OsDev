@@ -78,7 +78,7 @@ void corner_counter() {
         u64 i = 0;
 
         while (true) {
-            s8 c = (i % 10) + '0';
+            u8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
             asm volatile("mov $0, %rax; int $0x80");    // yield

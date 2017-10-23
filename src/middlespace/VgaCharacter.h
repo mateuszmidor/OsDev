@@ -8,6 +8,8 @@
 #ifndef SRC_MIDDLESPACE_VGACHARACTER_H_
 #define SRC_MIDDLESPACE_VGACHARACTER_H_
 
+#include "types.h"
+
 namespace drivers {
 
 // ega 16 color pallete index, mode that GRUB lefts us in
@@ -34,7 +36,7 @@ enum EgaColor : u8 {
  * This is the structure describing single character in VGA buffer
  */
 struct VgaCharacter {
-    VgaCharacter(u16 c) {
+    VgaCharacter(u16 c = 0) {
         character = c & 0xFF;
         fg_color = (c >> 8) & 0xF;
         bg_color = (c >> 12) & 0xF;

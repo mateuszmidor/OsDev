@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "kstd.h"
 #include "VgaDriver.h"
 
 using namespace hardware;
@@ -111,6 +112,10 @@ VgaCharacter& VgaDriver::at(u16 x, u16 y) const {
         return vga[0];
 
     return vga[y * width + x];
+}
+
+void VgaDriver::flush_buffer(const VgaCharacter* buff) {
+    memcpy(vga, buff, screen_width() * screen_height() * sizeof(VgaCharacter));
 }
 
 /**
