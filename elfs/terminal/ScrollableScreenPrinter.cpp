@@ -143,7 +143,7 @@ void ScrollableScreenPrinter::redraw() {
     flush_vga_buffer();
 }
 
-void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u8 y, const ustd::string& line) {
+void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u16 y, const ustd::string& line) {
     u16 num_characters = line.size();
 
     // print the line
@@ -173,6 +173,8 @@ void ScrollableScreenPrinter::draw_scroll_bar() {
         bar_size = 1;
 
     s16 max_top_line = lines.count() - printable_area_height;
+    if (max_top_line == 0)
+        max_top_line = 1;
 
     u16 move_space = printable_area_height - bar_size;
     u16 bar_y = top + move_space * top_line / max_top_line;

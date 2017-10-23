@@ -52,7 +52,7 @@ private:
     void putc(const char c);
     void redraw();
     void draw_scroll_bar();
-    void put_line_and_clear_remaining_space_at(u8 y, const ustd::string& line);
+    void put_line_and_clear_remaining_space_at(u16 y, const ustd::string& line);
     bool is_edit_line_visible();
     void flush_vga_buffer();
 
