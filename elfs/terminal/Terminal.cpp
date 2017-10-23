@@ -33,6 +33,8 @@
 //#include "cmds/elfinfo.h"
 #include "cmds/elfrun.h"
 //#include "cmds/cp.h"
+
+#include "syscalls.h"
 #include <algorithm>
 
 using namespace ustd;
@@ -45,10 +47,13 @@ namespace terminal {
 
 const string Terminal::PROMPT {"> "};
 
-Terminal::Terminal(u64 arg) :
-        printer(0, 0, 89, 29) {
+Terminal::Terminal(u64 arg) {
 
-    env.printer = &printer;
+    u16 vga_width;
+    u16 vga_height;
+    syscalls::vga_get_width_height(&vga_width, &vga_height);
+    printer = new ScrollableScreenPrinter(0, 0, vga_width-1, vga_height-1);
+    env.printer = printer;
 //    env.klog = &klog;
 
     // the commands will later be run as elf programs in user space
@@ -83,7 +88,7 @@ void Terminal::run() {
     // task main loop
     while(true) {
         // print prompt
-        printer.format("% %", env.cwd, PROMPT);
+        printer->format("% %", env.cwd, PROMPT);
 
         // get command
         string cmd = get_line();
@@ -108,7 +113,7 @@ bool Terminal::init() {
         return false;
     }
 
-    printer.clear_screen();
+    printer->clear_screen();
     return true;
 }
 
@@ -131,7 +136,7 @@ Key Terminal::get_key() {
         u32 count;
         while ((count = syscalls::read(stdout, buff, BUFF_SIZE - 1)) > 0) {
             buff[count] = '\0';
-            printer.format("%", buff);
+            printer->format("%", buff);
         }
         syscalls::usleep(0);
     }
@@ -143,9 +148,9 @@ Key Terminal::get_key() {
 
 void Terminal::suggest_cmd(const string& cmd) {
     for (u16 i = 0; i < edit_line.length(); i++)
-        printer.backspace();
+        printer->backspace();
 
-    printer.format(cmd);
+    printer->format(cmd);
     edit_line = cmd;
 }
 
@@ -167,14 +172,14 @@ void Terminal::process_key(Key key) {
             string filter_result;
             std::tie(multiple_results, filter_result) = cmd_collection.filter(edit_line);
             if (multiple_results)
-                printer.format("\n  %\n% %%", filter_result, env.cwd, PROMPT, edit_line);
+                printer->format("\n  %\n% %%", filter_result, env.cwd, PROMPT, edit_line);
             else
                 suggest_cmd(filter_result);
             break;
         }
 
         case Key::Enter: {
-            printer.newline();
+            printer->newline();
             cmd_history.set_to_latest();
             break;
         }
@@ -182,28 +187,28 @@ void Terminal::process_key(Key key) {
         case Key::Backspace: {
             if (!edit_line.empty()) {
                 edit_line.pop_back();
-                printer.backspace();
+                printer->backspace();
             }
             break;
         }
 
         case Key::PgUp: {
-            printer.scroll_up(4);
+            printer->scroll_up(4);
             break;
         }
 
         case Key::PgDown: {
-            printer.scroll_down(4);
+            printer->scroll_down(4);
             break;
         }
 
         case Key::Home: {
-            printer.scroll_to_begin();
+            printer->scroll_to_begin();
             break;
         }
 
         case Key::End: {
-            printer.scroll_to_end();
+            printer->scroll_to_end();
             break;
         }
 
@@ -214,7 +219,7 @@ void Terminal::process_key(Key key) {
         }
     }
     else {
-        printer.putc(key);
+        printer->putc(key);
         edit_line.push_back(key);
     }
 }
@@ -230,14 +235,14 @@ void Terminal::process_cmd(const string& cmd) {
         cmd_history.append(cmd);
     }
     else
-        printer.format("Unknown command: %\n", cmd);
+        printer->format("Unknown command: %\n", cmd);
 
     edit_line.clear();
 }
 
 void Terminal::print_klog() {
 //    auto& klog = KernelLog::instance();
-//    printer.format("%\n", klog.get_text());
+//    printer->format("%\n", klog.get_text());
 }
 
 

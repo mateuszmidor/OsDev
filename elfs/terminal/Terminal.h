@@ -46,7 +46,7 @@ private:
     CommandCollection cmd_collection;
 
 
-    utils::ScrollableScreenPrinter printer;
+    utils::ScrollableScreenPrinter* printer;
     TerminalEnv env;
 
     int keyboard    = -1;
