@@ -52,6 +52,7 @@ protected:
 
 private:
     drivers::VgaDriver* vga;
+    drivers::VgaCharacter null;
 };
 
 } /* namespace utils */

@@ -36,7 +36,6 @@ VgaCharacter& LimitedAreaScreenPrinter::at(const Cursor& cursor) {
 }
 
 VgaCharacter& LimitedAreaScreenPrinter::at(u16 x, u16 y) {
-    static VgaCharacter null;
 
     if (auto vga = get_vga())
         return vga->at(x, y);
