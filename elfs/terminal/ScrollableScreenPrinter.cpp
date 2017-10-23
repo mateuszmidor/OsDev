@@ -121,6 +121,8 @@ void ScrollableScreenPrinter::redraw() {
     cursor.set_visible(is_edit_line_visible());
     cursor.set_x(left + lines.back().length());
     cursor.set_y(top + lines_to_draw -1);
+
+    flush_vga_buffer();
 }
 
 void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u8 y, const ustd::string& line) {
@@ -128,12 +130,12 @@ void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u8 y, const 
 
     // print the line
     for (u16 x = 0; x < num_characters; x++) {
-        set_at(x, y, VgaCharacter(line[x], foreground, background));
+        set_at(x, y, VgaCharacter(line[x], foreground, background), false);
     }
 
     // clear remaining space of the row
     for (u16 x = num_characters; x < printable_area_width; x++)
-        set_at(x, y, VgaCharacter(' ', foreground, background));
+        set_at(x, y, VgaCharacter(' ', foreground, background), false);
 }
 
 void ScrollableScreenPrinter::clear_screen() {
@@ -145,7 +147,7 @@ void ScrollableScreenPrinter::draw_scroll_bar() {
 
     // draw scroll bar dotted background
     for (u16 y = top; y <= bottom; y++)
-        set_at(BAR_X, y, VgaCharacter(BG_CHAR, foreground, background));
+        set_at(BAR_X, y, VgaCharacter(BG_CHAR, foreground, background), false);
 
     // draw actual scrollbar
     u16 bar_size = (printable_area_height > lines.count()) ? printable_area_height : printable_area_height * printable_area_height / lines.count();
@@ -158,7 +160,7 @@ void ScrollableScreenPrinter::draw_scroll_bar() {
     u16 bar_y = top + move_space * top_line / max_top_line;
 
     for (u16 y = bar_y; y < bar_y + bar_size; y++)
-        set_at(BAR_X, y, VgaCharacter(BG_SCROLLER, foreground, background));
+        set_at(BAR_X, y, VgaCharacter(BG_SCROLLER, foreground, background), false);
 }
 
 

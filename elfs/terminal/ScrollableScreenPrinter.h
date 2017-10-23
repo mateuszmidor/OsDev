@@ -36,6 +36,7 @@ public:
         const ustd::string& str = ustd::format(fmt, args...);
         for (const char& c : str)
             putc(c);
+            redraw();
     }
     void putc(const char c);
 
