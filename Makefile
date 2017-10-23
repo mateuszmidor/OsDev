@@ -29,8 +29,6 @@ c_source_files :=  $(wildcard src/*.cpp) \
                    $(wildcard src/utils/*.cpp) \
                    $(wildcard src/_demos/*.cpp)
 #                   $(wildcard src/userspace/*.cpp) \
-#                   $(wildcard src/utils/terminal/*.cpp) \
-#                   $(wildcard src/utils/terminal/cmds/*.cpp) \
                    
 c_object_files := $(patsubst src/%.cpp, build/%.o, $(c_source_files))
 
