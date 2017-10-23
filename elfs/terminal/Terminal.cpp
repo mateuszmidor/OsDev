@@ -148,7 +148,7 @@ Key Terminal::get_key() {
 
 void Terminal::suggest_cmd(const string& cmd) {
     for (u16 i = 0; i < edit_line.length(); i++)
-        printer->backspace();
+        printer->format('\x08');    // backspace
 
     printer->format(cmd);
     edit_line = cmd;
@@ -179,7 +179,7 @@ void Terminal::process_key(Key key) {
         }
 
         case Key::Enter: {
-            printer->newline();
+            printer->format('\n');
             cmd_history.set_to_latest();
             break;
         }
@@ -187,7 +187,7 @@ void Terminal::process_key(Key key) {
         case Key::Backspace: {
             if (!edit_line.empty()) {
                 edit_line.pop_back();
-                printer->backspace();
+                printer->format('\x08');    // backspace
             }
             break;
         }
@@ -219,7 +219,7 @@ void Terminal::process_key(Key key) {
         }
     }
     else {
-        printer->putc(key);
+        printer->format(key);
         edit_line.push_back(key);
     }
 }
