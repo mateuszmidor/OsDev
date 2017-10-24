@@ -9,8 +9,8 @@
 
 namespace cmds {
 
-CmdBase::CmdBase(u64 arg) {
-    env = (terminal::TerminalEnv*)arg;
+CmdBase::CmdBase(terminal::TerminalEnv* arg) {
+    env = arg;
 }
 
 /**

@@ -14,7 +14,7 @@ namespace cmds {
 
 class CmdBase {
 public:
-    CmdBase(u64 arg);
+    CmdBase(terminal::TerminalEnv* arg);
     virtual ~CmdBase() {}
     virtual void run() = 0;
     ustd::string make_absolute_filename(const ustd::string& relative_filename) const;

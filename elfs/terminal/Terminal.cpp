@@ -49,7 +49,7 @@ Terminal::Terminal(u64 arg) {
 //    env.klog = &klog;
 
     // the commands will later be run as elf programs in user space
-    install_cmd<cmds::pwd>("pwd");
+    install_cmd(new cmds::pwd(&env), "pwd");
 //    install_cmd<cmds::log>("klog");
 //    install_cmd<cmds::lscpu>("lscpu");
 //    install_cmd<cmds::ps>("ps");
@@ -58,11 +58,11 @@ Terminal::Terminal(u64 arg) {
 //    install_cmd<cmds::date>("date");
 //    install_cmd<cmds::mb2>("mb2");
 //    install_cmd<cmds::elfinfo>("elfinfo");
-    install_cmd<cmds::elfrun>("elfrun");
+    install_cmd(new cmds::elfrun(&env), "elfrun");
 //    install_cmd<cmds::df>("df");
-    install_cmd<cmds::ls>("ls");
+    install_cmd(new cmds::ls(&env), "ls");
 //    install_cmd<cmds::cat>("cat");
-    install_cmd<cmds::cd>("cd");
+    install_cmd(new cmds::cd(&env), "cd");
 //    install_cmd<cmds::rm>("rm");
 //    install_cmd<cmds::mv>("mv");
 //    install_cmd<cmds::cp>("cp");
@@ -71,6 +71,27 @@ Terminal::Terminal(u64 arg) {
 //    install_cmd<cmds::tail>("tail");
 //    install_cmd<cmds::trunc>("trunc");
 //    install_cmd<cmds::test_fat32>("test_fat32");
+
+
+/*
+    u32 MAX_ENTRIES = 128; // should there be more in a single dir?
+    FsEntry* entries = new FsEntry[MAX_ENTRIES];
+
+    int fd = syscalls::open("/BIN");
+    if (fd < 0)
+        return;
+
+
+    ustd::vector<string> found;
+
+    // filter results
+    int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
+    for (int i = 0; i < count; i++)
+        if (entries[i].is_directory == false)
+            install(entries[i].name);
+
+    syscalls::close(fd);
+    */
 }
 
 void Terminal::run() {
