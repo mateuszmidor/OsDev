@@ -10,17 +10,14 @@
 namespace cmds {
 
 specificelfrun::specificelfrun(terminal::TerminalEnv* arg, const ustd::string& elf_absolute_path) :
-        CmdBase::CmdBase(env), elf_path(elf_absolute_path){
+        CmdBase::CmdBase(arg), elf_path(elf_absolute_path){
 }
 
 void specificelfrun::run() {
-    env->printer->format("specificelfrun: running %\n", elf_path);
     u32 count = env->cmd_args.size();
     const char** nullterm_argv = new const char*[count + 1]; // +1 for list terminating null
-    for (u32 i = 0; i < count; i++) {
-        env->printer->format("specificelfrun: arg: %\n", env->cmd_args[i]);
+    for (u32 i = 0; i < count; i++)
         nullterm_argv[i] = env->cmd_args[i].c_str();
-    }
 
     nullterm_argv[count] = nullptr;
 

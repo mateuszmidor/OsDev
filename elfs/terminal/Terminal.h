@@ -29,12 +29,10 @@ private:
     middlespace::Key get_key();
     void process_cmd(const ustd::string& cmd);
 
-    void install_cmd(cmds::CmdBase* cmd, const ustd::string& cmd_name) {
-        cmd_collection.install(cmd_name, cmd);
-        user_input.install(cmd_name);
-    }
+    void install_external_commands(const ustd::string& dir);
+    void install_cmd(cmds::CmdBase* cmd, const ustd::string& cmd_name);
 
-    middlespace::Key    last_key = middlespace::Key::INVALID;
+
     CommandHistory      cmd_history;
     CommandCollection   cmd_collection;
     CommandLineInput    user_input;

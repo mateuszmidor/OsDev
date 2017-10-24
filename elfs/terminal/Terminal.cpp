@@ -74,33 +74,53 @@ Terminal::Terminal(u64 arg) {
 //    install_cmd<cmds::test_fat32>("test_fat32");
 
 
+    // install commands that are in form of separate ELF programs, located under given directory
+    install_external_commands("/BIN");
+}
 
-    u32 MAX_ENTRIES = 128; // should there be more in a single dir?
-    FsEntry* entries = new FsEntry[MAX_ENTRIES];
+/**
+ * @brief   Install commands that are exteral ELF files located in filesystem under "dir"
+ */
+void Terminal::install_external_commands(const string& dir) {
+    int fd = syscalls::open(dir.c_str());
 
-    int fd = syscalls::open("/BIN");
+    // no such directory
     if (fd < 0)
         return;
 
-
-    ustd::vector<string> found;
-
-    // filter results
+    // get "dir" contents
+    u32 MAX_ENTRIES = 128; // should there be more in a single dir?
+    FsEntry* entries = new FsEntry[MAX_ENTRIES];
     int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
+
+    // install commands that were found
     for (int i = 0; i < count; i++) {
         FsEntry& e = entries[i];
+
+        // dont install directory. Should also check if it is actually an ELF file...
         if (e.is_directory)
             continue;
 
-        string path = string("/") + string(e.name);
-        printer->format("Terminal:: installing % from %\n", e.name, path);
-        install_cmd(new cmds::specificelfrun(&env, path), e.name);
+        string cmd_absolute_path = format("%/%", dir, e.name);
+        printer->format("Terminal:: installing % from %\n", e.name, cmd_absolute_path);
+        install_cmd(new cmds::specificelfrun(&env, cmd_absolute_path), e.name);
     }
 
     syscalls::close(fd);
     delete[] entries;
 }
 
+/**
+ * @brief   Install command "cmd" under name "cmd_name"
+ */
+void Terminal::install_cmd(cmds::CmdBase* cmd, const string& cmd_name) {
+    cmd_collection.install(cmd_name, cmd);
+    user_input.install(cmd_name);
+}
+
+/**
+ * @brief   Run the REPL (Read, Eval, Print, Loop)
+ */
 void Terminal::run() {
     if (!init())
         return;
@@ -144,11 +164,14 @@ string Terminal::get_line() {
 }
 
 Key Terminal::get_key() {
-    u32 BUFF_SIZE = 512;
+    const u32 BUFF_SIZE = 512;
     char buff[BUFF_SIZE];
 
     // wait until last_key is set by keyboard interrupt. Keys might be missed if stroking faster than Terminal gets CPU time :)
-    while (!(syscalls::read(keyboard, &last_key, sizeof(last_key)) > 0)) {
+    Key key;
+    while (!(syscalls::read(keyboard, &key, sizeof(key)) > 0)) {
+
+        // while waiting for key to arrive, check if there is something in stdout to be printed out
         u32 count;
         while ((count = syscalls::read(stdout, buff, BUFF_SIZE - 1)) > 0) {
             buff[count] = '\0';
@@ -157,8 +180,6 @@ Key Terminal::get_key() {
         syscalls::usleep(0);
     }
 
-    Key key = last_key;
-    last_key = Key::INVALID;
     return key;
 }
 
@@ -231,7 +252,6 @@ void Terminal::process_cmd(const string& cmd) {
     auto cmd_args = ustd::split_string<vector<string>>(cmd, ' ');
     if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
         env.cmd_args = cmd_args;
-        printer->format("Running %\n", cmd_args[0]);
         task->run();
         cmd_history.append(cmd);
     }
