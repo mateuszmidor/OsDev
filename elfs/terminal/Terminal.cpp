@@ -124,7 +124,7 @@ string Terminal::get_line() {
         process_key(key);
     } while (key != Key::Enter);
 
-    return edit_line;
+    return cl_user_input;
 }
 
 Key Terminal::get_key() {
@@ -146,12 +146,34 @@ Key Terminal::get_key() {
     return key;
 }
 
+/**
+ * @brief   Erase entire command line input and replace with "cmd"
+ */
 void Terminal::suggest_cmd(const string& cmd) {
-    for (u16 i = 0; i < edit_line.length(); i++)
+    for (s16 i = cl_user_input.length()-1; i >= 0 ; i--)
         printer->format('\x08');    // backspace
 
     printer->format(cmd);
-    edit_line = cmd;
+    cl_user_input =  cmd;
+}
+
+/**
+ * @brief   Erase last segment of command line parameter and replace with "param"
+ */
+void Terminal::suggest_param(const string& param) {
+    for (s16 i = cl_user_input.length()-1; i >= 0 ; i--) {
+        if (cl_user_input[i] == ' ')    // segment break (beginning of parameter)
+            break;
+
+        if (cl_user_input[i] == '/')    // path break (beginnig of path segment)
+            break;
+
+        printer->format('\x08');    // backspace
+        cl_user_input.pop_back();
+    }
+
+    printer->format(param);
+    cl_user_input += param;
 }
 
 void Terminal::process_key(Key key) {
@@ -170,11 +192,27 @@ void Terminal::process_key(Key key) {
         case Key::Tab: {
             bool multiple_results;
             string filter_result;
-            std::tie(multiple_results, filter_result) = cmd_collection.filter(edit_line);
-            if (multiple_results)
-                printer->format("\n  %\n% %%", filter_result, env.cwd, PROMPT, edit_line);
-            else
-                suggest_cmd(filter_result);
+
+
+            if (cl_user_input.find(' ') == string::npos) { // command not given, suggest command
+                std::tie(multiple_results, filter_result) = cmd_collection.filter(cl_user_input);
+                if (multiple_results)
+                    printer->format("\n  % \n% %%", filter_result, env.cwd, PROMPT, cl_user_input);
+                else
+                    suggest_cmd(filter_result);
+            }
+            else { // suggest param
+                string second_segment = cl_user_input.substr(cl_user_input.rfind(' ') + 1, cl_user_input.length());
+                string common_pattern;
+                std::tie(multiple_results, filter_result, common_pattern) = cd_filter(second_segment);
+                if (multiple_results)
+                    printer->format("\n  % \n% %%", filter_result, env.cwd, PROMPT, cl_user_input);
+              //  else
+                if (!common_pattern.empty())
+                    suggest_param(common_pattern);
+            }
+
+
             break;
         }
 
@@ -185,8 +223,8 @@ void Terminal::process_key(Key key) {
         }
 
         case Key::Backspace: {
-            if (!edit_line.empty()) {
-                edit_line.pop_back();
+            if (!cl_user_input.empty()) {
+                cl_user_input.pop_back();
                 printer->format('\x08');    // backspace
             }
             break;
@@ -220,7 +258,7 @@ void Terminal::process_key(Key key) {
     }
     else {
         printer->format(key);
-        edit_line.push_back(key);
+        cl_user_input.push_back(key);
     }
 }
 
@@ -237,7 +275,83 @@ void Terminal::process_cmd(const string& cmd) {
     else
         printer->format("Unknown command: %\n", cmd);
 
-    edit_line.clear();
+    cl_user_input.clear();
+}
+
+std::tuple<bool, string, string> Terminal::cd_filter(const string& param) {
+    string path;
+    string pattern;
+
+    size_t pivot = param.rfind('/');
+    if (pivot != string::npos) {
+        path = param.substr(0, pivot+1);
+        if (path[0] != '/')
+            path = env.cwd + "/" + path;
+
+        pattern = param.substr(pivot+1, param.length());
+    }
+    else {
+        path = env.cwd;
+        pattern = param;
+    }
+
+    u32 MAX_ENTRIES = 128; // should there be more in a single dir?
+    FsEntry* entries = new FsEntry[MAX_ENTRIES];
+
+    int fd = syscalls::open(path.c_str());
+    if (fd < 0) {
+        return {};
+    }
+
+    ustd::vector<string> found;
+
+    // filter results
+    int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
+    for (int i = 0; i < count; i++) {
+        const string& name (entries[i].name);
+        if (name == "." || name == "..")
+            continue;
+
+        if (name.find(pattern) == 0) {
+            if (entries[i].is_directory)
+                found.push_back(name + "/");
+            else
+                found.push_back(name);
+        }
+    }
+
+    // find common pattern
+    string common_pattern;
+    size_t i = 0;
+    bool done = found.empty();
+    while (!done) {
+        char common = found.front()[i];
+        for (const auto& s : found) {
+            if (s.length() <= i) {
+                done = true;
+                break;
+            }
+
+            if (s[i] != common) {
+                done = true;
+                break;
+            }
+        }
+        i++;
+    }
+    if (!found.empty())
+        common_pattern = found.front().substr(0, i-1);
+
+    delete[] entries;
+    syscalls::close(fd);
+
+    if (found.empty())
+        return std::make_tuple(false, pattern, common_pattern);
+    else if (found.size() == 1)
+        return std::make_tuple(false, found.back(), common_pattern);
+    else
+        return std::make_tuple(true, ustd::join_string(" ", found), common_pattern);
+
 }
 
 void Terminal::print_klog() {
