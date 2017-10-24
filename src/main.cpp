@@ -102,7 +102,7 @@ void task_init() {
     task_manager.add_task(Task::make_kernel_task(corner_counter, "corner_counter"));
 
 
-    VfsEntryPtr e = vfs_manager.get_entry("/mnt/PHOBOS_D/TERMINAL");
+    VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
     if (!e) {
         return;
     }

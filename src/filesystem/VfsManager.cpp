@@ -35,9 +35,7 @@ void VfsManager::install_root() {
     VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
     dev->entries.push_back(stdout);
 
-    VfsRamEntryPtr mnt = std::make_shared<VfsRamEntry>("mnt", true);
-    root->entries.push_back(mnt);
-    install_ata_devices(mnt);
+    install_ata_devices(root);
 }
 
 /**

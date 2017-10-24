@@ -12,7 +12,7 @@ using namespace ustd;
 using namespace middlespace;
 namespace terminal {
 
-const string CommandLineInput::PROMPT {"> "};
+const char CommandLineInput::PROMPT[] {"> "};
 
 CommandLineInput::CommandLineInput() : printer(nullptr) {
 }

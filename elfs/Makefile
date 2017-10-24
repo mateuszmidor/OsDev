@@ -14,7 +14,7 @@ all: $(TARGETS) # This is first target. It is used when no params passed to “m
 	
 
 install: $(TARGETS)
-	@cp $^ ../p2
+	@cp $^ ../p1
 	$(MAKE) install -C terminal
 	@sync
 	 

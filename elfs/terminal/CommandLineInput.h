@@ -34,7 +34,7 @@ private:
     std::tuple<bool, ustd::string> command_filter(const ustd::string& pattern);
     std::tuple<bool, ustd::string, ustd::string> folder_filter(const ustd::string& cwd, const ustd::string& pattern);
 
-    static const ustd::string   PROMPT;
+    static const char           PROMPT[];
     ustd::vector<ustd::string>  known_commands;
     ustd::string                input;
 };

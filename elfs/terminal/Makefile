@@ -26,7 +26,7 @@ $(MAIN): $(OBJECTS)
         
         
 install: $(MAIN)
-	@cp $^ ../../p2
+	@cp $^ ../../p1
 	@sync
 	 
 # indicate that following target doesnt update any file called "clean"
