@@ -12,6 +12,7 @@
 #include <sys/types.h>  // ssize_t
 #include "SysCallNumbers.h"
 #include "FsEntry.h"
+#include "posix/posix.h"
 
 namespace syscalls {
 
@@ -51,6 +52,10 @@ inline int open(const char* absolute_path, int flags = 0) {
 
 inline int close(int fd) {
     return syscall(middlespace::SysCallNumbers::FILE_CLOSE, (syscall_arg)fd);
+}
+
+inline int stat(const char pathname[], struct stat* statbuf) {
+    return syscall(middlespace::SysCallNumbers::FILE_STAT, (syscall_arg)pathname, (syscall_arg)statbuf);
 }
 
 inline int enumerate(unsigned int fd, middlespace::FsEntry* entries, unsigned int max_enties) {

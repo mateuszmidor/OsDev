@@ -19,7 +19,7 @@
 //#include "cmds/cat.h"
 //#include "cmds/ps.h"
 //#include "cmds/free.h"
-//#include "cmds/cd.h"
+#include "cmds/cd.h"
 //#include "cmds/rm.h"
 //#include "cmds/mv.h"
 //#include "cmds/echo.h"
@@ -70,7 +70,7 @@ Terminal::Terminal(u64 arg) {
 //    install_cmd<cmds::df>("df");
     install_cmd<cmds::ls>("ls");
 //    install_cmd<cmds::cat>("cat");
-//    install_cmd<cmds::cd>("cd");
+    install_cmd<cmds::cd>("cd");
 //    install_cmd<cmds::rm>("rm");
 //    install_cmd<cmds::mv>("mv");
 //    install_cmd<cmds::cp>("cp");

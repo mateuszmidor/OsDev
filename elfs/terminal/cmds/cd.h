@@ -9,7 +9,6 @@
 #define SRC_UTILS_TERMINAL_CMDS_CD_H_
 
 #include "CmdBase.h"
-#include "AtaDriver.h"
 #include "TerminalEnv.h"
 
 namespace cmds {

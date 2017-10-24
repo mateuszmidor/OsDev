@@ -12,6 +12,7 @@
 #include "VgaDriver.h"
 #include "ElfRunner.h"
 #include "syscall_errors.h"
+#include "posix/posix.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -81,6 +82,23 @@ s64 SysCallHandler::sys_write(u32 fd, const void *buf, u64 count) {
         return 0;
 
     return files[fd]->write(buf, count);
+}
+
+/**
+ * @brief   Get file status
+ * @return  On success, zero is returned.  On error, -1 is returned, and errno is set appropriately.
+ * @see     http://man7.org/linux/man-pages/man2/stat.2.html
+ */
+s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
+    VfsEntryPtr entry = VfsManager::instance().get_entry(name);
+    if (!entry)
+        return -1;
+
+    memset(buff, 0, sizeof(struct stat));
+    buff->st_size = entry->get_size();
+    buff->st_mode = entry->is_directory() ? S_IFDIR : S_IFREG;
+
+    return 0;
 }
 
 void SysCallHandler::sys_exit(s32 status) {

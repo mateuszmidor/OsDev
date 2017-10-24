@@ -7,12 +7,9 @@
 
 #include "cd.h"
 #include "ustd.h"
-#include "DriverManager.h"
+#include "syscalls.h"
 
 using namespace ustd;
-using namespace utils;
-using namespace drivers;
-using namespace filesystem;
 
 namespace cmds {
 
@@ -62,13 +59,15 @@ void cd::cd_root() {
 void cd::cd_directory(const string& path) {
     string absolute_path = make_absolute_filename(path);
     string normalized_absolute_path = format("/%", normalize_path(absolute_path)); // absolute path must start with "/"
-    VfsEntryPtr e = env->vfs_manager.get_entry(normalized_absolute_path);
-    if (!e) {
+
+    struct stat s;
+
+    if (syscalls::stat(normalized_absolute_path.c_str(), &s) == -1) {
         env->printer->format("cd: directory '%' doesnt exist\n", normalized_absolute_path);
         return;
     }
 
-    if (!e->is_directory()) {
+    if (!(s.st_mode == S_IFDIR)) {
         env->printer->format("cd: '%' is not directory\n", normalized_absolute_path);
         return;
     }

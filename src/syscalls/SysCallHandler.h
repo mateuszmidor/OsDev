@@ -11,6 +11,7 @@
 #include "types.h"
 #include "TaskManager.h"
 #include "middlespace/FsEntry.h"
+#include "middlespace/posix/posix.h"
 
 namespace syscalls {
 
@@ -22,6 +23,7 @@ public:
     s32 sys_close(u32 fd);
     s64 sys_read(u32 fd, void *buf, u64 count);
     s64 sys_write(u32 fd, const void *buf, u64 count);
+    s32 sys_stat(const char* name, struct stat* buff);
     s32 sys_enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);
 
     void sys_exit(s32 status);
