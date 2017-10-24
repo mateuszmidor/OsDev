@@ -5,7 +5,7 @@ SOURCES = TerminalEnv.cpp main.cpp
 INCLUDES = -I. -Icmds -I.. -I../../src/middlespace
 
 COMMANDS := cmds/CmdBase.cpp cmds/pwd.cpp cmds/ls.cpp cmds/elfrun.cpp cmds/cd.cpp #$(wildcard cmds/*.cpp) 
-SOURCES = main.cpp TerminalEnv.cpp Cursor.cpp CommandHistory.cpp CommandCollection.cpp \
+SOURCES = main.cpp TerminalEnv.cpp Cursor.cpp CommandHistory.cpp CommandCollection.cpp CommandLineInput.cpp \
 			LineBuffer.cpp ScrollableScreenPrinter.cpp \
 			$(COMMANDS) Terminal.cpp
 

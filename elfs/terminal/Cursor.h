@@ -11,9 +11,8 @@
 #include "types.h"
 #include "ustd.h"
 #include "syscalls.h"
-//#include "VgaDriver.h"
 
-namespace utils {
+namespace terminal {
 
 /**
  * @brief   Cursor that moves within limited area and automatically updates VGA cursor position
@@ -36,6 +35,6 @@ private:
     u16 cursor_x, cursor_y;         // current cursor position limited by [left, top, right, bottom]
 };
 
-} /* namespace utils */
+} /* namespace terminal */
 
 #endif /* SRC_UTILS_CURSOR_H_ */

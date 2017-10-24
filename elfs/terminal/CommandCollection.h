@@ -25,7 +25,6 @@ struct Command {
 class CommandCollection {
 public:
     cmds::CmdBase* get(const ustd::string& cmd_name) const;
-    std::tuple<bool, ustd::string> filter(const ustd::string& pattern);
     void install(const ustd::string name, cmds::CmdBase* cmd);
 
 private:

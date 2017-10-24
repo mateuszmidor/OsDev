@@ -7,7 +7,7 @@
 
 #include "Cursor.h"
 
-namespace utils {
+namespace terminal {
 
 Cursor::Cursor(u16 left, u16 top, u16 right, u16 bottom) :
         left(left), top(top), right(right), bottom(bottom), cursor_x(left), cursor_y(top){
@@ -64,4 +64,4 @@ void Cursor::update_vga_cursor() {
     syscalls::vga_cursor_setpos(cursor_x, cursor_y);
 }
 
-} /* namespace utils */
+} /* namespace terminal */

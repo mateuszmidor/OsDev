@@ -11,7 +11,7 @@
 #include "types.h"
 #include "ustd.h"
 
-namespace utils {
+namespace terminal {
 
 class LineBuffer {
 public:
@@ -27,6 +27,6 @@ public:
 private:
     ustd::vector<ustd::string> lines;
 };
-} /* namespace utils */
+} /* namespace terminal */
 
 #endif /* SRC_UTILS_LINEBUFFER_H_ */

@@ -9,7 +9,7 @@
 #include "syscalls.h"
 
 using namespace drivers;
-namespace utils {
+namespace terminal {
 
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
         left(left), top(top), right(right-1), bottom(bottom), // -1 for scrollbar
@@ -195,4 +195,4 @@ void ScrollableScreenPrinter::flush_vga_buffer() {
     syscalls::vga_flush_buffer((u16*)vga_buffer);
 }
 
-} // namespace utils
+} // namespace terminal

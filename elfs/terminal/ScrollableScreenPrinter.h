@@ -12,7 +12,7 @@
 #include "LineBuffer.h"
 #include "VgaCharacter.h"
 
-namespace utils {
+namespace terminal {
 
 
 class ScrollableScreenPrinter {
@@ -76,6 +76,6 @@ private:
     LineBuffer lines;
 };
 
-} // namespace utils
+} // namespace terminal
 
 #endif /* SRC_SCREENPRINTER_H_ */

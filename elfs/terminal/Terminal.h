@@ -12,7 +12,7 @@
 #include "TerminalEnv.h"
 #include "CommandHistory.h"
 #include "CommandCollection.h"
-//#include "TaskFactory.h"
+#include "CommandLineInput.h"
 #include "ustd.h"
 
 namespace terminal {
@@ -27,32 +27,26 @@ private:
     void process_key(middlespace::Key key);
     ustd::string get_line();
     middlespace::Key get_key();
-    void suggest_cmd(const ustd::string& cmd);
-    void suggest_param(const ustd::string& param);
-
     void process_cmd(const ustd::string& cmd);
-    void print_klog();
 
     template <class T>
     void install_cmd(const ustd::string& cmd) {
         cmds::CmdBase* task = new T((u64)&env);
         cmd_collection.install(cmd, task);
+        user_input.install(cmd);
     }
 
-    std::tuple<bool, ustd::string, ustd::string> cd_filter(const ustd::string& pattern);
-    static const ustd::string PROMPT;
+    middlespace::Key    last_key = middlespace::Key::INVALID;
+    CommandHistory      cmd_history;
+    CommandCollection   cmd_collection;
+    CommandLineInput    user_input;
 
-    ustd::string cl_user_input;
-    middlespace::Key last_key = middlespace::Key::INVALID;
-    CommandHistory cmd_history;
-    CommandCollection cmd_collection;
-
-
-    utils::ScrollableScreenPrinter* printer;
+    ScrollableScreenPrinter* printer;
     TerminalEnv env;
 
-    int keyboard    = -1;
-    int stdout      = -1;
+    // file descriptors
+    int keyboard    = -1;   // for reading keyboard input
+    int stdout      = -1;   // for reading stdout of child tasks(elf64)
 };
 
 } /* namespace terminal */

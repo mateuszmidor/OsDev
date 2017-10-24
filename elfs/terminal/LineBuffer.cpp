@@ -7,7 +7,7 @@
 
 #include "LineBuffer.h"
 
-namespace utils {
+namespace terminal {
 
 LineBuffer::LineBuffer() {
     // add first, empty line to the buffer
@@ -46,4 +46,4 @@ const ustd::string& LineBuffer::operator[](u32 index) const {
     return lines[index];
 }
 
-} /* namespace utils */
+} /* namespace terminal */

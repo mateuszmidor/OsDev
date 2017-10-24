@@ -9,7 +9,6 @@
 #define SRC_UTILS_TERMINAL_TERMINALENV_H_
 
 #include "ustd.h"
-//#include "KernelLog.h"
 #include "ScrollableScreenPrinter.h"
 
 namespace terminal {
@@ -17,9 +16,7 @@ namespace terminal {
 struct TerminalEnv {
     TerminalEnv();
 
-//    filesystem::VfsManager&     vfs_manager;
-//    utils::KernelLog* klog;
-    utils::ScrollableScreenPrinter* printer;
+    ScrollableScreenPrinter* printer;
     ustd::string cwd;
 
     ustd::vector<ustd::string> cmd_args;    // command_name, arg1, arg2, ...,  argn
