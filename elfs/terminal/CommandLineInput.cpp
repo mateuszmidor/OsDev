@@ -22,12 +22,15 @@ void CommandLineInput::prompt(const ustd::string& cwd) {
 }
 
 void CommandLineInput::backspace() {
-    if (!input.empty())
+    if (!input.empty()) {
         input.pop_back();
+        printer->format('\x08');    // backspace
+    }
 }
 
 void CommandLineInput::putc(char c) {
     input.push_back(c);
+    printer->format(c);
 }
 
 void CommandLineInput::clear() {

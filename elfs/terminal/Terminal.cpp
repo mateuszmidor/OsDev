@@ -160,10 +160,7 @@ void Terminal::process_key(Key key) {
         }
 
         case Key::Backspace: {
-            if (!user_input.get_text().empty()) {
-                user_input.backspace();
-                printer->format('\x08');    // backspace
-            }
+            user_input.backspace();
             break;
         }
 
@@ -195,7 +192,6 @@ void Terminal::process_key(Key key) {
     }
     // just an ASCII character
     else {
-        printer->format(key);
         user_input.putc(key);
     }
 }
