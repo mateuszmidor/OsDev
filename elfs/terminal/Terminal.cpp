@@ -27,6 +27,7 @@
 //#include "cmds/mb2.h"
 //#include "cmds/elfinfo.h"
 #include "cmds/elfrun.h"
+#include "cmds/specificelfrun.h"
 //#include "cmds/cp.h"
 
 #include "syscalls.h"
@@ -73,7 +74,7 @@ Terminal::Terminal(u64 arg) {
 //    install_cmd<cmds::test_fat32>("test_fat32");
 
 
-/*
+
     u32 MAX_ENTRIES = 128; // should there be more in a single dir?
     FsEntry* entries = new FsEntry[MAX_ENTRIES];
 
@@ -86,12 +87,18 @@ Terminal::Terminal(u64 arg) {
 
     // filter results
     int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
-    for (int i = 0; i < count; i++)
-        if (entries[i].is_directory == false)
-            install(entries[i].name);
+    for (int i = 0; i < count; i++) {
+        FsEntry& e = entries[i];
+        if (e.is_directory)
+            continue;
+
+        string path = string("/") + string(e.name);
+        printer->format("Terminal:: installing % from %\n", e.name, path);
+        install_cmd(new cmds::specificelfrun(&env, path), e.name);
+    }
 
     syscalls::close(fd);
-    */
+    delete[] entries;
 }
 
 void Terminal::run() {
@@ -224,6 +231,7 @@ void Terminal::process_cmd(const string& cmd) {
     auto cmd_args = ustd::split_string<vector<string>>(cmd, ' ');
     if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
         env.cmd_args = cmd_args;
+        printer->format("Running %\n", cmd_args[0]);
         task->run();
         cmd_history.append(cmd);
     }
