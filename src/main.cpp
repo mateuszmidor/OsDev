@@ -86,41 +86,49 @@ void corner_counter() {
     }
 }
 
+void run_userspace_terminal() {
+    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
+        // clear screen
+        for (u16 y = 0; y < 30; y++)
+            for (u16 x = 0; x < 90; x++)
+                vga_drv->at(x, y) = VgaCharacter(' ', EgaColor::Black, EgaColor::Black);
+
+        // print "Loading.." message
+        const char LOADING[] = "Loading terminal, please wait...";
+        u16 i = 0;
+        while (LOADING[i]) {
+            vga_drv->at(i, 0) = VgaCharacter(LOADING[i], EgaColor::LightGreen, EgaColor::Black);
+            i++;
+        }
+    }
+
+
+    VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
+    if (!e) {
+        // return;
+    }
+    if (e->is_directory()) {
+        //  return;
+    }
+    // read elf file data
+    u32 size = e->get_size();
+    u8* elf_data = new u8[size];
+    e->read(elf_data, size);
+    // run the elf
+    utils::ElfRunner runner;
+    if (!runner.run(elf_data, new vector<string> { "TERMINAL" }))
+        klog.format("elfrun: not enough memory to run elf\n");
+}
+
 /**
  * Here we enter multitasking
  */
 void task_init() {
     task_manager.add_task(Task::make_kernel_task(Task::idle, "idle"));
-
-//    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_a_demo", 'A'));
-//    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
-//    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
-//    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-//    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
-//    task_manager.add_task(TaskFactory::make_kernel_task<terminal::Terminal>("terminal", 0));
     task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0));
     task_manager.add_task(Task::make_kernel_task(corner_counter, "corner_counter"));
 
-
-    VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
-    if (!e) {
-        return;
-    }
-
-    if (e->is_directory()) {
-        return;
-    }
-
-    // read elf file data
-    u32 size = e->get_size();
-    u8* elf_data = new u8[size];
-    e->read(elf_data, size);
-
-    // run the elf
-    utils::ElfRunner runner;
-    if (!runner.run(elf_data, new vector<string>{"TERMINAL"}))
-        klog.format("elfrun: not enough memory to run elf\n");
-
+    run_userspace_terminal();
 }
 
 /**
