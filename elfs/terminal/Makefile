@@ -1,6 +1,6 @@
 # comments begin with pound sign.
 CXX = g++ # an alias. You can specify any number of aliases
-CFLAGS = -std=c++11 -Wall -mno-red-zone -nostartfiles -static -O0
+CFLAGS = -std=c++11 -Wall -mno-red-zone -nostartfiles -static -O0 -fdata-sections -ffunction-sections -Wl,--gc-sections
 SOURCES = TerminalEnv.cpp main.cpp
 INCLUDES = -I. -Icmds -I.. -I../../src/middlespace
 

@@ -39,18 +39,14 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     SysCallManager& mngr = SysCallManager::instance();
     KernelLog& klog = KernelLog::instance();
 
-    klog.format("syscall_handler: % \n", sys_call_num);
+//    klog.format("syscall_handler: % \n", sys_call_num);
 
     switch (sys_call_num) {
     case SysCallNumbers::FILE_READ: // read (unsigned int fd char *buf   size_t count)
         return syscall_handler.sys_read(arg1, (char*)arg2, arg3);
 
     case SysCallNumbers::FILE_WRITE: // write (fd, buff, count)
-        if (arg1 == 2) // stderr
-            klog.format("%\n", (char*)arg2);
-        else
-            return syscall_handler.sys_write(arg1, (const char*)arg2, arg3);
-        return 0;
+        return syscall_handler.sys_write(arg1, (const char*)arg2, arg3);
 
     case SysCallNumbers::FILE_OPEN: // open(const char* name, int flags, int mode)
         return syscall_handler.sys_open((const char*)arg1, arg2, arg3);
@@ -60,6 +56,9 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
 
     case SysCallNumbers::FILE_STAT:
         return syscall_handler.sys_stat((const char*)arg1, (struct stat*)arg2);
+
+    case SysCallNumbers::FILE_CREAT:
+        return syscall_handler.sys_creat((const char*)arg1, arg2);
 
     case SysCallNumbers::FILE_ENUMERATE:
         return syscall_handler.sys_enumerate(arg1, (FsEntry*)arg2, arg3);

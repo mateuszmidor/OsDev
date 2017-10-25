@@ -58,6 +58,10 @@ inline int stat(const char pathname[], struct stat* statbuf) {
     return syscall(middlespace::SysCallNumbers::FILE_STAT, (syscall_arg)pathname, (syscall_arg)statbuf);
 }
 
+inline int creat(const char pathname[], int mode = 0) {
+    return syscall(middlespace::SysCallNumbers::FILE_CREAT, (syscall_arg)pathname, (syscall_arg)mode);
+}
+
 inline int enumerate(unsigned int fd, middlespace::FsEntry* entries, unsigned int max_enties) {
     return syscall(middlespace::SysCallNumbers::FILE_ENUMERATE, (syscall_arg)fd, (syscall_arg)entries, (syscall_arg)max_enties);
 }

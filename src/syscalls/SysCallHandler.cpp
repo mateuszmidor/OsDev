@@ -101,12 +101,27 @@ s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
     return 0;
 }
 
+/**
+ * @brief   Create file and return its descriptor
+ * @param   name NOT USED NOW
+ * @param   mode NOT USED NOW
+ * @return  Descriptor number on success, -1 otherwise
+ * @see     http://man7.org/linux/man-pages/man2/open.2.html
+ */
+s32 SysCallHandler::sys_creat(const char* name, int mode) {
+    auto entry = VfsManager::instance().create_entry(name, false);
+    if (!entry)
+        return -1;
+
+    return sys_open(name, 0, mode);
+}
+
 void SysCallHandler::sys_exit(s32 status) {
-    multitasking::Task::exit();
+    multitasking::Task::exit(status);
 }
 
 void SysCallHandler::sys_exit_group(s32 status) {
-    multitasking::Task::exit();
+    multitasking::Task::exit(status);
 }
 
 /*************************************************************************************

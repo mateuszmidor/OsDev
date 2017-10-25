@@ -102,7 +102,7 @@ void Terminal::install_external_commands(const string& dir) {
             continue;
 
         string cmd_absolute_path = format("%/%", dir, e.name);
-        printer->format("Terminal:: installing % from %\n", e.name, cmd_absolute_path);
+        printer->format("Terminal::installing % from %\n", e.name, cmd_absolute_path);
         install_cmd(new cmds::specificelfrun(&env, cmd_absolute_path), e.name);
     }
 

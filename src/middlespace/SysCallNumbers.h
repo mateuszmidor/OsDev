@@ -21,6 +21,7 @@ enum SysCallNumbers {
     FILE_OPEN               = 2,
     FILE_CLOSE              = 3,
     FILE_STAT               = 4,
+    FILE_CREAT              = 85,
 
 //    FILE_GETDENTS           = 0xdc, //220
     EXIT                    = 60,
