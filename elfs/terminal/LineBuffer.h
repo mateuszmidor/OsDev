@@ -17,6 +17,7 @@ class LineBuffer {
 public:
     LineBuffer();
     u32 count() const;
+    void clear();
     void push_back(const ustd::string& line);
     void putc(char c);
     void backspace();

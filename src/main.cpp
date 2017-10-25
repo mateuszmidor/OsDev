@@ -97,18 +97,17 @@ void run_userspace_terminal() {
         const char LOADING[] = "Loading terminal, please wait...";
         u16 i = 0;
         while (LOADING[i]) {
-            vga_drv->at(i, 0) = VgaCharacter(LOADING[i], EgaColor::LightGreen, EgaColor::Black);
+            vga_drv->at(i, 0) = VgaCharacter(LOADING[i], EgaColor::White, EgaColor::Black);
             i++;
         }
     }
 
-
     VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
     if (!e) {
-        // return;
+         return;
     }
     if (e->is_directory()) {
-        //  return;
+         return;
     }
     // read elf file data
     u32 size = e->get_size();
@@ -116,8 +115,8 @@ void run_userspace_terminal() {
     e->read(elf_data, size);
     // run the elf
     utils::ElfRunner runner;
-    if (!runner.run(elf_data, new vector<string> { "TERMINAL" }))
-        klog.format("elfrun: not enough memory to run elf\n");
+    if (0 == runner.run(elf_data, new vector<string> { "TERMINAL" }))
+        klog.format("Terminal is running\n");
 }
 
 /**

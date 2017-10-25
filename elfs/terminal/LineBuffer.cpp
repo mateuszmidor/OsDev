@@ -18,6 +18,10 @@ u32 LineBuffer::count() const {
     return lines.size();
 }
 
+void LineBuffer::clear() {
+    lines.clear();
+}
+
 void LineBuffer::push_back(const ustd::string& line) {
     lines.push_back(line);
 }
