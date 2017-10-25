@@ -5,8 +5,8 @@
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_PROC_VFSKMSGENTRY_H_
-#define SRC_FILESYSTEM_PROC_VFSKMSGENTRY_H_
+#ifndef SRC_FILESYSTEM_PROCFS_VFSKMSGENTRY_H_
+#define SRC_FILESYSTEM_PROCFS_VFSKMSGENTRY_H_
 
 #include "VfsEntry.h"
 
@@ -40,4 +40,4 @@ private:
 
 } /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_PROC_VFSKMSGENTRY_H_ */
+#endif /* SRC_FILESYSTEM_PROCFS_VFSKMSGENTRY_H_ */

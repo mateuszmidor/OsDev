@@ -36,6 +36,7 @@ public:
     virtual ~VfsEntry() {}
 
     // [common interface]
+    // TODO: add Open/Close interface for session-like work with entries
     virtual bool is_directory() const = 0;
     virtual bool is_mount_point() const { return false; }
     virtual const kstd::string& get_name() const = 0;

@@ -5,10 +5,10 @@
  * @author: Mateusz Midor
  */
 
-#include "VfsKmsgEntry.h"
 
 #include <errno.h>
 #include "KernelLog.h"
+#include "procfs/VfsKmsgEntry.h"
 
 using namespace utils;
 namespace filesystem {
