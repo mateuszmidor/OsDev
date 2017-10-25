@@ -10,6 +10,7 @@
 #include "adapters/VfsFat32MountPoint.h"
 #include "DriverManager.h"
 #include "VfsManager.h"
+#include "proc/VfsKmsgEntry.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -29,11 +30,19 @@ void VfsManager::install_root() {
     VfsRamEntryPtr dev = std::make_shared<VfsRamEntry>("dev", true);
     root->entries.push_back(dev);
 
-    VfsRamEntryPtr keyboard = std::make_shared<VfsRamEntry>("keyboard", false);
-    dev->entries.push_back(keyboard);
+        VfsRamEntryPtr keyboard = std::make_shared<VfsRamEntry>("keyboard", false);
+        dev->entries.push_back(keyboard);
 
-    VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
-    dev->entries.push_back(stdout);
+        VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
+        dev->entries.push_back(stdout);
+
+
+
+    VfsRamEntryPtr proc = std::make_shared<VfsRamEntry>("proc", true);
+    root->entries.push_back(proc);
+
+        VfsEntryPtr kmsg = std::make_shared<VfsKmsgEntry>();
+        proc->entries.push_back(kmsg);
 
     install_ata_devices(root);
 }

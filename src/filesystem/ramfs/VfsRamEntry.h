@@ -8,7 +8,6 @@
 #ifndef SRC_FILESYSTEM_VFSRAMENTRY_H_
 #define SRC_FILESYSTEM_VFSRAMENTRY_H_
 
-#include "kstd.h"
 #include "VfsEntry.h"
 
 namespace filesystem {

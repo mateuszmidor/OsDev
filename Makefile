@@ -20,6 +20,7 @@ c_source_files :=  $(wildcard src/*.cpp) \
                    $(wildcard src/filesystem/*.cpp) \
                    $(wildcard src/filesystem/fat32/*.cpp) \
                    $(wildcard src/filesystem/ramfs/*.cpp) \
+                   $(wildcard src/filesystem/proc/*.cpp) \
                    $(wildcard src/filesystem/adapters/*.cpp) \
                    $(wildcard src/hardware/*.cpp) \
                    $(wildcard src/multitasking/*.cpp) \
