@@ -32,8 +32,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    size_t total = 0;
-    size_t count;
+    ssize_t total = 0;
+    ssize_t count;
+    print("\n");
     while ((count = syscalls::read(fd, buff, sizeof(buff))) > 0) {
         print(buff, count);
         total += count;
