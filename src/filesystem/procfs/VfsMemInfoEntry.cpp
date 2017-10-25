@@ -13,6 +13,19 @@
 using namespace memory;
 namespace filesystem {
 
+
+bool VfsMemInfoEntry::open() {
+    if (is_open)
+        return false;
+
+    is_open = true;
+    return true;
+}
+
+void VfsMemInfoEntry::close() {
+    is_open = false;
+}
+
 /**
  * @brief   The size of memory info is not known until the info string is built
  */
@@ -25,9 +38,7 @@ u32 VfsMemInfoEntry::get_size() const {
  * @return  Num of read bytes
  */
 s64 VfsMemInfoEntry::read(void* data, u32 count) {
-    // every second read is reading done
-    if (reading_done) {
-        reading_done = false;
+    if (!is_open) {
         return 0;
     }
 
@@ -44,7 +55,7 @@ s64 VfsMemInfoEntry::read(void* data, u32 count) {
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
-    reading_done = true;
+    close();
     return num_bytes_to_read;
 }
 

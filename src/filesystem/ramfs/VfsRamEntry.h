@@ -21,6 +21,8 @@ public:
     virtual ~VfsRamEntry();
 
     // [common interface]
+    bool open() override        { return true; /* no initialization to do here */ }
+    void close() override       {};
     bool is_directory() const override;
     const kstd::string& get_name() const;
 

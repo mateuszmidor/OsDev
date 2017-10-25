@@ -33,12 +33,14 @@ s32 SysCallHandler::sys_open(const char name[], int flags, int mode) {
     auto& files = current().files;
 
     for (u32 i = 0; i < files.size(); i++)
-        if (!files[i]) {
-            if (VfsEntryPtr entry = VfsManager::instance().get_entry(name)) {
+        if (!files[i]) {    // found empty file descriptor
+            VfsEntryPtr entry = VfsManager::instance().get_entry(name);
+
+            if (entry && entry->open()) {
                 files[i] = entry;
                 return i;
             } else
-                return -1; // cant get such file
+                return -1; // cant get or open such file
         }
     return -1; // open file limit reached
 }
@@ -56,6 +58,7 @@ s32 SysCallHandler::sys_close(u32 fd) {
     if (!files[fd])
         return -1;
 
+    files[fd]->close();
     files[fd].reset();
     return 0;
 }

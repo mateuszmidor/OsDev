@@ -36,7 +36,8 @@ public:
     virtual ~VfsEntry() {}
 
     // [common interface]
-    // TODO: add Open/Close interface for session-like work with entries
+    virtual bool open() = 0;	// start file manipulating session. this can be used to eg. implement exclusive access to a file
+    virtual void close() = 0;	// end file manipulating session.
     virtual bool is_directory() const = 0;
     virtual bool is_mount_point() const { return false; }
     virtual const kstd::string& get_name() const = 0;
