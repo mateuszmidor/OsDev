@@ -1,5 +1,5 @@
 /**
- *   @file: dmesg.cpp
+ *   @file: free.cpp
  *
  *   @date: Oct 25, 2017
  * @author: Mateusz Midor
@@ -9,9 +9,9 @@
 #include "ustd.h"
 #include "utils.h"
 
-char buff[1024*1024];
-const char KERNEL_PROC_FILE[] = "/proc/kmsg";
-const char ERROR_NO_INPUT_FILE[] = "/proc/kmsg doesnt exist";
+char buff[1024];
+const char KERNEL_PROC_FILE[] = "/proc/meminfo";
+const char ERROR_NO_INPUT_FILE[] = "/proc/meminfo doesnt exist";
 
 
 /**
