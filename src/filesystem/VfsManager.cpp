@@ -14,6 +14,7 @@
 #include "procfs/VfsKmsgEntry.h"
 #include "procfs/VfsMemInfoEntry.h"
 #include "procfs/VfsDateEntry.h"
+#include "procfs/VfsCpuInfoEntry.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -52,6 +53,9 @@ void VfsManager::install_root() {
 
         VfsEntryPtr date = std::make_shared<VfsDateEntry>();
         proc->entries.push_back(date);
+
+        VfsEntryPtr cpuinfo = std::make_shared<VfsCpuInfoEntry>();
+        proc->entries.push_back(cpuinfo);
 
 
     install_ata_devices(root);

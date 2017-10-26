@@ -1,25 +1,21 @@
 /**
- *   @file: VfsMemInfoEntry.h
+ *   @file: VfsCpuInfoEntry.h
  *
- *   @date: Oct 25, 2017
+ *   @date: Oct 26, 2017
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_PROCFS_VFSMEMINFOENTRY_H_
-#define SRC_FILESYSTEM_PROCFS_VFSMEMINFOENTRY_H_
+#ifndef SRC_FILESYSTEM_PROCFS_VFSCPUINFOENTRY_H_
+#define SRC_FILESYSTEM_PROCFS_VFSCPUINFOENTRY_H_
 
 #include "VfsEntry.h"
 
 namespace filesystem {
 
 /**
- * @brief   This class exposes system memory information as virtual filesystem entry
+ * @brief   This class exposes cpu information as virtual filesystem entry
  */
-class VfsMemInfoEntry: public VfsEntry {
-public:
-    VfsMemInfoEntry() {}
-    virtual ~VfsMemInfoEntry() {}
-
+class VfsCpuInfoEntry: public VfsEntry {
     // [common interface]
     bool open() override;
     void close() override;
@@ -37,11 +33,12 @@ public:
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; }
 
 private:
-    kstd::string get_info() const;
-    const kstd::string  name            = "meminfo";
+    kstd::string get_date_time() const;
+    const kstd::string  name            = "cpuinfo";
     bool                is_open         = false;
+
 };
 
 } /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_PROCFS_VFSMEMINFOENTRY_H_ */
+#endif /* SRC_FILESYSTEM_PROCFS_VFSCPUINFOENTRY_H_ */

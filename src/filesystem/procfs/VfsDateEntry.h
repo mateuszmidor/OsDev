@@ -13,6 +13,9 @@
 
 namespace filesystem {
 
+/**
+ * @brief   This class exposes system date and time as virtual filesystem entry
+ */
 class VfsDateEntry: public VfsEntry {
     // [common interface]
     bool open() override;
