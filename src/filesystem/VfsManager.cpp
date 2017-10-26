@@ -13,6 +13,7 @@
 
 #include "procfs/VfsKmsgEntry.h"
 #include "procfs/VfsMemInfoEntry.h"
+#include "procfs/VfsDateEntry.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -48,6 +49,9 @@ void VfsManager::install_root() {
 
         VfsEntryPtr meminfo = std::make_shared<VfsMemInfoEntry>();
         proc->entries.push_back(meminfo);
+
+        VfsEntryPtr date = std::make_shared<VfsDateEntry>();
+        proc->entries.push_back(date);
 
 
     install_ata_devices(root);
