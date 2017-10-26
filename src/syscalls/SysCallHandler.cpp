@@ -87,6 +87,39 @@ s64 SysCallHandler::sys_write(u32 fd, const void *buf, u64 count) {
     return files[fd]->write(buf, count);
 }
 
+off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
+    auto& files = current().files;
+
+    if (fd >= files.size())
+        return -1;
+
+    if (!files[fd])
+        return -1;
+
+    u32 new_position;
+    switch (whence) {
+    case SEEK_SET:
+        new_position = offset;
+        break;
+
+    case SEEK_CUR:
+        new_position = files[fd]->get_position() + offset;
+        break;
+
+    case SEEK_END:
+        new_position = files[fd]->get_size() + offset;
+        break;
+
+    default:
+        return -1;
+    }
+
+    if (files[fd]->seek(new_position))
+        return new_position;
+    else
+        return -1;
+}
+
 /**
  * @brief   Get file status
  * @return  On success, zero is returned.  On error, -1 is returned, and errno is set appropriately.

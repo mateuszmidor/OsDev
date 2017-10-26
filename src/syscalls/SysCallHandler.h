@@ -23,6 +23,7 @@ public:
     s32 sys_close(u32 fd);
     s64 sys_read(u32 fd, void *buf, u64 count);
     s64 sys_write(u32 fd, const void *buf, u64 count);
+    off_t sys_lseek(int fd, off_t offset, int whence);
     s32 sys_stat(const char* name, struct stat* buff);
     s32 sys_creat(const char* name, int mode);
     s32 sys_enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);

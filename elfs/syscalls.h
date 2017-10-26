@@ -54,6 +54,19 @@ inline int close(int fd) {
     return syscall(middlespace::SysCallNumbers::FILE_CLOSE, (syscall_arg)fd);
 }
 
+/**
+ * @brief   Change current position in file
+ * @param   whence: SEEK_SET(new pos = 0 + offset), SEEK_CUR(new pos = current pos + offset), SEEK_END(new pos = file end + offset)
+ * @return  New current position (in bytes), or -1 on error
+ */
+inline off_t lseek(int fd, off_t offset, int whence) {
+    return syscall(middlespace::SysCallNumbers::FILE_SEEK,(syscall_arg)fd, (syscall_arg)offset, (syscall_arg)whence);
+}
+
+/**
+ * @brief   Get virtual file system entry info
+ * @return  0 on success, -1 on no such file
+ */
 inline int stat(const char pathname[], struct stat* statbuf) {
     return syscall(middlespace::SysCallNumbers::FILE_STAT, (syscall_arg)pathname, (syscall_arg)statbuf);
 }
