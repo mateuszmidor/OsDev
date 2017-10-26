@@ -17,8 +17,6 @@ struct TerminalEnv {
     TerminalEnv();
 
     ScrollableScreenPrinter* printer;
-    ustd::string cwd;
-
     ustd::vector<ustd::string> cmd_args;    // command_name, arg1, arg2, ...,  argn
 };
 

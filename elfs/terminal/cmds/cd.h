@@ -25,6 +25,7 @@ private:
     void cd_directory(const ustd::string& path);
     ustd::string normalize_path(const ustd::string& path) const;
     void store_last_location();
+    ustd::string get_cwd() const;
 
     // for navigating "back". Maybe should be stored in TerminalEnv?
     static ustd::string prev_cwd;

@@ -37,7 +37,7 @@ bool is_directory(const char filename[]) {
 }
 
 string extract_file_name(const string& path) {
-    size_t pivot = 0;//path.rfind('/');
+    size_t pivot = path.rfind('/');
     return path.substr(pivot+1, path.size());
 }
 
@@ -55,13 +55,13 @@ int main(int argc, char* argv[]) {
     int src_fd = syscalls::open(src_path);
     if (src_fd == -1) {
         print(ERROR_INPUT_NO_EXISTS);
-        return 1;
+        return -1;
     }
 
     // copying directory should use recursive approach
     if (is_directory(src_path)) {
         print(ERROR_SOURCE_IS_DIR);
-        return 1;   // TODO: implement recursive copy
+        return -1;   // TODO: implement recursive copy
     }
 
     // check if dst describes destination directory or full destination path including filename
@@ -73,12 +73,10 @@ int main(int argc, char* argv[]) {
 
     // create dst file
     int dst_fd = syscalls::creat(final_dst_filename.c_str());
-    if (dst_fd == -1) {
+    if (dst_fd < 0) {
         print(ERROR_CANT_CREATE_DESTIN);
-        return 1;
+        return -1;
     }
-
-    //dst_fd = syscalls::open(final_dst_filename.c_str());
 
     // dest created, just copy contents
     ssize_t count;

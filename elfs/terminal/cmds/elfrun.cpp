@@ -23,7 +23,7 @@ void elfrun::run() {
         return;
     }
 
-    string filename = make_absolute_filename(env->cmd_args[1]);
+    string filename = env->cmd_args[1];
 
     u32 count = env->cmd_args.size() -1; // no first one
     const char** nullterm_argv = new const char*[count + 1]; // +1 for list terminating null

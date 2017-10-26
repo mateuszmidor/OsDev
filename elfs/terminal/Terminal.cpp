@@ -7,10 +7,8 @@
 
 #include "Terminal.h"
 //#include "cmds/df.h"
-#include "cmds/pwd.h"
 //#include "cmds/log.h"
 //#include "cmds/lscpu.h"
-#include "cmds/ls.h"
 //#include "cmds/cat.h"
 //#include "cmds/ps.h"
 //#include "cmds/free.h"
@@ -39,6 +37,8 @@ using namespace middlespace;
 namespace terminal {
 
 Terminal::Terminal(u64 arg) {
+    // start at /HOME
+    syscalls::chdir("/HOME");
 
     u16 vga_width;
     u16 vga_height;
@@ -50,7 +50,6 @@ Terminal::Terminal(u64 arg) {
 //    env.klog = &klog;
 
     // the commands will later be run as elf programs in user space
-    install_cmd(new cmds::pwd(&env), "pwd");
 //    install_cmd<cmds::log>("klog");
 //    install_cmd<cmds::lscpu>("lscpu");
 //    install_cmd<cmds::ps>("ps");
@@ -61,7 +60,6 @@ Terminal::Terminal(u64 arg) {
 //    install_cmd<cmds::elfinfo>("elfinfo");
     install_cmd(new cmds::elfrun(&env), "elfrun");
 //    install_cmd<cmds::df>("df");
-    install_cmd(new cmds::ls(&env), "ls");
 //    install_cmd<cmds::cat>("cat");
     install_cmd(new cmds::cd(&env), "cd");
 //    install_cmd<cmds::rm>("rm");
@@ -128,7 +126,7 @@ void Terminal::run() {
     // task main loop
     while(true) {
         // print prompt
-        user_input.prompt(env.cwd);
+        user_input.prompt();
 
         // get command
         string cmd = get_line();
@@ -198,7 +196,7 @@ void Terminal::process_key(Key key) {
         }
 
         case Key::Tab: {
-            user_input.help_me_out(env.cwd);
+            user_input.help_me_out();
             break;
         }
 

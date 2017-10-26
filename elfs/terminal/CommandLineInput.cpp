@@ -13,12 +13,17 @@ using namespace middlespace;
 namespace terminal {
 
 const char CommandLineInput::PROMPT[] {"> "};
+char CommandLineInput::cwd[256];
 
 CommandLineInput::CommandLineInput() : printer(nullptr) {
 }
 
-void CommandLineInput::prompt(const ustd::string& cwd) {
-    printer->format("% %", cwd, PROMPT);
+void CommandLineInput::prompt() {
+    char cwd[256];
+    if (syscalls::getcwd(cwd, 255) < 0)
+        printer->format("[UNKNOWN CWD] %", PROMPT);
+    else
+        printer->format("% %", cwd, PROMPT);
 }
 
 void CommandLineInput::backspace() {
@@ -41,7 +46,10 @@ void CommandLineInput::install(const ustd::string& cmd_name) {
     known_commands.push_back(cmd_name);
 }
 
-void CommandLineInput::help_me_out(const string& cwd) {
+void CommandLineInput::help_me_out() {
+    if (!syscalls::getcwd(cwd, sizeof(cwd)))
+        return;
+
     bool multiple_results;
     string filter_result;
 

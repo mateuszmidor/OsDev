@@ -14,7 +14,8 @@ using namespace ustd;
 namespace cmds {
 
 ustd::string cd::prev_cwd = "";
-
+const u32 MAX_PATH = 256;
+char cwd[MAX_PATH];
 
 void cd::run() {
     string path;
@@ -30,7 +31,9 @@ void cd::run() {
 void cd::navigate_back() {
     // first check if there is a known previous location
     if (!prev_cwd.empty()) {
-        std::swap(env->cwd, prev_cwd);
+        string tmp = prev_cwd;
+        prev_cwd = get_cwd();
+        syscalls::chdir(tmp.c_str());
     }
 }
 
@@ -46,7 +49,11 @@ void cd::navigate_path(const string& path) {
 }
 
 void cd::store_last_location() {
-    prev_cwd = env->cwd;
+    prev_cwd = get_cwd();
+}
+
+string cd::get_cwd() const {
+    return syscalls::getcwd(cwd, MAX_PATH);
 }
 
 void cd::cd_root() {
@@ -57,22 +64,19 @@ void cd::cd_root() {
  * @param path Path without volume name
  */
 void cd::cd_directory(const string& path) {
-    string absolute_path = make_absolute_filename(path);
-    string normalized_absolute_path = format("/%", normalize_path(absolute_path)); // absolute path must start with "/"
-
     struct stat s;
 
-    if (syscalls::stat(normalized_absolute_path.c_str(), &s) == -1) {
-        env->printer->format("cd: directory '%' doesnt exist\n", normalized_absolute_path);
+    if (syscalls::stat(path.c_str(), &s) == -1) {
+        env->printer->format("cd: directory '%' doesnt exist\n", path);
         return;
     }
 
     if (!(s.st_mode == S_IFDIR)) {
-        env->printer->format("cd: '%' is not directory\n", normalized_absolute_path);
+        env->printer->format("cd: '%' is not directory\n", path);
         return;
     }
 
-    env->cwd = normalized_absolute_path;
+    syscalls::chdir(path.c_str());
 }
 
 /**

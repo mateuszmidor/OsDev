@@ -12,6 +12,5 @@ namespace terminal {
 
 TerminalEnv::TerminalEnv() :
     printer(nullptr) {
-    cwd = "/HOME";
 }
 } /* namespace terminal */

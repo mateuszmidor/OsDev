@@ -24,9 +24,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const char* absolute_filename = argv[1];
+    const char* path = argv[1];
 
-    auto fd = syscalls::open(absolute_filename);
+    auto fd = syscalls::open(path);
     if (fd == -1) {
         print(ERROR_OPENING_FILE);
         return 1;
