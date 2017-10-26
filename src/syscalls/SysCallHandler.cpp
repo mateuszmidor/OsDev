@@ -34,7 +34,8 @@ s32 SysCallHandler::sys_open(const char name[], int flags, int mode) {
 
     for (u32 i = 0; i < files.size(); i++)
         if (!files[i]) {    // found empty file descriptor
-            VfsEntryPtr entry = VfsManager::instance().get_entry(name);
+            string absolute_path = make_absolute_path(name);
+            VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
 
             if (entry && entry->open()) {
                 files[i] = entry;
@@ -126,7 +127,8 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
  * @see     http://man7.org/linux/man-pages/man2/stat.2.html
  */
 s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
-    VfsEntryPtr entry = VfsManager::instance().get_entry(name);
+    string absolute_path = make_absolute_path(name);
+    VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (!entry)
         return -1;
 
@@ -145,7 +147,8 @@ s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
  * @see     http://man7.org/linux/man-pages/man2/open.2.html
  */
 s32 SysCallHandler::sys_creat(const char* name, int mode) {
-    auto entry = VfsManager::instance().create_entry(name, false);
+    string absolute_path = make_absolute_path(name);
+    auto entry = VfsManager::instance().create_entry(absolute_path, false);
     if (!entry)
         return -1;
 
@@ -174,14 +177,15 @@ char* SysCallHandler::sys_get_cwd(char* buff, size_t size) {
  * @return  0 on success, -1 on error
  */
 s32 SysCallHandler::sys_chdir(const char path[]) {
-    VfsEntryPtr entry = VfsManager::instance().get_entry(path);
+    string absolute_path = make_absolute_path(path);
+    VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (!entry)
         return -1;
 
     if (!entry->is_directory())
         return -1;
 
-    current().cwd = path;
+    current().cwd = absolute_path;
     return 0;
 }
 
@@ -279,11 +283,12 @@ void SysCallHandler::vga_get_width_height(u16* width, u16* height) {
 
 /**
  * @brief   Run ELF64 format program pointed by "absolute_filename"
- * @param   absolute_filename Absolute filename starting at root "/"
+ * @param   name ELF64 filename to run
  * @param   nullterm_argv List of cstrings, last one == null
  */
-s64 SysCallHandler::elf_run(const char absolute_filename[], const char* nullterm_argv[]) {
-    VfsEntryPtr e = VfsManager::instance().get_entry(absolute_filename);
+s64 SysCallHandler::elf_run(const char name[], const char* nullterm_argv[]) {
+    string absolute_path = make_absolute_path(name);
+    VfsEntryPtr e = VfsManager::instance().get_entry(absolute_path);
     if (!e)
         return -ENOENT; // no such file
 
@@ -314,4 +319,24 @@ multitasking::Task& SysCallHandler::current() const {
     return mngr.get_current_task();
 }
 
+/**
+ * @brief   Return absolute path made from "path" and current task working directory
+ */
+UnixPath SysCallHandler::make_absolute_path(const kstd::string& path) const {
+    const string& cwd = current().cwd;
+
+    // check if relative_filename specified at all
+    if (path.empty())
+        return cwd;
+
+    if (path == ".")
+        return cwd;
+
+    // check if relative_filename starts with a slash, which means it is actually an absolute filename
+    if (path[0] == '/')
+        return path;
+
+    // make absolute filename from current working directory + relative filename
+    return cwd + "/" + path;
+}
 } /* namespace filesystem */
