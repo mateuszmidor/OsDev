@@ -29,6 +29,7 @@ public:
     s64 write(const void* data, u32 count)      { return 0; }
     bool seek(u32 new_position) override        { return false; }
     bool truncate(u32 new_size) override        { return false; };
+    u32 get_position() const override           { return 0; }
 
     // [volume interface]
     virtual VfsEntryPtr get_entry(const UnixPath& unix_path) = 0;

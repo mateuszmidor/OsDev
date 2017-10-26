@@ -53,6 +53,7 @@ public:
     u32 write(const void* data, u32 count);
     bool seek(u32 new_position);
     bool truncate(u32 new_size);
+    u32 get_position() const;
 
     // [directory interface]
     EnumerateResult enumerate_entries(const OnEntryFound& on_entry);

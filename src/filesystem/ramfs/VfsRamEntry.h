@@ -14,6 +14,7 @@ namespace filesystem {
 
 /**
  * @brief   This class is VfsEntry implementation for an in-memory entry (file or directory)
+ * @note    It acts like FIFO; you always read the head of it, and write the tail, thus get_position() always return 0
  */
 class VfsRamEntry: public VfsEntry {
 public:
@@ -32,6 +33,7 @@ public:
     s64 write(const void* data, u32 count) override;
     bool seek(u32 new_position) override;
     bool truncate(u32 new_size) override;
+    u32 get_position() const override       { return 0; }
 
     // [directory interface]
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;

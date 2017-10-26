@@ -48,6 +48,7 @@ public:
     virtual s64 write(const void* data, u32 count) = 0;
     virtual bool seek(u32 new_position) = 0;
     virtual bool truncate(u32 new_size) = 0;
+    virtual u32 get_position() const = 0;
 
     // [directory interface]
     virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;

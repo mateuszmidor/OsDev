@@ -43,6 +43,10 @@ bool VfsFat32Entry::truncate(u32 new_size) {
     return entry.truncate(new_size);
 }
 
+u32 VfsFat32Entry::get_position() const {
+    return entry.get_position();
+}
+
 /**
  * @brief   Enumerate directory contents
  * @param   on_entry Callback called for every valid element in the directory
