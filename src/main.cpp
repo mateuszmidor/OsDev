@@ -87,32 +87,30 @@ void corner_counter() {
 }
 
 void run_userspace_terminal() {
-    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
-        // clear screen
-        for (u16 y = 0; y < 30; y++)
-            for (u16 x = 0; x < 90; x++)
-                vga_drv->at(x, y) = VgaCharacter(' ', EgaColor::Black, EgaColor::Black);
+    auto vga_drv = driver_manager.get_driver<VgaDriver>();
+    if (!vga_drv)
+        return;
 
-        // print "Loading.." message
-        const char LOADING[] = "Loading terminal, please wait...";
-        u16 i = 0;
-        while (LOADING[i]) {
-            vga_drv->at(i, 0) = VgaCharacter(LOADING[i], EgaColor::White, EgaColor::Black);
-            i++;
-        }
-    }
+    vga_drv->clear_screen();
+
 
     VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
     if (!e) {
-         return;
+        vga_drv->print(0, "/BIN/TERMINAL doesnt exist. No terminal will be available", EgaColor::Red);
+        return;
     }
     if (e->is_directory()) {
-         return;
+        vga_drv->print(0, "/BIN/TERMINAL is directory? No terminal will be available", EgaColor::Red);
+        return;
     }
+
+    vga_drv->print(0, "Loading terminal, please wait a few secs...");
+
     // read elf file data
     u32 size = e->get_size();
     u8* elf_data = new u8[size];
     e->read(elf_data, size);
+
     // run the elf
     utils::ElfRunner runner;
     if (0 == runner.run(elf_data, new vector<string> { "TERMINAL" }))

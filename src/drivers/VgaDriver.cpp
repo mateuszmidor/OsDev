@@ -162,6 +162,23 @@ u16 VgaDriver::screen_height() const {
     return height;
 }
 
+void VgaDriver::clear_screen(EgaColor color) {
+    for (u16 y = 0; y < height; y++)
+        for (u16 x = 0; x < width; x++)
+            at(x, y) = VgaCharacter(' ', color, color);
+}
+
+void VgaDriver::print(u16 y, const char* text,  EgaColor fg, EgaColor bg) {
+    u32 curr = y * width;
+    u32 max_index = width * height;
+
+    while (*text && curr < max_index) {
+        vga[curr] = VgaCharacter(*text, fg, bg);
+        text++;
+        curr++;
+    }
+}
+
 void VgaDriver::write_registers(u8* registers) const {
     // MISC
     misc_port.write(*(registers++));

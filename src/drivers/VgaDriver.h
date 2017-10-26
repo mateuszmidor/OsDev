@@ -30,6 +30,10 @@ public:
     u16 screen_width() const;
     u16 screen_height() const;
 
+    // higher level basic functions
+    void clear_screen(EgaColor color = EgaColor::Black);
+    void print(u16 y, const char* text, EgaColor fg = EgaColor::White, EgaColor bg = EgaColor::Black);
+
 private:
     void write_registers(u8* registers) const;
     u8* get_framebuffer_segment() const;
