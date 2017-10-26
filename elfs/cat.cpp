@@ -11,7 +11,7 @@
 
 char buff[1024*1024];
 const char ERROR_NO_INPUT_FILE[] = "Please specify file name.\n";
-const char ERROR_INVALID_FILE[] = "Specified file is directory or not even exists.\n";
+const char ERROR_OPENING_FILE[] = "Specified file is directory or not even exists.\n";
 
 
 /**
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 
     auto fd = syscalls::open(absolute_filename);
     if (fd == -1) {
-        print(ERROR_INVALID_FILE);
+        print(ERROR_OPENING_FILE);
         return 1;
     }
 
