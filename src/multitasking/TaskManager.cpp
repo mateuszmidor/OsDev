@@ -91,6 +91,7 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
  */
 hardware::CpuState* TaskManager::kill_current_task() {
+    close_files(tasks[current_task]);
     release_address_space(tasks[current_task]);
 
     // remove current task from the list
@@ -102,6 +103,12 @@ hardware::CpuState* TaskManager::kill_current_task() {
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
+}
+
+void TaskManager::close_files(Task& task) {
+    for (auto& f : task.files)
+        if (f)
+            f->close();
 }
 
 void TaskManager::release_address_space(Task& task) {
