@@ -152,6 +152,39 @@ s32 SysCallHandler::sys_creat(const char* name, int mode) {
     return sys_open(name, 0, mode);
 }
 
+/**
+ * @brief   Get current working directory and store into "buff"
+ * @param   size Size of the "buff"
+ * @return  Pointer to "buff" on success, nullptr on error
+ */
+char* SysCallHandler::sys_get_cwd(char* buff, size_t size) {
+    if (!buff)
+        return nullptr;
+
+    const string& cwd = current().cwd;
+    if (size < cwd.length() + 1)
+        return nullptr;
+
+    memcpy(buff, cwd.c_str(), cwd.length() + 1); // +1 copy with null
+    return buff;
+}
+
+/**
+ * @brief   Change current working directory
+ * @return  0 on success, -1 on error
+ */
+s32 SysCallHandler::sys_chdir(const char path[]) {
+    VfsEntryPtr entry = VfsManager::instance().get_entry(path);
+    if (!entry)
+        return -1;
+
+    if (!entry->is_directory())
+        return -1;
+
+    current().cwd = path;
+    return 0;
+}
+
 void SysCallHandler::sys_exit(s32 status) {
     multitasking::Task::exit(status);
 }

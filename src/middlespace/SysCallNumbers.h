@@ -26,6 +26,8 @@ enum SysCallNumbers {
 
 //    FILE_GETDENTS           = 0xdc, //220
     EXIT                    = 60,
+    GET_CWD                 = 79,
+    CHDIR                   = 80,
     EXIT_GROUP              = 231,
 
     // NON-POSIX

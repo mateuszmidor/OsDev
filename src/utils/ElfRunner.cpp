@@ -35,10 +35,11 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
     hardware::PageTables::map_elf_address_space(pml4_phys_addr);
 
     // run elf_loader in target address space, so the elf segments can be loaded
+    TaskManager& task_manager = TaskManager::instance();
     Task task = Task::make_kernel_task(load_and_run_elf, "elf_loader").set_arg1(elf_data).set_arg2(args);
     task.pml4_phys_addr = pml4_phys_addr;   // kernel task but in user memory space
+    task.cwd = task_manager.get_current_task().cwd; // inherit current working directory of calling task
 
-    TaskManager& task_manager = TaskManager::instance();
     if (u32 tid = task_manager.add_task(task))
         return 0;
     else
@@ -69,6 +70,7 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     char* name = argv[0];
     u64 pml4_phys_addr = task_manager.get_current_task().pml4_phys_addr;
     Task task = Task::make_user_task(entry_point, name, pml4_phys_addr, ELF_STACK_START, ELF_STACK_SIZE).set_arg1(argc).set_arg2(argv);
+    task.cwd = task_manager.get_current_task().cwd; // inherit current working directory of calling task
     task_manager.add_task(task);
 
     // page tables are shared by elf_loader and the actual user task to be run. make sure they are not wiped out upon elf_load erexit

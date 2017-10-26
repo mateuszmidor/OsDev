@@ -30,9 +30,10 @@ Task::Task() :
                             If != 0, make sure the entrypoint and stack will be accessible from this address space
   @param    stack_addr      Virtual address of task stack
   @param    stack_size      Task stack size in bytes
+  @param    cwd             current working directory
 */
-Task::Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) :
-        entrypoint(entrypoint), name(name), arg1(arg1), arg2(arg2), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(0) {
+Task::Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size, const char cwd[]) :
+        entrypoint(entrypoint), name(name), arg1(arg1), arg2(arg2), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(0), cwd(cwd) {
 
     // create default task stack (mostly for kernel tasks)
     if (stack_addr == 0) {

@@ -28,6 +28,8 @@ public:
     s32 sys_creat(const char* name, int mode);
     s32 sys_enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);
 
+    char* sys_get_cwd(char* buff, size_t size);
+    s32 sys_chdir(const char path[]);
     void sys_exit(s32 status);
     void sys_exit_group(s32 status);
 

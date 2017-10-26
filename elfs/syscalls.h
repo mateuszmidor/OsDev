@@ -19,6 +19,11 @@ namespace syscalls {
 using syscall_res = unsigned long long;
 using syscall_arg = unsigned long long;
 
+
+
+/**
+ * @note    The below syscalls are received in SysCallManager and passed for handling to SysCallHandler
+ */
 inline syscall_res syscall(unsigned int syscall_no,
         syscall_arg arg1 = 0,
         syscall_arg arg2 = 0,
@@ -73,6 +78,24 @@ inline int stat(const char pathname[], struct stat* statbuf) {
 
 inline int creat(const char pathname[], int mode = 0) {
     return syscall(middlespace::SysCallNumbers::FILE_CREAT, (syscall_arg)pathname, (syscall_arg)mode);
+}
+
+/**
+ * @brief   Get current working directory
+ * @param   buff Buffer for storing the cwd
+ * @param   size Length of the "buff", should be at least 256
+ * @return  "buff" pointer itself on success, nullptr on failure
+ */
+inline char* getcwd(char buff[], size_t size) {
+    return (char*)syscall(middlespace::SysCallNumbers::GET_CWD, (syscall_arg)buff, (syscall_arg)size);
+}
+
+/**
+ * @brief   Change current working directory
+ * @return  0 on success, -1 on error
+ */
+inline int chdir(const char path[]) {
+    return syscall(middlespace::SysCallNumbers::CHDIR, (syscall_arg)path);
 }
 
 inline int enumerate(unsigned int fd, middlespace::FsEntry* entries, unsigned int max_enties) {

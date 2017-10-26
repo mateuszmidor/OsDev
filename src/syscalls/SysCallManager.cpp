@@ -66,6 +66,12 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     case SysCallNumbers::FILE_ENUMERATE:
         return syscall_handler.sys_enumerate(arg1, (FsEntry*)arg2, arg3);
 
+    case SysCallNumbers::GET_CWD:
+            return (s64)syscall_handler.sys_get_cwd((char*)arg1, arg2);
+
+    case SysCallNumbers::CHDIR:
+            return syscall_handler.sys_chdir((const char*)arg1);
+
     case SysCallNumbers::VGA_CURSOR_SETVISIBLE:
         syscall_handler.vga_cursor_setvisible((bool)arg1);
         return 0;
