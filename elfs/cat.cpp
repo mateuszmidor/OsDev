@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 
     const char* path = argv[1];
 
-    auto fd = syscalls::open(path);
+    int fd = syscalls::open(path);
     if (fd == -1) {
         print(ERROR_OPENING_FILE);
         return 1;

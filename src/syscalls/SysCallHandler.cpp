@@ -147,12 +147,21 @@ s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
  * @see     http://man7.org/linux/man-pages/man2/open.2.html
  */
 s32 SysCallHandler::sys_creat(const char* name, int mode) {
+    // create file
     string absolute_path = make_absolute_path(name);
     auto entry = VfsManager::instance().create_entry(absolute_path, false);
-    if (!entry)
+    if (!entry || !entry->open())
         return -1;
 
-    return sys_open(name, 0, mode);
+    // alloc the created file in descriptor table
+    auto& files = current().files;
+    for (u32 i = 0; i < files.size(); i++)
+        if (!files[i]) {    // found empty file descriptor
+            files[i] = entry;
+            return i;
+        }
+
+    return -1;
 }
 
 /**
