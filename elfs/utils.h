@@ -73,7 +73,7 @@ void long_to_str(long long num, unsigned char base, char buff_12_chars[12]) {
 
     /* Handle 0 explicitely, otherwise empty string is printed for 0 */
     if (num == 0) {
-        buff_12_chars[11] = '0';
+        buff_12_chars[0] = '0';
         return;
     }
 
