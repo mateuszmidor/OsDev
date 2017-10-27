@@ -13,11 +13,11 @@ namespace terminal {
 
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
         left(left), top(top), right(right-1), bottom(bottom), // -1 for scrollbar
-        cursor(left, top, right, bottom) {
+        cursor(left, top, right - 1, bottom) {
 
     syscalls::vga_get_width_height(&vga_width, &vga_height);
     vga_buffer = new VgaCharacter[vga_width * vga_height];
-    printable_area_width = right - left + 1;  // +1 because if right=1 and left=0 it makes 2 columns
+    printable_area_width = right - left + 1 - 1;  // +1 because if right=1 and left=0 it makes 2 columns, -1 for scroll bar
     printable_area_height = bottom - top + 1; // +1 because if bottom=1 and top=0 it makes 2 rows
 }
 
@@ -34,7 +34,7 @@ void ScrollableScreenPrinter::putc(const char c) {
     } else if (c == '\x08') {
         backspace();
     } else {
-        set_at(cursor, VgaCharacter(c,  foreground, background));
+       // set_at(cursor, VgaCharacter(c,  foreground, background)); // redraw will do it
         cursor++;
         lines.putc(c);
     }
