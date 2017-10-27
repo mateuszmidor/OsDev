@@ -24,7 +24,7 @@ char buff[BUFF_SIZE];
 
 bool exists(const char filename[]) {
     struct stat s;
-    return syscalls::stat(filename, &s) != -1;
+    return !(syscalls::stat(filename, &s) < 0);
 }
 
 bool is_directory(const char filename[]) {

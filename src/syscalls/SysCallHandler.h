@@ -30,13 +30,14 @@ public:
     s32 sys_mkdir(const char path[], int mode);
     s32 sys_rmdir(const char path[]);
     s32 sys_creat(const char name[], int mode);
-    s32 sys_enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);
+    s32 sys_unlink(const char name[]);
 
     char* sys_get_cwd(char* buff, size_t size);
     s32 sys_chdir(const char path[]);
     void sys_exit(s32 status);
     void sys_exit_group(s32 status);
 
+    s32 enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);
     void vga_cursor_setvisible(bool visible);
     void vga_cursor_setpos(u8 x, u8 y);
     void vga_setat(u8 x, u8 y, u16 c);

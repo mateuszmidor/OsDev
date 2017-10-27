@@ -209,6 +209,23 @@ s32 SysCallHandler::sys_creat(const char* name, int mode) {
 }
 
 /**
+ * @brief   Remove file from filesystem
+ * @return  On success, zero is returned. On error, -1 is returned
+ * @see     https://linux.die.net/man/2/unlink
+ */
+s32 SysCallHandler::sys_unlink(const char name[]) {
+    string absolute_path = make_absolute_path(name);
+    VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
+    if (entry->is_directory())
+        return -1;
+
+    if (VfsManager::instance().delete_entry(absolute_path))
+        return 0;
+    else
+        return -1;
+}
+
+/**
  * @brief   Get current working directory and store into "buff"
  * @param   size Size of the "buff"
  * @return  Pointer to "buff" on success, nullptr on error
@@ -259,7 +276,7 @@ void SysCallHandler::sys_exit_group(s32 status) {
  * @param   entries Output buffer for directory entries
  * @param   max_entries "entries" buffer capacity, max num items
  */
-s32 SysCallHandler::sys_enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries) {
+s32 SysCallHandler::enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries) {
     auto& files = current().files;
 
     if (fd >= files.size())

@@ -96,7 +96,7 @@ inline int mkdir(const char path[], int mode = 0) {
 /**
  * @brief   Remove directory
  * @return  0 on success, negative error code on error
- * @note    Directory must  be empty
+ * @note    Directory must  be empty. Removes only directories. For file use unlink
  */
 inline int rmdir(const char path[]) {
     return syscall(middlespace::SysCallNumbers::FILE_RMDIR, (syscall_arg)path);
@@ -104,6 +104,15 @@ inline int rmdir(const char path[]) {
 
 inline int creat(const char path[], int mode = 0) {
     return syscall(middlespace::SysCallNumbers::FILE_CREAT, (syscall_arg)path, (syscall_arg)mode);
+}
+
+/**
+ * @brief   Remove file
+ * @return  0 on success, negative error code on error
+ * @note    Removes only files, for directory use rmdir
+ */
+inline int unlink(const char path[]) {
+    return syscall(middlespace::SysCallNumbers::FILE_UNLINK, (syscall_arg)path);
 }
 
 /**
