@@ -26,15 +26,15 @@ SysCallHandler::SysCallHandler() { }
 *************************************************************************************/
 
 /**
- * @brief   Get file with given absolute "name", associate file descriptor to it and return the descriptor
+ * @brief   Get file with given "path", associate file descriptor to it and return the descriptor
  * @return  Descriptor number on success, -1 otherwise
  */
-s32 SysCallHandler::sys_open(const char name[], int flags, int mode) {
+s32 SysCallHandler::sys_open(const char path[], int flags, int mode) {
     auto& files = current().files;
 
     for (u32 i = 0; i < files.size(); i++)
         if (!files[i]) {    // found empty file descriptor
-            string absolute_path = make_absolute_path(name);
+            string absolute_path = make_absolute_path(path);
             VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
 
             if (entry && entry->open()) {
@@ -126,8 +126,8 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
  * @return  On success, zero is returned. On error, -1 is returned
  * @see     http://man7.org/linux/man-pages/man2/stat.2.html
  */
-s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
-    string absolute_path = make_absolute_path(name);
+s32 SysCallHandler::sys_stat(const char* path, struct stat* buff) {
+    string absolute_path = make_absolute_path(path);
     VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (!entry)
         return -1;
@@ -137,6 +137,26 @@ s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
     buff->st_mode = entry->is_directory() ? S_IFDIR : S_IFREG;
 
     return 0;
+}
+
+/**
+ * @brief   Truncate file to given "lenght"
+ * @return  On success, zero is returned. On error, -1 is returned
+ * @see     http://man7.org/linux/man-pages/man2/truncate.2.html
+ */
+s32 SysCallHandler::sys_truncate(const char path[], off_t length) {
+    string absolute_path = make_absolute_path(path);
+    VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
+    if (!entry)
+        return -1;
+
+    if (entry->is_directory())
+        return -1;
+
+    if (entry->truncate(length))
+        return 0;
+    else
+        return -1;
 }
 
 /**
@@ -185,14 +205,13 @@ s32 SysCallHandler::sys_rmdir(const char path[]) {
 
 /**
  * @brief   Create file and return its descriptor
- * @param   name NOT USED NOW
  * @param   mode NOT USED NOW
  * @return  Descriptor number on success, -1 otherwise
  * @see     http://man7.org/linux/man-pages/man2/open.2.html
  */
-s32 SysCallHandler::sys_creat(const char* name, int mode) {
+s32 SysCallHandler::sys_creat(const char path[], int mode) {
     // create file
-    string absolute_path = make_absolute_path(name);
+    string absolute_path = make_absolute_path(path);
     auto entry = VfsManager::instance().create_entry(absolute_path, false);
     if (!entry || !entry->open())
         return -1;
@@ -213,8 +232,8 @@ s32 SysCallHandler::sys_creat(const char* name, int mode) {
  * @return  On success, zero is returned. On error, -1 is returned
  * @see     https://linux.die.net/man/2/unlink
  */
-s32 SysCallHandler::sys_unlink(const char name[]) {
-    string absolute_path = make_absolute_path(name);
+s32 SysCallHandler::sys_unlink(const char path[]) {
+    string absolute_path = make_absolute_path(path);
     VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (entry->is_directory())
         return -1;
@@ -352,12 +371,11 @@ void SysCallHandler::vga_get_width_height(u16* width, u16* height) {
 }
 
 /**
- * @brief   Run ELF64 format program pointed by "absolute_filename"
- * @param   name ELF64 filename to run
+ * @brief   Run ELF64 format program pointed by "path"
  * @param   nullterm_argv List of cstrings, last one == null
  */
-s64 SysCallHandler::elf_run(const char name[], const char* nullterm_argv[]) {
-    string absolute_path = make_absolute_path(name);
+s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
+    string absolute_path = make_absolute_path(path);
     VfsEntryPtr e = VfsManager::instance().get_entry(absolute_path);
     if (!e)
         return -ENOENT; // no such file

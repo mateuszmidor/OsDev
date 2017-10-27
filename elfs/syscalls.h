@@ -77,6 +77,13 @@ inline int stat(const char path[], struct stat* statbuf) {
 }
 
 /**
+ * @brief   Truncate file to specified size
+ * @return  0 on success, negative error code on error
+ */
+inline int truncate(const char path[], off_t length) {
+    return syscall(middlespace::SysCallNumbers::FILE_TRUNCATE, (syscall_arg)path, (syscall_arg)length);
+}
+/**
  * @brief   Rename file/directory
  * @return  0 on success, negative error code on error
  */
@@ -157,8 +164,8 @@ inline void vga_get_width_height(unsigned short* width, unsigned short* height) 
     syscall(middlespace::SysCallNumbers::VGA_GET_WIDTH_HEIGHT, (syscall_arg)width, (syscall_arg)height);
 }
 
-inline s64 elf_run(const char absolute_filename[], const char* nullterm_argv[]) {
-    return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)absolute_filename, (syscall_arg)nullterm_argv);
+inline s64 elf_run(const char path[], const char* nullterm_argv[]) {
+    return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)path, (syscall_arg)nullterm_argv);
 }
 
 inline int usleep(unsigned int usec) {

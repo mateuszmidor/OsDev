@@ -60,6 +60,9 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     case SysCallNumbers::FILE_STAT:
         return syscall_handler.sys_stat((const char*)arg1, (struct stat*)arg2);
 
+    case SysCallNumbers::FILE_TRUNCATE:
+        return syscall_handler.sys_truncate((const char*)arg1, arg2);
+
     case SysCallNumbers::FILE_RENAME:
         return syscall_handler.sys_rename((const char*)arg1, (const char*)arg2);
 
