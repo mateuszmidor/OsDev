@@ -1,17 +1,18 @@
 /**
- *   @file: VfsPciInfoEntry.cpp
+ *   @file: VfsPsInfoEntry.cpp
  *
  *   @date: Oct 27, 2017
  * @author: Mateusz Midor
  */
 
-#include "VfsPciInfoEntry.h"
-#include "PCIController.h"
+#include "VfsPsInfoEntry.h"
+#include "TaskManager.h"
 #include <errno.h>
 
+using namespace multitasking;
 namespace filesystem {
 
-bool VfsPciInfoEntry::open() {
+bool VfsPsInfoEntry::open() {
     if (is_open)
         return false;
 
@@ -19,14 +20,14 @@ bool VfsPciInfoEntry::open() {
     return true;
 }
 
-void VfsPciInfoEntry::close() {
+void VfsPsInfoEntry::close() {
     is_open = false;
 }
 
 /**
  * @brief   The size of the info is not known until the info string is built
  */
-u32 VfsPciInfoEntry::get_size() const {
+u32 VfsPsInfoEntry::get_size() const {
     return 0;
 }
 
@@ -34,7 +35,7 @@ u32 VfsPciInfoEntry::get_size() const {
  * @brief   Read the last "count" info bytes
  * @return  Num of read bytes
  */
-s64 VfsPciInfoEntry::read(void* data, u32 count) {
+s64 VfsPsInfoEntry::read(void* data, u32 count) {
     if (!is_open) {
         return 0;
     }
@@ -42,8 +43,12 @@ s64 VfsPciInfoEntry::read(void* data, u32 count) {
     if (count == 0)
         return 0;
 
-    hardware::PCIController pcic;
-    const kstd::string info = pcic.drivers_to_string();
+    TaskManager& task_manager = TaskManager::instance();
+    kstd::string info;
+    const auto& tasks = task_manager.get_tasks();
+    for (u16 i = 0; i < task_manager.get_num_tasks(); i++)
+        info += format("%. % [%], tid %\n", i, tasks[i].name, tasks[i].is_user_space ? "User" : "Kernel", tasks[i].task_id);
+
     if (info.empty())
         return 0;
 
@@ -56,7 +61,7 @@ s64 VfsPciInfoEntry::read(void* data, u32 count) {
     return num_bytes_to_read;
 }
 
-s64 VfsPciInfoEntry::write(const void* data, u32 count) {
+s64 VfsPsInfoEntry::write(const void* data, u32 count) {
     return -EPERM;
 }
 } /* namespace filesystem */
