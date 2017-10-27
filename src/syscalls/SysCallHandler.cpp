@@ -26,8 +26,13 @@ SysCallHandler::SysCallHandler() { }
 *************************************************************************************/
 
 /**
- * @brief   Get file with given "path", associate file descriptor to it and return the descriptor
- * @return  Descriptor number on success, -1 otherwise
+ * @brief   Open filesystem entry with given "path", assign file descriptor to it and return the descriptor
+ * @return  Descriptor number on success
+            -EMFILE if per-process open file limit is reached
+            -ENOENT if the filesystem entry does not exist
+            -EACCES if the filesystem entry can't be opened
+  @note     As for now, flags and mode is unused
+  @see      http://man7.org/linux/man-pages/man2/open.2.html
  */
 s32 SysCallHandler::sys_open(const char path[], int flags, int mode) {
     auto& files = current().files;
@@ -37,65 +42,89 @@ s32 SysCallHandler::sys_open(const char path[], int flags, int mode) {
             string absolute_path = make_absolute_path(path);
             VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
 
-            if (entry && entry->open()) {
-                files[i] = entry;
-                return i;
-            } else
-                return -1; // cant get or open such file
+            if (!entry)
+                return -ENOENT; // no such entry
+
+            if (!entry->open()) // cant open
+                return -EACCES;
+
+            files[i] = entry;
+            return i;
         }
-    return -1; // open file limit reached
+    return -EMFILE; // open file limit reached
 }
 
 /**
- * @brief   Close file associated with "fd" file descriptor
- * @return  0 if valid "fd" provided, -1 otherwise
+ * @brief   Close filesystem entry associated with "fd" file descriptor and release the descriptor
+ * @return  0 on success
+            -EBADF if "fd" is not valid descriptor
+ * @see     http://man7.org/linux/man-pages/man2/close.2.html
  */
 s32 SysCallHandler::sys_close(u32 fd) {
     auto& files = current().files;
 
     if (fd >= files.size())
-        return -1;
+        return -EBADF;
 
     if (!files[fd])
-        return -1;
+        return -EBADF;
 
     files[fd]->close();
     files[fd].reset();
     return 0;
 }
 
+/**
+ * @brief   Read up to "count" bytes
+ * @return  Number of actually read bytes on success
+ *          -EBADF if "fd" is not valid descriptor
+ * @see     http://man7.org/linux/man-pages/man2/read.2.html
+ */
 s64 SysCallHandler::sys_read(u32 fd, void *buf, u64 count) {
     auto& files = current().files;
 
     if (fd >= files.size())
-        return 0;
+        return -EBADF;
 
     if (!files[fd])
-        return 0;
+        return -EBADF;
 
     return files[fd]->read(buf, count);
 }
 
+/**
+ * @brief   Write up to "count" bytes
+ * @return  Number of actually written bytes on success
+ *          -EBADF if "fd" is not valid descriptor
+ * @see     http://man7.org/linux/man-pages/man2/write.2.html
+ */
 s64 SysCallHandler::sys_write(u32 fd, const void *buf, u64 count) {
     auto& files = current().files;
 
     if (fd >= files.size())
-        return 0;
+        return -EBADF;
 
     if (!files[fd])
-        return 0;
+        return -EBADF;
 
     return files[fd]->write(buf, count);
 }
 
+/**
+ * @brief   Change current read/write position
+ * @return  New current position from the file beginning on success
+ *          -EBADF if "fd" is not valid descriptor
+ *          -EINVAL if "whence" is invalid
+ * @see     http://man7.org/linux/man-pages/man2/lseek.2.html
+ */
 off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
     auto& files = current().files;
 
     if (fd >= files.size())
-        return -1;
+        return -EBADF;
 
     if (!files[fd])
-        return -1;
+        return -EBADF;
 
     u32 new_position;
     switch (whence) {
@@ -112,25 +141,26 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
         break;
 
     default:
-        return -1;
+        return -EINVAL;
     }
 
     if (files[fd]->seek(new_position))
         return new_position;
     else
-        return -1;
+        return -EINVAL;
 }
 
 /**
  * @brief   Get file status
- * @return  On success, zero is returned. On error, -1 is returned
+ * @return  0 on success
+ *          -ENOENT if the filesystem entry does not exist
  * @see     http://man7.org/linux/man-pages/man2/stat.2.html
  */
-s32 SysCallHandler::sys_stat(const char* path, struct stat* buff) {
+s32 SysCallHandler::sys_stat(const char path[], struct stat* buff) {
     string absolute_path = make_absolute_path(path);
     VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (!entry)
-        return -1;
+        return -ENOENT;
 
     memset(buff, 0, sizeof(struct stat));
     buff->st_size = entry->get_size();
@@ -141,27 +171,34 @@ s32 SysCallHandler::sys_stat(const char* path, struct stat* buff) {
 
 /**
  * @brief   Truncate file to given "lenght"
- * @return  On success, zero is returned. On error, -1 is returned
+ * @return  0 on success
+ *          -ENOENT if the filesystem entry does not exist
+ *          -EISDIR if the filesystem entry is directory
+ *          -EINVAL if "length" is invalid
  * @see     http://man7.org/linux/man-pages/man2/truncate.2.html
  */
 s32 SysCallHandler::sys_truncate(const char path[], off_t length) {
+    if (length < 0)
+        return -EINVAL;
+
     string absolute_path = make_absolute_path(path);
     VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (!entry)
-        return -1;
+        return -ENOENT;
 
     if (entry->is_directory())
-        return -1;
+        return -EISDIR;
 
     if (entry->truncate(length))
         return 0;
     else
-        return -1;
+        return -EINVAL;
 }
 
 /**
  * @brief   Move/rename filesystem entry
- * @return  On success, zero is returned. On error, -1 is returned
+ * @return  0 on success
+ *          -EACCES if some trouble happened
  * @see     http://man7.org/linux/man-pages/man2/rename.2.html
  */
 s32 SysCallHandler::sys_rename(const char old_path[], const char new_path[]) {
@@ -170,12 +207,13 @@ s32 SysCallHandler::sys_rename(const char old_path[], const char new_path[]) {
     if (VfsManager::instance().move_entry(absolute_old_path, absolute_new_path))
         return 0;
     else
-        return -1;
+        return -EACCES;
 }
 
 /**
  * @brief   Create directory
- * @return  On success, zero is returned. On error, -1 is returned
+ * @return  0 on success
+ *          -EACCES if some trouble happened
  * @see     http://man7.org/linux/man-pages/man2/mkdir.2.html
  */
 s32 SysCallHandler::sys_mkdir(const char path[], int mode) {
@@ -183,38 +221,45 @@ s32 SysCallHandler::sys_mkdir(const char path[], int mode) {
     if (VfsManager::instance().create_entry(absolute_path, true))
         return 0;
     else
-        return -1;
+        return -EACCES;
 }
 
 /**
  * @brief   Remove directory which must be empty
- * @return  On success, zero is returned. On error, -1 is returned
+ * @return  0 on success
+ *          -ENOTDIR if filesystem entry is not directory
+ *          -EACCES if some trouble happened
  * @see     http://man7.org/linux/man-pages/man2/rmdir.2.html
  */
 s32 SysCallHandler::sys_rmdir(const char path[]) {
     string absolute_path = make_absolute_path(path);
     VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (!entry->is_directory())
-        return -1;
+        return -ENOTDIR;
 
     if (VfsManager::instance().delete_entry(absolute_path))
         return 0;
     else
-        return -1;
+        return -EACCES;
 }
 
 /**
  * @brief   Create file and return its descriptor
  * @param   mode NOT USED NOW
- * @return  Descriptor number on success, -1 otherwise
+ * @return  Descriptor number on success
+ *          -EMFILE if per-process open file limit is reached
+            -EACCES if some trouble happened
  * @see     http://man7.org/linux/man-pages/man2/open.2.html
  */
 s32 SysCallHandler::sys_creat(const char path[], int mode) {
     // create file
     string absolute_path = make_absolute_path(path);
     auto entry = VfsManager::instance().create_entry(absolute_path, false);
-    if (!entry || !entry->open())
-        return -1;
+    if (!entry)
+        return -EACCES;
+
+    if (!entry->open())
+        return -EACCES;
 
     // alloc the created file in descriptor table
     auto& files = current().files;
@@ -224,64 +269,87 @@ s32 SysCallHandler::sys_creat(const char path[], int mode) {
             return i;
         }
 
-    return -1;
+    return -EMFILE;
 }
 
 /**
  * @brief   Remove file from filesystem
- * @return  On success, zero is returned. On error, -1 is returned
+ * @return  0 on success
+ *          -ENOENT if filesystem entry doesnt exist
+ *          -EISDIR if filesystem entry is directory
+ *          -EACCES if some trouble happened
  * @see     https://linux.die.net/man/2/unlink
  */
 s32 SysCallHandler::sys_unlink(const char path[]) {
     string absolute_path = make_absolute_path(path);
     VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
+
+    if (!entry)
+        return -ENOENT; // no such entry
+
     if (entry->is_directory())
-        return -1;
+        return -EISDIR; // is directory
 
     if (VfsManager::instance().delete_entry(absolute_path))
         return 0;
     else
-        return -1;
+        return -EACCES;
 }
 
 /**
  * @brief   Get current working directory and store into "buff"
  * @param   size Size of the "buff"
- * @return  Pointer to "buff" on success, nullptr on error
+ * @return  0 on success
+ *          -EINVAL if "buff" is null
+ *          -ERANGE if "size" < cwd.length
+ * @see     http://man7.org/linux/man-pages/man3/getcwd.3.html
  */
-char* SysCallHandler::sys_get_cwd(char* buff, size_t size) {
+s32 SysCallHandler::sys_get_cwd(char* buff, size_t size) {
     if (!buff)
-        return nullptr;
+        return -EINVAL;
 
     const string& cwd = current().cwd;
     if (size < cwd.length() + 1)
-        return nullptr;
+        return -ERANGE;
 
     memcpy(buff, cwd.c_str(), cwd.length() + 1); // +1 copy with null
-    return buff;
+    return 0;
 }
 
 /**
  * @brief   Change current working directory
- * @return  0 on success, -1 on error
+ * @return  0 on success
+            -ENOENT if filesystem entry doesnt exist
+            -ENOTDIR if filesystem entry is not directory
+ * @see     http://man7.org/linux/man-pages/man2/chdir.2.html
  */
 s32 SysCallHandler::sys_chdir(const char path[]) {
     string absolute_path = make_absolute_path(path);
     VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
     if (!entry)
-        return -1;
+        return -ENOENT ;
 
     if (!entry->is_directory())
-        return -1;
+        return -ENOTDIR;
 
     current().cwd = absolute_path;
     return 0;
 }
 
+/**
+ * @brief   Exit current task
+ * @return  This function does not return; TaskManager schedules another task instead
+ * @see     http://man7.org/linux/man-pages/man3/exit.3.html
+ */
 void SysCallHandler::sys_exit(s32 status) {
     multitasking::Task::exit(status);
 }
 
+/**
+ * @brief   Exit all threads in current process. Right now there is no multiple threads per process, so exit current task
+ * @return  This function does not return; TaskManager schedules another task instead
+ * @see     http://man7.org/linux/man-pages/man2/exit_group.2.html
+ */
 void SysCallHandler::sys_exit_group(s32 status) {
     multitasking::Task::exit(status);
 }

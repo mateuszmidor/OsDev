@@ -39,8 +39,10 @@ void print_dir(const char name[]) {
  */
 int main(int argc, char* argv[]) {
     char* path;
-    if (argc == 1)
-        path = syscalls::getcwd(buff, sizeof(buff) - 1);
+    if (argc == 1) {
+        syscalls::getcwd(buff, sizeof(buff) - 1);
+        path = buff;
+    }
     else
         path = argv[1];
 

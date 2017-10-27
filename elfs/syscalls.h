@@ -126,10 +126,10 @@ inline int unlink(const char path[]) {
  * @brief   Get current working directory
  * @param   buff Buffer for storing the cwd
  * @param   size Length of the "buff", should be at least 256
- * @return  "buff" pointer itself on success, nullptr on failure
+ * @return  0 on success, negative error code on error
  */
-inline char* getcwd(char buff[], size_t size) {
-    return (char*)syscall(middlespace::SysCallNumbers::GET_CWD, (syscall_arg)buff, (syscall_arg)size);
+inline int getcwd(char* buff, size_t size) {
+    return syscall(middlespace::SysCallNumbers::GET_CWD, (syscall_arg)buff, (syscall_arg)size);
 }
 
 /**

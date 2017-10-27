@@ -47,7 +47,7 @@ void CommandLineInput::install(const ustd::string& cmd_name) {
 }
 
 void CommandLineInput::help_me_out() {
-    if (!syscalls::getcwd(cwd, sizeof(cwd)))
+    if (syscalls::getcwd(cwd, sizeof(cwd)) < 0)
         return;
 
     bool multiple_results;

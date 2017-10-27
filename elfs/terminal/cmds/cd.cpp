@@ -14,8 +14,7 @@ using namespace ustd;
 namespace cmds {
 
 ustd::string cd::prev_cwd = "";
-const u32 MAX_PATH = 256;
-char cwd[MAX_PATH];
+char cwd[256];
 
 void cd::run() {
     string path;
@@ -53,7 +52,8 @@ void cd::store_last_location() {
 }
 
 string cd::get_cwd() const {
-    return syscalls::getcwd(cwd, MAX_PATH);
+    syscalls::getcwd(cwd, sizeof(cwd));
+    return cwd;
 }
 
 void cd::cd_root() {
