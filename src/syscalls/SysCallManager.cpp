@@ -60,6 +60,12 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     case SysCallNumbers::FILE_STAT:
         return syscall_handler.sys_stat((const char*)arg1, (struct stat*)arg2);
 
+    case SysCallNumbers::FILE_MKDIR:
+        return syscall_handler.sys_mkdir((const char*)arg1, arg2);
+
+    case SysCallNumbers::FILE_RMDIR:
+        return syscall_handler.sys_rmdir((const char*)arg1);
+
     case SysCallNumbers::FILE_CREAT:
         return syscall_handler.sys_creat((const char*)arg1, arg2);
 

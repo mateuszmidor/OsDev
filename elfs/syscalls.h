@@ -72,12 +72,30 @@ inline off_t lseek(int fd, off_t offset, int whence) {
  * @brief   Get virtual file system entry info
  * @return  0 on success, -1 on no such file
  */
-inline int stat(const char pathname[], struct stat* statbuf) {
-    return syscall(middlespace::SysCallNumbers::FILE_STAT, (syscall_arg)pathname, (syscall_arg)statbuf);
+inline int stat(const char path[], struct stat* statbuf) {
+    return syscall(middlespace::SysCallNumbers::FILE_STAT, (syscall_arg)path, (syscall_arg)statbuf);
 }
 
-inline int creat(const char pathname[], int mode = 0) {
-    return syscall(middlespace::SysCallNumbers::FILE_CREAT, (syscall_arg)pathname, (syscall_arg)mode);
+/**
+ * @brief   Create directory
+ * @return  0 on success, negative error code on error
+ * @note    "mode" is not used now
+ */
+inline int mkdir(const char path[], int mode = 0) {
+    return syscall(middlespace::SysCallNumbers::FILE_MKDIR, (syscall_arg)path, (syscall_arg)mode);
+}
+
+/**
+ * @brief   Remove directory
+ * @return  0 on success, negative error code on error
+ * @note    Directory must  be empty
+ */
+inline int rmdir(const char path[]) {
+    return syscall(middlespace::SysCallNumbers::FILE_RMDIR, (syscall_arg)path);
+}
+
+inline int creat(const char path[], int mode = 0) {
+    return syscall(middlespace::SysCallNumbers::FILE_CREAT, (syscall_arg)path, (syscall_arg)mode);
 }
 
 /**

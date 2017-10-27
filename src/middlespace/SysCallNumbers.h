@@ -22,6 +22,8 @@ enum SysCallNumbers {
     FILE_CLOSE              = 3,
     FILE_STAT               = 4,
     FILE_SEEK               = 8,
+    FILE_MKDIR              = 83,
+    FILE_RMDIR              = 84,
     FILE_CREAT              = 85,
 
 //    FILE_GETDENTS           = 0xdc, //220

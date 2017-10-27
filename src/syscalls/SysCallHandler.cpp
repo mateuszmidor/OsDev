@@ -123,7 +123,7 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
 
 /**
  * @brief   Get file status
- * @return  On success, zero is returned.  On error, -1 is returned, and errno is set appropriately.
+ * @return  On success, zero is returned. On error, -1 is returned
  * @see     http://man7.org/linux/man-pages/man2/stat.2.html
  */
 s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
@@ -137,6 +137,32 @@ s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
     buff->st_mode = entry->is_directory() ? S_IFDIR : S_IFREG;
 
     return 0;
+}
+
+/**
+ * @brief   Create directory
+ * @return  On success, zero is returned. On error, -1 is returned
+ * @see     http://man7.org/linux/man-pages/man2/mkdir.2.html
+ */
+s32 SysCallHandler::sys_mkdir(const char path[], int mode) {
+    string absolute_path = make_absolute_path(path);
+    if (VfsManager::instance().create_entry(absolute_path, true))
+        return 0;
+    else
+        return -1;
+}
+
+/**
+ * @brief   Remove directory which must be empty
+ * @return  On success, zero is returned. On error, -1 is returned
+ * @see     http://man7.org/linux/man-pages/man2/rmdir.2.html
+ */
+s32 SysCallHandler::sys_rmdir(const char path[]) {
+    string absolute_path = make_absolute_path(path);
+    if (VfsManager::instance().delete_entry(absolute_path))
+        return 0;
+    else
+        return -1;
 }
 
 /**
