@@ -26,6 +26,7 @@ public:
     s64 sys_write(u32 fd, const void* buf, u64 count);
     off_t sys_lseek(int fd, off_t offset, int whence);
     s32 sys_stat(const char name[], struct stat* buff);
+    s32 sys_rename(const char old_path[], const char new_path[]);
     s32 sys_mkdir(const char path[], int mode);
     s32 sys_rmdir(const char path[]);
     s32 sys_creat(const char name[], int mode);

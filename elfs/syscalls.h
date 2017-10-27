@@ -77,6 +77,14 @@ inline int stat(const char path[], struct stat* statbuf) {
 }
 
 /**
+ * @brief   Rename file/directory
+ * @return  0 on success, negative error code on error
+ */
+inline int rename(const char oldname[], const char newname[]) {
+    return syscall(middlespace::SysCallNumbers::FILE_RENAME, (syscall_arg)oldname, (syscall_arg)newname);
+}
+
+/**
  * @brief   Create directory
  * @return  0 on success, negative error code on error
  * @note    "mode" is not used now

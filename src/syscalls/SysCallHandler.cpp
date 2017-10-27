@@ -140,6 +140,20 @@ s32 SysCallHandler::sys_stat(const char* name, struct stat* buff) {
 }
 
 /**
+ * @brief   Move/rename filesystem entry
+ * @return  On success, zero is returned. On error, -1 is returned
+ * @see     http://man7.org/linux/man-pages/man2/rename.2.html
+ */
+s32 SysCallHandler::sys_rename(const char old_path[], const char new_path[]) {
+    string absolute_old_path = make_absolute_path(old_path);
+    string absolute_new_path = make_absolute_path(new_path);
+    if (VfsManager::instance().move_entry(absolute_old_path, absolute_new_path))
+        return 0;
+    else
+        return -1;
+}
+
+/**
  * @brief   Create directory
  * @return  On success, zero is returned. On error, -1 is returned
  * @see     http://man7.org/linux/man-pages/man2/mkdir.2.html
