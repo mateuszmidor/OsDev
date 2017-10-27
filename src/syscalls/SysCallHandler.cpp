@@ -173,6 +173,10 @@ s32 SysCallHandler::sys_mkdir(const char path[], int mode) {
  */
 s32 SysCallHandler::sys_rmdir(const char path[]) {
     string absolute_path = make_absolute_path(path);
+    VfsEntryPtr entry = VfsManager::instance().get_entry(absolute_path);
+    if (!entry->is_directory())
+        return -1;
+
     if (VfsManager::instance().delete_entry(absolute_path))
         return 0;
     else
