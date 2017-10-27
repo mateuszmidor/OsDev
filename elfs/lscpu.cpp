@@ -1,7 +1,7 @@
 /**
- *   @file: dmesg.cpp
+ *   @file: lscpu.cpp
  *
- *   @date: Oct 25, 2017
+ *   @date: Oct 27, 2017
  * @author: Mateusz Midor
  */
 
@@ -10,8 +10,8 @@
 #include "utils.h"
 
 char buff[1024*1024];
-const char KERNEL_PROC_FILE[] = "/proc/kmsg";
-const char ERROR_CANT_OPEN[] = "Cant open /proc/kmsg";
+const char KERNEL_PROC_FILE[] = "/proc/cpuinfo";
+const char ERROR_CANT_OPEN[] = "cant open /proc/cpuinfo";
 
 
 /**
@@ -19,7 +19,7 @@ const char ERROR_CANT_OPEN[] = "Cant open /proc/kmsg";
  */
 int main(int argc, char* argv[]) {
     int fd = syscalls::open(KERNEL_PROC_FILE);
-    if (fd < 0) {
+    if (fd == -1) {
         print(ERROR_CANT_OPEN);
         return 1;
     }

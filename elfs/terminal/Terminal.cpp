@@ -7,26 +7,19 @@
 
 #include "Terminal.h"
 //#include "cmds/df.h"
-//#include "cmds/log.h"
-//#include "cmds/lscpu.h"
-//#include "cmds/cat.h"
 //#include "cmds/ps.h"
-//#include "cmds/free.h"
 #include "cmds/cd.h"
 //#include "cmds/rm.h"
 //#include "cmds/mv.h"
 //#include "cmds/echo.h"
 //#include "cmds/mkdir.h"
-//#include "cmds/tail.h"
 //#include "cmds/trunc.h"
 //#include "cmds/testfat32.h"
 //#include "cmds/lspci.h"
-//#include "cmds/date.h"
 //#include "cmds/mb2.h"
 //#include "cmds/elfinfo.h"
 #include "cmds/elfrun.h"
 #include "cmds/specificelfrun.h"
-//#include "cmds/cp.h"
 
 #include "syscalls.h"
 
@@ -47,15 +40,11 @@ Terminal::Terminal(u64 arg) {
     env.printer = printer;
     user_input.printer = printer;
 
-//    env.klog = &klog;
 
     // the commands will later be run as elf programs in user space
-//    install_cmd<cmds::log>("klog");
-//    install_cmd<cmds::lscpu>("lscpu");
 //    install_cmd<cmds::ps>("ps");
 //    install_cmd<cmds::free>("free");
 //    install_cmd<cmds::lspci>("lspci");
-//    install_cmd<cmds::date>("date");
 //    install_cmd<cmds::mb2>("mb2");
 //    install_cmd<cmds::elfinfo>("elfinfo");
     install_cmd(new cmds::elfrun(&env), "elfrun");
@@ -64,10 +53,8 @@ Terminal::Terminal(u64 arg) {
     install_cmd(new cmds::cd(&env), "cd");
 //    install_cmd<cmds::rm>("rm");
 //    install_cmd<cmds::mv>("mv");
-//    install_cmd<cmds::cp>("cp");
 //    install_cmd<cmds::echo>("echo");
 //    install_cmd<cmds::mkdir>("mkdir");
-//    install_cmd<cmds::tail>("tail");
 //    install_cmd<cmds::trunc>("trunc");
 //    install_cmd<cmds::test_fat32>("test_fat32");
 

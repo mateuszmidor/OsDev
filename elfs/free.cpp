@@ -11,7 +11,7 @@
 
 char buff[1024];
 const char KERNEL_PROC_FILE[] = "/proc/meminfo";
-const char ERROR_NO_INPUT_FILE[] = "/proc/meminfo doesnt exist";
+const char ERROR_CANT_OPEN[] = "Cant open /proc/meminfo";
 
 
 /**
@@ -19,8 +19,8 @@ const char ERROR_NO_INPUT_FILE[] = "/proc/meminfo doesnt exist";
  */
 int main(int argc, char* argv[]) {
     int fd = syscalls::open(KERNEL_PROC_FILE);
-    if (fd == -1) {
-        print(ERROR_NO_INPUT_FILE);
+    if (fd < 0) {
+        print(ERROR_CANT_OPEN);
         return 1;
     }
 
