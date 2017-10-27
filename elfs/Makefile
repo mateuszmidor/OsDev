@@ -2,8 +2,8 @@
 CXX = g++ # an alias. You can specify any number of aliases
 CF = -std=c++11 -Wall -mno-red-zone -nostartfiles -static -O0 -fdata-sections -ffunction-sections -Wl,--gc-sections
 SOURCES = ret3.cpp square.cpp fibb.cpp sum.cpp \
-			cp.cpp mkdir.cpp rm.cpp mv.cpp trunc.cpp cat.cpp tail.cpp \
-			dmesg.cpp free.cpp ls.cpp lscpu.cpp lspci.cpp ps.cpp df.cpp
+			ls.cpp cp.cpp mkdir.cpp rm.cpp mv.cpp trunc.cpp cat.cpp tail.cpp \
+			dmesg.cpp free.cpp lscpu.cpp lspci.cpp ps.cpp df.cpp
 			
 GCCINCLUDES = -I../src/middlespace
 
