@@ -1,5 +1,5 @@
 /**
- *   @file: lscpu.cpp
+ *   @file: lspci.cpp
  *
  *   @date: Oct 27, 2017
  * @author: Mateusz Midor
@@ -9,9 +9,10 @@
 #include "ustd.h"
 #include "utils.h"
 
+
 char buff[1024];
-const char KERNEL_PROC_FILE[]   = "/proc/cpuinfo";
-const char ERROR_CANT_OPEN[]    = "lscpu: cant open /proc/cpuinfo\n";
+const char KERNEL_PROC_FILE[]   = "/proc/pciinfo";
+const char ERROR_CANT_OPEN[]    = "lspci: cant open /proc/pciinfo\n";
 
 
 /**
