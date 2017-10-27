@@ -66,7 +66,7 @@ void cd::cd_root() {
 void cd::cd_directory(const string& path) {
     struct stat s;
 
-    if (syscalls::stat(path.c_str(), &s) == -1) {
+    if (syscalls::stat(path.c_str(), &s) < 0) {
         env->printer->format("cd: directory '%' doesnt exist\n", path);
         return;
     }

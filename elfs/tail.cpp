@@ -11,15 +11,15 @@
 const u32 MAX_CHARS = 90;
 char buff[MAX_CHARS];
 
-const char ERROR_NO_INPUT_FILE[] = "Please specify filename.\n";
-const char ERROR_FILE_IS_DIR[] = "Specified filename points to a directory\n";
-const char ERROR_FILE_NOT_EXISTS[] = "Specified file does not exist";
-const char ERROR_OPENING_FILE[] = "Error opening file";
-const char ERROR_SEEK_ERROR[] = "File seek error";
+const char ERROR_NO_INPUT_FILE[]    = "tail: please specify filename.\n";
+const char ERROR_FILE_IS_DIR[]      = "tail: specified filename points to a directory\n";
+const char ERROR_FILE_NOT_EXISTS[]  = "tail: specified file does not exist\n";
+const char ERROR_OPENING_FILE[]     = "tail: cant open specified file\n";
+const char ERROR_SEEK_ERROR[]       = "tail: file seek error\n";
 
 /**
  * @brief   Entry point
- * @return  Simply return size of given file
+ * @return  Number of printed characters
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -27,24 +27,24 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const char* absolute_filename = argv[1];
+    const char* filename = argv[1];
 
     struct stat s;
-    if (syscalls::stat(absolute_filename, &s) < 0 ) {
+    if (syscalls::stat(filename, &s) < 0 ) {
         print(ERROR_FILE_NOT_EXISTS);
-        return -1;
+        return 1;
     }
 
     if (s.st_mode == S_IFDIR) {
         print(ERROR_FILE_IS_DIR);
-        return -1;
+        return 1;
     }
 
 
-    int fd = syscalls::open(absolute_filename);
+    int fd = syscalls::open(filename);
     if (fd < 0) {
         print(ERROR_OPENING_FILE);
-        return -1;
+        return 1;
     }
 
     ssize_t total = 0;
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
     u32 position = s.st_size > MAX_CHARS ? s.st_size - MAX_CHARS : 0;
     if (syscalls::lseek(fd, position, SEEK_SET) < 0) {
         print(ERROR_SEEK_ERROR);
-        return -1;
+        return 1;
     }
 
     print("\n");

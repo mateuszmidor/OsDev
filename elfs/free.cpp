@@ -10,12 +10,13 @@
 #include "utils.h"
 
 char buff[1024];
-const char KERNEL_PROC_FILE[] = "/proc/meminfo";
-const char ERROR_CANT_OPEN[] = "Cant open /proc/meminfo";
+const char KERNEL_PROC_FILE[]   = "/proc/meminfo";
+const char ERROR_CANT_OPEN[]    = "free: cant open /proc/meminfo\n";
 
 
 /**
  * @brief   Entry point
+ * @return  0 on success, 1 on error
  */
 int main(int argc, char* argv[]) {
     int fd = syscalls::open(KERNEL_PROC_FILE);

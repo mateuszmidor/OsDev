@@ -9,12 +9,13 @@
 #include "_start.h"
 #include "utils.h"
 
-const char ERROR_NO_INPUT_FILE[] = "Please provide directory path";
-const char ERROR_CANT_CREATE[] = "Cant create given directory\n";
+const char ERROR_NO_INPUT_FILE[]    = "mkdir: please provide directory path\n";
+const char ERROR_CANT_CREATE[]      = "mkdir: cant create given directory\n";
 
 
 /**
  * @brief   Entry point
+ * @return  0 on success, 1 on error
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
     int result = syscalls::mkdir(path);
     if (result < 0) {
         print(ERROR_CANT_CREATE);
-        return -1;
+        return 1;
     }
 
     return 0;

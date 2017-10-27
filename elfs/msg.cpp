@@ -12,10 +12,10 @@
 
 /**
  * @brief   Entry point
- * @return  Simply return number 3
+ * @return  0 no matter what
  */
 int main(int argc, char* argv[]) {
-    const char STR[] = "Hello from user space 'msg' binary!!";
+    const char STR[] = "msg: Hello from user space 'msg' binary!!\n";
     syscalls::write(2, STR, strlen(STR));
     return 0;
 }

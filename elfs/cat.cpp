@@ -10,13 +10,13 @@
 #include "utils.h"
 
 char buff[1024*1024];
-const char ERROR_NO_INPUT_FILE[] = "Please specify file name.\n";
-const char ERROR_OPENING_FILE[] = "Specified file is directory or not even exists.\n";
+const char ERROR_NO_INPUT_FILE[]    = "cat: please specify file name\n";
+const char ERROR_OPENING_FILE[]     = "cat: cant open specified file\n";
 
 
 /**
  * @brief   Entry point
- * @return  Simply return size of given file
+ * @return  Number of printed characters
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     const char* path = argv[1];
 
     int fd = syscalls::open(path);
-    if (fd == -1) {
+    if (fd < 0) {
         print(ERROR_OPENING_FILE);
         return 1;
     }

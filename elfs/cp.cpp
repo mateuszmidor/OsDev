@@ -12,11 +12,11 @@
 using namespace ustd;
 
 
-const char ERROR_NO_INPUT_PATHS[] = "cp: please specify src and dst paths\n";
-const char ERROR_INPUT_NO_EXISTS[] = "cp: source file does not exist\n";
-const char ERROR_SOURCE_IS_DIR[] = "cp: source is a directory. Recursive copy not implemented yet\n";
-const char ERROR_CANT_CREATE_DESTIN[] = "cp: cant create destination file\n";
-const char MSG_DONE[] = "cp: copying done.\n";
+const char ERROR_NO_INPUT_PATHS[]       = "cp: please specify src and dst paths\n";
+const char ERROR_CANT_OPEN_SRC[]        = "cp: cant open source file\n";
+const char ERROR_SOURCE_IS_DIR[]        = "cp: source is a directory. Recursive copy not implemented yet\n";
+const char ERROR_CANT_CREATE_DESTIN[]   = "cp: cant create destination file\n";
+const char MSG_DONE[]                   = "cp: copying done.\n";
 
 const u32 BUFF_SIZE = 1024;
 char buff[BUFF_SIZE];
@@ -29,7 +29,7 @@ bool exists(const char filename[]) {
 
 bool is_directory(const char filename[]) {
     struct stat s;
-    if (syscalls::stat(filename, &s) == -1) {
+    if (syscalls::stat(filename, &s) < 0) {
         return false;
     }
 
@@ -41,10 +41,14 @@ string extract_file_name(const string& path) {
     return path.substr(pivot+1, path.size());
 }
 
+/**
+ * @brief   Entry point
+ * @return  0 on success, 1 on error
+ */
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         print(ERROR_NO_INPUT_PATHS);
-        return -1;
+        return 1;
     }
 
     const char* src_path = argv[1];
@@ -53,15 +57,15 @@ int main(int argc, char* argv[]) {
 
     // source must exist
     int src_fd = syscalls::open(src_path);
-    if (src_fd == -1) {
-        print(ERROR_INPUT_NO_EXISTS);
-        return -1;
+    if (src_fd < 0) {
+        print(ERROR_CANT_OPEN_SRC);
+        return 1;
     }
 
     // copying directory should use recursive approach
     if (is_directory(src_path)) {
         print(ERROR_SOURCE_IS_DIR);
-        return -1;   // TODO: implement recursive copy
+        return 1;   // TODO: implement recursive copy
     }
 
     // check if dst describes destination directory or full destination path including filename
@@ -75,7 +79,7 @@ int main(int argc, char* argv[]) {
     int dst_fd = syscalls::creat(final_dst_filename.c_str());
     if (dst_fd < 0) {
         print(ERROR_CANT_CREATE_DESTIN);
-        return -1;
+        return 1;
     }
 
     // dest created, just copy contents

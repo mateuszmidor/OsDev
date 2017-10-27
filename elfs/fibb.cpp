@@ -20,13 +20,13 @@ int fib_rec(int n) {
 
 /**
  * @brief   Entry point
- * @return  0 on success, -1 on error
+ * @return  0 on success, 1 on error
  */
 char buff[12];
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        print("\nPlease provide number to calc fibonacci for");
-        return -1;
+        print("fibb: please provide number to calc fibonacci for\n");
+        return 1;
     }
 
     int result = fib_rec(str_to_long(argv[1]));

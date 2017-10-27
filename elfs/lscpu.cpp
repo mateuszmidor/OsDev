@@ -10,16 +10,17 @@
 #include "utils.h"
 
 char buff[1024*1024];
-const char KERNEL_PROC_FILE[] = "/proc/cpuinfo";
-const char ERROR_CANT_OPEN[] = "cant open /proc/cpuinfo";
+const char KERNEL_PROC_FILE[]   = "/proc/cpuinfo";
+const char ERROR_CANT_OPEN[]    = "lscpu: cant open /proc/cpuinfo\n";
 
 
 /**
  * @brief   Entry point
+ * @return  0 on success, 1 on error
  */
 int main(int argc, char* argv[]) {
     int fd = syscalls::open(KERNEL_PROC_FILE);
-    if (fd == -1) {
+    if (fd < 0) {
         print(ERROR_CANT_OPEN);
         return 1;
     }

@@ -14,7 +14,7 @@
  */
 int main(int argc, char* argv[]) {
     if (argc < 2)
-        return -1;
+        return 1;
 
     int value = str_to_long(argv[1]);
     return value * value;

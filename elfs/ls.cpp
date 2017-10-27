@@ -11,8 +11,8 @@
 #include "utils.h"
 
 
-const char ERROR_PATH_NOT_EXISTS[] = "Path doesnt exist";
-const char ERROR_OPENING_FILE[] = "Error opening file";
+const char ERROR_PATH_NOT_EXISTS[]  = "ls: path doesnt exist\n";
+const char ERROR_OPENING_DIR[]      = "ls: cant open specified directory\n";
 char buff[256];
 char size_str[12];
 
@@ -33,6 +33,10 @@ void print_dir(const char name[]) {
     print("]\n");
 }
 
+/**
+ * @brief   Entry point
+ * @return  0 on success, 1 on error
+ */
 int main(int argc, char* argv[]) {
     char* path;
     if (argc == 1)
@@ -45,7 +49,7 @@ int main(int argc, char* argv[]) {
     struct stat s;
     if (syscalls::stat(path, &s) < 0) {
         print(ERROR_PATH_NOT_EXISTS);
-        return -1;
+        return 1;
     }
 
     // ls file
@@ -57,8 +61,8 @@ int main(int argc, char* argv[]) {
     // ls directory
     int fd = syscalls::open(path);
     if (fd < 0) {
-        print(ERROR_OPENING_FILE);
-        return -1;
+        print(ERROR_OPENING_DIR);
+        return 1;
     }
 
     u32 MAX_ENTRIES = 128; // should there be more in a single dir?

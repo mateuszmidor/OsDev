@@ -11,7 +11,7 @@ unsigned char buffer[1024*1024*8]; // 8MB
 
 /**
  * @brief   Entry point
- * @return  0 if buffer properly initialized to 0, first nonzero entry otherwise
+ * @return  0 if buffer properly initialized to 0, first nonzero entry value otherwise
  */
 int main(int argc, char* argv[]) {
     // Check if global variable properly initialized to 0
