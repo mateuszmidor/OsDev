@@ -26,11 +26,11 @@ typedef int64_t     Elf64_Sxword;
  * @see     https://www.uclibc.org/docs/elf-64-gen.pdf, Table 2. ELF Identification, e_ident
  */
 enum Elf64_Ident {
-    EI_MAG0         = 0,    // File identification
-    EI_MAG1         = 1,    // File identification
-    EI_MAG2         = 2,    // File identification
-    EI_MAG3         = 3,    // File identification
-    EI_CLASS        = 4,    // File class
+    EI_MAG0         = 0,    // File identification; '\x7f'
+    EI_MAG1         = 1,    // File identification  'E'
+    EI_MAG2         = 2,    // File identification  'L'
+    EI_MAG3         = 3,    // File identification  'F'
+    EI_CLASS        = 4,    // File class; 1=32bit, 2=64bit
     EI_DATA         = 5,    // Data encoding
     EI_VERSION      = 6,    // File version
     EI_OSABI        = 7,    // OS/ABI identification
@@ -111,6 +111,7 @@ public:
     static kstd::string to_string(void* elf64_data);
     static kstd::string section_header_to_string(const char* section_names, Elf64_Shdr* section_header);
     static kstd::string segment_header_to_string(Elf64_Phdr* segment_header);
+    static bool is_elf64(const void* elf64_data);
     static u64 load_into_current_addressspace(void* elf64_data);
     static s64 get_available_memory_first_byte(void* elf64_data);
 };

@@ -23,7 +23,7 @@
 #include "TaskManager.h"
 #include "TaskFactory.h"
 #include "PageFaultHandler.h"
-#include "Terminal.h"
+//#include "Terminal.h"
 #include "MemoryManager.h"
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
@@ -31,11 +31,12 @@
 #include "Sse.h"
 #include "PageTables.h"
 #include "_demos/Demo.h"
-#include "_demos/VgaDemo.h"
-#include "_demos/Fat32Demo.h"
+//#include "_demos/VgaDemo.h"
+//#include "_demos/Fat32Demo.h"
 #include "_demos/MouseDemo.h"
-#include "_demos/MultitaskingDemo.h"
-#include "_demos/CpuSpeedDemo.h"
+//#include "_demos/MultitaskingDemo.h"
+//#include "_demos/CpuSpeedDemo.h"
+#include "ElfRunner.h"
 
 using std::make_shared;
 using namespace kstd;
@@ -48,6 +49,7 @@ using namespace syscalls;
 using namespace utils;
 using namespace demos;
 using namespace filesystem;
+using namespace middlespace;
 
 MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();
@@ -76,7 +78,7 @@ void corner_counter() {
         u64 i = 0;
 
         while (true) {
-            s8 c = (i % 10) + '0';
+            u8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
             asm volatile("mov $0, %rax; int $0x80");    // yield
@@ -84,20 +86,46 @@ void corner_counter() {
     }
 }
 
+void run_userspace_terminal() {
+    auto vga_drv = driver_manager.get_driver<VgaDriver>();
+    if (!vga_drv)
+        return;
+
+    vga_drv->clear_screen();
+
+
+    VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
+    if (!e) {
+        vga_drv->print(0, "/BIN/TERMINAL doesnt exist. No terminal will be available", EgaColor::Red);
+        return;
+    }
+    if (e->is_directory()) {
+        vga_drv->print(0, "/BIN/TERMINAL is directory? No terminal will be available", EgaColor::Red);
+        return;
+    }
+
+    vga_drv->print(0, "Loading terminal, please wait a few secs...");
+
+    // read elf file data
+    u32 size = e->get_size();
+    u8* elf_data = new u8[size];
+    e->read(elf_data, size);
+
+    // run the elf
+    utils::ElfRunner runner;
+    if (0 == runner.run(elf_data, new vector<string> { "TERMINAL" }))
+        klog.format("Terminal is running\n");
+}
+
 /**
  * Here we enter multitasking
  */
 void task_init() {
     task_manager.add_task(Task::make_kernel_task(Task::idle, "idle"));
-
-//    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_a_demo", 'A'));
-//    task_manager.add_task(Demo::make_demo<MultitaskingDemo>("multitasking_b_demo", 'B'));
-//    task_manager.add_task(Demo::make_demo<CpuSpeedDemo>("cpuspeed_demo"));
-//    task_manager.add_task(Demo::make_demo<Fat32Demo>("fat32_demo"));
-    task_manager.add_task(TaskFactory::make_kernel_task<terminal::Terminal>("terminal", 0));
     task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0));
     task_manager.add_task(Task::make_kernel_task(corner_counter, "corner_counter"));
-//    task_manager.add_task(Demo::make_demo<demos::VgaDemo>("vga_demo"));
+
+    run_userspace_terminal();
 }
 
 /**

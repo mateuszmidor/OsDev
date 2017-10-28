@@ -11,6 +11,14 @@
 #include "DriverManager.h"
 #include "VfsManager.h"
 
+#include "procfs/VfsKmsgEntry.h"
+#include "procfs/VfsMemInfoEntry.h"
+#include "procfs/VfsDateEntry.h"
+#include "procfs/VfsCpuInfoEntry.h"
+#include "procfs/VfsPciInfoEntry.h"
+#include "procfs/VfsPsInfoEntry.h"
+#include "procfs/VfsMountInfoEntry.h"
+
 using namespace kstd;
 using namespace drivers;
 namespace filesystem {
@@ -29,15 +37,39 @@ void VfsManager::install_root() {
     VfsRamEntryPtr dev = std::make_shared<VfsRamEntry>("dev", true);
     root->entries.push_back(dev);
 
-    VfsRamEntryPtr keyboard = std::make_shared<VfsRamEntry>("keyboard", false);
-    dev->entries.push_back(keyboard);
+        VfsRamEntryPtr keyboard = std::make_shared<VfsRamEntry>("keyboard", false);
+        dev->entries.push_back(keyboard);
 
-    VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
-    dev->entries.push_back(stdout);
+        VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
+        dev->entries.push_back(stdout);
 
-    VfsRamEntryPtr mnt = std::make_shared<VfsRamEntry>("mnt", true);
-    root->entries.push_back(mnt);
-    install_ata_devices(mnt);
+
+
+    VfsRamEntryPtr proc = std::make_shared<VfsRamEntry>("proc", true);
+    root->entries.push_back(proc);
+
+        VfsEntryPtr kmsg = std::make_shared<VfsKmsgEntry>();
+        proc->entries.push_back(kmsg);
+
+        VfsEntryPtr meminfo = std::make_shared<VfsMemInfoEntry>();
+        proc->entries.push_back(meminfo);
+
+        VfsEntryPtr date = std::make_shared<VfsDateEntry>();
+        proc->entries.push_back(date);
+
+        VfsEntryPtr cpuinfo = std::make_shared<VfsCpuInfoEntry>();
+        proc->entries.push_back(cpuinfo);
+
+        VfsEntryPtr pciinfo = std::make_shared<VfsPciInfoEntry>();
+        proc->entries.push_back(pciinfo);
+
+        VfsEntryPtr psinfo = std::make_shared<VfsPsInfoEntry>();
+        proc->entries.push_back(psinfo);
+
+        VfsEntryPtr mountinfo = std::make_shared<VfsMountInfoEntry>();
+        proc->entries.push_back(mountinfo);
+
+    install_ata_devices(root);
 }
 
 /**

@@ -11,7 +11,7 @@
 
 /**
  * @brief   Entry point
- * @return  Sum of provided integer arguments
+ * @return  Sum of provided integer arguments on success, -1 on error
  */
 int main(int argc, char* argv[]) {
     if (argc < 2)

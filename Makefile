@@ -20,16 +20,16 @@ c_source_files :=  $(wildcard src/*.cpp) \
                    $(wildcard src/filesystem/*.cpp) \
                    $(wildcard src/filesystem/fat32/*.cpp) \
                    $(wildcard src/filesystem/ramfs/*.cpp) \
+                   $(wildcard src/filesystem/procfs/*.cpp) \
                    $(wildcard src/filesystem/adapters/*.cpp) \
                    $(wildcard src/hardware/*.cpp) \
                    $(wildcard src/multitasking/*.cpp) \
                    $(wildcard src/memory/*.cpp) \
                    $(wildcard src/syscalls/*.cpp) \
-                   $(wildcard src/userspace/*.cpp) \
+                   $(wildcard src/middlespace/*.cpp) \
                    $(wildcard src/utils/*.cpp) \
-                   $(wildcard src/utils/terminal/*.cpp) \
-                   $(wildcard src/utils/terminal/cmds/*.cpp) \
                    $(wildcard src/_demos/*.cpp)
+#                   $(wildcard src/userspace/*.cpp) \
                    
 c_object_files := $(patsubst src/%.cpp, build/%.o, $(c_source_files))
 
@@ -38,7 +38,7 @@ c_object_files := $(patsubst src/%.cpp, build/%.o, $(c_source_files))
 all: $(kernel)
 
 clean:
-	@rm -rf build
+	@rm -rf $(c_object_files) $(assembly_object_files) $(iso)
 
 install: $(kernel)
 	sudo cp $< /boot/PhobOS.bin

@@ -22,6 +22,8 @@ public:
     virtual ~VfsFat32MountPoint();
 
     // [common interface]
+    bool open() override                        { return true; /* no initialization to do here */ }
+    void close() override                       {};
     const kstd::string& get_name() const;
 
     // [directory interface]

@@ -8,39 +8,11 @@
 #ifndef SRC_DRIVERS_VGADRIVER_H_
 #define SRC_DRIVERS_VGADRIVER_H_
 
+#include "VgaCharacter.h"
 #include "DeviceDriver.h"
 #include "Port.h"
 
 namespace drivers {
-
-// ega 16 color pallete index, mode that GRUB lefts us in
-enum EgaColor : u8 {
-    Black      = 0,
-    Blue       = 1,
-    Green      = 2,
-    Cyan       = 3,
-    Red        = 4,
-    Magenta    = 5,
-    Brown      = 6,
-    LightGray  = 7,
-    DarkGray   = 8,
-    LightBlue  = 9,
-    LightGreen = 10,
-    LightCyan  = 11,
-    LightRed   = 12,
-    Pink       = 13,
-    Yellow     = 14,
-    White      = 15
-};
-
-/**
- * This is the structure describing single character in VGA buffer
- */
-struct VgaCharacter {
-    s8      character;
-    u8      fg_color    : 4;
-    u8      bg_color    : 4;
-};
 
 class VgaDriver : public DeviceDriver {
 public:
@@ -52,10 +24,15 @@ public:
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
     VgaCharacter& at(u16 x, u16 y) const;
+    void flush_buffer(const VgaCharacter* buff);
     void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
     u16 screen_width() const;
     u16 screen_height() const;
+
+    // higher level basic functions
+    void clear_screen(EgaColor color = EgaColor::Black);
+    void print(u16 y, const char* text, EgaColor fg = EgaColor::White, EgaColor bg = EgaColor::Black);
 
 private:
     void write_registers(u8* registers) const;

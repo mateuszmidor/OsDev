@@ -213,6 +213,13 @@ bool Fat32Entry::truncate(u32 new_size) {
 }
 
 /**
+ * @brief    Get current read/write position in file (in bytes)
+ */
+u32 Fat32Entry::get_position() const {
+    return data.get_position();
+}
+
+/**
  * @brief   Enumerate directory contents
  * @param   on_entry Callback called for every valid element in the directory
  * @return  ENUMERATION_FINISHED if all entries have been enumerated,

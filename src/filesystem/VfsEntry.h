@@ -36,6 +36,8 @@ public:
     virtual ~VfsEntry() {}
 
     // [common interface]
+    virtual bool open() = 0;	// start file manipulating session. this can be used to eg. implement exclusive access to a file
+    virtual void close() = 0;	// end file manipulating session.
     virtual bool is_directory() const = 0;
     virtual bool is_mount_point() const { return false; }
     virtual const kstd::string& get_name() const = 0;
@@ -46,6 +48,7 @@ public:
     virtual s64 write(const void* data, u32 count) = 0;
     virtual bool seek(u32 new_position) = 0;
     virtual bool truncate(u32 new_size) = 0;
+    virtual u32 get_position() const = 0;
 
     // [directory interface]
     virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;

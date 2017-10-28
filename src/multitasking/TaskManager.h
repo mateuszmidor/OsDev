@@ -34,6 +34,7 @@ public:
 private:
     TaskManager() {}
     hardware::CpuState* pick_next_task_and_load_address_space();
+    void close_files(Task& task);
     void release_address_space(Task& task);
 
     static TaskManager _instance;

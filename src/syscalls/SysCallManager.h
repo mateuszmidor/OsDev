@@ -36,16 +36,7 @@ struct MSR_STAR {
 class SysCallManager {
 public:
     static SysCallManager& instance();
-
     void config_and_activate_syscalls();
-    s32 file_open(const char* name, u32 flags, u32 mode);
-    s32 file_close(u32 fd);
-    ssize_t file_read(int fd, void *buf, size_t count);
-    ssize_t file_write(int fd, const void *buf, size_t count);
-
-    void vga_cursor_setvisible(bool visible);
-    void vga_cursor_setpos(u8 x, u8 y);
-    void vga_setat(u8 x, u8 y, u16 c);
 
 private:
     static SysCallManager _instance;

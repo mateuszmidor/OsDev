@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "kstd.h"
 #include "VgaDriver.h"
 
 using namespace hardware;
@@ -113,6 +114,10 @@ VgaCharacter& VgaDriver::at(u16 x, u16 y) const {
     return vga[y * width + x];
 }
 
+void VgaDriver::flush_buffer(const VgaCharacter* buff) {
+    memcpy(vga, buff, screen_width() * screen_height() * sizeof(VgaCharacter));
+}
+
 /**
  * @ref http://wiki.osdev.org/Text_Mode_Cursor#Source_in_C_2
  */
@@ -155,6 +160,23 @@ u16 VgaDriver::screen_width() const {
  */
 u16 VgaDriver::screen_height() const {
     return height;
+}
+
+void VgaDriver::clear_screen(EgaColor color) {
+    for (u16 y = 0; y < height; y++)
+        for (u16 x = 0; x < width; x++)
+            at(x, y) = VgaCharacter(' ', color, color);
+}
+
+void VgaDriver::print(u16 y, const char* text,  EgaColor fg, EgaColor bg) {
+    u32 curr = y * width;
+    u32 max_index = width * height;
+
+    while (*text && curr < max_index) {
+        vga[curr] = VgaCharacter(*text, fg, bg);
+        text++;
+        curr++;
+    }
 }
 
 void VgaDriver::write_registers(u8* registers) const {

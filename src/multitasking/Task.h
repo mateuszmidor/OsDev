@@ -22,13 +22,8 @@ using TaskExitPoint = void (*)();
 
 struct Task {
     Task();
-    Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size);
+    Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size, const char cwd[]);
     void prepare(u32 tid, TaskExitPoint exitpoint);
-    s32 open_file(const char name[]);
-    s32 close_file(u32 fd);
-    s64 read_file(u32 fd, void *buf, u64 count);
-    s64 write_file(u32 fd, const void *buf, u64 count);
-
 
     /**
      * @brief   Create user space task (runs in protection ring3), with provided address space and stack
@@ -45,7 +40,8 @@ struct Task {
                     true,           // user space = true
                     pml4_phys_addr,
                     stack_addr,
-                    stack_size
+                    stack_size,
+                    "/"             // current working directory as root
                 );
 
     }
@@ -64,7 +60,8 @@ struct Task {
                     false,          // user space = false
                     0,              // use kernel address space
                     0,              // create default stack...
-                    0               // ...of default size
+                    0,              // ...of default size
+                    "/"             // current working directory as root
                 );
     }
 
@@ -85,6 +82,7 @@ struct Task {
     u32                 task_id;        // set by TaskManager when first adding the task
     TaskEntryPoint2     entrypoint;     // covers TaskEntryPoint0 and TaskEntryPoint1
     kstd::string        name;
+    kstd::string        cwd;            // current working directory
     u64                 arg1;
     u64                 arg2;
     bool                is_user_space;

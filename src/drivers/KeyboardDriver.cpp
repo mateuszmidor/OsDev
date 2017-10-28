@@ -8,7 +8,7 @@
 #include "KeyboardDriver.h"
 
 using namespace hardware;
-
+using namespace middlespace;
 namespace drivers {
 
 /**
