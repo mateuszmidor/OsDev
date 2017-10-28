@@ -116,6 +116,8 @@ void _print(int fd, const char str[], size_t len) {
         ssize_t written = syscalls::write(fd, str, len);
         if (written == -EWOULDBLOCK)
             syscalls::usleep(0);
+        else if (written < 0)
+            break;
         else {
             str += written;
             len -= written;
@@ -125,7 +127,7 @@ void _print(int fd, const char str[], size_t len) {
 
 void print(const char str[], size_t count) {
     if (stdout_fd == 0)
-        stdout_fd = syscalls::open("/dev/stdout");
+        stdout_fd = syscalls::open("/dev/stdout", 2);
     _print(stdout_fd, str, count);
 }
 
