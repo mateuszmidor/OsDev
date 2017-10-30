@@ -11,8 +11,8 @@
 #include "types.h"
 #include "TaskManager.h"
 #include "UnixPath.h"
-#include "middlespace/FsEntry.h"
-#include "middlespace/posix/posix.h"
+#include "FsEntry.h"
+#include "posix/posix.h"
 
 namespace syscalls {
 

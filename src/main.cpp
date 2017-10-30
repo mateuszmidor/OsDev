@@ -23,7 +23,6 @@
 #include "TaskManager.h"
 #include "TaskFactory.h"
 #include "PageFaultHandler.h"
-//#include "Terminal.h"
 #include "MemoryManager.h"
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
@@ -31,11 +30,7 @@
 #include "Sse.h"
 #include "PageTables.h"
 #include "_demos/Demo.h"
-//#include "_demos/VgaDemo.h"
-//#include "_demos/Fat32Demo.h"
 #include "_demos/MouseDemo.h"
-//#include "_demos/MultitaskingDemo.h"
-//#include "_demos/CpuSpeedDemo.h"
 #include "ElfRunner.h"
 
 using std::make_shared;

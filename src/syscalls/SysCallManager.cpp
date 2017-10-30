@@ -10,7 +10,7 @@
 #include "SysCallManager.h"
 #include "SysCallHandler.h"
 #include "SysCallNumbers.h"
-#include "middlespace/posix/posix.h"
+#include "posix/posix.h"
 
 using namespace middlespace;
 namespace syscalls {

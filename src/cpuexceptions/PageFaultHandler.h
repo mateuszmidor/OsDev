@@ -8,7 +8,7 @@
 #ifndef SRC_CPUEXCEPTIONS_PAGEFAULTHANDLER_H_
 #define SRC_CPUEXCEPTIONS_PAGEFAULTHANDLER_H_
 
-#include  <stddef.h>
+#include "types.h"
 #include "ExceptionHandler.h"
 
 namespace cpuexceptions {
