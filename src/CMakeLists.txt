@@ -69,3 +69,14 @@ add_custom_target(run
     COMMAND cp "${CMAKE_SOURCE_DIR}/../media/hdd.vdi" ${HDD}
     COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -d int -no-reboot # pcnet is AMD am79c973 network chip
 )
+
+add_custom_target(rungdb
+      #WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND mkdir -p "isofiles/boot/grub"
+    COMMAND cp ${PROJECT_ARCH} "isofiles/boot/kernel.bin"
+    COMMAND cp ${GRUB_CFG} "isofiles/boot/grub"
+    COMMAND grub-mkrescue -o ${ISO} "isofiles"
+    COMMAND rm -r "isofiles"
+    COMMAND cp "${CMAKE_SOURCE_DIR}/../media/hdd.vdi" ${HDD}
+    COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -s -S -no-reboot # pcnet is AMD am79c973 network chip
+)
