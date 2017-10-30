@@ -38,21 +38,8 @@ void KeyboardDriver::handle_keyboard_interrupt() {
     u8 key_code = keyboard_data_port.read();
     Key key = scan_code_set.push_code(key_code);
 
-    if (key != Key::INVALID) {
-
-        // 1. write key to /dev/keyboard RAM file
-        if (!keyboard)
-            keyboard = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
-
-        if (keyboard) {
-            keyboard->seek(0);
-            keyboard->write(&key, sizeof(key));
-        }
-
-        // 2. run callback
+    if (key != Key::INVALID)
         on_key_press(key);
-    }
-
 }
 
 } /* namespace drivers */

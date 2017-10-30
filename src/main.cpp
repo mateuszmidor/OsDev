@@ -71,6 +71,22 @@ VgaDriver               vga;
 Int80hDriver            int80h;
 PageFaultHandler        page_fault;
 
+
+VfsEntryPtr keyboard_vfe;
+void handle_keyboard_interrupt(const Key &key) {
+    if (key != Key::INVALID) {
+
+        // 1. write key to /dev/keyboard RAM file
+        if (!keyboard_vfe)
+            keyboard_vfe = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
+
+        if (keyboard_vfe) {
+            keyboard_vfe->seek(0);
+            keyboard_vfe->write(&key, sizeof(key));
+        }
+    }
+}
+
 /**
  *  Little counter in the right-top corner
  */
@@ -153,6 +169,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 4. prepare drivers
     pit.set_channel0_hz(20);
     pit.set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
+    keyboard.set_on_key_press(handle_keyboard_interrupt);
 
     // 5. install drivers
     //pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
