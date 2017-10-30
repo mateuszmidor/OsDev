@@ -4,7 +4,6 @@ cmake_minimum_required (VERSION 3.2)
 project (phobos)
 set(ARCH "x86_64")
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/arch/${ARCH}/linker.ld")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LINKER_SCRIPT}")
 
 # Setup project version
 set(PROJECT_MAJOR_VERSION 0)
@@ -13,7 +12,7 @@ set(PROJECT_PATCH_LEVEL 0)
 set(PROJECT_VERSION ${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_LEVEL})
 
 # Setup compilation flags
-set(CMAKE_CXX_FLAGS "-std=c++11 -mcmodel=kernel -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -nostartfiles -ffreestanding -O0 -g3")
+set(CMAKE_CXX_FLAGS "-std=c++11 -static -mcmodel=kernel -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -nostartfiles -ffreestanding -O0 -g3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
 set(CMAKE_ASM_FLAGS "${CMAKE_CXX_FLAGS} -x assembler-with-cpp")
@@ -36,15 +35,16 @@ add_subdirectory("_demos")
 
 # Make kernel
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 set(PROJECT_ARCH "${PROJECT_NAME}-${ARCH}.bin")
 set(ISO "kernel-${ARCH}.iso")
 set(HDD "hdd.vdi")
 
-set(GRUB_CFG  "${CMAKE_SOURCE_DIR}/arch/${ARCH}/grub.cfg")
+set(GRUB_CFG "${CMAKE_SOURCE_DIR}/arch/${ARCH}/grub.cfg")
 add_executable(${PROJECT_ARCH} "main.cpp")
 
 target_link_libraries(${PROJECT_ARCH}
-    "arch"
+    "-Wl,--whole-archive" "arch" "-Wl,--no-whole-archive" # multiboot2 header must be included
     "middlespace"
     "kstd"
     "logging"
