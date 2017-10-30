@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.2)
+project(syscalls)
+
+file(GLOB SOURCES "*.cpp")
+add_library(${PROJECT_NAME} STATIC ${SOURCES})
+target_link_libraries(${PROJECT_NAME} "kstd")
+target_link_libraries(${PROJECT_NAME} "logging")
+target_link_libraries(${PROJECT_NAME} "drivers")
+target_link_libraries(${PROJECT_NAME} "filesystem")
+target_link_libraries(${PROJECT_NAME} "middlespace")
+target_link_libraries(${PROJECT_NAME} "utils")
+target_include_directories(${PROJECT_NAME} PUBLIC ".")

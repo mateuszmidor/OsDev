@@ -1,0 +1,46 @@
+cmake_minimum_required (VERSION 3.2)
+
+# Setup project name
+project (phobos)
+
+# Setup project version
+set(PROJECT_MAJOR_VERSION 0)
+set(PROJECT_MINOR_VERSION 1)
+set(PROJECT_PATCH_LEVEL 0)
+set(PROJECT_VERSION ${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_LEVEL})
+
+# Setup compilation flags
+set(CMAKE_CXX_FLAGS "-std=c++11 -mcmodel=kernel -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -ffreestanding -O0 -g3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
+
+# Make subprojects
+add_subdirectory("arch")
+add_subdirectory("middlespace")
+add_subdirectory("kstd")
+add_subdirectory("logging")
+add_subdirectory("memory")
+add_subdirectory("hardware")
+add_subdirectory("drivers")
+add_subdirectory("filesystem")
+add_subdirectory("multitasking")
+add_subdirectory("cpuexceptions")
+add_subdirectory("syscalls")
+add_subdirectory("utils")
+
+# Make kernel
+#add_executable(${PROJECT_NAME} "main.cpp")
+#target_link_libraries(${PROJECT_NAME}
+#    "arch"
+#    "middlespace"
+#    "kstd"
+#    "logging"
+#    "memory"
+#    "hardware"
+#    "drivers"
+#    "filesystem"
+#    "multitasking"
+#    "cpuexceptions"
+#    "syscalls"
+#    "utils"
+#)
