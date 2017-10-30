@@ -85,11 +85,11 @@
 				<runAllBuilders>false</runAllBuilders>
 			</target>
 			<target name="install_in_bin" path="elfs/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildArguments/>
-				<buildTarget>install</buildTarget>
+				<buildCommand>bash</buildCommand>
+				<buildArguments>-c "make install &amp;&amp; sync"</buildArguments>
+				<buildTarget/>
 				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
+				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 			<target name="remake" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
