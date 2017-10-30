@@ -9,8 +9,7 @@
 #include "PageTables.h"
 #include "HigherHalf.h"
 
-using namespace memory;
-namespace hardware {
+namespace memory {
 
 PageTables64  PageTables::kernel_page_tables  __attribute__ ((aligned (4096)));
 

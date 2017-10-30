@@ -10,8 +10,8 @@
 #include "KernelLog.h"
 #include "MemoryManager.h"
 
+using namespace memory;
 using namespace hardware;
-
 namespace multitasking {
 
 

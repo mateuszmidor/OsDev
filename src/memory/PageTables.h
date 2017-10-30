@@ -10,7 +10,7 @@
 
 #include "types.h"
 
-namespace hardware {
+namespace memory {
 
 /**
  * @brief   Page attributes that reside in lower 12 bits of page physical address

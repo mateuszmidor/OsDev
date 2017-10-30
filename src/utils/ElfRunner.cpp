@@ -27,12 +27,12 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
         return -ENOEXEC; // not executable
 
     MemoryManager& mm = MemoryManager::instance();
-    size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(hardware::PageTables64)); // must be physical, continuous address space
+    size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(PageTables64)); // must be physical, continuous address space
     if (!pml4_phys_addr)
         return -ENOMEM;
 
     // create elf address space mapping, elf_loader will use this address space and load elf segments into it
-    hardware::PageTables::map_elf_address_space(pml4_phys_addr);
+    PageTables::map_elf_address_space(pml4_phys_addr);
 
     // run elf_loader in target address space, so the elf segments can be loaded
     TaskManager& task_manager = TaskManager::instance();
