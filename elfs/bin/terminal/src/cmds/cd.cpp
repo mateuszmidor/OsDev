@@ -85,7 +85,7 @@ void cd::cd_directory(const string& path) {
  * @return      Normalized path without starting slash
  */
 string cd::normalize_path(const string& path) const {
-    auto segments = split_string<vector<string>>(path, '/');
+    auto segments = split_string(path, '/');
     vector<string> out;
 
     for (const auto& s : segments) {

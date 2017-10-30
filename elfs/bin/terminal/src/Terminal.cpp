@@ -234,7 +234,7 @@ void Terminal::process_cmd(const string& cmd) {
     if (cmd.empty())
         return;
 
-    auto cmd_args = ustd::split_string<vector<string>>(cmd, ' ');
+    auto cmd_args = ustd::split_string(cmd, ' ');
     if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
         env.cmd_args = cmd_args;
         task->run();

@@ -42,6 +42,18 @@ void operator delete(void *ptr) noexcept {
     ufree(ptr);
 }
 
+extern "C" int memcmp ( const void * ptr1, const void * ptr2, size_t num ) {
+    const char *p1 = (const char*)ptr1;
+    const char *p2 = (const char*)ptr2;
+    for (size_t i = 0; i < num; i++)
+        if (p1[i] < p2[i])
+            return -1;
+        else if (p1[i] > p2[i])
+            return 1;
+
+    return 0;
+}
+
 /**
  * @brief   Convert string to long
  */
