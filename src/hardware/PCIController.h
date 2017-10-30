@@ -12,8 +12,8 @@
 #include <functional>
 #include "kstd.h"
 #include "Port.h"
-#include "DeviceDriver.h"
-#include "DriverManager.h"
+//#include "DeviceDriver.h"
+//#include "DriverManager.h"
 
 namespace hardware {
 
@@ -47,8 +47,8 @@ struct PCIDeviceDescriptor {
     u8 revision;
 };
 
-using DeviceDriverPtr = std::shared_ptr<drivers::DeviceDriver>;
-using OnDeviceDriver = std::function<void(DeviceDriverPtr)>;
+//using DeviceDriverPtr = std::shared_ptr<drivers::DeviceDriver>;
+//using OnDeviceDriver = std::function<void(DeviceDriverPtr)>;
 
 class PCIController {
 public:
@@ -56,11 +56,11 @@ public:
     void write(u16 bus, u16 device, u16 function, u32 register_offset, u32 value);
     bool device_has_functions(u16 bus, u16 device);
     kstd::string drivers_to_string();
-    void enumerate_device_drivers(OnDeviceDriver on_driver);
-    void install_drivers_into(drivers::DriverManager& driver_manager);
+//    void enumerate_device_drivers(OnDeviceDriver on_driver);
+//    void install_drivers_into(drivers::DriverManager& driver_manager);
     PCIDeviceDescriptor get_device_descriptor(u16 bus, u16 device, u16 function);
     BaseAddressRegister get_base_address_register(u16 bus, u16 device, u16 function, u16 bar_no);
-    DeviceDriverPtr get_driver(PCIDeviceDescriptor &dev, drivers::DriverManager& driver_manager);
+//    DeviceDriverPtr get_driver(PCIDeviceDescriptor &dev, drivers::DriverManager& driver_manager);
 
 private:
     hardware::Port32bit data_port { 0xCFC };
