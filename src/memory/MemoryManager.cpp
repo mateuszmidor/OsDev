@@ -13,6 +13,22 @@ namespace memory {
 MemoryManager MemoryManager::_instance;
 AllocationPolicy* MemoryManager::allocation_policy;
 
+/**
+ * @brief   Global kernel malloc
+ */
+void* kmalloc(size_t size) {
+    MemoryManager& mm = MemoryManager::instance();
+    return mm.alloc_virt_memory(size);
+}
+
+/**
+ * @brief   Global kernel free
+ */
+void kfree(void* address) {
+    MemoryManager& mm = MemoryManager::instance();
+    mm.free_virt_memory(address);
+}
+
 MemoryManager& MemoryManager::instance() {
     return _instance;
 }

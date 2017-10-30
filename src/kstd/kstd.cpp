@@ -8,12 +8,17 @@
 #include <algorithm>
 #include "kstd.h"
 #include "types.h"
-#include "KernelLog.h"
-#include "MemoryManager.h"
+//#include "KernelLog.h"
 
-using utils::KernelLog;
+//using utils::KernelLog;
 
-static KernelLog& klog = KernelLog::instance();
+//static KernelLog& klog = KernelLog::instance();
+
+
+namespace memory {
+    extern void* kmalloc(size_t size);
+    extern void kfree(void* address);
+};
 
 extern "C" size_t strlen(char const * str) {
     size_t result = 0;
@@ -24,31 +29,20 @@ extern "C" size_t strlen(char const * str) {
     return result;
 }
 
-void* kmalloc(size_t size) {
-    memory::MemoryManager& mm = memory::MemoryManager::instance();
-    return mm.alloc_virt_memory(size);
-}
-
-void kfree(void* address) {
-    memory::MemoryManager& mm = memory::MemoryManager::instance();
-    mm.free_virt_memory(address);
-}
-
-
 void* operator new(size_t size) {
-    return kmalloc(size);
+    return memory::kmalloc(size);
 }
 
 void* operator new[](size_t size) {
-    return kmalloc(size);
+    return memory::kmalloc(size);
 }
 
 void operator delete[](void* ptr) {
-    kfree(ptr);
+    memory::kfree(ptr);
 }
 
 void operator delete(void *ptr) {
-    kfree(ptr);
+    memory::kfree(ptr);
 }
 
 extern "C" void * memcpy( void * destination, const void * source, size_t num ) {
@@ -101,31 +95,31 @@ extern "C" const void* memchr(const void* ptr, int ch, std::size_t count) {
 //}
 
 extern "C" void __cxa_pure_virtual() {
-    klog.format("pure virtual function called\n");
+//    klog.format("pure virtual function called\n");
 }
 
 void std::__throw_length_error(char const* s) {
-    klog.format("__throw_length_error: %\n", s);
+//    klog.format("__throw_length_error: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_logic_error(char const* s) {
-    klog.format("__throw_logic_error: %\n", s);
+//    klog.format("__throw_logic_error: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_bad_alloc() {
-    klog.format("__throw_bad_alloc\n");
+//    klog.format("__throw_bad_alloc\n");
     __builtin_unreachable();
 }
 
 void std::__throw_out_of_range_fmt(char const* s, ...) {
-    klog.format("__throw_out_of_range_fmt: %\n", s);
+//    klog.format("__throw_out_of_range_fmt: %\n", s);
     __builtin_unreachable();
 }
 
 void std::__throw_bad_function_call() {
-    klog.format("__throw_bad_function_call\n");
+//    klog.format("__throw_bad_function_call\n");
     __builtin_unreachable();
 }
 
