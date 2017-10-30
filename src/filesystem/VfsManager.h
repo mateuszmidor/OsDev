@@ -31,7 +31,7 @@ public:
     bool copy_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const;
 
 private:
-    VfsManager() : klog(utils::KernelLog::instance()) {}
+    VfsManager() : klog(logging::KernelLog::instance()) {}
     VfsEntryPtr get_entry_for_name(VfsEntryPtr parent_dir, const kstd::string& name) const;
 
     void install_ata_devices(VfsRamEntryPtr parent);
@@ -39,7 +39,7 @@ private:
     VfsMountPointPtr get_mountpoint_path(kstd::string& path) const;
     static VfsManager _instance;
 
-    utils::KernelLog&       klog;
+    logging::KernelLog&       klog;
     VfsRamEntryPtr          root;
 };
 

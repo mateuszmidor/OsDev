@@ -43,7 +43,7 @@ private:
     u32                 current_cluster;
     u32                 current_byte;
     u32                 size;
-    utils::KernelLog&   klog;
+    logging::KernelLog& klog;
     const Fat32Table&   fat_table;
     const Fat32Data&    fat_data;
 

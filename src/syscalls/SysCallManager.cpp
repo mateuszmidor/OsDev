@@ -12,7 +12,6 @@
 #include "SysCallNumbers.h"
 #include "middlespace/posix/posix.h"
 
-using namespace utils;
 using namespace middlespace;
 namespace syscalls {
 
@@ -37,7 +36,7 @@ extern "C" void handle_syscall();
 SysCallHandler syscall_handler;
 extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5)  {
     SysCallManager& mngr = SysCallManager::instance();
-    KernelLog& klog = KernelLog::instance();
+//    logging::KernelLog& klog = logging::KernelLog::instance();
 
 //    klog.format("syscall_handler: % \n", sys_call_num);
 

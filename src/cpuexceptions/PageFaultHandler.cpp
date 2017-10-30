@@ -12,7 +12,7 @@
 #include "FrameAllocator.h"
 #include "TaskManager.h"
 
-using utils::KernelLog;
+using logging::KernelLog;
 using hardware::CpuState;
 using multitasking::TaskManager;
 using namespace memory;

@@ -10,7 +10,7 @@
 
 #include "kstd.h"
 
-namespace utils {
+namespace logging {
 
 class KernelLog {
 public:
@@ -33,5 +33,5 @@ private:
     kstd::string log_str;
 };
 
-} // namespace utils
+} // namespace logging
 #endif /* SRC_KERNELLOG_H_ */

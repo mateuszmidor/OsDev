@@ -121,7 +121,7 @@ void TaskManager::release_address_space(Task& task) {
     u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, task.pml4_phys_addr); // task virtual address space starts at virt address 0
 
     // scan 0..1GB of virtual memory
-    utils::KernelLog& klog = utils::KernelLog::instance();
+    logging::KernelLog& klog = logging::KernelLog::instance();
     memory::MemoryManager& mngr = memory::MemoryManager::instance();
     klog.format("Rmoving address space of task %\n", task.name);
     for (u32 i = 0; i < 512; i++)

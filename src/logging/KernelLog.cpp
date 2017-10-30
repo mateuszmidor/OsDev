@@ -7,7 +7,7 @@
 
 #include "KernelLog.h"
 
-namespace utils {
+namespace logging {
 
 KernelLog KernelLog::_instance;
 
@@ -25,4 +25,4 @@ const kstd::string& KernelLog::get_text() const {
 void KernelLog::clear() {
     log_str.clear();
 }
-} // namespace utils
+} // namespace logging

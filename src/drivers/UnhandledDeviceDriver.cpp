@@ -8,7 +8,7 @@
 #include "UnhandledDeviceDriver.h"
 #include "KernelLog.h"
 
-using utils::KernelLog;
+using logging::KernelLog;
 
 namespace drivers {
 

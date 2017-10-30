@@ -13,6 +13,7 @@
 
 using namespace kstd;
 using namespace drivers;
+using namespace logging;
 namespace utils {
 
 /**

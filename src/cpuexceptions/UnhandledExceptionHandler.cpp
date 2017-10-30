@@ -11,7 +11,7 @@
 
 using multitasking::TaskManager;
 using hardware::CpuState;
-using utils::KernelLog;
+using logging::KernelLog;
 
 namespace cpuexceptions {
 

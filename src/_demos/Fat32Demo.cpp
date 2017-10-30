@@ -14,7 +14,7 @@
 using namespace kstd;
 using namespace drivers;
 using namespace filesystem;
-using utils::KernelLog;
+using logging::KernelLog;
 
 namespace demos {
 

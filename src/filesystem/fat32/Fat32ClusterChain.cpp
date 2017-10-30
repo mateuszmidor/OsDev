@@ -18,7 +18,7 @@ Fat32ClusterChain::Fat32ClusterChain(const Fat32Table& fat_table, const Fat32Dat
     current_cluster(start_cluster),
     current_byte(0),
     size(size),
-    klog(utils::KernelLog::instance())
+    klog(logging::KernelLog::instance())
 {
 }
 

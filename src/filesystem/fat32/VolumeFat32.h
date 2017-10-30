@@ -183,7 +183,7 @@ private:
     Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& name) const;
     Fat32Entry empty_entry() const;
 
-    utils::KernelLog&       klog;
+    logging::KernelLog&     klog;
     drivers::AtaDevice&     hdd;
     VolumeBootRecordFat32   vbr;
     Fat32Table              fat_table;

@@ -9,7 +9,6 @@
 #include "Fat32Utils.h"
 
 using namespace kstd;
-using namespace utils;
 namespace filesystem {
 
 DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32() const {
@@ -57,7 +56,7 @@ Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, c
         data(fat_table, fat_data, data_cluster, is_directory ?  0xFFFFFFFF : size),
         parent_data(fat_table, fat_data, parent_data_cluster, 0xFFFFFFFF), // parent_data is directory data cluster which size is unknown
         parent_index(parent_index),
-        klog(KernelLog::instance()) {
+        klog(logging::KernelLog::instance()) {
 }
 
 Fat32Entry& Fat32Entry::operator=(const Fat32Entry& other) {

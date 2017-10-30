@@ -10,7 +10,7 @@
 #include "TaskManager.h"
 #include "KernelLog.h"
 
-using utils::KernelLog;
+using logging::KernelLog;
 using namespace hardware;
 using namespace multitasking;
 

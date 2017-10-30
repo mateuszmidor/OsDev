@@ -10,7 +10,7 @@
 #include "KernelLog.h"
 #include "procfs/VfsKmsgEntry.h"
 
-using namespace utils;
+using namespace logging;
 namespace filesystem {
 
 /**

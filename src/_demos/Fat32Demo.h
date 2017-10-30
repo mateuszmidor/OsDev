@@ -28,7 +28,7 @@ private:
     void print_hdd_info(drivers::AtaDevice& hdd);
     void traverse_tree(filesystem::VolumeFat32& v, filesystem::Fat32Entry& entry, u8 level, const OnTreeEntryFound& user_on_entry);
 
-    utils::KernelLog& klog;
+    logging::KernelLog& klog;
 };
 
 } /* namespace demos */

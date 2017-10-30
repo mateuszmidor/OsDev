@@ -9,7 +9,6 @@
 #include "VolumeFat32.h"
 
 using namespace kstd;
-using namespace utils;
 namespace filesystem {
 
 /**
@@ -27,7 +26,7 @@ VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_o
         partition_size_in_sectors(partition_size_in_sectors),
         fat_table(hdd),
         fat_data(hdd),
-        klog(KernelLog::instance()) {
+        klog(logging::KernelLog::instance()) {
 
     hdd.read28(partition_offset_in_sectors, &vbr, sizeof(vbr));
 
