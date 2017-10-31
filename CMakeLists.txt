@@ -45,3 +45,8 @@ add_custom_target(rungdb
     COMMAND sync
     COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -s -S -no-reboot # pcnet is AMD am79c973 network chip
 )
+
+# "make cleanup"
+add_custom_target(cleanup
+    COMMAND /usr/bin/ls ../build | grep -v hdd.vdi | xargs rm -rf
+)
