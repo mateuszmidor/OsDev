@@ -14,8 +14,8 @@ set(ARCH "x86_64")
 set(HDD "hdd.vdi")
 set(BIN "${PROJECT_NAME}-${ARCH}.bin")
 set(ISO "${PROJECT_NAME}-${ARCH}.iso")
-set(GRUB_CFG "${CMAKE_SOURCE_DIR}/arch/${ARCH}/grub.cfg")
-set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/arch/${ARCH}/linker.ld")
+set(GRUB_CFG "${PROJECT_SOURCE_DIR}/src/arch/${ARCH}/grub.cfg")
+set(LINKER_SCRIPT "${PROJECT_SOURCE_DIR}/src/arch/${ARCH}/linker.ld")
 
 # Setup compilation and linking flags
 set(CMAKE_CXX_FLAGS "-std=c++11 -static -mcmodel=kernel -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -nostartfiles -ffreestanding -O0 -g3")
@@ -25,24 +25,24 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 
 # Collect source directories
 set(SOURCE_DIRECTORIES
-    "${PROJECT_SOURCE_DIR}/_demos"
-    "${PROJECT_SOURCE_DIR}/arch/${ARCH}"
-    "${PROJECT_SOURCE_DIR}/cpuexceptions"
-    "${PROJECT_SOURCE_DIR}/drivers"
-    "${PROJECT_SOURCE_DIR}/filesystem"
-    "${PROJECT_SOURCE_DIR}/filesystem/adapters"
-    "${PROJECT_SOURCE_DIR}/filesystem/fat32"
-    "${PROJECT_SOURCE_DIR}/filesystem/procfs"
-    "${PROJECT_SOURCE_DIR}/filesystem/ramfs"
-    "${PROJECT_SOURCE_DIR}/hardware"
-    "${PROJECT_SOURCE_DIR}/kstd"
-    "${PROJECT_SOURCE_DIR}/logging"
-    "${PROJECT_SOURCE_DIR}/memory"
-    "${PROJECT_SOURCE_DIR}/middlespace"
-#    "${PROJECT_SOURCE_DIR}/middlespace/posix"
-    "${PROJECT_SOURCE_DIR}/multitasking"
-    "${PROJECT_SOURCE_DIR}/syscalls"
-    "${PROJECT_SOURCE_DIR}/utils"
+    "${PROJECT_SOURCE_DIR}/src/_demos"
+    "${PROJECT_SOURCE_DIR}/src/arch/${ARCH}"
+    "${PROJECT_SOURCE_DIR}/src/cpuexceptions"
+    "${PROJECT_SOURCE_DIR}/src/drivers"
+    "${PROJECT_SOURCE_DIR}/src/filesystem"
+    "${PROJECT_SOURCE_DIR}/src/filesystem/adapters"
+    "${PROJECT_SOURCE_DIR}/src/filesystem/fat32"
+    "${PROJECT_SOURCE_DIR}/src/filesystem/procfs"
+    "${PROJECT_SOURCE_DIR}/src/filesystem/ramfs"
+    "${PROJECT_SOURCE_DIR}/src/hardware"
+    "${PROJECT_SOURCE_DIR}/src/kstd"
+    "${PROJECT_SOURCE_DIR}/src/logging"
+    "${PROJECT_SOURCE_DIR}/src/memory"
+    "${PROJECT_SOURCE_DIR}/src/middlespace"
+#    "${PROJECT_SOURCE_DIR}/src/middlespace/posix"
+    "${PROJECT_SOURCE_DIR}/src/multitasking"
+    "${PROJECT_SOURCE_DIR}/src/syscalls"
+    "${PROJECT_SOURCE_DIR}/src/utils"
 )
 
 # Collect source files
@@ -53,7 +53,7 @@ foreach (DIR ${SOURCE_DIRECTORIES})
 endforeach()
     
 # Create the kernel binary
-add_executable(${BIN} "${SOURCES}" "main.cpp")
+add_executable(${BIN} "${SOURCES}" "src/main.cpp")
 foreach (DIR ${SOURCE_DIRECTORIES})
     message(STATUS "[${DIR}]")
     target_include_directories(${BIN} PRIVATE ${DIR})    
@@ -72,13 +72,13 @@ add_custom_target(iso
 # "make run"
 add_custom_target(run
     COMMAND make iso
-    COMMAND cp "${CMAKE_SOURCE_DIR}/../media/hdd.vdi" ${HDD}
+    COMMAND cp "${PROJECT_SOURCE_DIR}/media/hdd.vdi" ${HDD}
     COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -d int -no-reboot # pcnet is AMD am79c973 network chip
 )
 
 # "make rungdb"
 add_custom_target(rungdb
     COMMAND make iso
-    COMMAND cp "${CMAKE_SOURCE_DIR}/../media/hdd.vdi" ${HDD}
+    COMMAND cp "${PROJECT_SOURCE_DIR}/media/hdd.vdi" ${HDD}
     COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -s -S -no-reboot # pcnet is AMD am79c973 network chip
 )
