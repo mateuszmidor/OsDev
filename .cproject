@@ -129,15 +129,15 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="build" path="src/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="2. bin" path="src/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>bash</buildCommand>
-				<buildArguments>-c  "cmake .. &amp;&amp; make"</buildArguments>
+				<buildArguments>-c "cmake .. &amp;&amp; make -j2"</buildArguments>
 				<buildTarget/>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
-			<target name="clean" path="src/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="1. clean" path="src/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>bash</buildCommand>
 				<buildArguments>-c "rm -rf ../build/*"</buildArguments>
 				<buildTarget/>
@@ -145,13 +145,21 @@
 				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
-			<target name="run" path="src/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="4. run" path="src/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
 				<buildTarget>run</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="3. iso" path="src/build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>iso</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
 			</target>
 			<target name="remake" path="elfs/terminal" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
