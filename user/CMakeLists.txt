@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.2)
 
 # Setup project name
-project (userspace)
+project (user CXX)
 
 # Setup project version
 set(PROJECT_MAJOR_VERSION 0)

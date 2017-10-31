@@ -33,7 +33,6 @@
 #include "_demos/MouseDemo.h"
 #include "ElfRunner.h"
 
-using std::make_shared;
 using namespace kstd;
 using namespace logging;
 using namespace drivers;
