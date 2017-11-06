@@ -1,9 +1,16 @@
 #!/bin/bash
 
-sudo umount p1
-sudo umount p2
-sudo umount p3
-sudo umount p4
+# copy hdd if doesnt exist, change owner/group to user
+cp -n media/hdd.vdi build/  
+chown 1000:1000 build/hdd.vdi
+
+# unmount partitions if possible
+sudo umount p1 || true
+sudo umount p2 || true
+sudo umount p3 || true
+sudo umount p4 || true
+
+# mount partitions
 mkdir -p p1
 mkdir -p p2
 mkdir -p p3
