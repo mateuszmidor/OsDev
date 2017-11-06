@@ -18,24 +18,27 @@ Credits to the authors!
  + higher-half (kernel mapped at virt. 0xFFFFFFFF80000000; dynamic memory allocation starts at virt. 0xFFFFFFFFC0000000)
  + multitasking
  + kernel/user space (with kernel memory protected from user-space access)
- + ELF64 support (-static -nostdlib) - can exit with return value; system calls to be implemented
- + virtual filesystem
+ + ELF64 support (-static -nostdlib) - some basic syscalls implemented, see: syscalls.h)
+ + virtual filesystem (unix-like)
  + MBR/Fat32 driver (no long names)
  + PS/2 mouse driver
  + Keyboard driver
  + VGA driver (90x30 text mode, 320x200x8bit graphics mode for now)
  
 # Need install
+ + cmake (at least v3.2)
  + xorriso
- + qemu-system-x86_64
+ + qemu-system-x86_64 (with qemu-nbd)
 
-# Run it
+# Run it (tested on ubuntu 16.4 & recent manjaro)
 set your emulator to network chip AMD am79c973 (default for VBox, for QEMU add in command line: -net nic,model=pcnet)
-> make run
+> sudo remount_hdd.sh
+> cd build && cmake .. && make all iso hdd run
 
 # Debug it in terminal
-> make rungdb  
-> gdb -symbols=build/kernel-x86_64.bin -ex "set arch i386:x86-64:intel" -ex "target remote localhost:1234"  
+> sudo remount_hdd.sh
+> cd build && cmake .. && make all iso hdd rungdb
+> gdb -symbols=build/kernel/phobos-x86_64.bin -ex "set arch i386:x86-64:intel" -ex "target remote localhost:1234"  
 (gdb) break kmain  
 (gdb) continue  
 (gdb) ^a + ^x  
@@ -67,7 +70,7 @@ Download contents of https://gcc.gnu.org/svn/gcc/trunk/libstdc++-v3/python/libst
 Should work now.
 
 # Tools
- + make hdd && sudo ./remount_hdd.sh - mount build/hdd.vdi partitions as "p1" and "p2" in current directory. Requires qemu-nbd
+ + sudo ./remount_hdd.sh - mount build/hdd.vdi partitions as p1, p2, p3, p4 in current directory. Requires qemu-nbd
  + objdump -f - entry point logical address
  + objdump -h - elf headers
  + grub-file --is-x86-multiboot2 build/kernel-x86_64.bin; echo $? - check if kernel is multiboot2 compliant, (0 means yes)
