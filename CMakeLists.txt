@@ -11,42 +11,45 @@ set(ISO "${PROJECT_NAME}-${ARCH}.iso")
 set(GRUB_CFG "${PROJECT_SOURCE_DIR}/kernel/arch/${ARCH}/grub.cfg")
 set(LINKER_SCRIPT "${PROJECT_SOURCE_DIR}/kernel/arch/${ARCH}/linker.ld")
 
+
 # Build kernel binary
 add_subdirectory("kernel")
 
 # Build user binaries
 add_subdirectory("user")
 
-# "make iso"
+
+# "make iso" - create bootable kernel iso image
 add_custom_target(iso
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND cmake ..
     COMMAND make
-    COMMAND /bin/mkdir -p "isofiles/boot/grub"
-    COMMAND /bin/cp kernel/${BIN} "isofiles/boot/kernel.bin"
-    COMMAND /bin/cp ${GRUB_CFG} "isofiles/boot/grub"
+    COMMAND /usr/bin/env mkdir -p "isofiles/boot/grub"
+    COMMAND /usr/bin/env cp kernel/${BIN} "isofiles/boot/kernel.bin"
+    COMMAND /usr/bin/env cp ${GRUB_CFG} "isofiles/boot/grub"
     COMMAND grub-mkrescue -o ${ISO} "isofiles"
-    COMMAND /bin/rm -r "isofiles"
+    COMMAND /usr/bin/env rm -r "isofiles"
 )
 
-# "make run"
-add_custom_target(run
-    COMMAND make iso
-    COMMAND /bin/cp -n "${PROJECT_SOURCE_DIR}/media/hdd.vdi" ${HDD}
-    COMMAND make install    # install user binaries in hdd
+# "make hdd" - install user programs under /BIN in HDD; "sudo remount_hdd.sh" needs to be run first
+add_custom_target(hdd
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND echo "!!! REMEMBER TO FIRST: sudo remount_hdd.sh !!!"
+    COMMAND make install    # install user binaries under /BIN in HDD
     COMMAND sync
+)
+
+# "make run" - just run the kernel under qemu
+add_custom_target(run
     COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -d int -no-reboot # pcnet is AMD am79c973 network chip
 )
 
-# "make rungdb"
+# "make rungdb" - run the kernel under qemu, accept gdb connection at localhost:1234
 add_custom_target(rungdb
-    COMMAND make iso
-    COMMAND /bin/cp -n "${PROJECT_SOURCE_DIR}/media/hdd.vdi" ${HDD}
-    COMMAND make install    # install user binaries in hdd
-    COMMAND sync
     COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -s -S -no-reboot # pcnet is AMD am79c973 network chip
 )
 
-# "make cleanup"
+# "make cleanup" - remove all the files under build except for hdd
 add_custom_target(cleanup
-    COMMAND /usr/bin/ls ../build | grep -v hdd.vdi | xargs rm -rf
+    COMMAND /usr/bin/env ls ../build | grep -v ${HDD} | xargs rm -rf
 )
