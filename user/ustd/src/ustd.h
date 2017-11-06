@@ -56,6 +56,8 @@ namespace ustd {
         return format(fmt.c_str(), args...);
     }
 
+
+    string to_lower_case(string s);
 } // namespace kstd
 
 

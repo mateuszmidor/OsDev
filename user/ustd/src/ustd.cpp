@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include <algorithm>
 #include "ustd.h"
 
 namespace ustd {
@@ -113,6 +114,20 @@ string join_string(const string& separator, const vector<string>& elements) {
     result += elements.back();
 
     return result;
+}
+
+/**
+ * @brief   Change string to lower case
+ */
+string to_lower_case(string s) {
+    auto to_upper = [](char c) -> u32 {
+        if (c >= 'A' && c <= 'Z')
+            return c - ('A' - 'a');
+        else
+            return c;
+    };
+    std::transform(s.begin(), s.end(), s.begin(), to_upper);
+    return s;
 }
 
 }; // namespace ustd

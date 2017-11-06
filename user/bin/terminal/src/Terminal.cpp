@@ -87,8 +87,9 @@ void Terminal::install_external_commands(const string& dir) {
             continue;
 
         string cmd_absolute_path = format("%/%", dir, e.name);
-        printer->format("Terminal::installing % from %\n", e.name, cmd_absolute_path);
-        install_cmd(new cmds::specificelfrun(&env, cmd_absolute_path), e.name);
+        string lowercase_name = to_lower_case(e.name);
+        printer->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
+        install_cmd(new cmds::specificelfrun(&env, cmd_absolute_path), lowercase_name);
     }
 
     syscalls::close(fd);
