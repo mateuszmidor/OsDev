@@ -12,7 +12,7 @@ set(PROJECT_VERSION ${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_
 # Setup compilation and linking flags
 set(CMAKE_CXX_FLAGS "-std=c++11 -static -mcmodel=kernel -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -nostartfiles -ffreestanding -O0 -g3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
+set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g3")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 
 # Collect source directories
