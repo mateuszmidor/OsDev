@@ -18,12 +18,13 @@ Credits to the authors!
  + higher-half (kernel mapped at virt. 0xFFFFFFFF80000000; dynamic memory allocation starts at virt. 0xFFFFFFFFC0000000)
  + multitasking
  + kernel/user space (with kernel memory protected from user-space access)
- + ELF64 support (-static -nostdlib) - some basic syscalls implemented, see: syscalls.h)
+ + ELF64 support (statically linked only) - some basic syscalls implemented, see: syscalls.h
  + virtual filesystem (unix-like)
  + MBR/Fat32 driver (no long names)
  + PS/2 mouse driver
  + Keyboard driver
  + VGA driver (90x30 text mode, 320x200x8bit graphics mode for now)
+ + Simple terminal emulator (with TAB auto-completion) and a few basic system commands like cd, cat, cp, mkdir
  
 # Need install
  + cmake (at least v3.2)
