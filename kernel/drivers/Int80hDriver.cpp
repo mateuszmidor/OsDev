@@ -6,14 +6,14 @@
  */
 
 #include "Int80hDriver.h"
-
+#include "SysCallNumbers.h"
 #include "TaskManager.h"
 #include "KernelLog.h"
 
 using logging::KernelLog;
 using namespace hardware;
+using namespace middlespace;
 using namespace multitasking;
-
 namespace drivers {
 
 s16 Int80hDriver::handled_interrupt_no() {
@@ -22,12 +22,17 @@ s16 Int80hDriver::handled_interrupt_no() {
 
 hardware::CpuState* Int80hDriver::on_interrupt(hardware::CpuState* cpu_state) {
     TaskManager& mngr = TaskManager::instance();
-    switch (cpu_state->rax) {
-    case 1: // sys_exit
+    Int80hSysCallNumbers syscall = (Int80hSysCallNumbers)cpu_state->rax;
+
+    switch (syscall) {
+    case Int80hSysCallNumbers::EXIT:
         return task_exit(cpu_state->rbx);
 
-    default:
+    case Int80hSysCallNumbers::NANOSLEEP:
         return mngr.schedule(cpu_state);
+
+    default:
+        return cpu_state;
     }
 }
 

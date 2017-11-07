@@ -16,15 +16,38 @@
 
 namespace syscalls {
 
-using syscall_res = unsigned long long;
+using syscall_res = signed long long;
 using syscall_arg = unsigned long long;
 
 
+/**
+ * @brief   Sleep current task for given amount of time
+ *          It must be implemented as int80h until kernel is preemptible and syscall can be suspedned
+ * @note    Current implementation only reschedules CPU to another task
+ */
+inline int usleep(unsigned int usec) {
+    syscall_res result;
+
+    asm volatile(
+            "int $0x80"
+            : "=a"(result)
+            : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP)
+    );
+
+    return result;
+}
+
+/**
+ * @brief   Reschedule CPU to another task
+ */
+inline void yield() {
+    usleep(0);
+}
 
 /**
  * @note    The below syscalls are received in SysCallManager and passed for handling to SysCallHandler
  */
-inline syscall_res syscall(unsigned int syscall_no,
+inline syscall_res syscall(middlespace::SysCallNumbers syscall,
         syscall_arg arg1 = 0,
         syscall_arg arg2 = 0,
         syscall_arg arg3 = 0,
@@ -32,13 +55,21 @@ inline syscall_res syscall(unsigned int syscall_no,
         syscall_arg arg5 = 0) {
 
     syscall_res result;
-    asm volatile(
-            "mov %%rbx, %%r10       ;"
-            "mov %%rcx, %%r8        ;"
-            "syscall                ;"
-            : "=a"(result)
-            : "a"(syscall_no), "D"(arg1), "S"(arg2), "d"(arg3), "b"(arg4), "c"(arg5)
-    );
+
+    do {
+        // 1. make system call
+        asm volatile(
+                "mov %%rbx, %%r10       ;"
+                "mov %%rcx, %%r8        ;"
+                "syscall                ;"
+                : "=a"(result)
+                : "a"(syscall), "D"(arg1), "S"(arg2), "d"(arg3), "b"(arg4), "c"(arg5)
+        );
+
+        // 2. reschedule if syscall would block
+        if (result == -EWOULDBLOCK)
+            yield();
+    } while (result == -EWOULDBLOCK);
 
     return result;
 }
@@ -168,10 +199,6 @@ inline s64 elf_run(const char path[], const char* nullterm_argv[]) {
     return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)path, (syscall_arg)nullterm_argv);
 }
 
-inline int usleep(unsigned int usec) {
-    asm volatile("mov $0, %rax; int $0x80");    // yield, change when blocking syscalls and timers are implemented
-    return 0;
-}
 
 } // namespace syscalls
 

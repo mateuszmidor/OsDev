@@ -8,6 +8,7 @@
 #include "Task.h"
 #include "PageTables.h"
 #include "HigherHalf.h"
+#include "SysCallNumbers.h"
 
 using namespace hardware;
 namespace multitasking {
@@ -78,7 +79,7 @@ void Task::yield() {
 }
 
 void Task::exit(u64 result_code) {
-    asm volatile("int $0x80" : : "a"(1), "b"(result_code));
+    asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::EXIT), "b"(result_code));
 }
 
 } /* namespace multitasking */

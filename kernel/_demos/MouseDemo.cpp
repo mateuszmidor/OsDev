@@ -9,8 +9,10 @@
 #include "KernelLog.h"
 #include "DriverManager.h"
 #include "MouseDriver.h"
+#include "SysCallNumbers.h"
 
 using namespace drivers;
+using namespace middlespace;
 using logging::KernelLog;
 
 namespace demos {
@@ -36,7 +38,7 @@ void MouseDemo::run(u64 arg) {
 
     // keep task alive
     while (true)
-        asm volatile("mov $0, %rax; int $0x80");    // yield
+        asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP));    // yield
 }
 
 void MouseDemo::on_mouse_down(u8 button) {

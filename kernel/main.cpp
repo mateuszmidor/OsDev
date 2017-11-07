@@ -32,6 +32,7 @@
 #include "_demos/Demo.h"
 #include "_demos/MouseDemo.h"
 #include "ElfRunner.h"
+#include "SysCallNumbers.h"
 
 using namespace kstd;
 using namespace logging;
@@ -92,7 +93,7 @@ void corner_counter() {
             u8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
-            asm volatile("mov $0, %rax; int $0x80");    // yield
+            asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP));    // yield
         }
     }
 }

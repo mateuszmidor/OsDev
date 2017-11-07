@@ -40,7 +40,8 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
 
 //    klog.format("syscall_handler: % \n", sys_call_num);
 
-    switch (sys_call_num) {
+    SysCallNumbers syscall = (SysCallNumbers)sys_call_num;
+    switch (syscall) {
     case SysCallNumbers::FILE_READ: // read (unsigned int fd char *buf   size_t count)
         return syscall_handler.sys_read(arg1, (char*)arg2, arg3);
 
@@ -108,24 +109,6 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
 
     case SysCallNumbers::ELF_RUN:   // (char[] filename, char** argv)
         return syscall_handler.elf_run((const char*)arg1, (const char**)arg2);
-
-    case 9: // mmap
-        return 10*1024*1024;
-
-    case 12: // brk
-        return 7*1024*1024;
-
-    case 14: // sigprocmask
-        return 0;
-
-    case 20: // writev
-        return  arg3; // all bytes written
-
-    case 21: // access
-        return -1;
-
-    case 59: //  sys_execve
-        return 0;
 
     case SysCallNumbers::EXIT:
         syscall_handler.sys_exit(arg1);
