@@ -34,13 +34,13 @@ void TaskManager::on_task_finished() {
  * @return  Newly added task id or 0 if max task count is reached
  */
 u32 TaskManager::add_task(const Task& task) {
-    if (tasks.count() >= MAX_TASKS)
+    if (running_queue.count() >= MAX_TASKS)
         return 0;
 
     u32 tid = current_task_id;
     Task* t = new Task(task);
     t->prepare(tid, TaskManager::on_task_finished);
-    tasks.attach_front(t);
+    running_queue.push_front(t);
 
     current_task_id++;
 
@@ -52,11 +52,11 @@ Task& TaskManager::get_current_task() {
 }
 
 const TaskList& TaskManager::get_tasks() const {
-    return tasks;
+    return running_queue;
 }
 
 u16 TaskManager::get_num_tasks() const {
-    return tasks.count();
+    return running_queue.count();
 }
 
 /**
@@ -70,7 +70,7 @@ u16 TaskManager::get_num_tasks() const {
  */
 CpuState* TaskManager::schedule(CpuState* cpu_state) {
     // nothing to schedule?
-    if (tasks.count() == 0)
+    if (running_queue.count() == 0)
         return cpu_state;
 
     // store cpu state in current task
@@ -96,7 +96,7 @@ hardware::CpuState* TaskManager::kill_current_task() {
     close_files(*current_task);
     release_address_space(*current_task);
 
-    tasks.detach(current_task);
+    running_queue.remove(current_task);
     delete current_task;
     current_task = nullptr;
 
@@ -104,12 +104,18 @@ hardware::CpuState* TaskManager::kill_current_task() {
     return pick_next_task_and_load_address_space();
 }
 
+/**
+ * @brief   Close all the files open for "task"
+ */
 void TaskManager::close_files(Task& task) {
     for (auto& f : task.files)
         if (f)
             f->close();
 }
 
+/**
+ * @brief   Release physical memory frames allocated for "task"
+ */
 void TaskManager::release_address_space(Task& task) {
     if (task.pml4_phys_addr == 0)
         return;
@@ -117,7 +123,7 @@ void TaskManager::release_address_space(Task& task) {
     if (task.pml4_phys_addr == PageTables::get_kernel_pml4_phys_addr()) // dont remove kernel address space :)
         return;
 
-    u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, task.pml4_phys_addr); // task virtual address space starts at virt address 0
+    u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, task.pml4_phys_addr); // user task virtual address space starts at virt address 0
 
     // scan 0..1GB of virtual memory
     logging::KernelLog& klog = logging::KernelLog::instance();
@@ -138,23 +144,35 @@ void TaskManager::release_address_space(Task& task) {
  * @brief   Wait for task until it is terminated
  */
 void TaskManager::wait(u32 task_id) const {
-    while (tasks.contains(task_id))
+    while (running_queue.contains(task_id))
         Task::yield();
 }
 
-void TaskManager::current_wait_on(TaskList& wait_list) {
-    // how?
+/**
+ * @brief   Take the current task out of the running queue and put it on "list"
+ */
+void TaskManager::dequeue_current_task(TaskList& list) {
+    next_task = current_task->next;
+    running_queue.remove(current_task);
+    list.push_front(current_task);
+}
+
+/**
+ * @brief   Put the "task" back on running queue
+ * @note    IT MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
+ */
+void TaskManager::enqueue_task_back(Task* task) {
+    running_queue.push_front(task);
 }
 
 /**
  * @brief   Choose next task to run and load its page table level4 into cr3
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
-    // if there is no current or next task - use head task
-    if (!current_task || !current_task->next)
-        current_task = tasks.front();
-    else
-        current_task = current_task->next;
+    if (!next_task)
+        next_task = running_queue.front();
+    current_task = next_task;
+    next_task = next_task->next;
 
     u64 pml4_physical_address = current_task->pml4_phys_addr;
     PageTables::load_address_space(pml4_physical_address);

@@ -57,11 +57,14 @@ class TaskList {
 public:
     Task* front();
     const Task* front() const;
+
+    void push_front(Task* t);
+    Task* pop_front();
+
+    void remove(Task* t);
+
     bool contains(const Task* t) const;
     bool contains(u32 task_id) const;
-    void attach_front(Task* t);
-    void detach(Task* t);
-    void move_to(Task* t, TaskList& dst);
     u32 count() const;
 
     // iterator interface

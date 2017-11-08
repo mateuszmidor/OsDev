@@ -29,7 +29,8 @@ public:
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
     void wait(u32 task_id) const;
-    void current_wait_on(TaskList& wait_list);
+    void dequeue_current_task(TaskList& list);
+    void enqueue_task_back(Task* task);
 
 private:
     TaskManager() {}
@@ -39,8 +40,9 @@ private:
 
     static TaskManager _instance;
 
-    TaskList    tasks;
-    Task*       current_task    = nullptr;
+    TaskList    running_queue;              // list of tasks that are ready to be run
+    Task*       current_task    = nullptr;  // task that is currently running
+    Task*       next_task       = nullptr;  // next task to be run
     u32         current_task_id =  1;
 };
 
