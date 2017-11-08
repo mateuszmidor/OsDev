@@ -36,7 +36,7 @@ public:
     bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const override;
 
 private:
-    const VolumeFat32&  volume; // volume comes from MassStorageMsDos which got it from AtaDevice that is being held by AtaPrimaryBusDriver/AtaSecondaryBusDriver :)
+    VolumeFat32         volume; // volume comes from MassStorageMsDos which got it from AtaDevice that is being held by AtaPrimaryBusDriver/AtaSecondaryBusDriver :)
     Fat32Entry          root;
     kstd::string        name;
 };

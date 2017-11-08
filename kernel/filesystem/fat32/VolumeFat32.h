@@ -184,7 +184,7 @@ private:
     Fat32Entry empty_entry() const;
 
     logging::KernelLog&     klog;
-    drivers::AtaDevice&     hdd;
+    drivers::AtaDevice&     hdd;    // AtaDevice is held by AtaPrimaryBusDriver/AtaSecondaryBusDriver that never goes away so reference is ok
     VolumeBootRecordFat32   vbr;
     Fat32Table              fat_table;
     Fat32Data               fat_data;

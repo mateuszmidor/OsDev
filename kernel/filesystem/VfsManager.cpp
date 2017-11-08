@@ -299,7 +299,7 @@ void VfsManager::install_volumes(AtaDevice& hdd, VfsRamEntryPtr parent) {
         return;
 
     MassStorageMsDos ms(hdd);
-    for (auto& v : ms.get_volumes()) {
+    for (const auto& v : ms.get_volumes()) {
         VfsEntryPtr drive = std::make_shared<VfsFat32MountPoint>(v);
         parent->entries.push_back(drive);
     }
