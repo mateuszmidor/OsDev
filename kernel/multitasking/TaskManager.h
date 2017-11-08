@@ -8,9 +8,8 @@
 #ifndef SRC_TASKMANAGER_H_
 #define SRC_TASKMANAGER_H_
 
-#include <array>
 #include "kstd.h"
-#include "Task.h"
+#include "TaskList.h"
 
 namespace multitasking {
 
@@ -19,17 +18,18 @@ class TaskManager {
 
 public:
     static TaskManager& instance();
+    static void on_task_finished();
     TaskManager operator=(const TaskManager&) = delete;
     TaskManager operator=(TaskManager&&) = delete;
 
-    static void on_task_finished();
     u32 add_task(const Task& task);
     Task& get_current_task();
-    const std::array<Task, MAX_TASKS>& get_tasks() const;
+    const TaskList& get_tasks() const;
     u16 get_num_tasks() const;
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
     void wait(u32 task_id) const;
+    void current_wait_on(TaskList& wait_list);
 
 private:
     TaskManager() {}
@@ -39,10 +39,9 @@ private:
 
     static TaskManager _instance;
 
-    std::array<Task, MAX_TASKS> tasks;
-    u16 num_tasks       =  0;
-    s16 current_task    = -1;
-    u32 current_task_id =  1;
+    TaskList    tasks;
+    Task*       current_task    = nullptr;
+    u32         current_task_id =  1;
 };
 
 }

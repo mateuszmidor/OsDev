@@ -92,6 +92,8 @@ struct Task {
     hardware::CpuState* cpu_state;
 
     std::array<filesystem::VfsEntryPtr, 16> files;  // per-task list of open files. This should be later made per-process. TODO: concurrent access to the same file. How?
+
+    Task*               next;   // task list interface
 };
 
 struct TaskEpilogue {
