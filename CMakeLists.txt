@@ -9,8 +9,6 @@ set(HDD "hdd.vdi")
 set(BIN "${PROJECT_NAME}-${ARCH}.bin")
 set(ISO "${PROJECT_NAME}-${ARCH}.iso")
 set(GRUB_CFG "${PROJECT_SOURCE_DIR}/kernel/arch/${ARCH}/grub.cfg")
-set(LINKER_SCRIPT "${PROJECT_SOURCE_DIR}/kernel/arch/${ARCH}/linker.ld")
-
 
 # Build kernel binary
 add_subdirectory("kernel")
