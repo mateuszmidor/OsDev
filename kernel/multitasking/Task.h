@@ -11,6 +11,7 @@
 #include <array>
 #include "kstd.h"
 #include "CpuState.h"
+#include "TaskList.h"
 #include "VfsEntry.h"
 
 namespace multitasking {
@@ -94,6 +95,7 @@ struct Task {
     std::array<filesystem::VfsEntryPtr, 16> files;  // per-task list of open files. This should be later made per-process. TODO: concurrent access to the same file. How?
 
     Task*               next;   // task list interface
+    TaskList            wait_queue; // list of tasks waiting for this task to finish
 };
 
 struct TaskEpilogue {

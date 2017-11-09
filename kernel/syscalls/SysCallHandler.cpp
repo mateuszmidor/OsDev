@@ -451,6 +451,7 @@ s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
     if (e->is_directory())
         return -EISDIR; // is directory
 
+    // TODO: reading elf file should be done from kernel task not from syscall, this is experimental version
     u32 size = e->get_size();
     u8* elf_data = new u8[size];
     if (!elf_data)
@@ -465,6 +466,19 @@ s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
 
     utils::ElfRunner runner;
     return runner.run(elf_data, args);
+}
+
+/**
+ * @brief   Suspend current task until "task_id" is finished
+ * @return  -EWOULDBLOCK on success
+            -EINVAL on invalid "task_id"
+ */
+s64 SysCallHandler::task_wait(u32 task_id) {
+    multitasking::TaskManager& mngr = multitasking::TaskManager::instance();
+    if (mngr.wait(task_id))
+        return -EWOULDBLOCK;
+    else
+        return -EINVAL;
 }
 
 /**

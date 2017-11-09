@@ -45,6 +45,7 @@ enum class SysCallNumbers {
 
     FILE_ENUMERATE          = 600,
     ELF_RUN                 = 700,
+    TASK_WAIT               = 800,
 };
 
 /**

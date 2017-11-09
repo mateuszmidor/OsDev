@@ -8,42 +8,25 @@
 #ifndef KERNEL_MULTITASKING_TASKLIST_H_
 #define KERNEL_MULTITASKING_TASKLIST_H_
 
-#include "Task.h"
+#include "types.h"
 
 namespace multitasking {
+
+// forward declaration
+class Task;
 
 /**
  * @brief   Iterator interface for TaskList
  */
 class TaskIterator  {
 public:
-    TaskIterator(Task* x) : current(x) {}
-
-    TaskIterator(const TaskIterator& it) : current(it.current) {}
-
-    TaskIterator& operator++() {
-        if (current)
-            current = current->next;
-        return *this;
-    }
-
-    TaskIterator operator++(int) {
-        TaskIterator tmp(*this);
-        operator++();
-        return tmp;
-    }
-
-    bool operator==(const TaskIterator& rhs) const {
-        return current == rhs.current;
-    }
-
-    bool operator!=(const TaskIterator& rhs) const {
-        return current != rhs.current;
-    }
-
-    Task& operator*() {
-        return *current;
-    }
+    TaskIterator(Task* x);
+    TaskIterator(const TaskIterator& it);
+    TaskIterator& operator++();
+    TaskIterator operator++(int);
+    bool operator==(const TaskIterator& rhs) const;
+    bool operator!=(const TaskIterator& rhs) const;
+    Task& operator*();
 
 private:
     Task*   current = nullptr;
@@ -57,6 +40,7 @@ class TaskList {
 public:
     Task* front();
     const Task* front() const;
+    Task* get_by_tid(u32 task_id);
 
     void push_front(Task* t);
     Task* pop_front();

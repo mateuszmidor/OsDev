@@ -110,6 +110,9 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     case SysCallNumbers::ELF_RUN:   // (char[] filename, char** argv)
         return syscall_handler.elf_run((const char*)arg1, (const char**)arg2);
 
+    case SysCallNumbers::TASK_WAIT:
+        return syscall_handler.task_wait(arg1);
+
     case SysCallNumbers::EXIT:
         syscall_handler.sys_exit(arg1);
         return 0;   // never reached as the caller gets killed

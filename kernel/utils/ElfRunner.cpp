@@ -20,7 +20,7 @@ namespace utils {
  * @brief   Run elf as user task and return immediately
  * @param   elf_data ELF64 file data loaded into kernel memory. This function finally free the "elf_data"
  * @param   args User-provided cmd line arguments in kernel memory. This function finally free the "args"
- * @return  Error code on error, 0 on success
+ * @return  Error code on error, task id on success
  */
 s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
     if (!utils::Elf64::is_elf64(elf_data))
@@ -40,8 +40,9 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
     task.pml4_phys_addr = pml4_phys_addr;   // kernel task but in user memory space
     task.cwd = task_manager.get_current_task().cwd; // inherit current working directory of calling task
 
-    if (u32 tid = task_manager.add_task(task))
-        return 0;
+    if (u32 tid = task_manager.add_task(task)) {
+        return tid;
+    }
     else
         return -EPERM;  // running new task not permitted at this time
 }
@@ -50,6 +51,7 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
  * @brief   ELF loader kernel task that runs already in the task address space
  *          and thus is able to load the elf program segments into memory at virtual addresses starting at "0"
  * @note    This function frees the elf_file_data and args
+ *          The actual task gets task_id of elf_loader
  */
 void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // copy elf sections into address space and remember where free virtual memory starts
@@ -67,14 +69,12 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
 
     // run the actual elf task
     TaskManager& task_manager = TaskManager::instance();
-    char* name = argv[0];
-    u64 pml4_phys_addr = task_manager.get_current_task().pml4_phys_addr;
-    Task task = Task::make_user_task(entry_point, name, pml4_phys_addr, ELF_STACK_START, ELF_STACK_SIZE).set_arg1(argc).set_arg2(argv);
-    task.cwd = task_manager.get_current_task().cwd; // inherit current working directory of calling task
-    task_manager.add_task(task);
+    Task& elf_loader_task =  task_manager.get_current_task();
+    Task task = Task::make_user_task(entry_point, argv[0], elf_loader_task.pml4_phys_addr, ELF_STACK_START, ELF_STACK_SIZE).set_arg1(argc).set_arg2(argv);
+    task.cwd = elf_loader_task.cwd; // inherit current working directory of calling task
 
-    // page tables are shared by elf_loader and the actual user task to be run. make sure they are not wiped out upon elf_load erexit
-    task_manager.get_current_task().pml4_phys_addr = 0;
+    // replace elf_loader with actual ELF task
+    task_manager.replace_current_task(task);
 }
 
 /**

@@ -22,7 +22,8 @@ void specificelfrun::run() {
     nullterm_argv[count] = nullptr;
 
     // run the elf
-    switch (syscalls::elf_run(elf_path.c_str(), nullterm_argv)) {
+    s64 elf_run_result = syscalls::elf_run(elf_path.c_str(), nullterm_argv);
+    switch (elf_run_result) {
     case -ENOENT:
         env->printer->format("specificelfrun: no such file\n");
         break;
@@ -40,10 +41,11 @@ void specificelfrun::run() {
         break;
 
     case -EPERM:
-        env->printer->format("specificelfrun: task mamanger didnt allow to run new task. Too many tasks is running probably\n");
+        env->printer->format("specificelfrun: task mananger didnt allow to run new task. Too many tasks is running probably\n");
         break;
 
     default:
+//        syscalls::task_wait(elf_run_result); // wait till task exits. This deadlocks if task writes to "/dev/stdout, fills it up and blocks waiting for someone to read
         break;
     }
 

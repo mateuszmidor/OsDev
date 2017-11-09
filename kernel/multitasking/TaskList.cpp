@@ -6,9 +6,47 @@
  */
 
 #include "TaskList.h"
+#include "Task.h"
 
 namespace multitasking {
 
+
+/*******************************************************************************************
+ * class   TaskIterator
+ *******************************************************************************************/
+TaskIterator::TaskIterator(Task* x) : current(x) {}
+
+TaskIterator::TaskIterator(const TaskIterator& it) : current(it.current) {}
+
+TaskIterator& TaskIterator::operator++() {
+    if (current)
+        current = current->next;
+    return *this;
+}
+
+TaskIterator TaskIterator::operator++(int) {
+    TaskIterator tmp(*this);
+    operator++();
+    return tmp;
+}
+
+bool TaskIterator::operator==(const TaskIterator& rhs) const {
+    return current == rhs.current;
+}
+
+bool TaskIterator::operator!=(const TaskIterator& rhs) const {
+    return current != rhs.current;
+}
+
+Task& TaskIterator::operator*() {
+    return *current;
+}
+
+
+
+/*******************************************************************************************
+ * class   TaskList
+ *******************************************************************************************/
 
 /**
  * @brief   Get first list item
@@ -22,6 +60,21 @@ Task* TaskList::front() {
  */
 const Task* TaskList::front() const {
     return m_head;
+}
+
+/**
+ * @brief   Get task of given tid
+ */
+Task* TaskList::get_by_tid(u32 task_id) {
+    Task* t = m_head;
+    while (t) {
+        if (t->task_id == task_id)
+            return t;
+        else
+            t = t->next;
+    }
+
+    return nullptr;
 }
 
 /**
@@ -51,6 +104,10 @@ Task* TaskList::pop_front() {
  * @brief   Remove item identified by pointer "t" from the list
  */
 void TaskList::remove(Task* t) {
+    // nothing to remove
+    if (!m_head)
+        return;
+
     // case 1. removing head item
     if (t == m_head) {
         Task* second = m_head->next;

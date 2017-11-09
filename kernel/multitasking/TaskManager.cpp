@@ -37,14 +37,33 @@ u32 TaskManager::add_task(const Task& task) {
     if (running_queue.count() >= MAX_TASKS)
         return 0;
 
-    u32 tid = current_task_id;
+    u32 tid = next_task_id;
     Task* t = new Task(task);
     t->prepare(tid, TaskManager::on_task_finished);
     running_queue.push_front(t);
 
-    current_task_id++;
+    next_task_id++;
 
     return tid;
+}
+
+/**
+ * @brief   Add task that reuse tid and address space of current task, exit current task
+ * @note    As a result, current_task will exit and die, its tid and address space is taken over by "task"
+ * @note    To be run from Task, not from interrupt/syscall context
+ */
+void TaskManager::replace_current_task(const Task& task) {
+    if (running_queue.count() >= MAX_TASKS)
+        return;
+
+    u32 tid = current_task->task_id;
+    Task* t = new Task(task);
+    t->prepare(tid, TaskManager::on_task_finished);
+
+    running_queue.push_front(t);
+    current_task->task_id = 0;          // dont allow 2 same task_id s on running_queue
+    current_task->pml4_phys_addr = 0;   // avoid releasing this address space on current_task exit
+    Task::exit(0);
 }
 
 Task& TaskManager::get_current_task() {
@@ -93,9 +112,15 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
  */
 hardware::CpuState* TaskManager::kill_current_task() {
+    // release task resources
     close_files(*current_task);
     release_address_space(*current_task);
 
+    // enqueue back all waiting tasks
+    while (Task* t = current_task->wait_queue.pop_front())
+        enqueue_task_back(t);
+
+    // remove the task itself from running queue and from memory
     running_queue.remove(current_task);
     delete current_task;
     current_task = nullptr;
@@ -129,23 +154,27 @@ void TaskManager::release_address_space(Task& task) {
     logging::KernelLog& klog = logging::KernelLog::instance();
     memory::MemoryManager& mngr = memory::MemoryManager::instance();
     klog.format("Rmoving address space of task %\n", task.name);
-    for (u32 i = 0; i < 512; i++)
+    for (u32 i = 0; i < 512; i++)   // scan 512 * 2MB pages
         if (pde_virt_addr[i] != 0) {
-            klog.format("  Releasing mem frame\n");
+            klog.format("  Releasing mem frame: %\n", pde_virt_addr[i] / FrameAllocator::get_frame_size());
             mngr.free_frames((void*)pde_virt_addr[i], 1); // 1 byte will always correspond to just 1 frame
         }
 
     // release the page table itself
-    klog.format("  Releasing mem frames of PageTables64\n");
+    klog.format("  Releasing mem frames of PageTables64: %\n", task.pml4_phys_addr / FrameAllocator::get_frame_size());
     mngr.free_frames((void*)task.pml4_phys_addr, sizeof(PageTables64));
 }
 
 /**
- * @brief   Wait for task until it is terminated
+ * @brief   Remove current task from running_queue until "task_id" is  terminated
+ * @return  True if "task_id" still alive, False if already terminated/not exists
  */
-void TaskManager::wait(u32 task_id) const {
-    while (running_queue.contains(task_id))
-        Task::yield();
+bool TaskManager::wait(u32 task_id) {
+    if (Task* t = running_queue.get_by_tid(task_id)) {
+        dequeue_current_task(t->wait_queue);
+        return true;
+    }
+    return false;
 }
 
 /**

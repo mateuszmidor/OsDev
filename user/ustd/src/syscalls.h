@@ -199,7 +199,9 @@ inline s64 elf_run(const char path[], const char* nullterm_argv[]) {
     return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)path, (syscall_arg)nullterm_argv);
 }
 
-
+inline s64 task_wait(unsigned int task_id) {
+    return syscall(middlespace::SysCallNumbers::TASK_WAIT, (syscall_arg)task_id);
+}
 } // namespace syscalls
 
 

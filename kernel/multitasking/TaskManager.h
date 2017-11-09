@@ -9,6 +9,7 @@
 #define SRC_TASKMANAGER_H_
 
 #include "kstd.h"
+#include "Task.h"
 #include "TaskList.h"
 
 namespace multitasking {
@@ -23,12 +24,13 @@ public:
     TaskManager operator=(TaskManager&&) = delete;
 
     u32 add_task(const Task& task);
+    void replace_current_task(const Task& task);
     Task& get_current_task();
     const TaskList& get_tasks() const;
     u16 get_num_tasks() const;
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
-    void wait(u32 task_id) const;
+    bool wait(u32 task_id);
     void dequeue_current_task(TaskList& list);
     void enqueue_task_back(Task* task);
 
@@ -43,7 +45,7 @@ private:
     TaskList    running_queue;              // list of tasks that are ready to be run
     Task*       current_task    = nullptr;  // task that is currently running
     Task*       next_task       = nullptr;  // next task to be run
-    u32         current_task_id =  1;
+    u32         next_task_id =  1;
 };
 
 }
