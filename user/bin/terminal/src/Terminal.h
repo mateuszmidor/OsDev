@@ -41,8 +41,8 @@ private:
     TerminalEnv env;
 
     // file descriptors
-    int keyboard    = -1;   // for reading keyboard input
-    int stdout      = -1;   // for reading stdout of child tasks(elf64)
+    int fd_keyboard     = -1;   // for reading keyboard input
+    int fd_stdout       = -1;   // for reading stdout of child tasks(elf64)
 };
 
 } /* namespace terminal */

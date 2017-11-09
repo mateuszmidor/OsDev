@@ -125,13 +125,13 @@ void Terminal::run() {
 }
 
 bool Terminal::init() {
-    keyboard = syscalls::open("/dev/keyboard");
-    if (keyboard < 0) {
+    fd_keyboard = syscalls::open("/dev/keyboard");
+    if (fd_keyboard < 0) {
         return false;
     }
 
-    stdout = syscalls::open("/dev/stdout");
-    if (stdout < 0) {
+    fd_stdout = syscalls::open("/dev/stdout");
+    if (fd_stdout < 0) {
         return false;
     }
 
@@ -155,11 +155,11 @@ Key Terminal::get_key() {
 
     // wait until last_key is set by keyboard interrupt. Keys might be missed if stroking faster than Terminal gets CPU time :)
     Key key;
-    while (!(syscalls::read(keyboard, &key, sizeof(key)) > 0)) {
+    while (!(syscalls::read(fd_keyboard, &key, sizeof(key)) > 0)) {
 
         // while waiting for key to arrive, check if there is something in stdout to be printed out
         u32 count;
-        while ((count = syscalls::read(stdout, buff, BUFF_SIZE - 1)) > 0) {
+        while ((count = syscalls::read(fd_stdout, buff, BUFF_SIZE - 1)) > 0) {
             buff[count] = '\0';
             printer->format("%", buff);
         }
