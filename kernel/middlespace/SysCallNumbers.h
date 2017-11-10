@@ -14,7 +14,7 @@ namespace middlespace {
  * @brief   This enum defines system call numbers(asm: syscall) same as for Linux
  * @see     http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
  */
-enum SysCallNumbers {
+enum class SysCallNumbers {
     // POSIX
     FILE_READ               = 0,
     FILE_WRITE              = 1,
@@ -22,6 +22,7 @@ enum SysCallNumbers {
     FILE_CLOSE              = 3,
     FILE_STAT               = 4,
     FILE_SEEK               = 8,
+    NANOSLEEP               = 35,
     FILE_TRUNCATE           = 76,
     FILE_RENAME             = 82,
     FILE_MKDIR              = 83,
@@ -44,6 +45,16 @@ enum SysCallNumbers {
 
     FILE_ENUMERATE          = 600,
     ELF_RUN                 = 700,
+    TASK_WAIT               = 800,
+};
+
+/**
+ * @brief   This enum defines legacy system call numbers(asm: int 0x80) same as for Linux
+ * @see     http://asm.sourceforge.net/syscall.html
+ */
+enum class Int80hSysCallNumbers {
+    EXIT                    = 1,
+    NANOSLEEP               = 162,
 };
 
 } /* namespace middlespace */

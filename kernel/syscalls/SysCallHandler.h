@@ -45,6 +45,7 @@ public:
     void vga_flush_buffer(const u16* buff);
     void vga_get_width_height(u16* width, u16* height);
     s64 elf_run(const char path[], const char* nullterm_argv[]);
+    s64 task_wait(u32 task_id);
 
 private:
     multitasking::Task& current() const;

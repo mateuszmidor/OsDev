@@ -45,9 +45,12 @@ s64 VfsPsInfoEntry::read(void* data, u32 count) {
 
     TaskManager& task_manager = TaskManager::instance();
     kstd::string info;
-    const auto& tasks = task_manager.get_tasks();
-    for (u16 i = 0; i < task_manager.get_num_tasks(); i++)
-        info += format("%. % [%], tid %\n", i, tasks[i].name, tasks[i].is_user_space ? "User" : "Kernel", tasks[i].task_id);
+    u32 i = 0;
+    const TaskList& tasks = task_manager.get_tasks();
+    for (const Task& task : tasks) {
+        info += format("%. % [%], tid %\n", i, task.name, task.is_user_space ? "User" : "Kernel", task.task_id);
+        i++;
+    }
 
     if (info.empty())
         return 0;

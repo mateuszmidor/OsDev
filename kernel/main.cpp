@@ -32,6 +32,7 @@
 #include "_demos/Demo.h"
 #include "_demos/MouseDemo.h"
 #include "ElfRunner.h"
+#include "SysCallNumbers.h"
 
 using namespace kstd;
 using namespace logging;
@@ -66,9 +67,18 @@ Int80hDriver            int80h;
 PageFaultHandler        page_fault;
 
 
+Key last_key;
+TaskList counter_sleep_wl;
+
 VfsEntryPtr keyboard_vfe;
 void handle_keyboard_interrupt(const Key &key) {
     if (key != Key::INVALID) {
+        last_key = key;
+
+        if (key == Key::F2) {
+            if (counter_sleep_wl.front())
+               task_manager.enqueue_task_back(counter_sleep_wl.pop_front());
+        }
 
         // 1. write key to /dev/keyboard RAM file
         if (!keyboard_vfe)
@@ -89,10 +99,14 @@ void corner_counter() {
         u64 i = 0;
 
         while (true) {
+            if (last_key == Key::F1)
+                task_manager.dequeue_current_task(counter_sleep_wl);
+
+
             u8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
-            asm volatile("mov $0, %rax; int $0x80");    // yield
+            asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP));    // yield
         }
     }
 }
@@ -124,7 +138,7 @@ void run_userspace_terminal() {
 
     // run the elf
     utils::ElfRunner runner;
-    if (0 == runner.run(elf_data, new vector<string> { "TERMINAL" }))
+    if (runner.run(elf_data, new vector<string> { "TERMINAL" }) > 0)
         klog.format("Terminal is running\n");
 }
 

@@ -11,6 +11,7 @@
 #include <array>
 #include "kstd.h"
 #include "CpuState.h"
+#include "TaskList.h"
 #include "VfsEntry.h"
 
 namespace multitasking {
@@ -28,7 +29,8 @@ struct Task {
     /**
      * @brief   Create user space task (runs in protection ring3), with provided address space and stack
      * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
-     * @note    Make sure that entrypoint and stack is accessible from that address space
+     * @note    Make sure that entrypoint and stack is accessible from that address space,
+     *          ie. their virtual addresses are mapped as ring3 accessible
      */
     template <class EntrypointT>
     static Task make_user_task(EntrypointT entrypoint, const char name[], u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) {
@@ -92,6 +94,9 @@ struct Task {
     hardware::CpuState* cpu_state;
 
     std::array<filesystem::VfsEntryPtr, 16> files;  // per-task list of open files. This should be later made per-process. TODO: concurrent access to the same file. How?
+
+    Task*               next;   // task list interface
+    TaskList            wait_queue; // list of tasks waiting for this task to finish
 };
 
 struct TaskEpilogue {

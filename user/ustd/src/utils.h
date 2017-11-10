@@ -13,7 +13,7 @@
 #include "syscalls.h"
 
 
-int stdout_fd = 0;
+int stdout_fd = -1;
 size_t bump_addr = 128*1024*1024;
 
 void* umalloc(size_t size) {
@@ -126,9 +126,8 @@ void long_to_str(long long num, unsigned char base, char buff_12_chars[12]) {
 void _print(int fd, const char str[], size_t len) {
     while (len > 0) {
         ssize_t written = syscalls::write(fd, str, len);
-        if (written == -EWOULDBLOCK)
-            syscalls::usleep(0);
-        else if (written < 0)
+
+        if (written < 0)
             break;
         else {
             str += written;
@@ -138,9 +137,11 @@ void _print(int fd, const char str[], size_t len) {
 }
 
 void print(const char str[], size_t count) {
-    if (stdout_fd == 0)
+    if (stdout_fd < 0)
         stdout_fd = syscalls::open("/dev/stdout", 2);
-    _print(stdout_fd, str, count);
+
+    if (stdout_fd >= 0)
+        _print(stdout_fd, str, count);
 }
 
 void print(const char str[]) {
