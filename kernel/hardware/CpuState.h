@@ -19,6 +19,8 @@ namespace hardware {
 struct CpuState {
     CpuState(u64 rip = 0, u64 rsp = 0, u64 task_arg1 = 0, u64 task_arg2 = 0, bool user_space = false, u64 pml4_phys_addr = 0);
 
+    u8 xmm[16 * 16]; // xmm0..xmm15, 128 bit registers
+
     // this first part we save/restore manually
     u64 cr3;
     u64 rax;

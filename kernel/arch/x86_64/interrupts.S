@@ -62,8 +62,7 @@ HandleInterrupt 0x2E    # primary ata hdd
 HandleInterrupt 0x2F    # secondary ata hdd
 HandleInterrupt 0x80    # int80 old-style syscall
 
-.extern on_interrupt
-handle_interrupt:
+.macro save_context
     # save registers to CpuState struct, in the right order that reflects CpuState struct fields
     # CpuState::error_code is already pushed in HandleInterrupt/HandleException/HandleExceptionWithErrorCode
     push %r15
@@ -84,13 +83,45 @@ handle_interrupt:
     mov %cr3, %rax
     push %rax
 
-    # handle interrupt/exception
-    mov (interrupt_number), %rdi    # interrupt number as first param
-    mov %rsp, %rsi                  # stack pointer (holding CpuState struct) as second param
-    call on_interrupt
-    mov %rax, %rsp                  # set stack pointer to the one returned from on_interrupt
+    sub $256, %rsp
+    movdqu %xmm15, (%rsp)
+    movdqu %xmm14, 16(%rsp)
+    movdqu %xmm13, 32(%rsp)
+    movdqu %xmm12, 48(%rsp)
+    movdqu %xmm11, 64(%rsp)
+    movdqu %xmm10, 80(%rsp)
+    movdqu %xmm9, 96(%rsp)
+    movdqu %xmm8, 112(%rsp)
+    movdqu %xmm7, 128(%rsp)
+    movdqu %xmm6, 144(%rsp)
+    movdqu %xmm5, 160(%rsp)
+    movdqu %xmm4, 176(%rsp)
+    movdqu %xmm3, 192(%rsp)
+    movdqu %xmm2, 208(%rsp)
+    movdqu %xmm1, 224(%rsp)
+    movdqu %xmm0, 240(%rsp)
+.endm
 
+.macro restore_context
     # restore scratch registers from CpuState struct
+    movdqu (%rsp), %xmm15
+    movdqu 16(%rsp), %xmm14
+    movdqu 32(%rsp), %xmm13
+    movdqu 48(%rsp), %xmm12
+    movdqu 64(%rsp), %xmm11
+    movdqu 80(%rsp), %xmm10
+    movdqu 96(%rsp), %xmm9
+    movdqu 112(%rsp), %xmm8
+    movdqu 128(%rsp), %xmm7
+    movdqu 144(%rsp), %xmm6
+    movdqu 160(%rsp), %xmm5
+    movdqu 176(%rsp), %xmm4
+    movdqu 192(%rsp), %xmm3
+    movdqu 208(%rsp), %xmm2
+    movdqu 224(%rsp), %xmm1
+    movdqu 240(%rsp), %xmm0
+    add $256, %rsp
+
     pop %rax    # pop %cr3 value; no need to load it though as it is already loaded by on_interrupt so we can access our stack
     pop %rax
     pop %rbx
@@ -108,6 +139,20 @@ handle_interrupt:
     pop %r14
     pop %r15
     add $8, %rsp    # pop CpuState::error_code from stack
+.endm
+
+.extern on_interrupt
+handle_interrupt:
+    save_context
+
+    # handle interrupt/exception
+    mov (interrupt_number), %rdi    # interrupt number as first param
+    mov %rsp, %rsi                  # stack pointer (holding CpuState struct) as second param
+    call on_interrupt
+    mov %rax, %rsp                  # set stack pointer to the one returned from on_interrupt
+
+    restore_context
+
 .global ignore_interrupt
 ignore_interrupt:
     # return from interrupt handler
