@@ -71,7 +71,7 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
 
 void Task::idle() {
     while (true)
-        asm volatile("hlt");
+        yield();
 }
 
 void Task::yield() {
