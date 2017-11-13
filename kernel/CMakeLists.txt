@@ -34,6 +34,7 @@ set(SOURCE_DIRECTORIES
 #    "${PROJECT_SOURCE_DIR}/middlespace/posix"
     "${PROJECT_SOURCE_DIR}/multitasking"
     "${PROJECT_SOURCE_DIR}/syscalls"
+    "${PROJECT_SOURCE_DIR}/time"
     "${PROJECT_SOURCE_DIR}/utils"
 )
 
