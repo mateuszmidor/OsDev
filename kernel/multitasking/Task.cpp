@@ -71,11 +71,11 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
 
 void Task::idle() {
     while (true)
-        yield();
+        asm volatile("hlt");
 }
 
 void Task::yield() {
-    asm volatile("hlt");
+    asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP), "b"(0));
 }
 
 void Task::exit(u64 result_code) {

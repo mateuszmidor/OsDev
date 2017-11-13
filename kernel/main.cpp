@@ -102,8 +102,6 @@ void corner_counter() {
             if ((last_key == Key::F1) && (counter_sleep_wl.count() == 0))
                 task_manager.dequeue_current_task(counter_sleep_wl);
 
-
-
             u8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
