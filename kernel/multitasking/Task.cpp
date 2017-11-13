@@ -15,7 +15,7 @@ namespace multitasking {
 
 
 Task::Task() :
-        entrypoint(nullptr), name("newtask"), arg1(0), arg2(0), is_user_space(false), pml4_phys_addr(0), cpu_state(0), stack_addr(0), stack_size(0), task_id(0), next(nullptr) {
+        entrypoint(nullptr), name("newtask"), arg1(0), arg2(0), is_user_space(false), pml4_phys_addr(0), cpu_state(0), stack_addr(0), stack_size(0), task_id(0) {
 }
 
 /**
@@ -34,7 +34,7 @@ Task::Task() :
   @param    cwd             current working directory
 */
 Task::Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size, const char cwd[]) :
-        entrypoint(entrypoint), name(name), arg1(arg1), arg2(arg2), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(0), cwd(cwd), next(nullptr) {
+        entrypoint(entrypoint), name(name), arg1(arg1), arg2(arg2), is_user_space(user_space), pml4_phys_addr(pml4_phys_addr), cpu_state(0), task_id(0), cwd(cwd) {
 
     // create default task stack (mostly for kernel tasks)
     if (stack_addr == 0) {

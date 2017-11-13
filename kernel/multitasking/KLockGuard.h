@@ -18,7 +18,7 @@ namespace multitasking {
 class KLockGuard {
 public:
     KLockGuard();
-    virtual ~KLockGuard();
+    ~KLockGuard();
 
 private:
     u64 rflags = 0;

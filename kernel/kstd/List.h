@@ -62,6 +62,10 @@ public:
         return current->data;
     }
 
+    const T& operator*() const {
+        return current->data;
+    }
+
 private:
     ListItem* current   {};
 };
@@ -95,18 +99,19 @@ public:
         if (!m_head)
             return {};
 
-        T data = m_head->data;
-        remove(m_head->data);
+        auto first = begin();
+        T data = *first;
+        remove(first);
         return data;
     }
 
-    void remove(const T& t) {
+    void remove(const ListIterator<T>& it) {
         // nothing to remove
         if (!m_head)
             return;
 
         // case 1. removing head item
-        if (m_head->data == t) {
+        if (m_head->data == *it) {
             ListItem* new_head = m_head->next;
             delete m_head;
             m_head = new_head;
@@ -119,7 +124,7 @@ public:
         ListItem* curr = m_head->next;
 
         while (curr) {
-            if (curr->data == t) {
+            if (curr->data == *it) {
                 prev->next = curr->next;
                 delete curr;
                 m_count--;

@@ -9,6 +9,7 @@
 #include "PageTables.h"
 #include "KernelLog.h"
 #include "MemoryManager.h"
+#include "KLockGuard.h"
 
 using namespace memory;
 using namespace hardware;
@@ -34,6 +35,8 @@ void TaskManager::on_task_finished() {
  * @return  Newly added task id or 0 if max task count is reached
  */
 u32 TaskManager::add_task(const Task& task) {
+    KLockGuard lock;    // protect running_queue
+
     if (running_queue.count() >= MAX_TASKS)
         return 0;
 
@@ -43,7 +46,6 @@ u32 TaskManager::add_task(const Task& task) {
     running_queue.push_front(t);
 
     next_task_id++;
-
     return tid;
 }
 
@@ -53,21 +55,30 @@ u32 TaskManager::add_task(const Task& task) {
  * @note    To be run from Task, not from interrupt/syscall context
  */
 void TaskManager::replace_current_task(const Task& task) {
-    if (running_queue.count() >= MAX_TASKS)
-        return;
+    {
+        KLockGuard lock;    // protect running_queue and current_task
 
-    u32 tid = current_task->task_id;
-    Task* t = new Task(task);
-    t->prepare(tid, TaskManager::on_task_finished);
+        if (running_queue.count() >= MAX_TASKS)
+            return;
 
-    running_queue.push_front(t);
-    current_task->task_id = 0;          // dont allow 2 same task_id s on running_queue
-    current_task->pml4_phys_addr = 0;   // avoid releasing this address space on current_task exit
-    Task::exit(0);
+        u32 tid = (*current_task_it)->task_id;
+        Task* t = new Task(task);
+        t->prepare(tid, TaskManager::on_task_finished);
+        running_queue.push_front(t);
+
+        get_current_task().task_id = 0;          // dont allow 2 same task_id s on running_queue
+        get_current_task().pml4_phys_addr = 0;   // avoid releasing this address space on current_task exit
+    }
+    Task::exit();                           // current task dies
 }
 
 Task& TaskManager::get_current_task() {
-    return *current_task;
+    KLockGuard lock;    // protect running_queue
+
+    if (current_task_it != running_queue.end())
+        return *(*current_task_it);
+    else
+        return boot_task;   // if no even "idle" on running_queue, then we are still in boot "kmain" task
 }
 
 const TaskList& TaskManager::get_tasks() const {
@@ -93,10 +104,11 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
         return cpu_state;
 
     // store cpu state in current task
-    if (current_task) {
+    if (current_task_it != running_queue.end()) {
+        Task* current_task = *current_task_it;
         if (current_task->is_user_space) {
             current_task->cpu_state = (CpuState*) (cpu_state->rsp - sizeof(CpuState)); // allocate cpu state on the current task stack
-            *(current_task->cpu_state) = *cpu_state; // copy cpu state from kernel stack to task stack
+            *current_task->cpu_state = *cpu_state; // copy cpu state from kernel stack to task stack
         }
         else
             current_task->cpu_state = cpu_state;     // cpu state is already allocated and stored on task stack, just remember the pointer
@@ -112,6 +124,10 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
  */
 hardware::CpuState* TaskManager::kill_current_task() {
+    KLockGuard lock;    // protect running_queue and current_task
+
+    Task* current_task = *current_task_it;
+
     // release task resources
     close_files(*current_task);
     release_address_space(*current_task);
@@ -121,9 +137,8 @@ hardware::CpuState* TaskManager::kill_current_task() {
         enqueue_task_back(t);
 
     // remove the task itself from running queue and from memory
-    running_queue.remove(current_task);
     delete current_task;
-    current_task = nullptr;
+    running_queue.remove(current_task_it);
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
@@ -170,6 +185,8 @@ void TaskManager::release_address_space(Task& task) {
  * @return  True if "task_id" still alive, False if already terminated/not exists
  */
 bool TaskManager::wait(u32 task_id) {
+    KLockGuard lock;    // protect running_queue
+
     if (Task* t = running_queue.get_by_tid(task_id)) {
         dequeue_current_task(t->wait_queue);
         return true;
@@ -181,9 +198,10 @@ bool TaskManager::wait(u32 task_id) {
  * @brief   Take the current task out of the running queue and put it on "list"
  */
 void TaskManager::dequeue_current_task(TaskList& list) {
-    next_task = current_task->next;
-    running_queue.remove(current_task);
-    list.push_front(current_task);
+    KLockGuard lock;    // protect running_queue
+
+    list.push_front(*current_task_it);
+    running_queue.remove(current_task_it);
 }
 
 /**
@@ -191,6 +209,8 @@ void TaskManager::dequeue_current_task(TaskList& list) {
  * @note    IT MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
  */
 void TaskManager::enqueue_task_back(Task* task) {
+    KLockGuard lock;    // protect running_queue
+
     running_queue.push_front(task);
 }
 
@@ -198,14 +218,15 @@ void TaskManager::enqueue_task_back(Task* task) {
  * @brief   Choose next task to run and load its page table level4 into cr3
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
-    if (!next_task)
-        next_task = running_queue.front();
-    current_task = next_task;
-    next_task = next_task->next;
+    if (next_task_it == running_queue.end())
+        next_task_it = running_queue.begin();
 
-    u64 pml4_physical_address = current_task->pml4_phys_addr;
+    current_task_it = next_task_it;
+    next_task_it = next_task_it.get_next();
+
+    u64 pml4_physical_address = get_current_task().pml4_phys_addr;
     PageTables::load_address_space(pml4_physical_address);
 
-    return current_task->cpu_state;
+    return (*current_task_it)->cpu_state;
 }
 } // namespace multitasking {

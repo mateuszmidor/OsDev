@@ -76,11 +76,11 @@ void handle_keyboard_interrupt(const Key &key) {
         last_key = key;
 
         if (key == Key::F2) {
-            if (counter_sleep_wl.front())
-               task_manager.enqueue_task_back(counter_sleep_wl.pop_front());
+            if (Task* t = counter_sleep_wl.pop_front())
+               task_manager.enqueue_task_back(t);
         }
 
-        // 1. write key to /dev/keyboard RAM file
+        // write key to /dev/keyboard RAM file
         if (!keyboard_vfe)
             keyboard_vfe = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
 
@@ -99,14 +99,15 @@ void corner_counter() {
         u64 i = 0;
 
         while (true) {
-            if (last_key == Key::F1)
+            if ((last_key == Key::F1) && (counter_sleep_wl.count() == 0))
                 task_manager.dequeue_current_task(counter_sleep_wl);
+
 
 
             u8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
-            asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP));    // yield
+            Task::yield();
         }
     }
 }

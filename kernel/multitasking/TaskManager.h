@@ -42,10 +42,11 @@ private:
 
     static TaskManager _instance;
 
-    TaskList    running_queue;              // list of tasks that are ready to be run
-    Task*       current_task    = nullptr;  // task that is currently running
-    Task*       next_task       = nullptr;  // next task to be run
-    u32         next_task_id =  1;
+    Task                            boot_task       = Task::make_kernel_task(0xBADl, "kmain");   // represents "kmain" boot task
+    TaskList                        running_queue;                          // list of tasks that are ready to be run
+    kstd::ListIterator<Task*>       current_task_it = running_queue.end();  // task that is currently running
+    kstd::ListIterator<Task*>       next_task_it    = running_queue.end();  // next task to be run
+    u32                             next_task_id    =  1;                   // id to assign to the next task while adding
 };
 
 }
