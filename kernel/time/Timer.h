@@ -8,13 +8,19 @@
 #ifndef KERNEL_TIME_TIMER_H_
 #define KERNEL_TIME_TIMER_H_
 
+#include <functional>
 #include "types.h"
 
-namespace time {
+namespace ktime {
+
+using OnTimerExpire = std::function<void()>;
 
 class Timer {
-private:
-    u64 ticks_left;     // how many clock ticks left to expire
+public:
+    Timer(s64 ticks_left, const OnTimerExpire& on_expire) : ticks_left(ticks_left), on_expire(on_expire) {}
+
+    OnTimerExpire   on_expire;
+    s64             ticks_left;     // how many clock ticks left to expire
 };
 
 } /* namespace time */

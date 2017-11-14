@@ -27,6 +27,7 @@
 #include "BumpAllocationPolicy.h"
 #include "SysCallManager.h"
 #include "VfsManager.h"
+#include "TimeManager.h"
 #include "Sse.h"
 #include "PageTables.h"
 #include "_demos/Demo.h"
@@ -45,16 +46,18 @@ using namespace syscalls;
 using namespace utils;
 using namespace demos;
 using namespace filesystem;
+using namespace ktime;
 using namespace middlespace;
 
-MemoryManager& memory_manager       = MemoryManager::instance();
 KernelLog& klog                     = KernelLog::instance();
+MemoryManager& memory_manager       = MemoryManager::instance();
 TaskManager& task_manager           = TaskManager::instance();
 DriverManager& driver_manager       = DriverManager::instance();
 ExceptionManager& exception_manager = ExceptionManager::instance();
 InterruptManager& interrupt_manager = InterruptManager::instance();
 SysCallManager& syscall_manager     = SysCallManager::instance();
 VfsManager& vfs_manager             = VfsManager::instance();
+TimeManager& time_manager           = TimeManager::instance();
 Gdt                     gdt;
 PCIController           pcic;
 KeyboardScanCodeSet1    scs1;
@@ -66,6 +69,7 @@ VgaDriver               vga;
 Int80hDriver            int80h;
 PageFaultHandler        page_fault;
 
+const u32               PIT_FREQUENCY_HZ = 20;
 
 Key last_key;
 TaskList counter_sleep_wl;
@@ -89,6 +93,11 @@ void handle_keyboard_interrupt(const Key &key) {
             keyboard_vfe->write(&key, sizeof(key));
         }
     }
+}
+
+CpuState* handle_pit_interrupt(CpuState* cpu_state) {
+    time_manager.tick();
+    return task_manager.schedule(cpu_state);
 }
 
 /**
@@ -128,7 +137,18 @@ void run_userspace_terminal() {
         return;
     }
 
-    vga_drv->print(0, "Loading terminal, please wait a few secs...");
+    vga_drv->print(0, "Loading terminal, please wait a few secs");
+
+    auto on_expire5 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs....."); };
+    auto on_expire4 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs...."); };
+    auto on_expire1 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs."); };
+    auto on_expire2 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs.."); };
+    auto on_expire3 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs..."); };
+    time_manager.emplace(1000, on_expire1);
+    time_manager.emplace(2000, on_expire2);
+    time_manager.emplace(3000, on_expire3);
+    time_manager.emplace(4000, on_expire4);
+    time_manager.emplace(5000, on_expire5);
 
     // read elf file data
     u32 size = e->get_size();
@@ -174,8 +194,9 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     gdt.reinstall_gdt();
 
     // 4. prepare drivers
-    pit.set_channel0_hz(20);
-    pit.set_channel0_on_tick([](CpuState* cpu_state) { return task_manager.schedule(cpu_state); });
+    time_manager.set_hz(PIT_FREQUENCY_HZ);
+    pit.set_channel0_hz(PIT_FREQUENCY_HZ);
+    pit.set_channel0_on_tick(handle_pit_interrupt);
     keyboard.set_on_key_press(handle_keyboard_interrupt);
 
     // 5. install drivers

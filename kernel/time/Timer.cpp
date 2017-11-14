@@ -7,6 +7,6 @@
 
 #include "Timer.h"
 
-namespace time {
+namespace ktime {
 
 } /* namespace time */

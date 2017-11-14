@@ -18,8 +18,10 @@ namespace kstd {
 template <class T>
 class ListNode {
 public:
-    T               data  {};
-    ListNode<T>*    next  {};
+    ListNode() : next(nullptr) {}
+    ListNode(const T& data) : data(data), next(nullptr) {}
+    T               data;
+    ListNode<T>*    next;
 };
 
 /**
@@ -76,7 +78,10 @@ private:
  */
 template <class T>
 class List {
+protected:
     using ListItem = ListNode<T>;
+    ListItem*   m_head    = nullptr;
+    u32         m_count   = 0;
 
 public:
     T& front() {
@@ -162,9 +167,6 @@ public:
         return ListIterator<T>(nullptr);
     }
 
-private:
-    ListItem*   m_head    = nullptr;
-    u32         m_count   = 0;
 };
 
 } /* namespace kstd */
