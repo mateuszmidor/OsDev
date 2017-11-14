@@ -28,6 +28,7 @@ public:
     Task& get_current_task();
     const TaskList& get_tasks() const;
     u16 get_num_tasks() const;
+    hardware::CpuState* sleep_current_task(hardware::CpuState* cpu_state, u64 millis);
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
     bool wait(u32 task_id);

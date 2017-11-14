@@ -9,8 +9,10 @@
 #include "PageTables.h"
 #include "KernelLog.h"
 #include "MemoryManager.h"
+#include "TimeManager.h"
 #include "KLockGuard.h"
 
+using namespace ktime;
 using namespace memory;
 using namespace hardware;
 namespace multitasking {
@@ -98,6 +100,23 @@ const TaskList& TaskManager::get_tasks() const {
  */
 u16 TaskManager::get_num_tasks() const {
     return running_queue.count();
+}
+
+/**
+ * @brief   Sleep current task for at least "millis" milliseconds
+ * @note    Execution context: Interrupt only (in 80h)
+ */
+CpuState* TaskManager::sleep_current_task(CpuState* cpu_state, u64 millis) {
+    if (millis > 0) {
+        TaskList* tl = new TaskList();
+        dequeue_current_task(*tl);
+
+        TimeManager& mngr = TimeManager::instance();
+        auto on_expire = [=] () { enqueue_task_back(tl->pop_front()); delete tl; };
+        mngr.emplace(millis, on_expire);
+    }
+
+    return schedule(cpu_state);
 }
 
 /**

@@ -18,7 +18,7 @@ enum Interrupts : u16 {
     EXC_MAX         = 0x20,             // cpu exception count
 
     IRQ_BASE        = 0x20,             // hw interrupts start here; IRQ_BASE is defined in interrupts.S
-    Timer           = IRQ_BASE + 0,
+    PIT             = IRQ_BASE + 0,
     Keyboard        = IRQ_BASE + 1,
     Mouse           = IRQ_BASE + 12,
     PrimaryAta      = IRQ_BASE + 14,

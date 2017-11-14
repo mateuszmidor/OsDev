@@ -12,7 +12,7 @@ using namespace hardware;
 namespace drivers {
 
 s16 PitDriver::handled_interrupt_no() {
-    return Interrupts::Timer;
+    return Interrupts::PIT;
 }
 
 hardware::CpuState* PitDriver::on_interrupt(hardware::CpuState* cpu_state) {

@@ -21,17 +21,17 @@ using syscall_arg = unsigned long long;
 
 
 /**
- * @brief   Sleep current task for given amount of time
+ * @brief   Sleep current task for at least given amount of nanoseconds
  *          It must be implemented as int80h until kernel is preemptible and syscall can be suspedned
- * @note    Current implementation only reschedules CPU to another task
+ * @note    when nsec == 0, it only reschedules CPU to another task
  */
-inline int usleep(unsigned int usec) {
+inline int nsleep(unsigned int nsec) {
     syscall_res result;
 
     asm volatile(
             "int $0x80"
             : "=a"(result)
-            : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP)
+            : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP), "b"(nsec)
     );
 
     return result;
@@ -41,7 +41,7 @@ inline int usleep(unsigned int usec) {
  * @brief   Reschedule CPU to another task
  */
 inline void yield() {
-    usleep(0);
+    nsleep(0);
 }
 
 /**

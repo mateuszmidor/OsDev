@@ -163,7 +163,7 @@ Key Terminal::get_key() {
             buff[count] = '\0';
             printer->format("%", buff);
         }
-        syscalls::usleep(0);
+        syscalls::nsleep(0);
     }
 
     return key;

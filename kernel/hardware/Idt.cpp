@@ -99,7 +99,7 @@ void Idt::setup_interrupt_descriptor_table() {
         idt[i] = make_entry((u64) (ignore_interrupt));
 
     // then handle just the interrupts of interest
-    idt[Interrupts::Timer]          = make_entry((u64) (handle_interrupt_no_0x20));         // timer
+    idt[Interrupts::PIT]            = make_entry((u64) (handle_interrupt_no_0x20));         // timer
     idt[Interrupts::Keyboard]       = make_entry((u64) (handle_interrupt_no_0x21));         // keyboard
     idt[Interrupts::Mouse]          = make_entry((u64) (handle_interrupt_no_0x2C));         // mouse
     idt[Interrupts::PrimaryAta]     = make_entry((u64) (handle_interrupt_no_0x2E));         // primary ata bus

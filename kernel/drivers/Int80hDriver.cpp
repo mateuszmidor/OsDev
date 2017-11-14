@@ -29,7 +29,8 @@ hardware::CpuState* Int80hDriver::on_interrupt(hardware::CpuState* cpu_state) {
         return task_exit(cpu_state->rbx);
 
     case Int80hSysCallNumbers::NANOSLEEP:
-        return mngr.schedule(cpu_state);
+        cpu_state->rax = 0; // return value
+        return mngr.sleep_current_task(cpu_state, cpu_state->rbx / 1000 / 1000);
 
     default:
         return cpu_state;
