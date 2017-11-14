@@ -24,18 +24,20 @@ TaskManager& TaskManager::instance() {
 
 /**
  * @brief   When a task finishes its work, it jumps here for the TaskManeger to clear it from the list
+ * @note    Execution context: Task only; be careful with possible reschedule during execution of this method
  */
 void TaskManager::on_task_finished() {
+    // KLockGuard lock;    // reschedule not harmful here as no shared data is being modified
     Task::exit();
 }
 
 /**
  * @brief   Add new task to the list of scheduler tasks
- * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
  * @return  Newly added task id or 0 if max task count is reached
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
 u32 TaskManager::add_task(const Task& task) {
-    KLockGuard lock;    // protect running_queue
+    KLockGuard lock;    // prevent reschedule
 
     if (running_queue.count() >= MAX_TASKS)
         return 0;
@@ -52,28 +54,31 @@ u32 TaskManager::add_task(const Task& task) {
 /**
  * @brief   Add task that reuse tid and address space of current task, exit current task
  * @note    As a result, current_task will exit and die, its tid and address space is taken over by "task"
- * @note    To be run from Task, not from interrupt/syscall context
+ * @note    Execution context: Task only; be careful with possible reschedule during execution of this method
  */
 void TaskManager::replace_current_task(const Task& task) {
-    {
-        KLockGuard lock;    // protect running_queue and current_task
+    KLockGuard lock;    // prevent reschedule, especially between "current_task->pml4_phys_addr = 0" and "Task::exit()"
 
-        if (running_queue.count() >= MAX_TASKS)
-            return;
+    if (running_queue.count() >= MAX_TASKS)
+        return;
 
-        u32 tid = (*current_task_it)->task_id;
-        Task* t = new Task(task);
-        t->prepare(tid, TaskManager::on_task_finished);
-        running_queue.push_front(t);
+    Task* current_task = *current_task_it;
+    u32 tid = current_task->task_id;
+    Task* t = new Task(task);
+    t->prepare(tid, TaskManager::on_task_finished);
+    running_queue.push_front(t);
 
-        get_current_task().task_id = 0;          // dont allow 2 same task_id s on running_queue
-        get_current_task().pml4_phys_addr = 0;   // avoid releasing this address space on current_task exit
-    }
-    Task::exit();                           // current task dies
+    current_task->task_id = 0;          // dont allow 2 same task_id s on running_queue
+    current_task->pml4_phys_addr = 0;   // avoid releasing this address space on current_task exit
+    Task::exit();                       // current task dies
 }
 
+/**
+ * @brief   Get reference to the task currently being executer
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ */
 Task& TaskManager::get_current_task() {
-    KLockGuard lock;    // protect running_queue
+    KLockGuard lock;    // prevent reschedule
 
     if (current_task_it != running_queue.end())
         return *(*current_task_it);
@@ -81,10 +86,16 @@ Task& TaskManager::get_current_task() {
         return boot_task;   // if no even "idle" on running_queue, then we are still in boot "kmain" task
 }
 
+/**
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ */
 const TaskList& TaskManager::get_tasks() const {
     return running_queue;
 }
 
+/**
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ */
 u16 TaskManager::get_num_tasks() const {
     return running_queue.count();
 }
@@ -95,8 +106,7 @@ u16 TaskManager::get_num_tasks() const {
  * @note    cpu_state IS LOCATED ON THE KERNEL STACK AND NEEDS TO BE COPIED TO THE TASK-SPECIFIC LOCATION IF SWITCHING FROM RING 3 (USER SPACE)!!!
  *          This can be improved by storing cpu_state directly in task-specific location or using per-task kernel stack. To be done later.
  * @note    There must be always at least 1 ("idle") task
- * @note    This is supposed to be run from interrupt handling context
- * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
+ * @note    Execution context: Interrupt only (Programmable Interval Timer interrupt, int 80h interrupt)
  */
 CpuState* TaskManager::schedule(CpuState* cpu_state) {
     // nothing to schedule?
@@ -120,8 +130,7 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
 
 /**
  * @brief   Remove current task from the list and return new task to be run
- * @note    This is supposed to be run from interrupt handling context
- * @note    Should this be secured from multilevel interrupts in preemptive kernel in the future?
+ * @note    Execution context: Interrupt only (int 80h)
  */
 hardware::CpuState* TaskManager::kill_current_task() {
     KLockGuard lock;    // protect running_queue and current_task
@@ -146,6 +155,7 @@ hardware::CpuState* TaskManager::kill_current_task() {
 
 /**
  * @brief   Close all the files open for "task"
+ * @note    Execution context: Interrupt only (on kill_current_task)
  */
 void TaskManager::close_files(Task& task) {
     for (auto& f : task.files)
@@ -155,6 +165,7 @@ void TaskManager::close_files(Task& task) {
 
 /**
  * @brief   Release physical memory frames allocated for "task"
+ * @note    Execution context: Interrupt only (on kill_current_task)
  */
 void TaskManager::release_address_space(Task& task) {
     if (task.pml4_phys_addr == 0)
@@ -183,9 +194,10 @@ void TaskManager::release_address_space(Task& task) {
 /**
  * @brief   Remove current task from running_queue until "task_id" is  terminated
  * @return  True if "task_id" still alive, False if already terminated/not exists
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
 bool TaskManager::wait(u32 task_id) {
-    KLockGuard lock;    // protect running_queue
+    KLockGuard lock;    // prevent reschedule
 
     if (Task* t = running_queue.get_by_tid(task_id)) {
         dequeue_current_task(t->wait_queue);
@@ -196,9 +208,10 @@ bool TaskManager::wait(u32 task_id) {
 
 /**
  * @brief   Take the current task out of the running queue and put it on "list"
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
 void TaskManager::dequeue_current_task(TaskList& list) {
-    KLockGuard lock;    // protect running_queue
+    KLockGuard lock;   // prevent reschedule
 
     list.push_front(*current_task_it);
     running_queue.remove(current_task_it);
@@ -207,15 +220,17 @@ void TaskManager::dequeue_current_task(TaskList& list) {
 /**
  * @brief   Put the "task" back on running queue
  * @note    IT MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
 void TaskManager::enqueue_task_back(Task* task) {
-    KLockGuard lock;    // protect running_queue
+    KLockGuard lock;    // prevent reschedule
 
     running_queue.push_front(task);
 }
 
 /**
  * @brief   Choose next task to run and load its page table level4 into cr3
+ * @note    Execution context: Interrupt only (on kill_current_task, schedule)
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
     if (next_task_it == running_queue.end())
