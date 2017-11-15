@@ -41,9 +41,12 @@ public:
     s32 enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);
     void vga_cursor_setvisible(bool visible);
     void vga_cursor_setpos(u8 x, u8 y);
-    void vga_setat(u8 x, u8 y, u16 c);
-    void vga_flush_buffer(const u16* buff);
+    void vga_set_char_at(u8 x, u8 y, u16 c);
+    void vga_flush_char_buffer(const u16* buff);
     void vga_get_width_height(u16* width, u16* height);
+    void vga_enter_graphics_mode();
+    void vga_exit_graphics_mode();
+    void vga_set_pixel_at(u16 x, u16 y, u8 c);
     s64 elf_run(const char path[], const char* nullterm_argv[]);
     s64 task_wait(u32 task_id);
 

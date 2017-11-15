@@ -411,7 +411,7 @@ void SysCallHandler::vga_cursor_setpos(u8 x, u8 y) {
     }
 }
 
-void SysCallHandler::vga_setat(u8 x, u8 y, u16 c) {
+void SysCallHandler::vga_set_char_at(u8 x, u8 y, u16 c) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
         VgaCharacter* vc = (VgaCharacter*)&c;
@@ -419,7 +419,7 @@ void SysCallHandler::vga_setat(u8 x, u8 y, u16 c) {
     }
 }
 
-void SysCallHandler::vga_flush_buffer(const u16* buff) {
+void SysCallHandler::vga_flush_char_buffer(const u16* buff) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
         drv->flush_buffer((VgaCharacter*)buff);
@@ -435,6 +435,28 @@ void SysCallHandler::vga_get_width_height(u16* width, u16* height) {
     else {
         *width = 0;
         *height = 0;
+    }
+}
+
+void SysCallHandler::vga_enter_graphics_mode() {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        drv->set_graphics_mode_320_200_256();
+    }
+}
+
+void SysCallHandler::vga_exit_graphics_mode() {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        drv->set_text_mode_90_30();
+        drv->clear_screen(EgaColor::Black);
+    }
+}
+
+void SysCallHandler::vga_set_pixel_at(u16 x, u16 y, u8 c) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        drv->put_pixel(x, y, c);
     }
 }
 

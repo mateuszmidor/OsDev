@@ -192,7 +192,7 @@ void ScrollableScreenPrinter::set_at(u16 x, u16 y, VgaCharacter c) {
 }
 
 void ScrollableScreenPrinter::flush_vga_buffer() {
-    syscalls::vga_flush_buffer((u16*)vga_buffer);
+    syscalls::vga_flush_char_buffer((u16*)vga_buffer);
 }
 
 } // namespace terminal

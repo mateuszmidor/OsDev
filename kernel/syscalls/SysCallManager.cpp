@@ -95,16 +95,28 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
         syscall_handler.vga_cursor_setpos(arg1, arg2);
         return 0;
 
-    case SysCallNumbers::VGA_SET_AT:
-        syscall_handler.vga_setat(arg1, arg2, arg3);
+    case SysCallNumbers::VGA_SET_CHAR_AT:
+        syscall_handler.vga_set_char_at(arg1, arg2, arg3);
         return 0;
 
-    case SysCallNumbers::VGA_FLUSH_BUFFER:
-        syscall_handler.vga_flush_buffer((const u16*)arg1);
+    case SysCallNumbers::VGA_FLUSH_CHAR_BUFFER:
+        syscall_handler.vga_flush_char_buffer((const u16*)arg1);
         return 0;
 
     case SysCallNumbers::VGA_GET_WIDTH_HEIGHT:
         syscall_handler.vga_get_width_height((u16*)arg1, (u16*)arg2);
+        return 0;
+
+    case SysCallNumbers::VGA_ENTER_GRAPHICS_MODE:
+        syscall_handler.vga_enter_graphics_mode();
+        return 0;
+
+    case SysCallNumbers::VGA_EXIT_GRAPHICS_MODE:
+        syscall_handler.vga_exit_graphics_mode();
+        return 0;
+
+    case SysCallNumbers::VGA_SET_PIXEL_AT:
+        syscall_handler.vga_set_pixel_at(arg1, arg2, arg3);
         return 0;
 
     case SysCallNumbers::ELF_RUN:   // (char[] filename, char** argv)

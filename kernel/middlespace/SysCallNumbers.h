@@ -39,9 +39,12 @@ enum class SysCallNumbers {
     // NON-POSIX
     VGA_CURSOR_SETVISIBLE   = 500,
     VGA_CURSOR_SETPOS       = 501,
-    VGA_SET_AT              = 502,
-    VGA_FLUSH_BUFFER        = 503,
+    VGA_SET_CHAR_AT         = 502,
+    VGA_FLUSH_CHAR_BUFFER   = 503,
     VGA_GET_WIDTH_HEIGHT    = 504,
+    VGA_ENTER_GRAPHICS_MODE = 505,
+    VGA_EXIT_GRAPHICS_MODE  = 506,
+    VGA_SET_PIXEL_AT        = 507,
 
     FILE_ENUMERATE          = 600,
     ELF_RUN                 = 700,

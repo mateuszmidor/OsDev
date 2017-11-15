@@ -25,7 +25,7 @@ using syscall_arg = unsigned long long;
  *          It must be implemented as int80h until kernel is preemptible and syscall can be suspedned
  * @note    when nsec == 0, it only reschedules CPU to another task
  */
-inline int nsleep(unsigned int nsec) {
+inline int nsleep(unsigned long long nsec) {
     syscall_res result;
 
     asm volatile(
@@ -35,6 +35,15 @@ inline int nsleep(unsigned int nsec) {
     );
 
     return result;
+}
+
+/**
+ * @brief   Sleep current task for at least given amount of milliseconds
+ *          It must be implemented as int80h until kernel is preemptible and syscall can be suspedned
+ * @note    when msec == 0, it only reschedules CPU to another task
+ */
+inline int msleep(unsigned long long msec) {
+    return nsleep(msec * 1000 * 1000);
 }
 
 /**
@@ -183,16 +192,28 @@ inline void vga_cursor_setpos(unsigned int x, unsigned int y) {
     syscall(middlespace::SysCallNumbers::VGA_CURSOR_SETPOS, (syscall_arg)x, (syscall_arg)y);
 }
 
-inline void vga_setat(unsigned int x, unsigned int y, unsigned short c) {
-    syscall(middlespace::SysCallNumbers::VGA_SET_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)c);
+inline void vga_set_char_at(unsigned int x, unsigned int y, unsigned short vga_character) {
+    syscall(middlespace::SysCallNumbers::VGA_SET_CHAR_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)vga_character);
 }
 
-inline void vga_flush_buffer(const unsigned short* vga_buffer) {
-    syscall(middlespace::SysCallNumbers::VGA_FLUSH_BUFFER, (syscall_arg)vga_buffer);
+inline void vga_flush_char_buffer(const unsigned short* text_buffer) {
+    syscall(middlespace::SysCallNumbers::VGA_FLUSH_CHAR_BUFFER, (syscall_arg)text_buffer);
 }
 
 inline void vga_get_width_height(unsigned short* width, unsigned short* height) {
     syscall(middlespace::SysCallNumbers::VGA_GET_WIDTH_HEIGHT, (syscall_arg)width, (syscall_arg)height);
+}
+
+inline void vga_enter_graphics_mode() {
+    syscall(middlespace::SysCallNumbers::VGA_ENTER_GRAPHICS_MODE);
+}
+
+inline void vga_exit_graphics_mode() {
+    syscall(middlespace::SysCallNumbers::VGA_EXIT_GRAPHICS_MODE);
+}
+
+inline void vga_set_pixel_at(unsigned short x, unsigned short y, unsigned char color_index) {
+    syscall(middlespace::SysCallNumbers::VGA_SET_PIXEL_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)color_index);
 }
 
 inline s64 elf_run(const char path[], const char* nullterm_argv[]) {
