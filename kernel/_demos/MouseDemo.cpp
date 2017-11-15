@@ -60,6 +60,6 @@ void MouseDemo::on_mouse_move(s8 dx, s8 dy) {
 
 void MouseDemo::swap_fg_bg_at(u16 x, u16 y) {
     VgaCharacter c = vga->at(x, y);
-    vga->at(x, y) = VgaCharacter {.character = c.character, .fg_color = c.bg_color, .bg_color = c.fg_color};
+    vga->at(x, y) = VgaCharacter {.character = (u8)c.character, .fg_color = c.bg_color, .bg_color = c.fg_color};
 }
 } /* namespace demos */
