@@ -19,33 +19,17 @@ CpuState* VgaDriver::on_interrupt(CpuState* cpu_state) {
     return cpu_state;
 }
 
-void VgaDriver::set_text_mode_80_25() {
-    u8 g_80x25_text[] =
-    {
-    /* MISC */
-        0x67,
-    /* SEQ */
-        0x03, 0x00, 0x03, 0x00, 0x02,
-    /* CRTC */
-        0x5F, 0x4F, 0x50, 0x82, 0x55, 0x81, 0xBF, 0x1F,
-        0x00, 0x4F, 0x0D, 0x0E, 0x00, 0x00, 0x00, 0x50,
-        0x9C, 0x0E, 0x8F, 0x28, 0x1F, 0x96, 0xB9, 0xA3,
-        0xFF,
-    /* GC */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0E, 0x00,
-        0xFF,
-    /* AC */
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
-        0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
-        0x0C, 0x00, 0x0F, 0x08, 0x00
-    };
-
-    write_registers(g_80x25_text);
-    width = 80;
-    height = 25;
-}
-
 void VgaDriver::set_text_mode_90_30() {
+    if (width == 90 && height == 30)
+        return;
+
+    // restore framebuffer_segment contents; seems that VGA font is keept there
+    if (framebuffer_segment && framebuffer_segment_copy) {
+        memcpy(framebuffer_segment, framebuffer_segment_copy, width * height);
+        delete[] framebuffer_segment_copy;
+        framebuffer_segment_copy = nullptr;
+    }
+
     // http://files.osdev.org/mirrors/geezer/osd/graphics/modes.c
     u8 g_90x30_text[] =
     {
@@ -68,11 +52,15 @@ void VgaDriver::set_text_mode_90_30() {
     };
 
     write_registers(g_90x30_text);
+
     width = 90;
     height = 30;
 }
 
 void VgaDriver::set_graphics_mode_320_200_256() {
+    if (width == 320 && height == 200)
+        return;
+
     // http://files.osdev.org/mirrors/geezer/osd/graphics/modes.c
     u8 g_320x200x256[] =
     {
@@ -97,13 +85,18 @@ void VgaDriver::set_graphics_mode_320_200_256() {
     write_registers(g_320x200x256);
     width = 320;
     height = 200;
+
+    // make copy of framebuffer_segment; seems that VGA font is keept there
+    framebuffer_segment = get_framebuffer_segment();
+    framebuffer_segment_copy = new u8[width*height];
+    memcpy(framebuffer_segment_copy, framebuffer_segment, width*height);
 }
 
 void VgaDriver::put_pixel(u16 x, u16 y, u8 color_index) const {
-    if (x >= width || y > height)
+    if (x >= width || y >= height || !framebuffer_segment)
         return;
 
-    u8* ptr = get_framebuffer_segment() + y * width + x;
+    u8* ptr = framebuffer_segment + y * width + x;
     *ptr = color_index;
 }
 
@@ -146,6 +139,7 @@ void VgaDriver::set_cursor_pos(u8 x, u8 y) {
    cursor_cmd_port.write(0x0E);
    cursor_data_port.write(position >> 8);
 }
+
 /**
  * screen_width
  * @return  Num columns (text mode), num pixels (graphics mode)

@@ -19,7 +19,6 @@ public:
     static s16 handled_interrupt_no();
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
-    void set_text_mode_80_25();
     void set_text_mode_90_30();
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
@@ -38,6 +37,8 @@ private:
     void write_registers(u8* registers) const;
     u8* get_framebuffer_segment() const;
 
+    u8* framebuffer_segment                             {nullptr};
+    u8* framebuffer_segment_copy                        {nullptr};
     VgaCharacter* const vga                             {(VgaCharacter*)0xFFFFFFFF800b8000};
     u16 width                                           {80};  // in characters (text mode)
     u16 height                                          {25};  // in characters (text mode)
