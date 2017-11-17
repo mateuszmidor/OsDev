@@ -25,6 +25,7 @@
 #include "PageFaultHandler.h"
 #include "MemoryManager.h"
 #include "BumpAllocationPolicy.h"
+#include "WyoosAllocationPolicy.h"
 #include "SysCallManager.h"
 #include "VfsManager.h"
 #include "TimeManager.h"
