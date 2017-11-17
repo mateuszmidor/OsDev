@@ -211,6 +211,14 @@ void TaskManager::release_address_space(Task& task) {
 }
 
 /**
+ * @brief   Get dummy boot task, just so there is always some TaskManager::get_current_task() result
+ */
+Task TaskManager::get_boot_task() const {
+    // boot task is not subject to scheduling so we can use 0xBAD for poitners to entry point, stack
+    return Task((TaskEntryPoint2)0xBAD, "boot", 0, 0, false, 0xBAD, 0xBAD, 0, "");
+}
+
+/**
  * @brief   Remove current task from running_queue until "task_id" is  terminated
  * @return  True if "task_id" still alive, False if already terminated/not exists
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
