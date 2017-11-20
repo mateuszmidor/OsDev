@@ -165,7 +165,7 @@ namespace filesystem {
  */
 class VolumeFat32 {
 public:
-    VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors);
+    VolumeFat32(const drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors);
     kstd::string get_label() const;
     kstd::string get_type() const;
     u32 get_size_in_bytes() const;
@@ -183,15 +183,14 @@ private:
     Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& name) const;
     Fat32Entry empty_entry() const;
 
-    logging::KernelLog&     klog;
-    drivers::AtaDevice&     hdd;    // AtaDevice is held by AtaPrimaryBusDriver/AtaSecondaryBusDriver that never goes away so reference is ok
-    VolumeBootRecordFat32   vbr;
-    Fat32Table              fat_table;
-    Fat32Data               fat_data;
-
-    bool bootable;
-    u32 partition_offset_in_sectors;
-    u32 partition_size_in_sectors;
+    const drivers::AtaDevice    hdd;
+    logging::KernelLog&         klog;
+    VolumeBootRecordFat32       vbr;
+    Fat32Table                  fat_table;
+    Fat32Data                   fat_data;
+    bool                        bootable;
+    u32                         partition_offset_in_sectors;
+    u32                         partition_size_in_sectors;
 };
 
 } /* namespace filesystem */

@@ -15,7 +15,7 @@ namespace filesystem {
 
 class Fat32Table {
 public:
-    Fat32Table(drivers::AtaDevice& hdd);
+    Fat32Table(const drivers::AtaDevice& hdd);
     void setup(u32 fat_start_in_sectors, u16 sector_size, u8 sectors_per_cluster, u32 fat_size_in_sectors);
 
     u32 get_used_space_in_clusters() const;
@@ -42,13 +42,13 @@ private:
     bool read_fat_table_sector(u32 sector, void* data, u32 size) const;
     bool write_fat_table_sector(u32 sector, void const* data, u32 size) const;
 
-    logging::KernelLog& klog;
-    drivers::AtaDevice& hdd;
-    u16                 fat_entries_per_sector  = 0;
-    u32                 fat_start_in_sectors    = 0;
-    u32                 fat_size_in_sectors     = 0;
-    u16                 bytes_per_sector        = 0;
-    u8                  sectors_per_cluster     = 0;
+    const drivers::AtaDevice    hdd;
+    logging::KernelLog&         klog;
+    u16                         fat_entries_per_sector  = 0;
+    u32                         fat_start_in_sectors    = 0;
+    u32                         fat_size_in_sectors     = 0;
+    u16                         bytes_per_sector        = 0;
+    u8                          sectors_per_cluster     = 0;
 };
 
 } /* namespace filesystem */

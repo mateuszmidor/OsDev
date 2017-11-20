@@ -14,18 +14,18 @@ using kstd::enum_to_str;
 
 namespace filesystem {
 
-MasterBootRecord MassStorageMsDos::read_mbr(drivers::AtaDevice& hdd) {
+MasterBootRecord MassStorageMsDos::read_mbr(const drivers::AtaDevice& hdd) {
     MasterBootRecord mbr;
     hdd.read28(0, &mbr, sizeof(mbr));
     return mbr;
 }
 
-bool MassStorageMsDos::verify(AtaDevice& hdd) {
+bool MassStorageMsDos::verify(const AtaDevice& hdd) {
     MasterBootRecord mbr = read_mbr(hdd);
     return mbr.magic_number == MasterBootRecord::MAGIC_NUMBER;
 }
 
-MassStorageMsDos::MassStorageMsDos(AtaDevice& hdd) {
+MassStorageMsDos::MassStorageMsDos(const AtaDevice& hdd) {
     // check this is truly MBR formatted device
     if (!verify(hdd))
         return;

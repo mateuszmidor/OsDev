@@ -38,14 +38,14 @@ public:
 private:
     u32 get_cluster_for_write();
 
+    const Fat32Table    fat_table;
+    const Fat32Data     fat_data;
+    logging::KernelLog& klog;
     u32                 head_cluster;
     u32                 tail_cluster;
     u32                 current_cluster;
     u32                 current_byte;
     u32                 size;
-    logging::KernelLog& klog;
-    const Fat32Table&   fat_table;
-    const Fat32Data&    fat_data;
 
 };
 

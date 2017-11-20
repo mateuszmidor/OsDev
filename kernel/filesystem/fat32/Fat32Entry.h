@@ -85,9 +85,9 @@ private:
     u8 get_entries_per_sector() const;
     void alloc_dot_dot_entries();
 
+    const Fat32Table   fat_table;
+    const Fat32Data    fat_data;
     logging::KernelLog& klog;
-    const Fat32Table&   fat_table;
-    const Fat32Data&    fat_data;
 
     // entry meta data
     kstd::string        name;

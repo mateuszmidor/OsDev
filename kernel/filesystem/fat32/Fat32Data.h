@@ -18,7 +18,7 @@ namespace filesystem {
  */
 class Fat32Data {
 public:
-    Fat32Data(drivers::AtaDevice& hdd);
+    Fat32Data(const drivers::AtaDevice& hdd);
     void setup(u32 data_start, u16 bytes_per_sector, u8 sectors_per_cluster);
 
     bool read_data_sector(u32 cluster, u8 sector_in_cluster, void* data, u32 size) const;
@@ -33,10 +33,10 @@ public:
     u8 get_sectors_per_cluster() const { return sectors_per_cluster; }
 
 private:
-    drivers::AtaDevice& hdd;
-    u32 data_start_in_sectors   = 0;
-    u16 bytes_per_sector        = 0;
-    u8 sectors_per_cluster      = 0;
+    const drivers::AtaDevice    hdd;
+    u32                         data_start_in_sectors   = 0;
+    u16                         bytes_per_sector        = 0;
+    u8                          sectors_per_cluster      = 0;
 
 };
 

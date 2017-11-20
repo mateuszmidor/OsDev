@@ -30,7 +30,7 @@ hardware::CpuState* AtaDevice::on_interrupt(hardware::CpuState* cpu_state) {
     return cpu_state;
 }
 
-bool AtaDevice::is_present() {
+bool AtaDevice::is_present() const {
     device_port.write(is_master ? 0xA0 : 0xB0);
     sector_count_port.write(0);
     lba_lo_port.write(0);
@@ -57,7 +57,7 @@ bool AtaDevice::is_present() {
     return true;
 }
 
-bool AtaDevice::read28(u32 sector, void* data, u32 count) {
+bool AtaDevice::read28(u32 sector, void* data, u32 count) const {
     const u32 SECTOR_LIMIT = 1 << 28;
     KernelLog& klog = KernelLog::instance();
     u8* dst = (u8*)data;
@@ -100,7 +100,7 @@ bool AtaDevice::read28(u32 sector, void* data, u32 count) {
     return true;
 }
 
-bool AtaDevice::write28(u32 sector, void const* data, u32 count) {
+bool AtaDevice::write28(u32 sector, void const* data, u32 count) const {
     const u32 SECTOR_LIMIT = 1 << 28;
     KernelLog& klog = KernelLog::instance();
     u8 const* dst = (u8*)data;
@@ -142,7 +142,7 @@ bool AtaDevice::write28(u32 sector, void const* data, u32 count) {
     return flush_cache();
 }
 
-bool AtaDevice::flush_cache() {
+bool AtaDevice::flush_cache() const {
     KernelLog& klog = KernelLog::instance();
 
     device_port.write(is_master ? 0xE0 : 0xF0);
@@ -165,7 +165,7 @@ bool AtaDevice::flush_cache() {
 /**
  * Instead of polling, interrupts should be used for better performance
  */
-u8 AtaDevice::poll_ata_device() {
+u8 AtaDevice::poll_ata_device() const {
     u8 status = cmd_status_port.read();
     if (status == 0x00)
         return 0;

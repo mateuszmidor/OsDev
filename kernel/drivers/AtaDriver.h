@@ -22,28 +22,28 @@ public:
     AtaDevice(u16 port_base, bool is_master);
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state);
 
-    bool is_present();
-    bool read28(u32 sector, void* data, u32 count);
-    bool write28(u32 sector, void const* data, u32 count);
-    bool flush_cache();
+    bool is_present() const;
+    bool read28(u32 sector, void* data, u32 count) const;
+    bool write28(u32 sector, void const* data, u32 count) const;
+    bool flush_cache() const;
 
     static const u16 BYTES_PER_SECTOR          {512};
     static const u16 PRIMARY_BUS_PORT_BASE     {0x1F0};     // interrupt_no 14
     static const u16 SECONDARY_BUS_PORT_BASE   {0x170};     // interrupt_no 15
 
 private:
-    u8 poll_ata_device();
+    u8 poll_ata_device() const;
 
-    hardware::Port16bit   data_port;
-    hardware::Port8bit    error_port;
-    hardware::Port8bit    sector_count_port;
-    hardware::Port8bit    lba_lo_port;
-    hardware::Port8bit    lba_mi_port;
-    hardware::Port8bit    lba_hi_port;
-    hardware::Port8bit    device_port;
-    hardware::Port8bit    cmd_status_port;
-    hardware::Port8bit    control_port;
-    bool        is_master;  // master/slave drive
+    hardware::Port16bit data_port;
+    hardware::Port8bit  error_port;
+    hardware::Port8bit  sector_count_port;
+    hardware::Port8bit  lba_lo_port;
+    hardware::Port8bit  lba_mi_port;
+    hardware::Port8bit  lba_hi_port;
+    hardware::Port8bit  device_port;
+    hardware::Port8bit  cmd_status_port;
+    hardware::Port8bit  control_port;
+    bool                is_master;  // master/slave drive
 
     const u8    CMD_IDENTIFY        = 0xEC;
     const u8    CMD_READ_SECTORS    = 0x20;

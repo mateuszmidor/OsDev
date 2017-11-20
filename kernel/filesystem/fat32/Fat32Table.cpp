@@ -9,7 +9,7 @@
 
 namespace filesystem {
 
-Fat32Table::Fat32Table(drivers::AtaDevice& hdd) :
+Fat32Table::Fat32Table(const drivers::AtaDevice& hdd) :
     hdd(hdd),
     klog(logging::KernelLog::instance()) {
 }

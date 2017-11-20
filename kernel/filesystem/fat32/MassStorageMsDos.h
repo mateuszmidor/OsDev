@@ -47,12 +47,12 @@ struct MasterBootRecord {
  */
 class MassStorageMsDos {
 public:
-    static bool verify(drivers::AtaDevice& hdd);
-    MassStorageMsDos(drivers::AtaDevice& hdd);
+    static bool verify(const drivers::AtaDevice& hdd);
+    MassStorageMsDos(const drivers::AtaDevice& hdd);
     kstd::vector<VolumeFat32>& get_volumes();
 
 private:
-    static MasterBootRecord read_mbr(drivers::AtaDevice& hdd);
+    static MasterBootRecord read_mbr(const drivers::AtaDevice& hdd);
 
     // see https://www.win.tue.nl/~aeb/partitions/partition_types-1.html
     static const u8 PARTITION_TYPE_NONE     = 0x00;

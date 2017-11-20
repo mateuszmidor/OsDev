@@ -12,7 +12,7 @@
 using namespace kstd;
 namespace filesystem {
 
-Fat32Data::Fat32Data(drivers::AtaDevice& hdd) :
+Fat32Data::Fat32Data(const drivers::AtaDevice& hdd) :
     hdd(hdd) {
 }
 

@@ -19,7 +19,7 @@ namespace filesystem {
  * @param   partition_offset_in_sectors Where the volume data starts on the device
  * @param   partition_size_in_sectors How big the volume is
  */
-VolumeFat32::VolumeFat32(drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors) :
+VolumeFat32::VolumeFat32(const drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors) :
         hdd(hdd),
         bootable(bootable),
         partition_offset_in_sectors(partition_offset_in_sectors),
