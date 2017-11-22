@@ -224,6 +224,7 @@ void run_userspace_terminal() {
     time_manager.emplace(4000, on_expire4);
     time_manager.emplace(5000, on_expire5);
 
+
     // read elf file data
     u32 size = e->get_size();
     u8* elf_data = new u8[size];
@@ -256,8 +257,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     Sse::activate_legacy_sse();
     PageTables::map_and_load_kernel_address_space_at_memory_start();
 
-    // 1. initialize multiboot2 info from the data provided by the boot loader, then setup dynamic memory manager.
-    // This must be done before global constructors are run since global constructors may require dynamic memory
+    // 1. initialize multiboot2 info from the data provided by the boot loader
     Multiboot2::initialize(multiboot2_info_ptr);
 
     // 2. run constructors of global objects
@@ -288,7 +288,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts(); // Dynamic memory "new" available from here, as page_fault handler installed and active
-    MemoryManager::install_allocation_policy<BumpAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
+    MemoryManager::install_allocation_policy<WyoosAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
 
     // 8. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
