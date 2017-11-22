@@ -7,7 +7,9 @@
 
 #include "MemoryManager.h"
 #include "HigherHalf.h"
+#include "KLockGuard.h"
 
+using namespace multitasking;
 namespace memory {
 
 MemoryManager MemoryManager::_instance;
@@ -17,6 +19,8 @@ AllocationPolicy* MemoryManager::allocation_policy;
  * @brief   Global kernel malloc
  */
 void* kmalloc(size_t size) {
+    KLockGuard lock;    // prevent reschedule
+
     MemoryManager& mm = MemoryManager::instance();
     return mm.alloc_virt_memory(size);
 }
@@ -38,6 +42,8 @@ MemoryManager& MemoryManager::instance() {
  * @note    Allocated memory chunk physical address on success, nullptr on failure
  */
 void* MemoryManager::alloc_frames(size_t size) const {
+    KLockGuard lock;    // prevent reschedule
+
     ssize_t phys_addr = FrameAllocator::alloc_consecutive_frames(size);
     if (phys_addr == -1)
         return nullptr;
@@ -50,6 +56,8 @@ void* MemoryManager::alloc_frames(size_t size) const {
  *          A number of frames necessary to hold "size" bytes will be freed
  */
 void MemoryManager::free_frames(void* address, size_t size) const {
+    KLockGuard lock;    // prevent reschedule
+
     FrameAllocator::free_consecutive_frames((size_t)address, size);
 }
 
@@ -65,6 +73,8 @@ void* MemoryManager::alloc_virt_memory(size_t size) const {
  * @brief   Release memory block located at virtual address
  */
 void MemoryManager::free_virt_memory(void* virtual_address) const {
+    KLockGuard lock;    // prevent reschedule
+
     if (!virtual_address)
         return;
 
@@ -75,6 +85,8 @@ void MemoryManager::free_virt_memory(void* virtual_address) const {
  * @brief   Get amount of memory left for dynamic allocation.
  */
 size_t MemoryManager::get_free_memory_in_bytes() const {
+    KLockGuard lock;    // prevent reschedule
+
     return allocation_policy->free_memory_in_bytes();
 }
 
@@ -84,6 +96,8 @@ size_t MemoryManager::get_free_memory_in_bytes() const {
  *          since the first megabytes are used for kernel code/data and multiboot2 structures (eg. 0..2MB in release build, 0..7MB in debug build)
  */
 size_t MemoryManager::get_total_memory_in_bytes() const {
+    KLockGuard lock;    // prevent reschedule
+
     return allocation_policy->total_memory_in_bytes();
 }
 

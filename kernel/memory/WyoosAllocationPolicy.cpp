@@ -6,11 +6,9 @@
  */
 
 #include "Assert.h"
-#include "KLockGuard.h"
 #include "WyoosAllocationPolicy.h"
 
 using namespace utils;
-using namespace multitasking;
 namespace memory {
 
 /**
@@ -32,8 +30,6 @@ WyoosAllocationPolicy::WyoosAllocationPolicy(size_t first_byte, size_t last_byte
  * @brief   Find and alloc MemoryChunk that can accomodate "size" bytes
  */
 void* WyoosAllocationPolicy::alloc_bytes(size_t size) {
-    KLockGuard lock;    // prevent reschedule
-
     MemoryChunk* curr = m_head;
     while (curr) {
         if (!curr->is_allocated() && (curr->size >= size)) { // free chunk that is big enough found
@@ -82,8 +78,6 @@ void WyoosAllocationPolicy::split_chunk_if_worthwhile(MemoryChunk* c, size_t cho
  * @brief   Release and possibly merge chunk of memory, if valid
  */
 void WyoosAllocationPolicy::free_bytes(void* address) {
-    KLockGuard lock;    // prevent reschedule
-
     MemoryChunk* c = MemoryChunk::from_data(address);
     if (!c->is_valid()) {
 //       "Invalid address given to free\n";
@@ -124,8 +118,6 @@ void WyoosAllocationPolicy::merge_chunks_if_possible(MemoryChunk* c1, MemoryChun
  * @brief   Calc total free memory that is contained in unallocated chunks
  */
 size_t WyoosAllocationPolicy::free_memory_in_bytes() {
-    KLockGuard lock;    // prevent reschedule
-
     size_t total_free = 0;
     MemoryChunk* curr = m_head;
     while (curr) {
