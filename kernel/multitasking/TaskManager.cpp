@@ -165,8 +165,12 @@ hardware::CpuState* TaskManager::kill_current_task() {
         enqueue_task_back(t);
 
     // remove the task itself from running queue and from memory
-    delete current_task;
     running_queue.remove(current_task_it);
+
+    // delete kernelspace stack. userspace stack is removed with task address space
+    if (!current_task->is_user_space)
+        delete[] (u8*)current_task->stack_addr;
+    delete current_task;
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
