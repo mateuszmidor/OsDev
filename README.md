@@ -14,7 +14,7 @@ Credits to the authors!
  + GRUB2 bootable
  + 64 bit kernel
  + memory paging (2MB pages) and on-page-fault allocator
- + dynamic memory (simple bump allocator for now)
+ + dynamic memory (linked list of free and allocated memory chunks)
  + higher-half (kernel mapped at virt. 0xFFFFFFFF80000000; dynamic memory allocation starts at virt. 0xFFFFFFFFC0000000)
  + multitasking
  + kernel/user space (with kernel memory protected from user-space access)
