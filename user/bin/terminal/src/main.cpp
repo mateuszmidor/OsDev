@@ -16,4 +16,5 @@ int main(int argc, char* argv[]) {
     Terminal t(0);
     t.run();
     print("Goodbye terminal");
+    return 0;
 }

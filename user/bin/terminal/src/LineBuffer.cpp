@@ -11,7 +11,7 @@ namespace terminal {
 
 LineBuffer::LineBuffer() {
     // add first, empty line to the buffer
-    lines.push_back("");
+    newline();
 }
 
 u32 LineBuffer::count() const {
@@ -20,6 +20,7 @@ u32 LineBuffer::count() const {
 
 void LineBuffer::clear() {
     lines.clear();
+    newline();
 }
 
 void LineBuffer::push_back(const ustd::string& line) {
@@ -27,10 +28,7 @@ void LineBuffer::push_back(const ustd::string& line) {
 }
 
 void LineBuffer::putc(char c) {
-    if (lines.empty())
-        lines.push_back("c");
-    else
-        lines.back().push_back(c);
+    lines.back().push_back(c);
 }
 
 void LineBuffer::backspace() {
@@ -41,7 +39,7 @@ void LineBuffer::backspace() {
         lines.back().pop_back();    // remove last character from the line
 }
 
-void LineBuffer:: newline() {
+void LineBuffer::newline() {
     lines.push_back("");
 }
 
