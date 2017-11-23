@@ -13,6 +13,7 @@
 #include "SysCallNumbers.h"
 #include "FsEntry.h"
 #include "posix/posix.h"
+#include <errno.h>
 
 namespace syscalls {
 

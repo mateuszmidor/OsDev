@@ -7,7 +7,7 @@
 
 #include "_start.h"
 #include "utils.h"
-
+#include "StringUtils.h"
 
 /**
  * @brief   Entry point
@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 
     int result = 0;
     for (int i = 1; i < argc; i++)
-        result += str_to_long(argv[i]);
+        result += ustd::StringUtils::to_int(argv[i]);
 
     return result;
 }

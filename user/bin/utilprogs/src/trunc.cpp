@@ -8,6 +8,7 @@
 
 #include "_start.h"
 #include "utils.h"
+#include "StringUtils.h"
 
 const u32 MAX_CHARS = 90;
 char buff[MAX_CHARS];
@@ -16,6 +17,8 @@ const char ERROR_NO_INPUT[]         = "trunc: please specify filename and new fi
 const char ERROR_FILE_IS_DIR[]      = "trunc: specified filename points to a directory\n";
 const char ERROR_FILE_NOT_EXISTS[]  = "trunc: specified file does not exist\n";
 const char ERROR_TRUNC_ERROR[]      = "trunc: file truncate error\n";
+
+using namespace ustd;
 
 /**
  * @brief   Entry point
@@ -29,7 +32,7 @@ int main(int argc, char* argv[]) {
 
     const char* filename = argv[1];
     const char* newsizestr = argv[2];
-    long newsize = str_to_long(newsizestr);
+    long newsize = StringUtils::to_int(newsizestr);
 
     struct stat s;
     if (syscalls::stat(filename, &s) < 0 ) {

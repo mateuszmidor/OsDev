@@ -7,6 +7,7 @@
 
 #include "_start.h"
 #include "utils.h"
+#include "StringUtils.h"
 
 /**
  * @brief   Entry point
@@ -16,6 +17,6 @@ int main(int argc, char* argv[]) {
     if (argc < 2)
         return 1;
 
-    int value = str_to_long(argv[1]);
+    int value = ustd::StringUtils::to_int(argv[1]);
     return value * value;
 }

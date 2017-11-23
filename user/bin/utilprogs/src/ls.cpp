@@ -9,21 +9,18 @@
 #include "_start.h"
 #include "ustd.h"
 #include "utils.h"
-
+#include "StringUtils.h"
 
 const char ERROR_PATH_NOT_EXISTS[]  = "ls: path doesnt exist\n";
 const char ERROR_OPENING_DIR[]      = "ls: cant open specified directory\n";
 char buff[256];
-char size_str[12];
 
-using namespace ustd;
 using namespace middlespace;
 
 void print_file(const char name[], u32 size) {
-    long_to_str(size, 10, size_str);
     print(name);
     print(" - ");
-    print(size_str);
+    print(ustd::StringUtils::from_int(size).c_str());
     print(" bytes \n");
 }
 

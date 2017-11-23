@@ -8,6 +8,7 @@
 #include "cd.h"
 #include "ustd.h"
 #include "syscalls.h"
+#include "StringUtils.h"
 
 using namespace ustd;
 
@@ -85,7 +86,7 @@ void cd::cd_directory(const string& path) {
  * @return      Normalized path without starting slash
  */
 string cd::normalize_path(const string& path) const {
-    auto segments = split_string(path, '/');
+    auto segments = StringUtils::split_string(path, '/');
     vector<string> out;
 
     for (const auto& s : segments) {
@@ -100,7 +101,7 @@ string cd::normalize_path(const string& path) const {
             out.push_back(s);
 
     }
-    return join_string("/", out);
+    return StringUtils::join_string("/", out);
 }
 
 } /* namespace cmds */

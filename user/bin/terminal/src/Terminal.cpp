@@ -6,6 +6,7 @@
  */
 
 #include "Terminal.h"
+#include "StringUtils.h"
 //#include "cmds/df.h"
 //#include "cmds/ps.h"
 #include "cmds/cd.h"
@@ -86,8 +87,8 @@ void Terminal::install_external_commands(const string& dir) {
         if (e.is_directory)
             continue;
 
-        string cmd_absolute_path = format("%/%", dir, e.name);
-        string lowercase_name = to_lower_case(e.name);
+        string cmd_absolute_path = StringUtils::format("%/%", dir, e.name);
+        string lowercase_name = StringUtils::to_lower_case(e.name);
         printer->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
         install_cmd(new cmds::specificelfrun(&env, cmd_absolute_path), lowercase_name);
     }
@@ -235,7 +236,7 @@ void Terminal::process_cmd(const string& cmd) {
     if (cmd.empty())
         return;
 
-    auto cmd_args = ustd::split_string(cmd, ' ');
+    auto cmd_args = ustd::StringUtils::split_string(cmd, ' ');
     if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
         env.cmd_args = cmd_args;
         task->run();

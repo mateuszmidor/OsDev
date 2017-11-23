@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "StringUtils.h"
 #include "CommandLineInput.h"
 #include "syscalls.h"
 
@@ -119,7 +120,7 @@ std::tuple<bool, string> CommandLineInput::command_filter(const string& pattern)
     else if (found.size() == 1)
         return std::make_tuple(false, found.back());
     else
-        return std::make_tuple(true, ustd::join_string(" ", found));
+        return std::make_tuple(true, ustd::StringUtils::join_string(" ", found));
 }
 
 std::tuple<bool, string, string> CommandLineInput::folder_filter(const string& cwd, const string& param) {
@@ -194,7 +195,7 @@ std::tuple<bool, string, string> CommandLineInput::folder_filter(const string& c
     else if (found.size() == 1)
         return std::make_tuple(false, found.back(), common_pattern);
     else
-        return std::make_tuple(true, ustd::join_string(" ", found), common_pattern);
+        return std::make_tuple(true, ustd::StringUtils::join_string(" ", found), common_pattern);
 
 }
 } /* namespace terminal */

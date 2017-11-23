@@ -11,6 +11,7 @@
 #include "Cursor.h"
 #include "LineBuffer.h"
 #include "VgaCharacter.h"
+#include "StringUtils.h"
 
 namespace terminal {
 
@@ -32,7 +33,7 @@ public:
      */
     template<typename ... Args>
     void format(const ustd::string& fmt, Args ... args) {
-        const ustd::string& str = ustd::format(fmt, args...);
+        const ustd::string& str = ustd::StringUtils::format(fmt, args...);
         for (const char& c : str)
             putc(c);
         redraw();
