@@ -7,11 +7,13 @@
 
 
 #include "_start.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 
 const char ERROR_NO_INPUT[]     = "mv: please provide source and destination names\n";
 const char ERROR_CANT_MOVE[]    = "mv: cant move given entities\n";
 
+using namespace ustd;
 
 /**
  * @brief   Entry point
@@ -19,7 +21,7 @@ const char ERROR_CANT_MOVE[]    = "mv: cant move given entities\n";
  */
 int main(int argc, char* argv[]) {
     if (argc < 3) {
-        print(ERROR_NO_INPUT);
+        cout::print(ERROR_NO_INPUT);
         return 1;
     }
 
@@ -28,7 +30,7 @@ int main(int argc, char* argv[]) {
 
     int result = syscalls::rename(old_path, new_path);
     if (result < 0) {
-        print(ERROR_CANT_MOVE);
+        cout::print(ERROR_CANT_MOVE);
         return 1;
     }
 

@@ -7,12 +7,14 @@
 
 
 #include "_start.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 
 char buff[1024*1024];
 const char ERROR_NO_INPUT_FILE[]    = "cat: please specify file name\n";
 const char ERROR_OPENING_FILE[]     = "cat: cant open specified file\n";
 
+using namespace ustd;
 
 /**
  * @brief   Entry point
@@ -20,7 +22,7 @@ const char ERROR_OPENING_FILE[]     = "cat: cant open specified file\n";
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        print(ERROR_NO_INPUT_FILE);
+        cout::print(ERROR_NO_INPUT_FILE);
         return 1;
     }
 
@@ -28,15 +30,15 @@ int main(int argc, char* argv[]) {
 
     int fd = syscalls::open(path);
     if (fd < 0) {
-        print(ERROR_OPENING_FILE);
+        cout::print(ERROR_OPENING_FILE);
         return 1;
     }
 
     ssize_t total = 0;
     ssize_t count;
-    print("\n");
+    cout::print("\n");
     while ((count = syscalls::read(fd, buff, sizeof(buff))) > 0) {
-        print(buff, count);
+        cout::print(buff, count);
         total += count;
     }
 

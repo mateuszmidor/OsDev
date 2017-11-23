@@ -6,9 +6,10 @@
  */
 
 #include "_start.h"
-#include "utils.h"
+#include "Cout.h"
 #include "StringUtils.h"
 
+using namespace ustd;
 /**
  * @brief   Recursive Fibonacci; tests stack well
  */
@@ -25,14 +26,12 @@ int fib_rec(int n) {
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        print("fibb: please provide number to calc fibonacci for\n");
+        cout::print("fibb: please provide number to calc fibonacci for\n");
         return 1;
     }
 
     int result = fib_rec(ustd::StringUtils::to_int(argv[1]));
+    cout::format("Fibonacci result: %\n", result);
 
-    print("Fibonacci result: ");
-    print(ustd::StringUtils::from_int(result).c_str());
-    print("\n");
     return 0;
 }

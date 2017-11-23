@@ -7,15 +7,12 @@
 
 
 #include "_start.h"
-#include "utils.h"
 #include "Terminal.h"
 
-using namespace ustd;
 using namespace terminal;
 
 int main(int argc, char* argv[]) {
     Terminal t(0);
     t.run();
-    print("Goodbye terminal");
     return 0;
 }

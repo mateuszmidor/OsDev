@@ -6,8 +6,10 @@
  */
 
 #include "_start.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 
+using namespace ustd;
 
 /**
  * @brief   Entry point
@@ -15,25 +17,23 @@
  */
 int main(int argc, char* argv[]) {
     const auto SECOND = 1000*1000*1000;
-    print("Sleep demo 1...");
+
+    cout::print("Sleep demo 1...");
     syscalls::nsleep(SECOND);
 
-    print("2...");
+    cout::print("2...");
     syscalls::nsleep(SECOND);
 
-    print("3...");
+    cout::print("3...");
     syscalls::nsleep(SECOND);
 
-    print("4...");
+    cout::print("4...");
     syscalls::nsleep(SECOND);
 
-    print("5...");
+    cout::print("5...");
     syscalls::nsleep(SECOND);
 
-    print("done.");
+    cout::print("done.");
 
     return 0;
 }
-
-
-

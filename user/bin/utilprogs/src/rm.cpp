@@ -6,13 +6,16 @@
  */
 
 #include "_start.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 
 const char ERROR_NO_INPUT_FILE[]    = "rm: please provide directory path, optionally '-d'. Eg. rm -r DIR\n";
 const char ERROR_DOESNT_EXIST[]     = "rm: given filename doesnt exist\n";
 const char ERROR_DIRECTORY[]        = "rm: given filename points to a directory. Use '-d'\n";
 const char ERROR_CANT_REMOVE_FILE[] = "rm: cant remove given file\n";
 const char ERROR_CANT_REMOVE_DIR[]  = "rm: cant remove given directory\n";
+
+using namespace ustd;
 
 bool exists(const char filename[]) {
     struct stat s;
@@ -31,7 +34,7 @@ bool is_directory(const char filename[]) {
 int rm_file(const char path[]) {
     int result = syscalls::unlink(path);
     if (result < 0) {
-        print(ERROR_CANT_REMOVE_FILE);
+        cout::print(ERROR_CANT_REMOVE_FILE);
         return 1;
     }
 
@@ -41,7 +44,7 @@ int rm_file(const char path[]) {
 int rm_directory(const char path[]) {
     int result = syscalls::rmdir(path);
     if (result < 0) {
-        print(ERROR_CANT_REMOVE_DIR);
+        cout::print(ERROR_CANT_REMOVE_DIR);
         return 1;
     }
 
@@ -54,7 +57,7 @@ int rm_directory(const char path[]) {
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        print(ERROR_NO_INPUT_FILE);
+        cout::print(ERROR_NO_INPUT_FILE);
         return 1;
     }
 
@@ -69,13 +72,13 @@ int main(int argc, char* argv[]) {
     }
 
     if (!exists(path)) {
-        print(ERROR_DOESNT_EXIST);
+        cout::print(ERROR_DOESNT_EXIST);
         return 1;
     }
 
     if (is_directory(path)){
         if (flags[1] != 'd') {
-            print(ERROR_DIRECTORY);
+            cout::print(ERROR_DIRECTORY);
             return 1;
         }
         return rm_directory(path);

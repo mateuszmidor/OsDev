@@ -8,7 +8,9 @@
 #ifndef SRC_UTILS_TERMINAL_COMMANDHISTORY_H_
 #define SRC_UTILS_TERMINAL_COMMANDHISTORY_H_
 
-#include "ustd.h"
+#include "types.h"
+#include "String.h"
+#include "Vector.h"
 
 namespace terminal {
 

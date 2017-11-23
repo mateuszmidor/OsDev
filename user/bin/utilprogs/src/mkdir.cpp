@@ -7,11 +7,13 @@
 
 
 #include "_start.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 
 const char ERROR_NO_INPUT_FILE[]    = "mkdir: please provide directory path\n";
 const char ERROR_CANT_CREATE[]      = "mkdir: cant create given directory\n";
 
+using namespace ustd;
 
 /**
  * @brief   Entry point
@@ -19,7 +21,7 @@ const char ERROR_CANT_CREATE[]      = "mkdir: cant create given directory\n";
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        print(ERROR_NO_INPUT_FILE);
+        cout::print(ERROR_NO_INPUT_FILE);
         return 1;
     }
 
@@ -27,7 +29,7 @@ int main(int argc, char* argv[]) {
 
     int result = syscalls::mkdir(path);
     if (result < 0) {
-        print(ERROR_CANT_CREATE);
+        cout::print(ERROR_CANT_CREATE);
         return 1;
     }
 

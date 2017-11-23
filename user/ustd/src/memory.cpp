@@ -6,15 +6,17 @@
  */
 #include "types.h"
 
+// TODO: this heap start should be fetched from system by brk
 size_t bump_addr = 128*1024*1024;
 
 void* umalloc(size_t size) {
-    auto old_bump_addr = bump_addr;
+    size_t old_bump_addr = bump_addr;
     bump_addr+= size;
     return (void*)old_bump_addr;
 }
 
 void ufree(void* address) {
+    // bump allocator doesnt free
 }
 
 
@@ -66,7 +68,7 @@ extern "C" void* memset( void* dest, int ch, size_t count ) {
     return dest;
 }
 
-extern "C" const void* memchr(const void* ptr, int ch, std::size_t count) {
+extern "C" const void* memchr(const void* ptr, int ch, size_t count) {
     const char* data = (const char*)ptr;
     const char c = (char)ch;
 

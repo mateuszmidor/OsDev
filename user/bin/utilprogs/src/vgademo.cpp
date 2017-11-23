@@ -6,9 +6,11 @@
  */
 
 #include "_start.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 #include "VgaCharacter.h"
 
+using namespace ustd;
 
 void clear_screen(u16 height, u16 width) {
     for (int y = 0; y < height; y++)
@@ -57,7 +59,7 @@ int main(int argc, char* argv[]) {
 
     syscalls::vga_exit_graphics_mode();
 
-    print("Vga demo done.");
+    cout::print("Vga demo done.");
 
     return 0;
 }

@@ -9,7 +9,8 @@
 #define SRC_UTILS_LINEBUFFER_H_
 
 #include "types.h"
-#include "ustd.h"
+#include "String.h"
+#include "Vector.h"
 
 namespace terminal {
 

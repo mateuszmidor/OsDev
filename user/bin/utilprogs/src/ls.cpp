@@ -7,27 +7,23 @@
 
 
 #include "_start.h"
-#include "ustd.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 #include "StringUtils.h"
 
 const char ERROR_PATH_NOT_EXISTS[]  = "ls: path doesnt exist\n";
 const char ERROR_OPENING_DIR[]      = "ls: cant open specified directory\n";
 char buff[256];
 
+using namespace ustd;
 using namespace middlespace;
 
 void print_file(const char name[], u32 size) {
-    print(name);
-    print(" - ");
-    print(ustd::StringUtils::from_int(size).c_str());
-    print(" bytes \n");
+    cout::format("% - % bytes\n", name, size);
 }
 
 void print_dir(const char name[]) {
-    print("[");
-    print(name);
-    print("]\n");
+    cout::format("[%]\n", name);
 }
 
 /**
@@ -47,7 +43,7 @@ int main(int argc, char* argv[]) {
     // check exists
     struct stat s;
     if (syscalls::stat(path, &s) < 0) {
-        print(ERROR_PATH_NOT_EXISTS);
+        cout::print(ERROR_PATH_NOT_EXISTS);
         return 1;
     }
 
@@ -60,7 +56,7 @@ int main(int argc, char* argv[]) {
     // ls directory
     int fd = syscalls::open(path);
     if (fd < 0) {
-        print(ERROR_OPENING_DIR);
+        cout::print(ERROR_OPENING_DIR);
         return 1;
     }
 
@@ -68,7 +64,7 @@ int main(int argc, char* argv[]) {
     FsEntry* entries = new FsEntry[MAX_ENTRIES];
 
     int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
-    print("\n");
+    cout::print("\n");
     for (int i = 0; i < count; i++)
         if (entries[i].is_directory)
             print_dir(entries[i].name);

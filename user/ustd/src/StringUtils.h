@@ -8,6 +8,7 @@
 #ifndef USER_USTD_SRC_STRINGUTILS_H_
 #define USER_USTD_SRC_STRINGUTILS_H_
 
+#include "types.h"
 #include "String.h"
 #include "Vector.h"
 

@@ -9,7 +9,6 @@
 #define USER_USTD_SRC_STRING_H_
 
 #include <string>
-#include "types.h"
 #include "Allocator.h"
 
 namespace ustd {

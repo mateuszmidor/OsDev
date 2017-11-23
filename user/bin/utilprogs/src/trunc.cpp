@@ -7,8 +7,8 @@
 
 
 #include "_start.h"
-#include "utils.h"
-#include "StringUtils.h"
+#include "syscalls.h"
+#include "Cout.h"
 
 const u32 MAX_CHARS = 90;
 char buff[MAX_CHARS];
@@ -26,7 +26,7 @@ using namespace ustd;
  */
 int main(int argc, char* argv[]) {
     if (argc < 3) {
-        print(ERROR_NO_INPUT);
+        cout::print(ERROR_NO_INPUT);
         return 1;
     }
 
@@ -36,17 +36,17 @@ int main(int argc, char* argv[]) {
 
     struct stat s;
     if (syscalls::stat(filename, &s) < 0 ) {
-        print(ERROR_FILE_NOT_EXISTS);
+        cout::print(ERROR_FILE_NOT_EXISTS);
         return 1;
     }
 
     if (s.st_mode == S_IFDIR) {
-        print(ERROR_FILE_IS_DIR);
+        cout::print(ERROR_FILE_IS_DIR);
         return 1;
     }
 
     if (syscalls::truncate(filename, newsize) < 0) {
-        print(ERROR_TRUNC_ERROR);
+        cout::print(ERROR_TRUNC_ERROR);
         return 1;
     }
 

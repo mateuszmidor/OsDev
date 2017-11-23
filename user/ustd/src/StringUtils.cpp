@@ -8,6 +8,15 @@
 #include <algorithm>
 #include "StringUtils.h"
 
+//extern "C" size_t strlen(char const * str) {
+//    size_t result = 0;
+//    while (str[result]) {
+//        result++;
+//    }
+//
+//    return result;
+//}
+
 namespace ustd {
 
 /**

@@ -21,5 +21,4 @@ __asm__ __volatile__(
 );
 
 
-
 #endif /* ELFS__START_H_ */

@@ -6,7 +6,6 @@
  */
 
 #include "_start.h"
-#include "utils.h"
 #include "StringUtils.h"
 
 /**

@@ -6,8 +6,8 @@
  */
 
 #include "_start.h"
-#include "ustd.h"
-#include "utils.h"
+#include "syscalls.h"
+#include "Cout.h"
 
 using namespace ustd;
 
@@ -47,7 +47,7 @@ string extract_file_name(const string& path) {
  */
 int main(int argc, char* argv[]) {
     if (argc < 3) {
-        print(ERROR_NO_INPUT_PATHS);
+        cout::print(ERROR_NO_INPUT_PATHS);
         return 1;
     }
 
@@ -58,13 +58,13 @@ int main(int argc, char* argv[]) {
     // source must exist
     int src_fd = syscalls::open(src_path);
     if (src_fd < 0) {
-        print(ERROR_CANT_OPEN_SRC);
+        cout::print(ERROR_CANT_OPEN_SRC);
         return 1;
     }
 
     // copying directory should use recursive approach
     if (is_directory(src_path)) {
-        print(ERROR_SOURCE_IS_DIR);
+        cout::print(ERROR_SOURCE_IS_DIR);
         return 1;   // TODO: implement recursive copy
     }
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     // create dst file
     int dst_fd = syscalls::creat(final_dst_filename.c_str());
     if (dst_fd < 0) {
-        print(ERROR_CANT_CREATE_DESTIN);
+        cout::print(ERROR_CANT_CREATE_DESTIN);
         return 1;
     }
 
@@ -90,6 +90,6 @@ int main(int argc, char* argv[]) {
 
     syscalls::close(src_fd);
     syscalls::close(dst_fd);
-    print(MSG_DONE);
+    cout::print(MSG_DONE);
     return 0;
 }
