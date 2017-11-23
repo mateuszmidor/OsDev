@@ -27,7 +27,10 @@ void LineBuffer::push_back(const ustd::string& line) {
 }
 
 void LineBuffer::putc(char c) {
-    lines.back().push_back(c);
+    if (lines.empty())
+        lines.push_back("c");
+    else
+        lines.back().push_back(c);
 }
 
 void LineBuffer::backspace() {
