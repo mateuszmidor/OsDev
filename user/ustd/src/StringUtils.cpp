@@ -108,6 +108,20 @@ string StringUtils::to_lower_case(string s) {
 }
 
 /**
+ * @brief   Change string to upper case
+ */
+string StringUtils::to_upper_case(string s) {
+    auto to_upper = [](char c) -> u32 {
+        if (c >= 'a' && c <= 'z')
+            return c + ('A' - 'a');
+        else
+            return c;
+    };
+    std::transform(s.begin(), s.end(), s.begin(), to_upper);
+    return s;
+}
+
+/**
  * @brief   Split string on delimiter, return only nonempty segments
  */
 vector<string> StringUtils::split_string(const string& s, char delimiter) {

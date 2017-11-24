@@ -22,6 +22,8 @@ public:
 
     static string to_lower_case(string s);
 
+    static string to_upper_case(string s);
+
     static vector<string> split_string(const string& s, char delimiter);
 
     static string join_string(const string& separator, const vector<string>& elements);
