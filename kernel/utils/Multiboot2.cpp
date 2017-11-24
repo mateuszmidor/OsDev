@@ -7,8 +7,8 @@
 
 #include "kstd.h"
 #include "Multiboot2.h"
-
-#include "../memory/HigherHalf.h"
+#include "StringUtils.h"
+#include "HigherHalf.h"
 
 
 using namespace kstd;
@@ -152,33 +152,33 @@ size_t Multiboot2::get_available_memory_last_byte() {
 string Multiboot2::to_string() {
     string result;
 
-    result += format("boot loader: %, ", bl->name);
-    result += format("boot cmdline: %\n", cmd->cmd);
-    result += format("framebuffer: %x%x%, colors: %\n", fb->width, fb->height, fb->bpp, kstd::enum_to_str(fb->fb_type, "indexed=0x0"," RGB=0x1", "EGA text=0x2").c_str());
-    result += format("memory info: lower: %KB, upper:%MB\n", bmi->lower, bmi->upper / 1024);
-    result += format("memory map: size: %, entry size: %, entry version: %\n", mm->size, mm->entry_size, mm->entry_version);
-    result += format("memory areas:\n");
+    result += StringUtils::format("boot loader: %, ", bl->name);
+    result += StringUtils::format("boot cmdline: %\n", cmd->cmd);
+    result += StringUtils::format("framebuffer: %x%x%, colors: %\n", fb->width, fb->height, fb->bpp, StringUtils::enum_to_str(fb->fb_type, "indexed=0x0"," RGB=0x1", "EGA text=0x2").c_str());
+    result += StringUtils::format("memory info: lower: %KB, upper:%MB\n", bmi->lower, bmi->upper / 1024);
+    result += StringUtils::format("memory map: size: %, entry size: %, entry version: %\n", mm->size, mm->entry_size, mm->entry_version);
+    result += StringUtils::format("memory areas:\n");
     for (int i = 0; i < mme_count; i++) {
         kstd::string type =
-                kstd::enum_to_str(mme[i]->type,
+                StringUtils::enum_to_str(mme[i]->type,
                         "Available=0x1",
                         "Reserved=0x2",
                         "ACPI reclaimable=0x3",
                         "ACPI NVS=0x4",
                         "BAD=0x5");
 
-        result += format("   addr: %KB, len: %KB, type: %\n",
+        result += StringUtils::format("   addr: %KB, len: %KB, type: %\n",
                     mme[i]->address / 1024, mme[i]->length / 1024, type.c_str());
     }
 
-    result += format("elf sections: \n");
+    result += StringUtils::format("elf sections: \n");
     char* section_names = (char*)es->headers[es->shndx].sh_addr;
     for (int i = 0; i < esh_count; i++) {
         string esh_str = Elf64::section_header_to_string(section_names, (Elf64_Shdr*)esh[i]);
-        result += format("  %. %\n", i, esh_str);
+        result += StringUtils::format("  %. %\n", i, esh_str);
     }
 
-    result += format("multiboot: addr: %, len: %\n", multiboot2_info_addr, multiboot2_info_totalsize);
+    result += StringUtils::format("multiboot: addr: %, len: %\n", multiboot2_info_addr, multiboot2_info_totalsize);
 
     return result;
 }

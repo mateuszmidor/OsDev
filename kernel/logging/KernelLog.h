@@ -8,7 +8,7 @@
 #ifndef SRC_KERNELLOG_H_
 #define SRC_KERNELLOG_H_
 
-#include "kstd.h"
+#include "StringUtils.h"
 
 namespace logging {
 
@@ -24,7 +24,7 @@ public:
      */
     template<typename ... Args>
     void format(const kstd::string& fmt, Args ... args) {
-        log_str += kstd::format(fmt, args...);
+        log_str += kstd::StringUtils::format(fmt, args...);
     }
 
 private:

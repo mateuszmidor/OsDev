@@ -6,6 +6,7 @@
  */
 
 #include "Fat32ClusterChain.h"
+#include "kstd.h"
 
 using namespace kstd;
 namespace filesystem {

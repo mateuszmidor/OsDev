@@ -6,6 +6,7 @@
  */
 
 #include "UnixPath.h"
+#include "StringUtils.h"
 
 using namespace kstd;
 namespace filesystem {
@@ -44,7 +45,7 @@ string UnixPath::normalize(const kstd::string& path) const {
     if (path.empty())
         return {};
 
-    auto segments = split_string<vector<string>>(path, '/');
+    auto segments = StringUtils::split_string(path, '/');
     vector<string> out;
 
     for (const auto& s : segments) {
@@ -61,9 +62,9 @@ string UnixPath::normalize(const kstd::string& path) const {
 
     // keep starting slash if present in source
     if (path[0] == '/')
-        return format("/%", join_string("/", out));
+        return StringUtils::format("/%", StringUtils::join_string("/", out));
     else
-        return join_string("/", out);
+        return StringUtils::join_string("/", out);
 }
 
 string UnixPath::extract_directory() const {

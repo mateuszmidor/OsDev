@@ -44,7 +44,11 @@ s64 VfsCpuInfoEntry::read(void* data, u32 count) {
         return 0;
 
     utils::CpuInfo cpu_info;
-    const kstd::string info = kstd::format("CPU: % @ %MHz, %\n", cpu_info.get_vendor(), cpu_info.get_peak_mhz(), cpu_info.get_multimedia_extensions().to_string());
+    const kstd::string info = kstd::StringUtils::format("CPU: % @ %MHz, %\n",
+            cpu_info.get_vendor(),
+            cpu_info.get_peak_mhz(),
+            cpu_info.get_multimedia_extensions().to_string());
+
     if (info.empty())
         return 0;
 

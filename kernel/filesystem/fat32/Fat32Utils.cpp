@@ -6,6 +6,7 @@
  */
 
 #include "Fat32Utils.h"
+#include "StringUtils.h"
 
 using namespace kstd;
 namespace filesystem {
@@ -50,12 +51,12 @@ void Fat32Utils::make_8_3_filename(const kstd::string& filename, kstd::string& n
         name = filename;
         ext = "";
     } else {
-        split_key_value(filename, name, ext, '.');
+        StringUtils::split_key_value(filename, name, ext, '.');
     }
 
     // if name length > 8 characters, reduce it to have 8 characters including well known DOS "~num" ending
     if (name.length() > 8) {
-        string seq = to_str(seq_num);
+        string seq = StringUtils::from_int(seq_num);
         name.resize(8 - seq.length() - 1);
         name += "~" + seq;
     }
@@ -65,8 +66,8 @@ void Fat32Utils::make_8_3_filename(const kstd::string& filename, kstd::string& n
     }
 
     // make the name and ext upper case
-    name = to_upper_case(name);
-    ext = to_upper_case(ext);
+    name = StringUtils::to_upper_case(name);
+    ext = StringUtils::to_upper_case(ext);
 }
 
 void Fat32Utils::make_8_3_space_padded_filename(const string& filename, string& name, string& ext)  {

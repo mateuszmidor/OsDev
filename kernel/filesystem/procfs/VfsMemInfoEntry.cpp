@@ -67,7 +67,7 @@ kstd::string VfsMemInfoEntry::get_info() const {
 
     size_t used_frames = FrameAllocator::get_used_frames_count();
     size_t total_frames = FrameAllocator::get_total_frames_count();
-    return kstd::format("Used frames so far: %, total available: %\n", used_frames, total_frames);
+    return kstd::StringUtils::format("Used frames so far: %, total available: %\n", used_frames, total_frames);
 }
 
 s64 VfsMemInfoEntry::write(const void* data, u32 count) {

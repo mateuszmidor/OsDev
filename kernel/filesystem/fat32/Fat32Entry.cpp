@@ -329,8 +329,8 @@ EnumerateResult Fat32Entry::enumerate_directory_cluster(u32 cluster, const OnEnt
 }
 
 Fat32Entry Fat32Entry::make_fat32_entry(const DirectoryEntryFat32& dentry, Fat32ClusterChain parent_data, u32 parent_index) const {
-    string name = rtrim(dentry.name, sizeof(dentry.name));
-    string ext = rtrim(dentry.ext, sizeof(dentry.ext));
+    string name = StringUtils::rtrim((const char*)dentry.name, sizeof(dentry.name));
+    string ext = StringUtils::rtrim((const char*)dentry.ext, sizeof(dentry.ext));
     bool is_directory = (dentry.attributes & DirectoryEntryFat32Attrib::DIRECTORY) == DirectoryEntryFat32Attrib::DIRECTORY;
     u32 data_cluster = dentry.first_cluster_hi << 16 | dentry.first_cluster_lo;
 

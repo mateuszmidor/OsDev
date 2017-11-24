@@ -102,12 +102,12 @@ kstd::string VfsMountInfoEntry::get_hdd_info(drivers::AtaDevice& hdd) const {
         u32 size_in_bytes = v.get_size_in_bytes();
         u32 used_space_in_bytes = v.get_used_space_in_bytes();
         u32 cluster_in_bytes = v.get_cluster_size_in_bytes();
-        result += format("  %, size: %MB, used: %KB (% clusters), cluster size: %B\n",
-                v.get_label(),
-                size_in_bytes / 1024 / 1024,
-                used_space_in_bytes / 1024,
-                used_space_in_bytes / cluster_in_bytes,
-                cluster_in_bytes);
+        result += kstd::StringUtils::format("  %, size: %MB, used: %KB (% clusters), cluster size: %B\n",
+                                            v.get_label(),
+                                            size_in_bytes / 1024 / 1024,
+                                            used_space_in_bytes / 1024,
+                                            used_space_in_bytes / cluster_in_bytes,
+                                            cluster_in_bytes);
     }
 
     return result;

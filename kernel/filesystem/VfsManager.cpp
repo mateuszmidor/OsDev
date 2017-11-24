@@ -9,6 +9,7 @@
 #include "adapters/VfsFat32Entry.h"
 #include "adapters/VfsFat32MountPoint.h"
 #include "DriverManager.h"
+#include "StringUtils.h"
 #include "VfsManager.h"
 
 #include "procfs/VfsKmsgEntry.h"
@@ -92,7 +93,7 @@ VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) const {
     VfsEntryPtr e = root;
 
     // ...and descend down the path to the very last entry
-    auto segments = kstd::split_string<vector<string>>(unix_path, '/');
+    auto segments = StringUtils::split_string(unix_path, '/');
     for (const auto& path_segment : segments) {
         if (!e->is_directory()) {
             klog.format("VfsManager::get_entry: entry '%' is not a directory\n", e->get_name());
@@ -215,7 +216,7 @@ bool VfsManager::copy_entry(const UnixPath& unix_path_from, const UnixPath& unix
     UnixPath final_path_to;
     VfsEntryPtr dst = mount_point_to->get_entry(mountpoint_path_to);
     if (dst && dst->is_directory())
-        final_path_to = format("%/%", unix_path_to, unix_path_from.extract_file_name());
+        final_path_to = StringUtils::format("%/%", unix_path_to, unix_path_from.extract_file_name());
     else
         final_path_to = unix_path_to;
 
@@ -321,7 +322,7 @@ VfsMountPointPtr VfsManager::get_mountpoint_path(kstd::string& path) const {
 
     VfsEntryPtr e = root;
     do  {
-        string path_segment = snap_head(path, '/');
+        string path_segment = StringUtils::snap_head(path, '/');
         if (path_segment.empty())
             continue;
 

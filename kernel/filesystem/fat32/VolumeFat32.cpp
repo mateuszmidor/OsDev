@@ -38,11 +38,11 @@ VolumeFat32::VolumeFat32(const drivers::AtaDevice& hdd, bool bootable, u32 parti
 }
 
 string VolumeFat32::get_label() const {
-    return rtrim(vbr.volume_label, sizeof(vbr.volume_label));
+    return StringUtils::rtrim((const char*)vbr.volume_label, sizeof(vbr.volume_label));
 }
 
 string VolumeFat32::get_type() const {
-    return rtrim(vbr.fat_type_label, sizeof(vbr.fat_type_label));
+    return StringUtils::rtrim((const char*)vbr.fat_type_label, sizeof(vbr.fat_type_label));
 }
 
 u32 VolumeFat32::get_size_in_bytes() const {
@@ -77,7 +77,7 @@ Fat32Entry VolumeFat32::get_entry(const UnixPath& unix_path) const {
     Fat32Entry e = get_root_dentry();
 
     // ...and descend down the path to the very last entry
-    auto segments = kstd::split_string<vector<string>>(unix_path, '/');
+    auto segments = StringUtils::split_string(unix_path, '/');
     for (const auto& path_segment : segments) {
         if (!e.is_dir) {
             klog.format("VolumeFat32::get_entry: entry '%' is not a directory\n", e.name);
@@ -250,7 +250,7 @@ bool VolumeFat32::move_entry(const UnixPath& unix_path_from, const UnixPath& uni
     string path_to;
     Fat32Entry dest = get_entry(unix_path_to);
     if (dest && dest.is_dir)
-        path_to = format("%/%", unix_path_to, unix_path_from.extract_file_name());
+        path_to = StringUtils::format("%/%", unix_path_to, unix_path_from.extract_file_name());
     else
         path_to = unix_path_to;
 

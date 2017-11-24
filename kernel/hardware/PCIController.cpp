@@ -48,11 +48,11 @@ string PCIController::drivers_to_string() {
                         dev.port_base = (u32)(u64)bar.address; // for IO registers, address is port number
                 }
 
-                out += format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
-                out += format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
-                out += format("DEVICE_NO % % ", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
+                out += StringUtils::format("PCI BUS %, DEVICE %, FUNCTION %", bus, device, function);
+                out += StringUtils::format(" = VENDOR_ID % %, ", (dev.vendor_id & 0xFF00) >> 8, dev.vendor_id & 0xFF);
+                out += StringUtils::format("DEVICE_NO % % ", (dev.device_id & 0xFF00) >> 8, dev.device_id & 0xFF);
                 /* DeviceDriver drv = */ //get_driver(dev);
-                out += format("\n");
+                out += StringUtils::format("\n");
             }
         }
 
