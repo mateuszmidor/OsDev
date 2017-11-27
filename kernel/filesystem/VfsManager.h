@@ -8,7 +8,7 @@
 #ifndef SRC_FILESYSTEM_VFSMANAGER_H_
 #define SRC_FILESYSTEM_VFSMANAGER_H_
 
-#include "ramfs/VfsRamEntry.h"
+#include "ramfs/VfsRamDirectoryEntry.h"
 #include "VfsMountPoint.h"
 #include "AtaDriver.h"
 #include "UnixPath.h"
@@ -34,13 +34,13 @@ private:
     VfsManager() : klog(logging::KernelLog::instance()) {}
     VfsEntryPtr get_entry_for_name(VfsEntryPtr parent_dir, const kstd::string& name) const;
 
-    void install_ata_devices(VfsRamEntryPtr parent);
-    void install_volumes(drivers::AtaDevice& hdd, VfsRamEntryPtr parent);
+    void install_ata_devices(VfsRamDirectoryEntryPtr parent);
+    void install_volumes(drivers::AtaDevice& hdd, VfsRamDirectoryEntryPtr parent);
     VfsMountPointPtr get_mountpoint_path(kstd::string& path) const;
     static VfsManager _instance;
 
-    logging::KernelLog&       klog;
-    VfsRamEntryPtr          root;
+    logging::KernelLog&     klog;
+    VfsRamDirectoryEntryPtr root;
 };
 
 } /* namespace filesystem */

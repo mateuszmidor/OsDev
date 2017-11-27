@@ -19,6 +19,7 @@
 #include "procfs/VfsPciInfoEntry.h"
 #include "procfs/VfsPsInfoEntry.h"
 #include "procfs/VfsMountInfoEntry.h"
+#include "ramfs/VfsRamFifoEntry.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -34,41 +35,42 @@ VfsManager& VfsManager::instance() {
  * @brief   Install elementary filesystem entries under "/", including available ata volumes
  */
 void VfsManager::install_root() {
-    root = std::make_shared<VfsRamEntry>("/", true);
-    VfsRamEntryPtr dev = std::make_shared<VfsRamEntry>("dev", true);
-    root->entries.push_back(dev);
+    root = std::make_shared<VfsRamDirectoryEntry>("/");
 
-        VfsRamEntryPtr keyboard = std::make_shared<VfsRamEntry>("keyboard", false);
-        dev->entries.push_back(keyboard);
+    VfsRamDirectoryEntryPtr dev = std::make_shared<VfsRamDirectoryEntry>("dev");
+    root->push_back(dev);
 
-        VfsRamEntryPtr stdout = std::make_shared<VfsRamEntry>("stdout", false);
-        dev->entries.push_back(stdout);
+        VfsRamFifoEntryPtr keyboard = std::make_shared<VfsRamFifoEntry>("keyboard");
+        dev->push_back(keyboard);
+
+        VfsRamFifoEntryPtr stdout = std::make_shared<VfsRamFifoEntry>("stdout");
+        dev->push_back(stdout);
 
 
 
-    VfsRamEntryPtr proc = std::make_shared<VfsRamEntry>("proc", true);
-    root->entries.push_back(proc);
+    VfsRamDirectoryEntryPtr proc = std::make_shared<VfsRamDirectoryEntry>("proc");
+    root->push_back(proc);
 
         VfsEntryPtr kmsg = std::make_shared<VfsKmsgEntry>();
-        proc->entries.push_back(kmsg);
+        proc->push_back(kmsg);
 
         VfsEntryPtr meminfo = std::make_shared<VfsMemInfoEntry>();
-        proc->entries.push_back(meminfo);
+        proc->push_back(meminfo);
 
         VfsEntryPtr date = std::make_shared<VfsDateEntry>();
-        proc->entries.push_back(date);
+        proc->push_back(date);
 
         VfsEntryPtr cpuinfo = std::make_shared<VfsCpuInfoEntry>();
-        proc->entries.push_back(cpuinfo);
+        proc->push_back(cpuinfo);
 
         VfsEntryPtr pciinfo = std::make_shared<VfsPciInfoEntry>();
-        proc->entries.push_back(pciinfo);
+        proc->push_back(pciinfo);
 
         VfsEntryPtr psinfo = std::make_shared<VfsPsInfoEntry>();
-        proc->entries.push_back(psinfo);
+        proc->push_back(psinfo);
 
         VfsEntryPtr mountinfo = std::make_shared<VfsMountInfoEntry>();
-        proc->entries.push_back(mountinfo);
+        proc->push_back(mountinfo);
 
     install_ata_devices(root);
 }
@@ -261,7 +263,7 @@ VfsEntryPtr VfsManager::get_entry_for_name(VfsEntryPtr parent_dir, const string&
 /**
  * @brief   Install all ata devices/volumes under "parent"
  */
-void VfsManager::install_ata_devices(VfsRamEntryPtr parent) {
+void VfsManager::install_ata_devices(VfsRamDirectoryEntryPtr parent) {
     auto& driver_manager = DriverManager::instance();
 
     auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
@@ -292,7 +294,7 @@ void VfsManager::install_ata_devices(VfsRamEntryPtr parent) {
 /**
  * @brief   Install all volumes available in "hdd" under "parent"
  */
-void VfsManager::install_volumes(AtaDevice& hdd, VfsRamEntryPtr parent) {
+void VfsManager::install_volumes(AtaDevice& hdd, VfsRamDirectoryEntryPtr parent) {
     if (!MassStorageMsDos::verify(hdd))
         return;
 
@@ -302,7 +304,7 @@ void VfsManager::install_volumes(AtaDevice& hdd, VfsRamEntryPtr parent) {
     MassStorageMsDos ms(hdd);
     for (const auto& v : ms.get_volumes()) {
         VfsEntryPtr drive = std::make_shared<VfsFat32MountPoint>(v);
-        parent->entries.push_back(drive);
+        parent->push_back(drive);
     }
 }
 
