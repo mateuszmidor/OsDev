@@ -35,19 +35,19 @@ void TaskManager::on_task_finished() {
 
 /**
  * @brief   Add new task to the list of scheduler tasks
+ * @note    TaskManager takes ownership of "task" pointer
  * @return  Newly added task id or 0 if max task count is reached
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-u32 TaskManager::add_task(const Task& task) {
+u32 TaskManager::add_task(Task* task) {
     KLockGuard lock;    // prevent reschedule
 
     if (running_queue.count() >= MAX_TASKS)
         return 0;
 
     u32 tid = next_task_id;
-    Task* t = new Task(task);
-    t->prepare(tid, TaskManager::on_task_finished);
-    running_queue.push_front(t);
+    task->prepare(tid, TaskManager::on_task_finished);
+    running_queue.push_front(task);
 
     next_task_id++;
     return tid;
@@ -55,10 +55,11 @@ u32 TaskManager::add_task(const Task& task) {
 
 /**
  * @brief   Add task that reuse tid and address space of current task, exit current task
+ * @note    TaskManager takes ownership of "task" pointer
  * @note    As a result, current_task will exit and die, its tid and address space is taken over by "task"
  * @note    Execution context: Task only; be careful with possible reschedule during execution of this method
  */
-void TaskManager::replace_current_task(const Task& task) {
+void TaskManager::replace_current_task(Task* task) {
     KLockGuard lock;    // prevent reschedule, especially between "current_task->pml4_phys_addr = 0" and "Task::exit()"
 
     if (running_queue.count() >= MAX_TASKS)
@@ -66,9 +67,8 @@ void TaskManager::replace_current_task(const Task& task) {
 
     Task* current_task = *current_task_it;
     u32 tid = current_task->task_id;
-    Task* t = new Task(task);
-    t->prepare(tid, TaskManager::on_task_finished);
-    running_queue.push_front(t);
+    task->prepare(tid, TaskManager::on_task_finished);
+    running_queue.push_front(task);
 
     current_task->task_id = 0;          // dont allow 2 same task_id s on running_queue
     current_task->pml4_phys_addr = 0;   // avoid releasing this address space on current_task exit

@@ -22,9 +22,8 @@ public:
     }
 
     template <class T>
-    static multitasking::Task make_demo(const kstd::string& name, u64 arg = 0) {
-        multitasking::Task task = multitasking::Task::make_kernel_task(make_demo_<T>, name.c_str());
-        task.arg1 = arg;
+    static multitasking::Task* make_demo(const kstd::string& name, u64 arg = 0) {
+        multitasking::Task* task = multitasking::Task::make_kernel_task(make_demo_<T>, name.c_str())->set_arg1(arg);
         return task;
     }
 };

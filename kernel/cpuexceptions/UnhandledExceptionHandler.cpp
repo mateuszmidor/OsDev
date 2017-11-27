@@ -53,7 +53,7 @@ const char* UnhandledExceptionHandler::EXCEPTION_NAMES[32] = {
 CpuState* UnhandledExceptionHandler::on_exception(u8 exception_no, CpuState* cpu_state) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
-    auto current = mngr.get_current_task();
+    const auto& current = mngr.get_current_task();
     klog.format("\nCPU EXCEPTION: %(%) at % by \"%\" [%], error %. KILLING\n",
                 EXCEPTION_NAMES[exception_no],
                 exception_no,

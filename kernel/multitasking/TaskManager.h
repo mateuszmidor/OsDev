@@ -23,8 +23,8 @@ public:
     TaskManager operator=(const TaskManager&) = delete;
     TaskManager operator=(TaskManager&&) = delete;
 
-    u32 add_task(const Task& task);
-    void replace_current_task(const Task& task);
+    u32 add_task(Task* task);
+    void replace_current_task(Task* task);
     Task& get_current_task();
     const TaskList& get_tasks() const;
     u16 get_num_tasks() const;

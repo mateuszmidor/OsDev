@@ -80,10 +80,43 @@ template <class T>
 class List {
 protected:
     using ListItem = ListNode<T>;
-    ListItem*   m_head    = nullptr;
-    u32         m_count   = 0;
+    ListItem*   m_head;
+    u32         m_count;
 
 public:
+    List() {
+        m_head = nullptr;
+        m_count = 0;
+    }
+
+    List(const List& l) = delete;
+    List& operator=(const List& l) = delete;
+
+    List(List&& l) {
+        this->m_count = l.m_count;
+        l.m_count = 0;
+        this->m_head = l.m_head;
+        l.m_head = nullptr;
+    }
+
+    List& operator=(const List&& l) {
+        this->m_count = l.m_count;
+        l.m_count = 0;
+        this->m_head = l.m_head;
+        l.m_head = nullptr;
+        return *this;
+    }
+
+    virtual ~List() {
+        ListItem* curr = m_head;
+
+        while (curr) {
+            ListItem* next = curr->next;
+            delete curr;
+            curr = next;
+        }
+    }
+
     T& front() {
         return m_head->data;
     }

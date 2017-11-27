@@ -33,19 +33,18 @@ struct Task {
      *          ie. their virtual addresses are mapped as ring3 accessible
      */
     template <class EntrypointT>
-    static Task make_user_task(EntrypointT entrypoint, const char name[], u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) {
-        return Task(
-                    (TaskEntryPoint2)entrypoint,
-                    name,
-                    0,              // task func arg 1
-                    0,              // task func arg 2
-                    true,           // user space = true
-                    pml4_phys_addr,
-                    stack_addr,
-                    stack_size,
-                    "/"             // current working directory as root
-                );
-
+    static Task* make_user_task(EntrypointT entrypoint, const char name[], u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) {
+        return new Task(
+                        (TaskEntryPoint2)entrypoint,
+                        name,
+                        0,              // task func arg 1
+                        0,              // task func arg 2
+                        true,           // user space = true
+                        pml4_phys_addr,
+                        stack_addr,
+                        stack_size,
+                        "/"             // current working directory as root
+                    );
     }
 
     /**
@@ -53,18 +52,18 @@ struct Task {
      * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
      */
     template <class EntrypointT>
-    static Task make_kernel_task(EntrypointT entrypoint, const char name[]) {
-        return Task(
-                    (TaskEntryPoint2)entrypoint,
-                    name,
-                    0,              // task func arg 1
-                    0,              // task func arg 2
-                    false,          // user space = false
-                    0,              // use kernel address space
-                    0,              // create default stack...
-                    0,              // ...of default size
-                    "/"             // current working directory as root
-                );
+    static Task* make_kernel_task(EntrypointT entrypoint, const char name[]) {
+        return new Task(
+                        (TaskEntryPoint2)entrypoint,
+                        name,
+                        0,              // task func arg 1
+                        0,              // task func arg 2
+                        false,          // user space = false
+                        0,              // use kernel address space
+                        0,              // create default stack...
+                        0,              // ...of default size
+                        "/"             // current working directory as root
+                    );
     }
 
 
@@ -74,10 +73,10 @@ struct Task {
 
 
     template <class T>
-    Task& set_arg1(T value) { arg1 = (u64) value; return *this; }
+    Task* set_arg1(T value) { arg1 = (u64) value; return this; }
 
     template <class T>
-    Task& set_arg2(T value) { arg2 = (u64) value; return *this; }
+    Task* set_arg2(T value) { arg2 = (u64) value; return this; }
 
 
     static const u64    DEFAULT_STACK_SIZE = 2 * 4096;

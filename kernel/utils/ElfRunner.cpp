@@ -36,9 +36,9 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
 
     // run elf_loader in target address space, so the elf segments can be loaded
     TaskManager& task_manager = TaskManager::instance();
-    Task task = Task::make_kernel_task(load_and_run_elf, "elf_loader").set_arg1(elf_data).set_arg2(args);
-    task.pml4_phys_addr = pml4_phys_addr;   // kernel task but in user memory space
-    task.cwd = task_manager.get_current_task().cwd; // inherit current working directory of calling task
+    Task* task = Task::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(args);
+    task->pml4_phys_addr = pml4_phys_addr;   // kernel task but in user memory space
+    task->cwd = task_manager.get_current_task().cwd; // inherit current working directory of calling task
 
     if (u32 tid = task_manager.add_task(task)) {
         return tid;
@@ -70,8 +70,8 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // run the actual elf task
     TaskManager& task_manager = TaskManager::instance();
     Task& elf_loader_task =  task_manager.get_current_task();
-    Task task = Task::make_user_task(entry_point, argv[0], elf_loader_task.pml4_phys_addr, ELF_STACK_START, ELF_STACK_SIZE).set_arg1(argc).set_arg2(argv);
-    task.cwd = elf_loader_task.cwd; // inherit current working directory of calling task
+    Task* task = Task::make_user_task(entry_point, argv[0], elf_loader_task.pml4_phys_addr, ELF_STACK_START, ELF_STACK_SIZE)->set_arg1(argc)->set_arg2(argv);
+    task->cwd = elf_loader_task.cwd; // inherit current working directory of calling task
 
     // replace elf_loader with actual ELF task
     task_manager.replace_current_task(task);
