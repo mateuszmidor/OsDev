@@ -9,6 +9,7 @@
 #define SRC_USERSPACE_ELFRUNNER_H_
 
 #include "kstd.h"
+#include "Vector.h"
 #include "BumpAllocationPolicy.h"
 
 namespace utils {

@@ -9,7 +9,8 @@
 #ifndef SRC_CPUINFO_H_
 #define SRC_CPUINFO_H_
 
-#include "kstd.h"
+#include "types.h"
+#include "String.h"
 
 namespace utils {
 

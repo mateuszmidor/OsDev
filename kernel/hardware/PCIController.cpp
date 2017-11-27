@@ -6,6 +6,7 @@
  */
 
 //#include "KernelLog.h"
+#include "StringUtils.h"
 #include "PCIController.h"
 //#include "VgaDriver.h"
 

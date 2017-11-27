@@ -5,9 +5,11 @@
  * @author: Mateusz Midor
  */
 
+#include <errno.h>
+#include "kstd.h"
+#include "StringUtils.h"
 #include "VfsCpuInfoEntry.h"
 #include "CpuInfo.h"
-#include <errno.h>
 
 namespace filesystem {
 

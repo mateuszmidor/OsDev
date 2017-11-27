@@ -8,7 +8,8 @@
 #ifndef SRC_FILESYSTEM_FAT32_FAT32UTILS_H_
 #define SRC_FILESYSTEM_FAT32_FAT32UTILS_H_
 
-#include "kstd.h"
+#include "types.h"
+#include "String.h"
 
 namespace filesystem {
 

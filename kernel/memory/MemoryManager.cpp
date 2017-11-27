@@ -15,24 +15,6 @@ namespace memory {
 MemoryManager MemoryManager::_instance;
 AllocationPolicy* MemoryManager::allocation_policy;
 
-/**
- * @brief   Global kernel malloc
- */
-void* kmalloc(size_t size) {
-    KLockGuard lock;    // prevent reschedule
-
-    MemoryManager& mm = MemoryManager::instance();
-    return mm.alloc_virt_memory(size);
-}
-
-/**
- * @brief   Global kernel free
- */
-void kfree(void* address) {
-    MemoryManager& mm = MemoryManager::instance();
-    mm.free_virt_memory(address);
-}
-
 MemoryManager& MemoryManager::instance() {
     return _instance;
 }
@@ -66,6 +48,8 @@ void MemoryManager::free_frames(void* address, size_t size) const {
  * @note    Memory frames will be allocated by PageFaulHandler
  */
 void* MemoryManager::alloc_virt_memory(size_t size) const {
+    KLockGuard lock;    // prevent reschedule
+
     return allocation_policy->alloc_bytes(size);
 }
 

@@ -11,9 +11,8 @@
 #include <memory>
 #include <functional>
 #include "kstd.h"
+#include "String.h"
 #include "Port.h"
-//#include "DeviceDriver.h"
-//#include "DriverManager.h"
 
 namespace hardware {
 

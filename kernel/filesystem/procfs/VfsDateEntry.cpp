@@ -6,6 +6,7 @@
  */
 
 #include <errno.h>
+#include "kstd.h"
 #include "VfsDateEntry.h"
 #include "StringUtils.h"
 

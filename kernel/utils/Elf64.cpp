@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "kstd.h"
 #include "Elf64.h"
 #include "StringUtils.h"
 

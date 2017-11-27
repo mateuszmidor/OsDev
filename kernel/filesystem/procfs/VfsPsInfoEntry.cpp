@@ -8,6 +8,7 @@
 #include <errno.h>
 #include "VfsPsInfoEntry.h"
 #include "TaskManager.h"
+#include "StringUtils.h"
 
 using namespace multitasking;
 namespace filesystem {

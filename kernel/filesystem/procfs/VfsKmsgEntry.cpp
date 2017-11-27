@@ -7,6 +7,7 @@
 
 
 #include <errno.h>
+#include "kstd.h"
 #include "KernelLog.h"
 #include "procfs/VfsKmsgEntry.h"
 

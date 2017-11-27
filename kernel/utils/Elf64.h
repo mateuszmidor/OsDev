@@ -8,8 +8,8 @@
 #ifndef SRC_UTILS_ELF64_H_
 #define SRC_UTILS_ELF64_H_
 
-#include <cstdint>
-#include "kstd.h"
+#include "types.h"
+#include "String.h"
 
 namespace utils {
 

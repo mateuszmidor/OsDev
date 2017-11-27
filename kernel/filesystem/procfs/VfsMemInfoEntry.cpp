@@ -6,6 +6,9 @@
  */
 
 #include <errno.h>
+#include "kstd.h"
+#include "types.h"
+#include "StringUtils.h"
 #include "VfsMemInfoEntry.h"
 #include "MemoryManager.h"
 #include "FrameAllocator.h"

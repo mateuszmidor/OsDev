@@ -6,6 +6,7 @@
  */
 
 #include <errno.h>
+#include "kstd.h"
 #include "VfsRamEntry.h"
 
 namespace filesystem {

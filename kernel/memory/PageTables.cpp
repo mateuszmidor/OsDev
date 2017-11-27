@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include <new>
 #include "kstd.h"
 #include "PageTables.h"
 #include "HigherHalf.h"
