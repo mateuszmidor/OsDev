@@ -8,14 +8,23 @@
 #ifndef USER_USTD_SRC_USTD_H_
 #define USER_USTD_SRC_USTD_H_
 
-namespace std {
+#include <utility>
+#include <cstring>
 
-void __throw_length_error(char const* s);
-void __throw_logic_error(char const* s);
-void __throw_bad_alloc();
-void __throw_out_of_range_fmt(char const* s, ...);
-void __throw_bad_function_call();
 
-};
+namespace kstd {
+
+template <class T1, class T2>
+typename std::common_type<T1, T2>::type min(const T1& a, const T2& b) {
+    return a < b ? a : b;
+}
+
+template <class T1, class T2>
+typename std::common_type<T1, T2>::type max(const T1& a, const T2& b) {
+    return a > b ? a : b;
+}
+
+
+}; // namespace ustd
 
 #endif /* USER_USTD_SRC_USTD_H_ */
