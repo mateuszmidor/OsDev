@@ -240,9 +240,9 @@ void run_userspace_terminal() {
  * Here we enter multitasking
  */
 void task_init() {
-    task_manager.add_task(Task::make_kernel_task(Task::idle, "idle"));
+    task_manager.add_task(TaskFactory::make_kernel_task(Task::idle, "idle"));
     task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0));
-    task_manager.add_task(Task::make_kernel_task(corner_counter, "corner_counter"));
+    task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
 
     run_userspace_terminal();
 }
@@ -303,6 +303,6 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     get_vesa_info();
 
     // 11. start multitasking
-    task_manager.add_task(Task::make_kernel_task(task_init, "init"));
+    task_manager.add_task(TaskFactory::make_kernel_task(task_init, "init"));
     Task::idle();
 }

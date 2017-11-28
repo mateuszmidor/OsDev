@@ -21,50 +21,14 @@ using TaskEntryPoint1 = void (*)(u64 arg1);
 using TaskEntryPoint2 = void (*)(u64 arg1, u64 arg2);
 using TaskExitPoint = void (*)();
 
+struct TaskEpilogue {
+    u64 rip;    // rip cpu register value for retq instruction on task function exit
+} __attribute__((packed));
+
 struct Task {
     Task();
     Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 pml4_phys_addr, u64 stack_addr, u64 stack_size, const char cwd[]);
     void prepare(u32 tid, TaskExitPoint exitpoint);
-
-    /**
-     * @brief   Create user space task (runs in protection ring3), with provided address space and stack
-     * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
-     * @note    Make sure that entrypoint and stack is accessible from that address space,
-     *          ie. their virtual addresses are mapped as ring3 accessible
-     */
-    template <class EntrypointT>
-    static Task* make_user_task(EntrypointT entrypoint, const char name[], u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) {
-        return new Task(
-                        (TaskEntryPoint2)entrypoint,
-                        name,
-                        0,              // task func arg 1
-                        0,              // task func arg 2
-                        true,           // user space = true
-                        pml4_phys_addr,
-                        stack_addr,
-                        stack_size,
-                        "/"             // current working directory as root
-                    );
-    }
-
-    /**
-     * @brief   Create kernel space task (runs in protection ring0), with kernel address space and default stack
-     * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
-     */
-    template <class EntrypointT>
-    static Task* make_kernel_task(EntrypointT entrypoint, const char name[]) {
-        return new Task(
-                        (TaskEntryPoint2)entrypoint,
-                        name,
-                        0,              // task func arg 1
-                        0,              // task func arg 2
-                        false,          // user space = false
-                        0,              // use kernel address space
-                        0,              // create default stack...
-                        0,              // ...of default size
-                        "/"             // current working directory as root
-                    );
-    }
 
 
     static void idle();
@@ -96,10 +60,6 @@ struct Task {
 
     TaskList            wait_queue; // list of tasks waiting for this task to finish
 };
-
-struct TaskEpilogue {
-    u64 rip;    // rip cpu register value for retq instruction on task function exit
-} __attribute__((packed));
 
 
 } /* namespace multitasking */

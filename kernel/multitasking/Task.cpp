@@ -49,7 +49,7 @@ Task::Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bo
 }
 
 /**
- * @brief   Setup cpu state and return address on the task stack befor running the task
+ * @brief   Setup cpu state and return address on the task stack before running the task
  * @param   exitpoint Address of a function that the task should return to upon exit
  */
 void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
