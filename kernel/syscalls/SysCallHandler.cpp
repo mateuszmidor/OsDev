@@ -7,6 +7,7 @@
 
 #include "SysCallHandler.h"
 #include "TaskManager.h"
+#include "TaskFactory.h"
 #include "VfsManager.h"
 #include "DriverManager.h"
 #include "VgaDriver.h"
@@ -501,6 +502,28 @@ s64 SysCallHandler::task_wait(u32 task_id) {
         return -EWOULDBLOCK;
     else
         return -EINVAL;
+}
+
+/**
+ *
+ * @brief   Run task process in current task address space
+ * @return  Task ID on success
+ *          -EINVAL if "entry_point" or "name" is null
+ *          -EPERM if task could not be run
+ */
+s64 SysCallHandler::task_lightweight_run(u64 entry_point, u64 arg, const char name[]) {
+    if (!entry_point || !name)
+        return -EINVAL;
+
+    multitasking::TaskManager& mngr = multitasking::TaskManager::instance();
+    multitasking::Task* t = multitasking::TaskFactory::make_lightweight_task(mngr.get_current_task(), entry_point, name, multitasking::Task::DEFAULT_STACK_SIZE);
+    t->set_arg1(arg);
+
+    u32 task_id = mngr.add_task(t);
+    if (task_id == 0)
+        return -EPERM;
+
+    return task_id;
 }
 
 /**

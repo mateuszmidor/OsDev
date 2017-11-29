@@ -49,6 +49,7 @@ public:
     void vga_set_pixel_at(u16 x, u16 y, u8 c);
     s64 elf_run(const char path[], const char* nullterm_argv[]);
     s64 task_wait(u32 task_id);
+    s64 task_lightweight_run(u64 entry_point, u64 arg, const char name[]);
 
 private:
     multitasking::Task& current() const;

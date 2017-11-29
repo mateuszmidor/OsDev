@@ -217,8 +217,16 @@ inline void vga_set_pixel_at(unsigned short x, unsigned short y, unsigned char c
     syscall(middlespace::SysCallNumbers::VGA_SET_PIXEL_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)color_index);
 }
 
+inline void exit(u64 code) {
+    syscall(middlespace::SysCallNumbers::EXIT, (syscall_arg)code);
+}
+
 inline s64 elf_run(const char path[], const char* nullterm_argv[]) {
     return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)path, (syscall_arg)nullterm_argv);
+}
+
+inline s64 task_lightweight_run(unsigned long long entry_point, unsigned long long arg = 0, const char name[] = "lightweight") {
+    return syscall(middlespace::SysCallNumbers::TASK_LIGHTWEIGHT_RUN, (syscall_arg)entry_point, (syscall_arg)arg, (syscall_arg)name);
 }
 
 inline s64 task_wait(unsigned int task_id) {
