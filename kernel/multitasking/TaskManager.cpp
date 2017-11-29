@@ -6,6 +6,7 @@
  */
 
 #include "TaskManager.h"
+#include "TaskFactory.h"
 #include "PageTables.h"
 #include "KernelLog.h"
 #include "MemoryManager.h"
@@ -70,9 +71,7 @@ void TaskManager::replace_current_task(Task* task) {
     task->prepare(tid, TaskManager::on_task_finished);
     running_queue.push_front(task);
 
-    current_task->task_id = 0;          // dont allow 2 same task_id s on running_queue
-    current_task->pml4_phys_addr = 0;   // avoid releasing this address space on current_task exit
-    Task::exit();                       // current task dies
+    Task::exit();  // current task dies
 }
 
 /**
@@ -155,20 +154,12 @@ hardware::CpuState* TaskManager::kill_current_task() {
 
     Task* current_task = *current_task_it;
 
-    // release task resources
-    close_files(*current_task);
-    release_address_space(*current_task);
-
     // enqueue back all waiting tasks
     while (Task* t = current_task->wait_queue.pop_front())
         enqueue_task_back(t);
 
     // remove the task itself from running queue and from memory
     running_queue.remove(current_task_it);
-
-    // delete kernelspace stack. userspace stack is removed with task address space
-    if (!current_task->is_user_space)
-        delete[] (u8*)current_task->stack_addr;
     delete current_task;
 
     // return next task to switch to
@@ -176,49 +167,10 @@ hardware::CpuState* TaskManager::kill_current_task() {
 }
 
 /**
- * @brief   Close all the files open for "task"
- * @note    Execution context: Interrupt only (on kill_current_task)
- */
-void TaskManager::close_files(Task& task) {
-    for (auto& f : task.files)
-        if (f)
-            f->close();
-}
-
-/**
- * @brief   Release physical memory frames allocated for "task"
- * @note    Execution context: Interrupt only (on kill_current_task)
- */
-void TaskManager::release_address_space(Task& task) {
-    if (task.pml4_phys_addr == 0)
-        return;
-
-    if (task.pml4_phys_addr == PageTables::get_kernel_pml4_phys_addr()) // dont remove kernel address space :)
-        return;
-
-    u64* pde_virt_addr =  PageTables::get_page_for_virt_address(0, task.pml4_phys_addr); // user task virtual address space starts at virt address 0
-
-    // scan 0..1GB of virtual memory
-    logging::KernelLog& klog = logging::KernelLog::instance();
-    memory::MemoryManager& mngr = memory::MemoryManager::instance();
-    klog.format("Rmoving address space of task %\n", task.name);
-    for (u32 i = 0; i < 512; i++)   // scan 512 * 2MB pages
-        if (pde_virt_addr[i] != 0) {
-            klog.format("  Releasing mem frame: %\n", pde_virt_addr[i] / FrameAllocator::get_frame_size());
-            mngr.free_frames((void*)pde_virt_addr[i], 1); // 1 byte will always correspond to just 1 frame
-        }
-
-    // release the page table itself
-    klog.format("  Releasing mem frames of PageTables64: %\n", task.pml4_phys_addr / FrameAllocator::get_frame_size());
-    mngr.free_frames((void*)task.pml4_phys_addr, sizeof(PageTables64));
-}
-
-/**
  * @brief   Get dummy boot task, just so there is always some TaskManager::get_current_task() result
  */
 Task TaskManager::get_boot_task() const {
-    // boot task is not subject to scheduling so we can use 0xBAD for poitners to entry point, stack
-    return Task((TaskEntryPoint2)0xBAD, "boot", 0, 0, false, 0xBAD, 0xBAD, 0, "");
+    return TaskFactory::make_boot_stub_task();
 }
 
 /**
@@ -269,7 +221,7 @@ CpuState* TaskManager::pick_next_task_and_load_address_space() {
     current_task_it = next_task_it;
     next_task_it = next_task_it.get_next();
 
-    u64 pml4_physical_address = get_current_task().pml4_phys_addr;
+    u64 pml4_physical_address = get_current_task().task_group_data->pml4_phys_addr;
     PageTables::load_address_space(pml4_physical_address);
 
     return (*current_task_it)->cpu_state;

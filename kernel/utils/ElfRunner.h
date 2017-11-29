@@ -23,11 +23,10 @@ public:
 
 private:
     static void load_and_run_elf(u8* elf_file_data, kstd::vector<kstd::string>* args);
-    static char** string_vec_to_argv(const kstd::vector<kstd::string>& src_vec, memory::BumpAllocationPolicy& allocator);
+    static char** string_vec_to_argv(const kstd::vector<kstd::string>& src_vec, multitasking::TaskGroupDataPtr tgr);
 
-    static const size_t ELF_VIRTUAL_MEM_BYTES   = 1024*1024*1024;  // 1GB of virtual memory can be dynamically mapped on Page Fault, as for now
-    static const size_t ELF_STACK_SIZE          = 4 * 4096;
-    static const size_t ELF_STACK_START         = ELF_VIRTUAL_MEM_BYTES - ELF_STACK_SIZE; // use top of the elf virtual memory for the stack
+    static constexpr size_t ELF_VIRTUAL_MEM_BYTES   = 1024*1024*1024;  // 1GB of virtual memory can be dynamically mapped on Page Fault, as for now
+    static constexpr size_t ELF_STACK_SIZE          = 4 * 4096;
 };
 
 } /* namespace userspace */

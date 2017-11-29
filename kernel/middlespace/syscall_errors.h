@@ -8,6 +8,7 @@
 #ifndef SRC_MIDDLESPACE_SYSCALL_ERRORS_H_
 #define SRC_MIDDLESPACE_SYSCALL_ERRORS_H_
 
+#include <errno.h>
 namespace syscalls {
 
 

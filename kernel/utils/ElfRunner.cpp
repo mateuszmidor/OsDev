@@ -24,7 +24,7 @@ namespace utils {
  * @return  Error code on error, task id on success
  */
 s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
-    if (!utils::Elf64::is_elf64(elf_data))
+    if (!Elf64::is_elf64(elf_data))
         return -ENOEXEC; // not executable
 
     MemoryManager& mm = MemoryManager::instance();
@@ -35,11 +35,14 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
     // create elf address space mapping, elf_loader will use this address space and load elf segments into it
     PageTables::map_elf_address_space(pml4_phys_addr);
 
-    // run elf_loader in target address space, so the elf segments can be loaded
+    // run load_and_run_elf in target address space, so the elf segments can be loaded
     TaskManager& task_manager = TaskManager::instance();
-    Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(args);
-    task->pml4_phys_addr = pml4_phys_addr;   // kernel task but in user memory space
-    task->cwd = task_manager.get_current_task().cwd; // inherit current working directory of calling task
+
+    const size_t HEAP_LOW_LIMIT = Elf64::get_available_memory_first_byte(elf_data);     // first free byte after ELF segments
+    const size_t HEAP_HIGH_LIMIT = ELF_VIRTUAL_MEM_BYTES;
+    const string& CWD = task_manager.get_current_task().task_group_data->cwd;           // inherit current working directory
+    Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(args); // kernel task so it can run "load_and_run_elf"
+    task->task_group_data  = std::make_shared<TaskGroupData>(pml4_phys_addr, CWD, HEAP_LOW_LIMIT, HEAP_HIGH_LIMIT); // but in its own address space
 
     if (u32 tid = task_manager.add_task(task)) {
         return tid;
@@ -56,23 +59,20 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
  */
 void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // copy elf sections into address space and remember where free virtual memory starts
-    u64 entry_point = utils::Elf64::load_into_current_addressspace(elf_file_data);
-    u64 free_virtual_mem_start = utils::Elf64::get_available_memory_first_byte(elf_file_data);
+    size_t entry_point = Elf64::load_into_current_addressspace(elf_file_data);
     delete[] elf_file_data;
 
-    // free to use user space memory is between elf image last byte and elf stack first byte
-    BumpAllocationPolicy userspace_allocator(free_virtual_mem_start, ELF_VIRTUAL_MEM_BYTES - ELF_STACK_SIZE);
+    TaskManager& task_manager = TaskManager::instance();
+    Task& elf_loader_task =  task_manager.get_current_task();
 
     // prepare the target run environment in use memory space
-    u64 argc = args->size();
-    char** argv = string_vec_to_argv(*args, userspace_allocator);
+    size_t argc = args->size();
+    char** argv = string_vec_to_argv(*args, elf_loader_task.task_group_data);
     delete args;
 
     // run the actual elf task
-    TaskManager& task_manager = TaskManager::instance();
-    Task& elf_loader_task =  task_manager.get_current_task();
-    Task* task = TaskFactory::make_user_task(entry_point, argv[0], elf_loader_task.pml4_phys_addr, ELF_STACK_START, ELF_STACK_SIZE)->set_arg1(argc)->set_arg2(argv);
-    task->cwd = elf_loader_task.cwd; // inherit current working directory of calling task
+    Task* task = TaskFactory::make_lightweight_task(elf_loader_task, entry_point, argv[0], ELF_STACK_SIZE)->set_arg1(argc)->set_arg2(argv); // reuse prepared address space
+    task->is_user_space = true;                                                                                                             // but make the elf task a userspace task
 
     // replace elf_loader with actual ELF task
     task_manager.replace_current_task(task);
@@ -81,12 +81,12 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
 /**
  * @brief   Convert vector<string> into char*[] that is stored in user space virtual memory
  */
-char** ElfRunner::string_vec_to_argv(const vector<string>& src_vec, BumpAllocationPolicy& allocator) {
+char** ElfRunner::string_vec_to_argv(const vector<string>& src_vec, TaskGroupDataPtr tgr) {
     u8 argc = src_vec.size();
-    char** argv =  (char**)allocator.alloc_bytes(argc * sizeof(char*));
+    char** argv =  (char**)tgr->alloc_static(argc * sizeof(char*));
     for (u8 i = 0; i < argc; i++) {
         const string& src = src_vec[i];
-        argv[i] = (char*)allocator.alloc_bytes(src.length() + 1); // +1 for null terminator
+        argv[i] = (char*)tgr->alloc_static(src.length() + 1); // +1 for null terminator
         memcpy(argv[i], src.c_str(), src.length() + 1); // +1 for null terminator
     }
 

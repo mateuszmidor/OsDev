@@ -34,6 +34,20 @@ public:
         return (size_t)physical_addr + get_kernel_offset();
     }
 
+    /**
+     * @brief   Kernel heap starts at -1GB of virtual memory
+     */
+    static size_t get_kernel_heap_low_limit() {
+        return (size_t)-1024*1024*1024;
+    }
+
+    /**
+     * @brief   Kernel heap ends at (-1)B virtual memory
+     */
+    static size_t get_kernel_heap_high_limit() {
+        return (size_t)-1;
+    }
+
 private:
     static size_t get_kernel_offset();
 };

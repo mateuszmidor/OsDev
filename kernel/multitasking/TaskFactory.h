@@ -13,61 +13,65 @@
 namespace multitasking {
 
 class TaskFactory {
-public:
-    /**
-     * @brief   Create user space task (runs in protection ring3), with provided address space and stack
-     * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
-     * @note    Make sure that entrypoint and stack is accessible from that address space,
-     *          ie. their virtual addresses are mapped as ring3 accessible
-     */
-    template <class EntrypointT>
-    static Task* make_user_task(EntrypointT entrypoint, const char name[], u64 pml4_phys_addr, u64 stack_addr, u64 stack_size) {
-        return new Task(
-                        (TaskEntryPoint2)entrypoint,
-                        name,
-                        0,              // task func arg 1
-                        0,              // task func arg 2
-                        true,           // user space = true
-                        pml4_phys_addr,
-                        stack_addr,
-                        stack_size,
-                        "/"             // current working directory as root
-                    );
-    }
+private:
+    static TaskGroupData    kernel_task_group;
+    static TaskGroupDataPtr kernel_task_group_ptr;
 
+public:
     /**
      * @brief   Create kernel space task (runs in protection ring0), with kernel address space and default stack
      * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
      */
     template <class EntrypointT>
     static Task* make_kernel_task(EntrypointT entrypoint, const char name[]) {
+        // this init is done only once when "init" task is being created (thus no preemptiom possible)
+        if (!kernel_task_group_ptr)
+            kernel_task_group_ptr.reset(&kernel_task_group);
+
+        u64 stack_size = Task::DEFAULT_STACK_SIZE;
+        u64 stack_addr = (u64)new char[stack_size];
+
         return new Task(
                         (TaskEntryPoint2)entrypoint,
-                        name,
-                        0,              // task func arg 1
-                        0,              // task func arg 2
-                        false,          // user space = false
-                        0,              // use kernel address space
-                        0,              // create default stack...
-                        0,              // ...of default size
-                        "/"             // current working directory as root
+                        name,                   // task name
+                        0,                      // task func arg 1
+                        0,                      // task func arg 2
+                        false,                  // user space = false
+                        stack_addr,
+                        stack_size,
+                        kernel_task_group_ptr   // all kernel tasks belong to one group
                     );
     }
 
     /**
-     * @brief   Makes a Task object from a class that exposes Constructor(u64 arg) and void run()
+     * @brief   Create a task that shares the resources with "src" task.
+     *          To be used to add threads within same process.
+     * @param   EntrypointT should be of type TaskEntryPoint0, TaskEntryPoint1 or TaskEntryPoint2
      */
-//    template <class T>
-//    static Task make_kernel_task(const kstd::string& name, u64 arg = 0) {
-//        return Task::make_kernel_task(make_<T>, name.c_str()).set_arg1(arg);
-//    }
+    template <class EntrypointT>
+    static Task* make_lightweight_task(const Task& src, EntrypointT entrypoint, const char name[], u64 stack_size) {
+        TaskGroupDataPtr task_group_data = src.task_group_data;
+        u64 stack_addr = (u64)task_group_data->alloc_static(stack_size);
 
-private:
-    template <class T>
-    static void make_(u64 arg) {
-        T task(arg);
-        task.run();
+        return new Task(
+                        (TaskEntryPoint2)entrypoint,
+                        name,                   // task name
+                        0,                      // task func arg 1
+                        0,                      // task func arg 2
+                        src.is_user_space,      // execution space same as source task
+                        stack_addr,
+                        stack_size,
+                        task_group_data         // group same assource task
+                    );
     }
+
+    /**
+     * @brief   Create fake task that represents kernel main until entering multitasking
+     */
+    static Task make_boot_stub_task() {
+        return Task((TaskEntryPoint2)0, "boot", 0, 0, false, 0, 0, TaskGroupDataPtr {});
+    }
+
 };
 
 } /* namespace multitasking */

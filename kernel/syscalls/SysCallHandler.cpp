@@ -35,7 +35,7 @@ SysCallHandler::SysCallHandler() { }
   @see      http://man7.org/linux/man-pages/man2/open.2.html
  */
 s32 SysCallHandler::sys_open(const char path[], int flags, int mode) {
-    auto& files = current().files;
+    auto& files = current().task_group_data->files;
 
     for (u32 i = 0; i < files.size(); i++)
         if (!files[i]) {    // found empty file descriptor
@@ -61,7 +61,7 @@ s32 SysCallHandler::sys_open(const char path[], int flags, int mode) {
  * @see     http://man7.org/linux/man-pages/man2/close.2.html
  */
 s32 SysCallHandler::sys_close(u32 fd) {
-    auto& files = current().files;
+    auto& files = current().task_group_data->files;
 
     if (fd >= files.size())
         return -EBADF;
@@ -81,7 +81,7 @@ s32 SysCallHandler::sys_close(u32 fd) {
  * @see     http://man7.org/linux/man-pages/man2/read.2.html
  */
 s64 SysCallHandler::sys_read(u32 fd, void *buf, u64 count) {
-    auto& files = current().files;
+    auto& files = current().task_group_data->files;
 
     if (fd >= files.size())
         return -EBADF;
@@ -99,7 +99,7 @@ s64 SysCallHandler::sys_read(u32 fd, void *buf, u64 count) {
  * @see     http://man7.org/linux/man-pages/man2/write.2.html
  */
 s64 SysCallHandler::sys_write(u32 fd, const void *buf, u64 count) {
-    auto& files = current().files;
+    auto& files = current().task_group_data->files;
 
     if (fd >= files.size())
         return -EBADF;
@@ -118,7 +118,7 @@ s64 SysCallHandler::sys_write(u32 fd, const void *buf, u64 count) {
  * @see     http://man7.org/linux/man-pages/man2/lseek.2.html
  */
 off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
-    auto& files = current().files;
+    auto& files = current().task_group_data->files;
 
     if (fd >= files.size())
         return -EBADF;
@@ -262,7 +262,7 @@ s32 SysCallHandler::sys_creat(const char path[], int mode) {
         return -EACCES;
 
     // alloc the created file in descriptor table
-    auto& files = current().files;
+    auto& files = current().task_group_data->files;
     for (u32 i = 0; i < files.size(); i++)
         if (!files[i]) {    // found empty file descriptor
             files[i] = entry;
@@ -308,7 +308,7 @@ s32 SysCallHandler::sys_get_cwd(char* buff, size_t size) {
     if (!buff)
         return -EINVAL;
 
-    const string& cwd = current().cwd;
+    const string& cwd = current().task_group_data->cwd;
     if (size < cwd.length() + 1)
         return -ERANGE;
 
@@ -332,7 +332,7 @@ s32 SysCallHandler::sys_chdir(const char path[]) {
     if (!entry->is_directory())
         return -ENOTDIR;
 
-    current().cwd = absolute_path;
+    current().task_group_data->cwd = absolute_path;
     return 0;
 }
 
@@ -364,7 +364,7 @@ void SysCallHandler::sys_exit_group(s32 status) {
  * @param   max_entries "entries" buffer capacity, max num items
  */
 s32 SysCallHandler::enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries) {
-    auto& files = current().files;
+    auto& files = current().task_group_data->files;
 
     if (fd >= files.size())
         return -EBADF;
@@ -515,7 +515,7 @@ multitasking::Task& SysCallHandler::current() const {
  * @brief   Return absolute path made from "path" and current task working directory
  */
 UnixPath SysCallHandler::make_absolute_path(const kstd::string& path) const {
-    const string& cwd = current().cwd;
+    const string& cwd = current().task_group_data->cwd;
 
     // check if relative_filename specified at all
     if (path.empty())

@@ -38,12 +38,10 @@ public:
 private:
     TaskManager() {}
     hardware::CpuState* pick_next_task_and_load_address_space();
-    void close_files(Task& task);
-    void release_address_space(Task& task);
     Task get_boot_task() const;
     static TaskManager _instance;
 
-    Task                            boot_task       = get_boot_task();   // represents "kmain" boot task
+    Task                            boot_task       = get_boot_task();      // represents "kmain" boot task
     TaskList                        running_queue;                          // list of tasks that are ready to be run
     kstd::ListIterator<Task*>       current_task_it = running_queue.end();  // task that is currently running
     kstd::ListIterator<Task*>       next_task_it    = running_queue.end();  // next task to be run
