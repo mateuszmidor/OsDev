@@ -17,7 +17,7 @@ namespace cmds {
  * 0...x -> process image
  * ELF_VIRTUAL_MEM_BYTES - stack size -> process stack
  */
-void elfrun::run() {
+void elfrun::run(bool run_in_bg) {
     if (env->cmd_args.size() < 2) {
         env->printer->format("elfrun: please specify file name\n");
         return;
@@ -33,7 +33,8 @@ void elfrun::run() {
     nullterm_argv[count] = nullptr;
 
     // run the elf
-    switch (syscalls::elf_run(filename.c_str(), nullterm_argv)) {
+    s64 elf_run_result = syscalls::elf_run(filename.c_str(), nullterm_argv);
+    switch (elf_run_result) {
     case -ENOENT:
         env->printer->format("elfrun: no such file\n");
         break;
@@ -55,6 +56,8 @@ void elfrun::run() {
         break;
 
     default:
+        if (!run_in_bg)
+            syscalls::task_wait(elf_run_result); // wait till task exits. This deadlocks if task writes to "/dev/stdout, fills it up and blocks waiting for someone to read
         break;
     }
 

@@ -14,7 +14,7 @@ using namespace ustd;
 //using namespace filesystem;
 namespace cmds {
 
-void elfinfo::run() {
+void elfinfo::run(bool run_in_bg) {
 //    if (env->cmd_args.size() < 2) {
 //        env->printer->format("elfinfo: please specify file name\n");
 //        return;

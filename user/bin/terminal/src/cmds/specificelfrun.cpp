@@ -13,7 +13,7 @@ specificelfrun::specificelfrun(terminal::TerminalEnv* arg, const ustd::string& e
         CmdBase::CmdBase(arg), elf_path(elf_absolute_path){
 }
 
-void specificelfrun::run() {
+void specificelfrun::run(bool run_in_bg) {
     u32 count = env->cmd_args.size();
     const char** nullterm_argv = new const char*[count + 1]; // +1 for list terminating null
     for (u32 i = 0; i < count; i++)
@@ -45,7 +45,8 @@ void specificelfrun::run() {
         break;
 
     default:
-        syscalls::task_wait(elf_run_result); // wait till task exits. This deadlocks if task writes to "/dev/stdout, fills it up and blocks waiting for someone to read
+        if (!run_in_bg)
+            syscalls::task_wait(elf_run_result); // wait till task exits
         break;
     }
 

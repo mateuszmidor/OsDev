@@ -232,9 +232,15 @@ void Terminal::process_cmd(const string& cmd) {
         return;
 
     auto cmd_args = ustd::StringUtils::split_string(cmd, ' ');
+    bool run_in_background = false;
+    if (cmd_args.back() == "&") {
+        run_in_background = true;
+        cmd_args.pop_back();
+    }
+
     if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
         env.cmd_args = cmd_args;
-        task->run();
+        task->run(run_in_background);
         cmd_history.append(cmd);
     }
     else

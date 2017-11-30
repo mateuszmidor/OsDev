@@ -16,7 +16,7 @@ namespace cmds {
 class cd : public CmdBase {
 public:
     using CmdBase::CmdBase;
-    void run();
+    void run(bool run_in_bg = false);
 
 private:
     void navigate_path(const ustd::string& path);

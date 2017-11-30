@@ -17,7 +17,7 @@ namespace cmds {
 ustd::string cd::prev_cwd = "";
 char cwd[256];
 
-void cd::run() {
+void cd::run(bool run_in_bg) {
     string path;
     if (env->cmd_args.size() > 1)
         path = env->cmd_args[1];

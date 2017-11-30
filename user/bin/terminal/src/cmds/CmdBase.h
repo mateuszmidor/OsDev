@@ -16,7 +16,7 @@ class CmdBase {
 public:
     CmdBase(terminal::TerminalEnv* arg);
     virtual ~CmdBase() {}
-    virtual void run() = 0;
+    virtual void run(bool run_in_bg = false) = 0;
 
 protected:
     terminal::TerminalEnv* env;

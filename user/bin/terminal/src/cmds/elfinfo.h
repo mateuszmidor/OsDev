@@ -15,7 +15,7 @@ namespace cmds {
 class elfinfo: public CmdBase {
 public:
     using CmdBase::CmdBase;
-    void run() override;
+    void run(bool run_in_bg = false) override;
 
 private:
 };

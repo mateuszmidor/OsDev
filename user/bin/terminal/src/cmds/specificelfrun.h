@@ -16,7 +16,7 @@ class specificelfrun: public CmdBase {
 public:
     specificelfrun(terminal::TerminalEnv* arg, const ustd::string& elf_absolute_path);
     ~specificelfrun() override {}
-    void run() override;
+    void run(bool run_in_bg = false) override;
 
 private:
     ustd::string elf_path;
