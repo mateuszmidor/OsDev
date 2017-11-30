@@ -232,7 +232,7 @@ void run_userspace_terminal() {
 
     // run the elf
     utils::ElfRunner runner;
-    if (runner.run(elf_data, new vector<string> { "TERMINAL" }) > 0)
+    if (runner.run(elf_data, new vector<string> { "terminal" }) > 0)
         klog.format("Terminal is running\n");
 }
 
