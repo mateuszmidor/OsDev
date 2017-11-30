@@ -137,6 +137,10 @@ bool Terminal::init() {
     }
 
     printer->clear_screen();
+
+    // start a thread printing /dev/stdout to the screen
+    syscalls::task_lightweight_run((unsigned long long)stdout_printer_thread, (unsigned long long)this, "terminal_stdout_printer");
+
     return true;
 }
 
@@ -150,22 +154,13 @@ string Terminal::get_line() {
     return user_input.get_text();
 }
 
+/**
+ * @brief   Read a key from /dev/keyboard
+ */
 Key Terminal::get_key() {
-    const u32 BUFF_SIZE = 512;
-    char buff[BUFF_SIZE];
-
-    // wait until last_key is set by keyboard interrupt. Keys might be missed if stroking faster than Terminal gets CPU time :)
     Key key;
-    while (!(syscalls::read(fd_keyboard, &key, sizeof(key)) > 0)) {
-
-        // while waiting for key to arrive, check if there is something in stdout to be printed out
-        u32 count;
-        while ((count = syscalls::read(fd_stdout, buff, BUFF_SIZE - 1)) > 0) {
-            buff[count] = '\0';
-            printer->format("%", buff);
-        }
+    while (!(syscalls::read(fd_keyboard, &key, sizeof(key)) > 0))
         syscalls::nsleep(0);
-    }
 
     return key;
 }
@@ -246,6 +241,24 @@ void Terminal::process_cmd(const string& cmd) {
         printer->format("Unknown command: %\n", cmd);
 
     user_input.clear();
+}
+
+/**
+ * @brief   All this function does is read /dev/stdout in a loop and print it to the screen
+ * @note    This function is run in a separate thread
+ */
+void Terminal::stdout_printer_thread(Terminal* term) {
+    const u32 BUFF_SIZE = 512;
+    char buff[BUFF_SIZE];
+
+    while (true) {
+        u32 count;
+        while ((count = syscalls::read(term->fd_stdout, buff, BUFF_SIZE - 1)) > 0) {
+            buff[count] = '\0';
+            term->printer->format("%", buff);   // TODO: secure this from race access to printer
+        }
+        syscalls::nsleep(0); // yield CPU
+    }
 }
 
 } /* namespace terminal */

@@ -12,7 +12,7 @@ using namespace ustd;
 using namespace cmds;
 namespace terminal {
 
-CmdBase* CommandCollection::get(const ustd::string& cmd_name) const {
+CmdBase* CommandCollection::get(const string& cmd_name) const {
     for (const Command& cmd : commands)
         if (cmd.name == cmd_name)
             return cmd.task;
@@ -20,7 +20,7 @@ CmdBase* CommandCollection::get(const ustd::string& cmd_name) const {
     return nullptr;
 }
 
-void CommandCollection::install(const string name, CmdBase* task) {
+void CommandCollection::install(const string& name, CmdBase* task) {
     commands.emplace_back(name, task);
 }
 

@@ -32,6 +32,7 @@ private:
     void install_external_commands(const ustd::string& dir);
     void install_cmd(cmds::CmdBase* cmd, const ustd::string& cmd_name);
 
+    static void stdout_printer_thread(Terminal* term);
 
     CommandHistory      cmd_history;
     CommandCollection   cmd_collection;

@@ -25,7 +25,7 @@ struct Command {
 class CommandCollection {
 public:
     cmds::CmdBase* get(const ustd::string& cmd_name) const;
-    void install(const ustd::string name, cmds::CmdBase* cmd);
+    void install(const ustd::string& name, cmds::CmdBase* cmd);
 
 private:
     ustd::vector<Command> commands;

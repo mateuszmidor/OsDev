@@ -45,7 +45,7 @@ void specificelfrun::run() {
         break;
 
     default:
-//        syscalls::task_wait(elf_run_result); // wait till task exits. This deadlocks if task writes to "/dev/stdout, fills it up and blocks waiting for someone to read
+        syscalls::task_wait(elf_run_result); // wait till task exits. This deadlocks if task writes to "/dev/stdout, fills it up and blocks waiting for someone to read
         break;
     }
 
