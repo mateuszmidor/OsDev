@@ -15,7 +15,7 @@ using namespace memory;
 namespace multitasking {
 
 TaskGroupData::TaskGroupData(u64 pml4_phys_addr, const kstd::string& cwd, size_t heap_low_limit, size_t heap_high_limit) :
-        pml4_phys_addr(pml4_phys_addr), cwd(cwd), heap_low_limit(heap_low_limit), heap_high_limit(heap_high_limit) {
+        pml4_phys_addr(pml4_phys_addr), cwd(cwd), heap_low_limit(heap_low_limit), heap_high_limit(heap_high_limit), termination_pending(false) {
 }
 
 TaskGroupData::~TaskGroupData() {

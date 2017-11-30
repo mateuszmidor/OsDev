@@ -352,7 +352,7 @@ void SysCallHandler::sys_exit(s32 status) {
  * @see     http://man7.org/linux/man-pages/man2/exit_group.2.html
  */
 void SysCallHandler::sys_exit_group(s32 status) {
-    multitasking::Task::exit(status);
+    multitasking::Task::exit_group(status);
 }
 
 /*************************************************************************************

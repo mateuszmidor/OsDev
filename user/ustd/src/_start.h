@@ -16,9 +16,8 @@ __asm__ __volatile__(
     "_start:            ;"
     "call main          ;"
     "mov %rax, %rdi     ;"  // error code
-    "mov $60, %rax      ;"  // syscall 60: exit
+    "mov $231, %rax     ;"  // syscall 231: exit_group
     "syscall            ;"
 );
-
 
 #endif /* ELFS__START_H_ */

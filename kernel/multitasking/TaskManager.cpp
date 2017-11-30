@@ -122,7 +122,6 @@ CpuState* TaskManager::sleep_current_task(CpuState* cpu_state, u64 millis) {
  * @param   cpu_state Current task cpu state.
  * @note    cpu_state IS LOCATED ON THE KERNEL STACK AND NEEDS TO BE COPIED TO THE TASK-SPECIFIC LOCATION IF SWITCHING FROM RING 3 (USER SPACE)!!!
  *          This can be improved by storing cpu_state directly in task-specific location or using per-task kernel stack. To be done later.
- * @note    There must be always at least 1 ("idle") task
  * @note    Execution context: Interrupt only (Programmable Interval Timer interrupt, int 80h interrupt)
  */
 CpuState* TaskManager::schedule(CpuState* cpu_state) {
@@ -134,8 +133,8 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
     if (current_task_it != running_queue.end()) {
         Task* current_task = *current_task_it;
         if (current_task->is_user_space) {
-            current_task->cpu_state = (CpuState*) (cpu_state->rsp - sizeof(CpuState)); // allocate cpu state on the current task stack
-            *current_task->cpu_state = *cpu_state; // copy cpu state from kernel stack to task stack
+            current_task->cpu_state = (CpuState*) (cpu_state->rsp - sizeof(CpuState));  // allocate cpu state on the current task stack
+            *current_task->cpu_state = *cpu_state;                                      // copy cpu state from kernel stack to task stack
         }
         else
             current_task->cpu_state = cpu_state;     // cpu state is already allocated and stored on task stack, just remember the pointer
@@ -150,20 +149,59 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @note    Execution context: Interrupt only (int 80h)
  */
 hardware::CpuState* TaskManager::kill_current_task() {
-    KLockGuard lock;    // protect running_queue and current_task
+    // enqueue back all waiting tasks and delete the task itself
+    wakeup_waitings_and_delete_task(*current_task_it);
 
-    Task* current_task = *current_task_it;
-
-    // enqueue back all waiting tasks
-    while (Task* t = current_task->wait_queue.pop_front())
-        enqueue_task_back(t);
-
-    // remove the task itself from running queue and from memory
+    // remove the task from running queue
     running_queue.remove(current_task_it);
-    delete current_task;
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
+}
+
+/**
+ * @brief   Remove all the tasks in current task group effectively killing process and return new task to be run
+ * @note    Execution context: Interrupt only (int 80h)
+ */
+hardware::CpuState* TaskManager::kill_current_task_group() {
+    // for each task
+    //  if task belong to the group
+    //    enqueue back waiting tasks
+    //    remove task from the queue
+    //    delete task
+
+    const TaskGroupDataPtr current_task_group = (*current_task_it)->task_group_data;
+    current_task_group->termination_pending = true; // mark the group as to be terminated so when member tasks get awaken they get immediately deleted
+
+    for (auto task_it = running_queue.begin(); task_it != running_queue.end(); task_it++) {
+        Task* task = *task_it;
+
+        if (task->task_group_data != current_task_group)
+            continue;
+
+        // enqueue back all waiting tasks and delete the task itself
+        wakeup_waitings_and_delete_task(task);
+
+        // remove the task from running queue
+        running_queue.remove(task_it);
+
+        // invalidate next task if needed
+        if (task_it == next_task_it)
+            next_task_it = running_queue.end();
+    }
+
+    // return next task to switch to
+    return pick_next_task_and_load_address_space();
+}
+
+/**
+ * @brief   Wake up tasks waiting for "task" to finish, then delete the "task" itself
+ */
+void TaskManager::wakeup_waitings_and_delete_task(Task* task) {
+    while (Task* t = task->wait_queue.pop_front())
+        enqueue_task_back(t);
+
+    delete task;
 }
 
 /**
@@ -200,19 +238,23 @@ void TaskManager::dequeue_current_task(TaskList& list) {
 }
 
 /**
- * @brief   Put the "task" back on running queue
- * @note    IT MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
+ * @brief   Put the "task" back on running queue, or remove it if task group is ordered to be terminated
+ * @note    TASK MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
 void TaskManager::enqueue_task_back(Task* task) {
     KLockGuard lock;    // prevent reschedule
 
-    running_queue.push_front(task);
+    if (task->task_group_data->termination_pending)
+        wakeup_waitings_and_delete_task(task);
+    else
+        running_queue.push_front(task);
 }
 
 /**
  * @brief   Choose next task to run and load its page table level4 into cr3
  * @note    Execution context: Interrupt only (on kill_current_task, schedule)
+ * @note    There always need to be at least the "idle" task on the queue
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
     if (next_task_it == running_queue.end())

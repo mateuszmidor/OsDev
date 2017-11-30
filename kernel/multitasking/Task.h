@@ -19,6 +19,7 @@ using TaskEntryPoint1 = void (*)(u64 arg1);
 using TaskEntryPoint2 = void (*)(u64 arg1, u64 arg2);
 using TaskExitPoint = void (*)();
 
+
 struct TaskEpilogue {
     u64 rip;    // rip cpu register value for retq instruction on task function exit
 } __attribute__((packed));
@@ -41,6 +42,7 @@ struct Task {
     static void idle();
     static void yield();
     static void exit(u64 result_code = 0);
+    static void exit_group(u64 result_code = 0);
 
 
     template <class T>

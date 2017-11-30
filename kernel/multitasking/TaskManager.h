@@ -31,6 +31,7 @@ public:
     hardware::CpuState* sleep_current_task(hardware::CpuState* cpu_state, u64 millis);
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
+    hardware::CpuState* kill_current_task_group();
     bool wait(u32 task_id);
     void dequeue_current_task(TaskList& list);
     void enqueue_task_back(Task* task);
@@ -38,6 +39,7 @@ public:
 private:
     TaskManager() {}
     hardware::CpuState* pick_next_task_and_load_address_space();
+    void wakeup_waitings_and_delete_task(Task* task);
     Task get_boot_task() const;
     static TaskManager _instance;
 

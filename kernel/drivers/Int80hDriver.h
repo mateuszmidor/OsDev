@@ -22,6 +22,7 @@ public:
 
 private:
     hardware::CpuState* task_exit(u64 exit_code);
+    hardware::CpuState* task_exit_group(u64 exit_code);
 };
 
 } /* namespace drivers */

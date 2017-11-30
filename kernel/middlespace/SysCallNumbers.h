@@ -59,6 +59,7 @@ enum class SysCallNumbers {
 enum class Int80hSysCallNumbers {
     EXIT                    = 1,
     NANOSLEEP               = 162,
+    EXIT_GROUP              = 252,
 };
 
 } /* namespace middlespace */

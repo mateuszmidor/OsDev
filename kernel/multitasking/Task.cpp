@@ -77,5 +77,8 @@ void Task::exit(u64 result_code) {
     asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::EXIT), "b"(result_code));
 }
 
+void Task::exit_group(u64 result_code) {
+    asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::EXIT_GROUP), "b"(result_code));
+}
 
 } /* namespace multitasking */
