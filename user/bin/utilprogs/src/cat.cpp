@@ -42,5 +42,7 @@ int main(int argc, char* argv[]) {
     }
 
     syscalls::close(fd);
+    cout::print("\n");
+
     return total;
 }
