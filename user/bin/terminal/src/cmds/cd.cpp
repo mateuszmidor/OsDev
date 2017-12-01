@@ -8,6 +8,7 @@
 #include "cd.h"
 #include "ustd.h"
 #include "syscalls.h"
+#include "Cout.h"
 #include "StringUtils.h"
 
 using namespace ustd;
@@ -17,10 +18,10 @@ namespace cmds {
 ustd::string cd::prev_cwd = "";
 char cwd[256];
 
-void cd::run(bool run_in_bg) {
+void cd::run(const CmdArgs& args, bool run_in_bg) {
     string path;
-    if (env->cmd_args.size() > 1)
-        path = env->cmd_args[1];
+    if (args.size() > 1)
+        path = args[1];
 
     if (path == "-")
         navigate_back();
@@ -68,12 +69,12 @@ void cd::cd_directory(const string& path) {
     struct stat s;
 
     if (syscalls::stat(path.c_str(), &s) < 0) {
-        env->printer->format("cd: directory '%' doesnt exist\n", path);
+        cout::format("cd: directory '%' doesnt exist\n", path);
         return;
     }
 
     if (!(s.st_mode == S_IFDIR)) {
-        env->printer->format("cd: '%' is not directory\n", path);
+        cout::format("cd: '%' is not directory\n", path);
         return;
     }
 

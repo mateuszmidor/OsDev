@@ -15,10 +15,7 @@ namespace cmds {
 
 class elfrun: public CmdBase {
 public:
-    using CmdBase::CmdBase;
-    void run(bool run_in_bg = false) override;
-
-private:
+    void run(const CmdArgs& args, bool run_in_bg = false) override;
 
 };
 

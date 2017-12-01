@@ -5,19 +5,22 @@
  * @author: Mateusz Midor
  */
 
+#include "Cout.h"
+#include "syscalls.h"
 #include "specificelfrun.h"
 
+using namespace ustd;
 namespace cmds {
 
-specificelfrun::specificelfrun(terminal::TerminalEnv* arg, const ustd::string& elf_absolute_path) :
-        CmdBase::CmdBase(arg), elf_path(elf_absolute_path){
+specificelfrun::specificelfrun(const ustd::string& elf_absolute_path) :
+        elf_path(elf_absolute_path){
 }
 
-void specificelfrun::run(bool run_in_bg) {
-    u32 count = env->cmd_args.size();
+void specificelfrun::run(const CmdArgs& args, bool run_in_bg) {
+    u32 count = args.size();
     const char** nullterm_argv = new const char*[count + 1]; // +1 for list terminating null
     for (u32 i = 0; i < count; i++)
-        nullterm_argv[i] = env->cmd_args[i].c_str();
+        nullterm_argv[i] = args[i].c_str();
 
     nullterm_argv[count] = nullptr;
 
@@ -25,23 +28,23 @@ void specificelfrun::run(bool run_in_bg) {
     s64 elf_run_result = syscalls::elf_run(elf_path.c_str(), nullterm_argv);
     switch (elf_run_result) {
     case -ENOENT:
-        env->printer->format("specificelfrun: no such file\n");
+        cout::print("specificelfrun: no such file\n");
         break;
 
     case -EISDIR:
-        env->printer->format("specificelfrun: given filename points to a directory not a file\n");
+        cout::print("specificelfrun: given filename points to a directory not a file\n");
         break;
 
     case -ENOMEM:
-        env->printer->format("specificelfrun: no enough memory to run ELF\n");
+        cout::print("specificelfrun: no enough memory to run ELF\n");
         break;
 
     case -ENOEXEC:
-        env->printer->format("specificelfrun: give filename points to non-executable\n");
+        cout::print("specificelfrun: give filename points to non-executable\n");
         break;
 
     case -EPERM:
-        env->printer->format("specificelfrun: task mananger didnt allow to run new task. Too many tasks is running probably\n");
+        cout::print("specificelfrun: task mananger didnt allow to run new task. Too many tasks is running probably\n");
         break;
 
     default:

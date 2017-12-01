@@ -9,8 +9,4 @@
 
 namespace cmds {
 
-CmdBase::CmdBase(terminal::TerminalEnv* arg) {
-    env = arg;
-}
-
 } /* namespace cmds */

@@ -9,14 +9,13 @@
 #define SRC_UTILS_TERMINAL_CMDS_CD_H_
 
 #include "CmdBase.h"
-#include "TerminalEnv.h"
 
 namespace cmds {
 
 class cd : public CmdBase {
 public:
     using CmdBase::CmdBase;
-    void run(bool run_in_bg = false);
+    void run(const CmdArgs& args,bool run_in_bg = false);
 
 private:
     void navigate_path(const ustd::string& path);

@@ -14,9 +14,9 @@ namespace cmds {
 
 class specificelfrun: public CmdBase {
 public:
-    specificelfrun(terminal::TerminalEnv* arg, const ustd::string& elf_absolute_path);
+    specificelfrun(const ustd::string& elf_absolute_path);
     ~specificelfrun() override {}
-    void run(bool run_in_bg = false) override;
+    void run(const CmdArgs& args, bool run_in_bg = false) override;
 
 private:
     ustd::string elf_path;

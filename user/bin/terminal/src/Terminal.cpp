@@ -21,7 +21,7 @@ using namespace middlespace;
 
 namespace terminal {
 
-Terminal::Terminal(u64 arg) {
+Terminal::Terminal(u64 arg) : user_input(printer) {
     // start at /HOME
     syscalls::chdir("/HOME");
 
@@ -29,13 +29,11 @@ Terminal::Terminal(u64 arg) {
     u16 vga_width;
     u16 vga_height;
     syscalls::vga_get_width_height(&vga_width, &vga_height);
-    printer = new ScrollableScreenPrinter(0, 0, vga_width-1, vga_height-1);
-    env.printer = printer;
-    user_input.printer = printer;
+    printer.reset(std::make_shared<ScrollableScreenPrinter>(0, 0, vga_width-1, vga_height-1));
 
     // install internal commands
-    install_cmd(new cmds::elfrun(&env), "elfrun");
-    install_cmd(new cmds::cd(&env), "cd");
+    install_cmd(new cmds::elfrun, "elfrun");
+    install_cmd(new cmds::cd,"cd");
 
     // install external commands that are in form of separate ELF programs, located under given directory
     install_external_commands("/BIN");
@@ -66,8 +64,8 @@ void Terminal::install_external_commands(const string& dir) {
 
         string cmd_absolute_path = StringUtils::format("%/%", dir, e.name);
         string lowercase_name = StringUtils::to_lower_case(e.name);
-        printer->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
-        install_cmd(new cmds::specificelfrun(&env, cmd_absolute_path), lowercase_name);
+        printer.get()->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
+        install_cmd(new cmds::specificelfrun(cmd_absolute_path), lowercase_name);
     }
 
     syscalls::close(fd);
@@ -118,7 +116,7 @@ bool Terminal::init() {
         return false;
     }
 
-    printer->clear_screen();
+    printer.get()->clear_screen();
 
     // start a thread reading /dev/keyboard
     syscalls::task_lightweight_run((unsigned long long)key_processor_thread, (unsigned long long)this, "terminal_key_processor");
@@ -155,22 +153,22 @@ void Terminal::on_key_down(Key key) {
         }
 
         case Key::PgUp: {
-            printer->scroll_up(4);
+            printer.get()->scroll_up(4);
             break;
         }
 
         case Key::PgDown: {
-            printer->scroll_down(4);
+            printer.get()->scroll_down(4);
             break;
         }
 
         case Key::Home: {
-            printer->scroll_to_begin();
+            printer.get()->scroll_to_begin();
             break;
         }
 
         case Key::End: {
-            printer->scroll_to_end();
+            printer.get()->scroll_to_end();
             break;
         }
 
@@ -205,13 +203,12 @@ void Terminal::process_cmd(const string& cmd) {
     }
 
     if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
-        env.cmd_args = cmd_args;
-        task->run(run_in_background);
+        task->run(cmd_args, run_in_background);
         cmd_history.append(cmd);
         cmd_history.set_to_latest();
     }
     else
-        printer->format("Unknown command: '%'\n", cmd);
+        printer.get()->format("Unknown command: '%'\n", cmd);
 }
 
 /**
@@ -226,7 +223,7 @@ void Terminal::stdout_printer_thread(Terminal* term) {
         ssize_t count;
         while ((count = syscalls::read(term->fd_stdout, buff, BUFF_SIZE - 1)) > 0) {
             buff[count] = '\0';
-            term->printer->format("%", buff);   // TODO: secure this from race access to printer
+            term->printer.get()->format("%", buff);
         }
         syscalls::nsleep(0); // yield CPU
     }

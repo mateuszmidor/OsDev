@@ -9,10 +9,10 @@
 #define SRC_UTILS_TERMINAL_TERMINAL_H_
 
 #include "Key.h"
-#include "TerminalEnv.h"
 #include "CommandHistory.h"
 #include "CommandCollection.h"
 #include "CommandLineInput.h"
+#include "Monitor.h"
 #include "ustd.h"
 
 namespace terminal {
@@ -37,8 +37,7 @@ private:
     CommandCollection   cmd_collection;
     CommandLineInput    user_input;
 
-    ScrollableScreenPrinter* printer;
-    TerminalEnv env;
+    ustd::Monitor<ScrollableScreenPrinter> printer; // printer is accessed from multiple threads so it is secured inside Monitor
 
     // file descriptors
     int fd_keyboard     = -1;   // for reading keyboard input
