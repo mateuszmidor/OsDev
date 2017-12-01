@@ -36,7 +36,6 @@ int main(int argc, char* argv[]) {
 
     ssize_t total = 0;
     ssize_t count;
-    cout::print("\n");
     while ((count = syscalls::read(fd, buff, sizeof(buff))) > 0) {
         cout::print(buff, count);
         total += count;

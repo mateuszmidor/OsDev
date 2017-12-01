@@ -7,6 +7,7 @@
 
 #include "Terminal.h"
 #include "StringUtils.h"
+#include "Cin.h"
 //#include "cmds/df.h"
 //#include "cmds/ps.h"
 #include "cmds/cd.h"
@@ -118,7 +119,7 @@ void Terminal::run() {
         user_input.prompt();
 
         // get command
-        string cmd = get_line();
+        string cmd = cin::readln();
 
         // process command
         process_cmd(cmd);
@@ -131,6 +132,11 @@ bool Terminal::init() {
         return false;
     }
 
+    fd_stdin = syscalls::open("/dev/stdin");
+    if (fd_stdin < 0) {
+        return false;
+    }
+
     fd_stdout = syscalls::open("/dev/stdout");
     if (fd_stdout < 0) {
         return false;
@@ -138,34 +144,17 @@ bool Terminal::init() {
 
     printer->clear_screen();
 
+    // start a thread reading /dev/keyboard
+    syscalls::task_lightweight_run((unsigned long long)key_processor_thread, (unsigned long long)this, "terminal_key_processor");
+
     // start a thread printing /dev/stdout to the screen
     syscalls::task_lightweight_run((unsigned long long)stdout_printer_thread, (unsigned long long)this, "terminal_stdout_printer");
 
     return true;
 }
 
-string Terminal::get_line() {
-    Key key;
-    do  {
-        key = get_key();
-        process_key(key);
-    } while (key != Key::Enter);
 
-    return user_input.get_text();
-}
-
-/**
- * @brief   Read a key from /dev/keyboard
- */
-Key Terminal::get_key() {
-    Key key;
-    while (!(syscalls::read(fd_keyboard, &key, sizeof(key)) > 0))
-        syscalls::nsleep(0);
-
-    return key;
-}
-
-void Terminal::process_key(Key key) {
+void Terminal::on_key_down(Key key) {
     // functional key
     if (key & Key::FUNCTIONAL) {
         switch (key) {
@@ -181,12 +170,6 @@ void Terminal::process_key(Key key) {
 
         case Key::Tab: {
             user_input.help_me_out();
-            break;
-        }
-
-        case Key::Enter: {
-            printer->format('\n');
-            cmd_history.set_to_latest();
             break;
         }
 
@@ -218,6 +201,13 @@ void Terminal::process_key(Key key) {
         case Key::Esc:
             break;
 
+        case Key::Enter: {
+            user_input.putc('\n');
+            syscalls::write(fd_stdin, user_input.get_text().c_str(), user_input.get_text().length()); // this makes cin::readln() work :)
+            user_input.clear();
+            break;
+        }
+
         default:;
         }
     }
@@ -242,15 +232,14 @@ void Terminal::process_cmd(const string& cmd) {
         env.cmd_args = cmd_args;
         task->run(run_in_background);
         cmd_history.append(cmd);
+        cmd_history.set_to_latest();
     }
     else
-        printer->format("Unknown command: %\n", cmd);
-
-    user_input.clear();
+        printer->format("Unknown command: '%'\n", cmd);
 }
 
 /**
- * @brief   All this function does is read /dev/stdout in a loop and print it to the screen
+ * @brief   This function reads /dev/stdout in a loop and print it to the screen
  * @note    This function is run in a separate thread
  */
 void Terminal::stdout_printer_thread(Terminal* term) {
@@ -258,12 +247,27 @@ void Terminal::stdout_printer_thread(Terminal* term) {
     char buff[BUFF_SIZE];
 
     while (true) {
-        u32 count;
+        ssize_t count;
         while ((count = syscalls::read(term->fd_stdout, buff, BUFF_SIZE - 1)) > 0) {
             buff[count] = '\0';
             term->printer->format("%", buff);   // TODO: secure this from race access to printer
         }
         syscalls::nsleep(0); // yield CPU
+    }
+}
+
+/**
+ * @brief   This function reads /dev/keyboard and runs Terminal::on_key_down
+ * @note    This function is run in a separate thread
+ */
+void Terminal::key_processor_thread(Terminal* term) {
+    Key key;
+
+    while (true) {
+        while (!(syscalls::read(term->fd_keyboard, &key, sizeof(key)) > 0))
+            syscalls::nsleep(0); // yield CPU
+
+        term->on_key_down(key);
     }
 }
 

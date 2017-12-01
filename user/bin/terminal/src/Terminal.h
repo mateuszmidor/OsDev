@@ -24,15 +24,14 @@ public:
 
 private:
     bool init();
-    void process_key(middlespace::Key key);
-    ustd::string get_line();
-    middlespace::Key get_key();
+    void on_key_down(middlespace::Key key);
     void process_cmd(const ustd::string& cmd);
 
     void install_external_commands(const ustd::string& dir);
     void install_cmd(cmds::CmdBase* cmd, const ustd::string& cmd_name);
 
     static void stdout_printer_thread(Terminal* term);
+    static void key_processor_thread(Terminal* term);
 
     CommandHistory      cmd_history;
     CommandCollection   cmd_collection;
@@ -43,6 +42,7 @@ private:
 
     // file descriptors
     int fd_keyboard     = -1;   // for reading keyboard input
+    int fd_stdin        = -1;   // for reading formatted string user input
     int fd_stdout       = -1;   // for reading stdout of child tasks(elf64)
 };
 

@@ -45,8 +45,10 @@ void specificelfrun::run(bool run_in_bg) {
         break;
 
     default:
-        if (!run_in_bg)
+        if (!run_in_bg) {
             syscalls::task_wait(elf_run_result); // wait till task exits
+            syscalls::msleep(25); // so the command stdout gets printed out before returning to terminal interactive
+        }
         break;
     }
 

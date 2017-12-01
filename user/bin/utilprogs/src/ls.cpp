@@ -64,7 +64,6 @@ int main(int argc, char* argv[]) {
     FsEntry* entries = new FsEntry[MAX_ENTRIES];
 
     int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
-    cout::print("\n");
     for (int i = 0; i < count; i++)
         if (entries[i].is_directory)
             print_dir(entries[i].name);

@@ -58,7 +58,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    cout::print("\n");
     while ((count = syscalls::read(fd, buff, sizeof(buff))) > 0) {
         cout::print(buff, count);
         total += count;

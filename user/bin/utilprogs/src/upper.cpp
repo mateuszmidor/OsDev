@@ -18,16 +18,18 @@ using namespace ustd;
  * @return  0 on success, 1 on error
  */
 int main(int argc, char* argv[]) {
-
-    cout::print("\n");
     string line;
-    do {
-        cout::print("> ");
-        line = cin::readln();
-        string upper_line = StringUtils::to_upper_case(line);
-        cout::print(upper_line);
-    } while (line != "");
 
-    cout::print("\nupper done.");
+    cout::print(": ");
+    line = cin::readln();
+
+    while (!line.empty()) {
+        string upper_line = StringUtils::to_upper_case(line);
+        cout::format("> %\n", upper_line);
+        cout::print(": ");
+        line = cin::readln();
+    };
+    cout::print("upper done.\n");
+
     return 0;
 }
