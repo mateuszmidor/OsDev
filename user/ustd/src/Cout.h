@@ -19,7 +19,7 @@ public:
     static void print(const char str[], size_t count);
 
     template<typename ... Args>
-    static void format(const string& fmt, Args ... args) {
+    static void format(const string& fmt, Args& ... args) {
         print(StringUtils::format(fmt, args...));
     }
 

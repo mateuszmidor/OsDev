@@ -8,18 +8,8 @@
 #include "Terminal.h"
 #include "StringUtils.h"
 #include "Cin.h"
-//#include "cmds/df.h"
-//#include "cmds/ps.h"
+
 #include "cmds/cd.h"
-//#include "cmds/rm.h"
-//#include "cmds/mv.h"
-//#include "cmds/echo.h"
-//#include "cmds/mkdir.h"
-//#include "cmds/trunc.h"
-//#include "cmds/testfat32.h"
-//#include "cmds/lspci.h"
-//#include "cmds/mb2.h"
-//#include "cmds/elfinfo.h"
 #include "cmds/elfrun.h"
 #include "cmds/specificelfrun.h"
 
@@ -35,6 +25,7 @@ Terminal::Terminal(u64 arg) {
     // start at /HOME
     syscalls::chdir("/HOME");
 
+    // setup screen printer
     u16 vga_width;
     u16 vga_height;
     syscalls::vga_get_width_height(&vga_width, &vga_height);
@@ -42,26 +33,11 @@ Terminal::Terminal(u64 arg) {
     env.printer = printer;
     user_input.printer = printer;
 
-
-    // the commands will later be run as elf programs in user space
-//    install_cmd<cmds::ps>("ps");
-//    install_cmd<cmds::free>("free");
-//    install_cmd<cmds::lspci>("lspci");
-//    install_cmd<cmds::mb2>("mb2");
-//    install_cmd<cmds::elfinfo>("elfinfo");
+    // install internal commands
     install_cmd(new cmds::elfrun(&env), "elfrun");
-//    install_cmd<cmds::df>("df");
-//    install_cmd<cmds::cat>("cat");
     install_cmd(new cmds::cd(&env), "cd");
-//    install_cmd<cmds::rm>("rm");
-//    install_cmd<cmds::mv>("mv");
-//    install_cmd<cmds::echo>("echo");
-//    install_cmd<cmds::mkdir>("mkdir");
-//    install_cmd<cmds::trunc>("trunc");
-//    install_cmd<cmds::test_fat32>("test_fat32");
 
-
-    // install commands that are in form of separate ELF programs, located under given directory
+    // install external commands that are in form of separate ELF programs, located under given directory
     install_external_commands("/BIN");
 }
 
