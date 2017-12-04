@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include <array>
 #include "Terminal.h"
 #include "StringUtils.h"
 #include "Cin.h"
@@ -32,8 +33,8 @@ Terminal::Terminal(u64 arg) : user_input(printer) {
     printer.reset(std::make_shared<ScrollableScreenPrinter>(0, 0, vga_width-1, vga_height-1));
 
     // install internal commands
+    install_cmd(new cmds::cd, "cd");
     install_cmd(new cmds::elfrun, "elfrun");
-    install_cmd(new cmds::cd,"cd");
 
     // install external commands that are in form of separate ELF programs, located under given directory
     install_external_commands("/BIN");
@@ -46,13 +47,15 @@ void Terminal::install_external_commands(const string& dir) {
     int fd = syscalls::open(dir.c_str());
 
     // no such directory
-    if (fd < 0)
+    if (fd < 0) {
+        printer.get()->format("Terminal: cant open directory %\n", dir);
         return;
+    }
 
     // get "dir" contents
-    u32 MAX_ENTRIES = 128; // should there be more in a single dir?
-    FsEntry* entries = new FsEntry[MAX_ENTRIES];
-    int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
+    std::array<FsEntry, 128> entries;
+    int count = syscalls::enumerate(fd, entries.data(), entries.size());
+    syscalls::close(fd);
 
     // install commands that were found
     for (int i = 0; i < count; i++) {
@@ -67,17 +70,14 @@ void Terminal::install_external_commands(const string& dir) {
         printer.get()->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
         install_cmd(new cmds::specificelfrun(cmd_absolute_path), lowercase_name);
     }
-
-    syscalls::close(fd);
-    delete[] entries;
 }
 
 /**
  * @brief   Install command "cmd" under name "cmd_name"
  */
 void Terminal::install_cmd(cmds::CmdBase* cmd, const string& cmd_name) {
-    cmd_collection.install(cmd_name, cmd);
     user_input.install(cmd_name);
+    cmd_collection.install(cmd_name, cmd);
 }
 
 /**
@@ -191,6 +191,9 @@ void Terminal::on_key_down(Key key) {
     }
 }
 
+/**
+ * @brief   User entered a command. Do something with it
+ */
 void Terminal::process_cmd(const string& cmd) {
     if (cmd.empty())
         return;
