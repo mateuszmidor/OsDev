@@ -1,0 +1,12 @@
+ELF user programs are loaded into virtual memory 0..1GB as follows:
++---------------------+
+| 1 GB                |
++---------------------|
+|"main" argv          |
+|"main" thread stack  |
+| other thread stacks |
+| HEAP                |
+| ELF CODE + DATA     |
++---------------------+
+| 0 GB                |
++---------------------+   
