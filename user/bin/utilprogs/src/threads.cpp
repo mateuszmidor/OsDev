@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 
     syscalls::task_wait(t1);
     syscalls::task_wait(t2);
-    cout::print("\n Threading done.");
+    cout::print("\n Threading done.\n");
 
     return 0;
 }

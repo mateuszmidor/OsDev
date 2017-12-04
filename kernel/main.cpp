@@ -72,19 +72,10 @@ PageFaultHandler        page_fault;
 
 const u32               PIT_FREQUENCY_HZ = 20;
 
-TaskList counter_sleep_wl;
 
-
-Key last_key;
 VfsEntryPtr keyboard_vfe;
 void handle_keyboard_interrupt(const Key &key) {
     if (key != Key::INVALID) {
-        last_key = key;
-
-        if (key == Key::F2) {
-            if (Task* t = counter_sleep_wl.pop_front())
-               task_manager.enqueue_task_back(t);
-        }
 
         // write key to /dev/keyboard RAM file
         if (!keyboard_vfe)
@@ -110,9 +101,6 @@ void corner_counter() {
         u64 i = 0;
 
         while (true) {
-            if ((last_key == Key::F1) && (counter_sleep_wl.count() == 0))
-                task_manager.dequeue_current_task(counter_sleep_wl);
-
             u8 c = (i % 10) + '0';
             vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
@@ -210,25 +198,26 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(&int80h);
 
     // 6. install exceptions
-    exception_manager.install_handler(&page_fault);     // this guy allows dynamic memory allocation
+    exception_manager.install_handler(&page_fault);    // this guy allows dynamic memory on-page-fault allocation
 
     // 7. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
-    interrupt_manager.config_and_activate_exceptions_and_interrupts(); // Dynamic memory "new" available from here, as page_fault handler installed and active
+    interrupt_manager.config_and_activate_exceptions_and_interrupts(); // on-page-fault allocation available from here, as page_fault handler installed and activated
+
+    // 8. configure dynamic memory management
     MemoryManager::install_allocation_policy<WyoosAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
 
-    // 8. configure and activate system calls through "syscall" instruction
+    // 9. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
 
-    // 9. install filesystem root "/"
+    // 10. install filesystem root "/"
     vfs_manager.install_root();
 
-    // 10. configure vga text mode
-    if (auto vga_drv = driver_manager.get_driver<VgaDriver>())
-        vga_drv->set_text_mode_90_30();
+    // 11. configure vga text mode
+    vga.set_text_mode_90_30();
 
-    // 11. start multitasking
+    // 12. start multitasking
     task_manager.add_task(TaskFactory::make_kernel_task(task_init, "init"));
     Task::idle();
 }
