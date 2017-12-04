@@ -54,7 +54,7 @@ void TaskGroupData::release_address_space() {
         }
 
     // release the page table itself
-    klog.format("  Releasing mem frames of PageTables64: %\n", pml4_phys_addr / FrameAllocator::get_frame_size());
+    klog.format("  Releasing mem frames of PageTables64: %\n\n", pml4_phys_addr / FrameAllocator::get_frame_size());
     mngr.free_frames((void*)pml4_phys_addr, sizeof(PageTables64));
 }
 

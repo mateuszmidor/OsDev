@@ -44,7 +44,7 @@ hardware::CpuState* Int80hDriver::task_exit(u64 exit_code) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     const Task& current = mngr.get_current_task();
-    klog.format("[% task \"%\" exits with code %]\n\n", current.is_user_space ? "User" : "Kernel", current.name.c_str(), exit_code);
+    klog.format("[% task \"%\" exits with code %]\n", current.is_user_space ? "User" : "Kernel", current.name.c_str(), exit_code);
     return mngr.kill_current_task();
 }
 
@@ -52,7 +52,7 @@ hardware::CpuState* Int80hDriver::task_exit_group(u64 exit_code) {
     KernelLog& klog = KernelLog::instance();
     TaskManager& mngr = TaskManager::instance();
     const Task& current = mngr.get_current_task();
-    klog.format("[% task group \"%\" exits with code %]\n\n", current.is_user_space ? "User" : "Kernel", current.name.c_str(), exit_code);
+    klog.format("[% task group \"%\" exits with code %]\n", current.is_user_space ? "User" : "Kernel", current.name.c_str(), exit_code);
     return mngr.kill_current_task_group();
 }
 
