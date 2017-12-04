@@ -33,6 +33,7 @@ public:
     s32 sys_creat(const char path[], int mode);
     s32 sys_unlink(const char path[]);
 
+    u64 sys_brk(u64 new_brk);
     s32 sys_get_cwd(char* buff, size_t size);
     s32 sys_chdir(const char path[]);
     void sys_exit(s32 status);

@@ -22,6 +22,7 @@ enum class SysCallNumbers {
     FILE_CLOSE              = 3,
     FILE_STAT               = 4,
     FILE_SEEK               = 8,
+    BRK                     = 12,
     NANOSLEEP               = 35,
     FILE_TRUNCATE           = 76,
     FILE_RENAME             = 82,

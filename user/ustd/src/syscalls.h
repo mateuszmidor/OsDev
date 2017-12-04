@@ -164,6 +164,14 @@ inline int unlink(const char path[]) {
 }
 
 /**
+ * @brief   Move program break effectively changing amount of dynamic memory available to the task
+ * @param   new_brk New dynamic memory high limit
+ * @return  New program break on success, current program break on failure (no memory, new_brk == 0)
+ */
+inline size_t brk(size_t new_brk) {
+    return syscall(middlespace::SysCallNumbers::BRK, (syscall_arg)new_brk);
+}
+/**
  * @brief   Get current working directory
  * @param   buff Buffer for storing the cwd
  * @param   size Length of the "buff", should be at least 256

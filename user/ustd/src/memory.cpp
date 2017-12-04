@@ -5,11 +5,31 @@
  * @author: Mateusz Midor
  */
 #include "types.h"
+#include "syscalls.h"
 
-// TODO: this heap start should be fetched from system by brk
-size_t bump_addr = 128*1024*1024;
+size_t bump_addr = 0;
+size_t bump_old_limit = 0;
+size_t bump_limit = 0;
 
 void* umalloc(size_t size) {
+    // setup dynamic memory allocation start
+    if (bump_addr == 0) {
+        bump_addr = syscalls::brk(0);
+        bump_limit = bump_addr; // we start with 0 bytes of dynamic memory and then alloc as needed
+    }
+
+    // alloc dynamic memory to the program if needed
+    if (bump_addr + size > bump_limit) {
+        size_t increase = size > 1024*1024 ? size : 1024*1024;
+        bump_old_limit = bump_limit;
+        bump_limit = syscalls::brk(bump_old_limit + increase);
+    }
+
+    // if allocation failed - out of memory
+    if (bump_limit == bump_old_limit)
+        return nullptr;
+
+    // cut out chunk of program dynamic memory
     size_t old_bump_addr = bump_addr;
     bump_addr+= size;
     return (void*)old_bump_addr;

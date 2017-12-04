@@ -53,6 +53,10 @@ public:
         TaskGroupDataPtr task_group_data = src.task_group_data;
         u64 stack_addr = (u64)task_group_data->alloc_static(stack_size);
 
+        // out of memory
+        if (stack_addr == 0)
+            return nullptr;
+
         return new Task(
                         (TaskEntryPoint2)entrypoint,
                         name,                   // task name

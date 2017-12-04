@@ -63,6 +63,10 @@ void TaskGroupData::release_address_space() {
  *          This is useful eg. for allocating task stack memory
  */
 void* TaskGroupData::alloc_static(size_t size) {
+    // out of memory
+    if (heap_high_limit - size < heap_low_limit)
+        return nullptr;
+
     heap_high_limit -= size;
     return (void*)heap_high_limit;
 }

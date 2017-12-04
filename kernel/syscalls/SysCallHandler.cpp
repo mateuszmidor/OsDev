@@ -298,6 +298,29 @@ s32 SysCallHandler::sys_unlink(const char path[]) {
 }
 
 /**
+ * @brief   Set new program break effectively changing the amount of dynamic memory available to a task
+ * @return  New program break on success
+ *          Current program break on failure (invalid argument or out of memory)
+ * @see     http://man7.org/linux/man-pages/man2/brk.2.html
+ */
+u64 SysCallHandler::sys_brk(u64 new_brk) {
+    multitasking::TaskManager& mngr = multitasking::TaskManager::instance();
+    multitasking::TaskGroupDataPtr tgd = mngr.get_current_task().task_group_data;
+
+    // invalid argument
+    if (new_brk == 0)
+        return tgd->heap_low_limit;
+
+    // out of memory
+    if (new_brk >= tgd->heap_high_limit)
+        return tgd->heap_low_limit;
+
+    // move program break
+    tgd->heap_low_limit = new_brk;
+    return new_brk;
+}
+
+/**
  * @brief   Get current working directory and store into "buff"
  * @param   size Size of the "buff"
  * @return  0 on success
@@ -510,6 +533,7 @@ s64 SysCallHandler::task_wait(u32 task_id) {
  * @return  Task ID on success
  *          -EINVAL if "entry_point" or "name" is null
  *          -EPERM if task could not be run
+ *          -ENOMEM if out of memory
  */
 s64 SysCallHandler::task_lightweight_run(u64 entry_point, u64 arg, const char name[]) {
     if (!entry_point || !name)
@@ -517,6 +541,9 @@ s64 SysCallHandler::task_lightweight_run(u64 entry_point, u64 arg, const char na
 
     multitasking::TaskManager& mngr = multitasking::TaskManager::instance();
     multitasking::Task* t = multitasking::TaskFactory::make_lightweight_task(mngr.get_current_task(), entry_point, name, multitasking::Task::DEFAULT_STACK_SIZE);
+    if (!t)
+        return -ENOMEM;
+
     t->set_arg1(arg);
 
     u32 task_id = mngr.add_task(t);
