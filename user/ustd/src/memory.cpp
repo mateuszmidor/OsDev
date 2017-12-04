@@ -6,12 +6,18 @@
  */
 #include "types.h"
 #include "syscalls.h"
+#include "ScopeGuard.h"
 
 size_t bump_addr = 0;
 size_t bump_old_limit = 0;
 size_t bump_limit = 0;
 
+/**
+ * @note    This should be secured from concurrent access
+ */
 void* umalloc(size_t size) {
+    ustd::ScopeGuard one_thread_at_a_time;
+
     // setup dynamic memory allocation start
     if (bump_addr == 0) {
         bump_addr = syscalls::brk(0);
