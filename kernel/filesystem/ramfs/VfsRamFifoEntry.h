@@ -9,6 +9,7 @@
 #define SRC_FILESYSTEM_VFSRAMFIFOENTRY_H_
 
 #include "VfsEntry.h"
+#include "TaskManager.h"
 
 namespace filesystem {
 
@@ -22,7 +23,8 @@ private:
     u8                          buff[BUFF_SIZE];  // in-memory file buffer
     kstd::string                name;
     u32                         size;
-
+    multitasking::TaskList      read_wait_list;
+    multitasking::TaskList      write_wait_list;
 public:
     VfsRamFifoEntry(const kstd::string& name) : name(name), size(0) {}
 

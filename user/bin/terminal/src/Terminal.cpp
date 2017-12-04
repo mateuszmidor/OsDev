@@ -220,12 +220,9 @@ void Terminal::stdout_printer_thread(Terminal* term) {
     char buff[BUFF_SIZE];
 
     while (true) {
-        ssize_t count;
-        while ((count = syscalls::read(term->fd_stdout, buff, BUFF_SIZE - 1)) > 0) {
-            buff[count] = '\0';
-            term->printer.get()->format("%", buff);
-        }
-        syscalls::nsleep(0); // yield CPU
+        ssize_t count = syscalls::read(term->fd_stdout, buff, BUFF_SIZE - 1);
+        buff[count] = '\0';
+        term->printer.get()->format("%", buff);
     }
 }
 
@@ -237,9 +234,7 @@ void Terminal::key_processor_thread(Terminal* term) {
     Key key;
 
     while (true) {
-        while (!(syscalls::read(term->fd_keyboard, &key, sizeof(key)) > 0))
-            syscalls::nsleep(0); // yield CPU
-
+        syscalls::read(term->fd_keyboard, &key, sizeof(key));
         term->on_key_down(key);
     }
 }

@@ -23,7 +23,7 @@ using syscall_arg = unsigned long long;
 
 /**
  * @brief   Sleep current task for at least given amount of nanoseconds
- *          It must be implemented as int80h until kernel is preemptible and syscall can be suspedned
+ *          It must be implemented as int80h until kernel is preemptible and syscall can be suspended
  * @note    when nsec == 0, it only reschedules CPU to another task
  */
 inline int nsleep(unsigned long long nsec) {

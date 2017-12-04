@@ -10,11 +10,18 @@
 #include "kstd.h"
 #include "VfsRamFifoEntry.h"
 
+
+using namespace multitasking;
 namespace filesystem {
 
 s64 VfsRamFifoEntry::read(void* data, u32 count) {
-    if (size == 0)
-        return 0;
+    TaskManager& mngr = TaskManager::instance();
+
+    // if buffer is empty - block the reader
+    if (size == 0) {
+        mngr.dequeue_current_task(read_wait_list);
+        return -EWOULDBLOCK;
+    }
 
     if (count == 0)
         return 0;
@@ -25,13 +32,21 @@ s64 VfsRamFifoEntry::read(void* data, u32 count) {
     memcpy(buff, buff + num_bytes_to_read, num_bytes_remaining);
     size = num_bytes_remaining;
 
+    // data got out of the buffer - unblock the writers
+    while (Task* t = write_wait_list.pop_front())
+        mngr.enqueue_task_back(t);
+
     return num_bytes_to_read;
 }
 
 s64 VfsRamFifoEntry::write(const void* data, u32 count) {
-    // if buffer is full - block
-    if (size == BUFF_SIZE)
+    TaskManager& mngr = TaskManager::instance();
+
+    // if buffer is full - block the writer
+    if (size == BUFF_SIZE) {
+        mngr.dequeue_current_task(write_wait_list);
         return -EWOULDBLOCK;
+    }
 
     if (count == 0)
         return 0;
@@ -40,6 +55,10 @@ s64 VfsRamFifoEntry::write(const void* data, u32 count) {
     u32 num_bytes_to_write = kstd::min(remaining_space, count);
     memcpy(buff + size, data, num_bytes_to_write);
     size += num_bytes_to_write;
+
+    // data got into the buffer - unblock the readers
+    while (Task* t = read_wait_list.pop_front())
+        mngr.enqueue_task_back(t);
 
     return num_bytes_to_write;
 }

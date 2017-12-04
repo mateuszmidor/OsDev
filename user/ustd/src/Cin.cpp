@@ -20,15 +20,14 @@ string cin::readln() {
         return {};
 
 
-    const u32 BUFF_SIZE = 512;
+    const u32 BUFF_SIZE = 256;
     char buff[BUFF_SIZE];
 
-    ssize_t count;
-    while ((count = syscalls::read(stdin_fd, buff, BUFF_SIZE - 1)) <= 0) {
-        syscalls::nsleep(0); // yield CPU
-    }
-
-    return string(buff, count-1); // skip ending \n
+    ssize_t count = syscalls::read(stdin_fd, buff, BUFF_SIZE - 1);
+    if (count > 0)
+        return string(buff, count-1); // skip ending \n
+    else
+        return {};
 }
 
 } /* namespace ustd */
