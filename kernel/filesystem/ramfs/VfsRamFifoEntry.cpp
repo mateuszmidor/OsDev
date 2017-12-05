@@ -63,4 +63,19 @@ s64 VfsRamFifoEntry::write(const void* data, u32 count) {
     return num_bytes_to_write;
 }
 
+bool VfsRamFifoEntry::truncate(u32 new_size) {
+    // cant resize the file beyond the buffer size
+    if (new_size > BUFF_SIZE)
+        return false;
+
+    size = new_size;
+
+    // buffer clear - unblock the writers
+    TaskManager& mngr = TaskManager::instance();
+    while (Task* t = write_wait_list.pop_front())
+        mngr.enqueue_task_back(t);
+
+    return true;
+}
+
 } /* namespace filesystem */

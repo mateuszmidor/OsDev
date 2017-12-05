@@ -39,7 +39,7 @@ public:
     s64 read(void* data, u32 count) override;
     s64 write(const void* data, u32 count) override;
     bool seek(u32 new_position) override            { return false; }
-    bool truncate(u32 new_size) override            { return false; }
+    bool truncate(u32 new_size) override;
     u32 get_position() const override               { return 0; }
 
     // [directory interface]
