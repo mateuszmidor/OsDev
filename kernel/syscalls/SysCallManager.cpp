@@ -98,6 +98,9 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
         syscall_handler.vga_cursor_setpos(arg1, arg2);
         return 0;
 
+    case SysCallNumbers::VGA_GET_CHAR_AT:
+        return syscall_handler.vga_get_char_at(arg1, arg2);
+
     case SysCallNumbers::VGA_SET_CHAR_AT:
         syscall_handler.vga_set_char_at(arg1, arg2, arg3);
         return 0;

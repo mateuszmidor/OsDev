@@ -42,6 +42,7 @@ public:
     s32 enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);
     void vga_cursor_setvisible(bool visible);
     void vga_cursor_setpos(u8 x, u8 y);
+    u16 vga_get_char_at(u8 x, u8 y);
     void vga_set_char_at(u8 x, u8 y, u16 c);
     void vga_flush_char_buffer(const u16* buff);
     void vga_get_width_height(u16* width, u16* height);

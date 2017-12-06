@@ -435,6 +435,14 @@ void SysCallHandler::vga_cursor_setpos(u8 x, u8 y) {
     }
 }
 
+u16 SysCallHandler::vga_get_char_at(u8 x, u8 y) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        return (u16)drv->at(x, y);
+    }
+    return 0;
+}
+
 void SysCallHandler::vga_set_char_at(u8 x, u8 y, u16 c) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {

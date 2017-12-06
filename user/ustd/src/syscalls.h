@@ -201,6 +201,10 @@ inline void vga_cursor_setpos(unsigned int x, unsigned int y) {
     syscall(middlespace::SysCallNumbers::VGA_CURSOR_SETPOS, (syscall_arg)x, (syscall_arg)y);
 }
 
+inline unsigned short vga_get_char_at(unsigned int x, unsigned int y) {
+    return syscall(middlespace::SysCallNumbers::VGA_GET_CHAR_AT, (syscall_arg)x, (syscall_arg)y);
+}
+
 inline void vga_set_char_at(unsigned int x, unsigned int y, unsigned short vga_character) {
     syscall(middlespace::SysCallNumbers::VGA_SET_CHAR_AT, (syscall_arg)x, (syscall_arg)y, (syscall_arg)vga_character);
 }

@@ -46,6 +46,7 @@ enum class SysCallNumbers {
     VGA_ENTER_GRAPHICS_MODE = 505,
     VGA_EXIT_GRAPHICS_MODE  = 506,
     VGA_SET_PIXEL_AT        = 507,
+    VGA_GET_CHAR_AT         = 508,
 
     FILE_ENUMERATE          = 600,
     ELF_RUN                 = 700,
