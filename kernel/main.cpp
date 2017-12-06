@@ -31,8 +31,6 @@
 #include "TimeManager.h"
 #include "Sse.h"
 #include "PageTables.h"
-#include "_demos/Demo.h"
-#include "_demos/MouseDemo.h"
 #include "ElfRunner.h"
 #include "SysCallNumbers.h"
 #include "MouseState.h"
@@ -46,7 +44,6 @@ using namespace multitasking;
 using namespace memory;
 using namespace syscalls;
 using namespace utils;
-using namespace demos;
 using namespace filesystem;
 using namespace ktime;
 using namespace middlespace;
@@ -117,7 +114,7 @@ void handle_mouse_move(s8 dx, s8 dy) {
     update_mouse() ;
 }
 
-CpuState* handle_pit_interrupt(CpuState* cpu_state) {
+CpuState* handle_timer_tick(CpuState* cpu_state) {
     time_manager.tick();
     return task_manager.schedule(cpu_state);
 }
@@ -212,7 +209,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 4. prepare drivers
     time_manager.set_hz(PIT_FREQUENCY_HZ);
     pit.set_channel0_hz(PIT_FREQUENCY_HZ);
-    pit.set_channel0_on_tick(handle_pit_interrupt);
+    pit.set_channel0_on_tick(handle_timer_tick);
     keyboard.set_on_key_press(handle_key_press);
     mouse.set_on_down(handle_mouse_down);
     mouse.set_on_up(handle_mouse_up);
