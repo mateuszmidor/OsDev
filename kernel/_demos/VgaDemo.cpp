@@ -11,6 +11,7 @@
 #include "MouseDriver.h"
 
 using namespace drivers;
+using namespace middlespace;
 using logging::KernelLog;
 
 namespace demos {

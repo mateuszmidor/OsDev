@@ -75,10 +75,10 @@ void MouseDriver::handle_mouse_interrupt() {
         // detect button state change
         for (u8 i = 0; i < 3; i++) {
             if ((buffer[0] & (1 << i)) && !(buttons & (1 << i)))
-                on_down((MouseButton)i);
+                on_down((middlespace::MouseButton)i);
 
             if (!(buffer[0] & (1 << i)) && (buttons & (1 << i)))
-                on_up((MouseButton)i);
+                on_up((middlespace::MouseButton)i);
         }
 
         // remember button state

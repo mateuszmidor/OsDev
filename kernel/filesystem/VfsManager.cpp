@@ -43,6 +43,9 @@ void VfsManager::install_root() {
         VfsRamFifoEntryPtr keyboard = std::make_shared<VfsRamFifoEntry>("keyboard");
         dev->push_back(keyboard);
 
+        VfsRamFifoEntryPtr mouse = std::make_shared<VfsRamFifoEntry>("mouse");
+        dev->push_back(mouse);
+
         VfsRamFifoEntryPtr stdin = std::make_shared<VfsRamFifoEntry>("stdin");
         dev->push_back(stdin);
 

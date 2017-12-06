@@ -35,6 +35,7 @@
 #include "_demos/MouseDemo.h"
 #include "ElfRunner.h"
 #include "SysCallNumbers.h"
+#include "MouseState.h"
 
 using namespace kstd;
 using namespace logging;
@@ -72,9 +73,8 @@ PageFaultHandler        page_fault;
 
 const u32               PIT_FREQUENCY_HZ = 20;
 
-
 VfsEntryPtr keyboard_vfe;
-void handle_keyboard_interrupt(const Key &key) {
+void handle_key_press(const Key &key) {
     if (key != Key::INVALID) {
 
         // write key to /dev/keyboard RAM file
@@ -82,10 +82,39 @@ void handle_keyboard_interrupt(const Key &key) {
             keyboard_vfe = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
 
         if (keyboard_vfe) {
-            keyboard_vfe->seek(0);
+            keyboard_vfe->truncate(0);
             keyboard_vfe->write(&key, sizeof(key));
         }
     }
+}
+
+middlespace::MouseState mouse_state;
+VfsEntryPtr mouse_vfe;
+void update_mouse() {
+    // write key to /dev/mouse RAM file
+    if (!mouse_vfe)
+        mouse_vfe = filesystem::VfsManager::instance().get_entry("/dev/mouse");
+
+    if (mouse_vfe) {
+        mouse_vfe->truncate(0);
+        mouse_vfe->write(&mouse_state, sizeof(mouse_state));
+    }
+}
+
+void handle_mouse_down(MouseButton button) {
+    mouse_state.buttons[button] = true;
+    update_mouse() ;
+}
+
+void handle_mouse_up(MouseButton button) {
+    mouse_state.buttons[button] = false;
+    update_mouse() ;
+}
+
+void handle_mouse_move(s8 dx, s8 dy) {
+    mouse_state.dx = dx;
+    mouse_state.dy = dy;
+    update_mouse() ;
 }
 
 CpuState* handle_pit_interrupt(CpuState* cpu_state) {
@@ -157,9 +186,7 @@ void run_userspace_terminal() {
  */
 void task_init() {
     task_manager.add_task(TaskFactory::make_kernel_task(Task::idle, "idle"));
-    task_manager.add_task(Demo::make_demo<MouseDemo>("mouse", 0));
     task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
-
     run_userspace_terminal();
 }
 
@@ -186,7 +213,10 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     time_manager.set_hz(PIT_FREQUENCY_HZ);
     pit.set_channel0_hz(PIT_FREQUENCY_HZ);
     pit.set_channel0_on_tick(handle_pit_interrupt);
-    keyboard.set_on_key_press(handle_keyboard_interrupt);
+    keyboard.set_on_key_press(handle_key_press);
+    mouse.set_on_down(handle_mouse_down);
+    mouse.set_on_up(handle_mouse_up);
+    mouse.set_on_move(handle_mouse_move);
 
     // 5. install drivers
     //pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
