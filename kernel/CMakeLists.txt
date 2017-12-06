@@ -18,8 +18,8 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 
 # Collect source directories
 set(SOURCE_DIRECTORIES
-    "${PROJECT_SOURCE_DIR}/_demos"
     "${PROJECT_SOURCE_DIR}/arch/${ARCH}"
+    "${PROJECT_SOURCE_DIR}/../middlespace"
     "${PROJECT_SOURCE_DIR}/cpuexceptions"
     "${PROJECT_SOURCE_DIR}/drivers"
     "${PROJECT_SOURCE_DIR}/filesystem"
@@ -31,8 +31,6 @@ set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/kstd"
     "${PROJECT_SOURCE_DIR}/logging"
     "${PROJECT_SOURCE_DIR}/memory"
-    "${PROJECT_SOURCE_DIR}/middlespace"
-#    "${PROJECT_SOURCE_DIR}/middlespace/posix"
     "${PROJECT_SOURCE_DIR}/multitasking"
     "${PROJECT_SOURCE_DIR}/syscalls"
     "${PROJECT_SOURCE_DIR}/time"

@@ -3,4 +3,4 @@ project(ustd)
 
 file(GLOB SOURCES "src/*.cpp")
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC "src/" "../../kernel/middlespace")
+target_include_directories(${PROJECT_NAME} PUBLIC "src/" "../../middlespace")
