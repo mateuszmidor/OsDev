@@ -11,7 +11,7 @@
 #include "types.h"
 #include "TaskManager.h"
 #include "UnixPath.h"
-#include "FsEntry.h"
+#include "Vfs.h"
 #include "posix/posix.h"
 
 namespace syscalls {
@@ -39,7 +39,7 @@ public:
     void sys_exit(s32 status);
     void sys_exit_group(s32 status);
 
-    s32 enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries);
+    s32 enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_entries);
     void vga_cursor_setvisible(bool visible);
     void vga_cursor_setpos(u8 x, u8 y);
     u16 vga_get_char_at(u8 x, u8 y);

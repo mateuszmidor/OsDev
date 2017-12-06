@@ -10,7 +10,6 @@
 #include "SysCallManager.h"
 #include "SysCallHandler.h"
 #include "SysCallNumbers.h"
-#include "posix/posix.h"
 
 using namespace middlespace;
 namespace syscalls {
@@ -79,7 +78,7 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
         return syscall_handler.sys_unlink((const char*)arg1);
 
     case SysCallNumbers::FILE_ENUMERATE:
-        return syscall_handler.enumerate(arg1, (FsEntry*)arg2, arg3);
+        return syscall_handler.enumerate(arg1, (VfsEntry*)arg2, arg3);
 
     case SysCallNumbers::BRK:
         return syscall_handler.sys_brk(arg1);

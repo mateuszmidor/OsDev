@@ -8,6 +8,8 @@
 #include "kstd.h"
 #include "VgaDriver.h"
 
+using middlespace::EgaColor;
+using middlespace::VgaCharacter;
 using namespace hardware;
 namespace drivers {
 

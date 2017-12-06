@@ -9,11 +9,10 @@
 #include "syscalls.h"
 #include "Cin.h"
 #include "Cout.h"
-#include "MouseState.h"
-#include "VgaCharacter.h"
+#include "Mouse.h"
+#include "Vga.h"
 
 using namespace ustd;
-using namespace drivers;
 using namespace middlespace;
 
 

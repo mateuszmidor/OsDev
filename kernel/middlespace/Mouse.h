@@ -1,12 +1,12 @@
 /**
- *   @file: MouseState.h
+ *   @file: Mouse.h
  *
  *   @date: Dec 5, 2017
  * @author: Mateusz Midor
  */
 
-#ifndef KERNEL_MIDDLESPACE_MOUSESTATE_H_
-#define KERNEL_MIDDLESPACE_MOUSESTATE_H_
+#ifndef KERNEL_MIDDLESPACE_MOUSE_H_
+#define KERNEL_MIDDLESPACE_MOUSE_H_
 
 #include "types.h"
 
@@ -26,4 +26,4 @@ struct MouseState {
 
 } /* namespace middlespace */
 
-#endif /* KERNEL_MIDDLESPACE_MOUSESTATE_H_ */
+#endif /* KERNEL_MIDDLESPACE_MOUSE_H_ */

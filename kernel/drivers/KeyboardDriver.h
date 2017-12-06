@@ -21,7 +21,7 @@ using KeyEvent = std::function<void(middlespace::Key)>;
  */
 class KeyboardDriver : public DeviceDriver {
 public:
-    KeyboardDriver(middlespace::KeyboardScanCodeSet& scs);
+    KeyboardDriver(KeyboardScanCodeSet& scs);
     virtual ~KeyboardDriver();
     void set_on_key_press(const KeyEvent &event);
 
@@ -29,9 +29,9 @@ public:
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
 private:
-    hardware::Port8bit                  keyboard_data_port;
-    middlespace::KeyboardScanCodeSet&   scan_code_set;
-    KeyEvent                            on_key_press = [](u8) { /* do nothing */ };
+    hardware::Port8bit      keyboard_data_port;
+    KeyboardScanCodeSet&    scan_code_set;
+    KeyEvent                on_key_press = [](u8) { /* do nothing */ };
 
     void handle_keyboard_interrupt();
 };

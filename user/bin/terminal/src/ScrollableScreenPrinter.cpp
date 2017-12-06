@@ -8,7 +8,7 @@
 #include "ScrollableScreenPrinter.h"
 #include "syscalls.h"
 
-using namespace drivers;
+using namespace middlespace;
 namespace terminal {
 
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :

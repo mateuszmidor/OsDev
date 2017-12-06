@@ -8,8 +8,8 @@
 #ifndef SRC_DRIVERS_VGADRIVER_H_
 #define SRC_DRIVERS_VGADRIVER_H_
 
-#include "VgaCharacter.h"
 #include "DeviceDriver.h"
+#include "Vga.h"
 #include "Port.h"
 
 namespace drivers {
@@ -22,16 +22,16 @@ public:
     void set_text_mode_90_30();
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
-    VgaCharacter& at(u16 x, u16 y) const;
-    void flush_buffer(const VgaCharacter* buff);
+    middlespace::VgaCharacter& at(u16 x, u16 y) const;
+    void flush_buffer(const  middlespace::VgaCharacter* buff);
     void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
     u16 screen_width() const;
     u16 screen_height() const;
 
     // higher level basic functions
-    void clear_screen(EgaColor color = EgaColor::Black);
-    void print(u16 y, const char* text, EgaColor fg = EgaColor::White, EgaColor bg = EgaColor::Black);
+    void clear_screen( middlespace::EgaColor color =  middlespace::EgaColor::Black);
+    void print(u16 y, const char* text,  middlespace::EgaColor fg =  middlespace::EgaColor::White,  middlespace::EgaColor bg =  middlespace::EgaColor::Black);
 
 private:
     void write_registers(u8* registers) const;
@@ -39,7 +39,7 @@ private:
 
     u8* framebuffer_segment                             {nullptr};
     u8* framebuffer_segment_copy                        {nullptr};
-    VgaCharacter* const vga                             {(VgaCharacter*)0xFFFFFFFF800b8000};
+    middlespace::VgaCharacter* const vga                {( middlespace::VgaCharacter*)0xFFFFFFFF800b8000};
     u16 width                                           {80};  // in characters (text mode)
     u16 height                                          {25};  // in characters (text mode)
     // text mode

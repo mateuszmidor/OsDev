@@ -10,10 +10,10 @@
 
 #include <cstddef>      // size_t
 #include <sys/types.h>  // ssize_t
+
 #include "SysCallNumbers.h"
-#include "FsEntry.h"
+#include "Vfs.h"
 #include "posix/posix.h"
-#include <errno.h>
 
 namespace syscalls {
 
@@ -189,7 +189,7 @@ inline int chdir(const char path[]) {
     return syscall(middlespace::SysCallNumbers::CHDIR, (syscall_arg)path);
 }
 
-inline int enumerate(unsigned int fd, middlespace::FsEntry* entries, unsigned int max_enties) {
+inline int enumerate(unsigned int fd, middlespace::VfsEntry* entries, unsigned int max_enties) {
     return syscall(middlespace::SysCallNumbers::FILE_ENUMERATE, (syscall_arg)fd, (syscall_arg)entries, (syscall_arg)max_enties);
 }
 

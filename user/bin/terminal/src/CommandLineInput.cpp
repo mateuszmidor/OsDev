@@ -141,7 +141,7 @@ std::tuple<bool, string, string> CommandLineInput::folder_filter(const string& c
     }
 
     u32 MAX_ENTRIES = 128; // should there be more in a single dir?
-    FsEntry* entries = new FsEntry[MAX_ENTRIES];
+    VfsEntry* entries = new VfsEntry[MAX_ENTRIES];
 
     int fd = syscalls::open(path.c_str());
     if (fd < 0) {

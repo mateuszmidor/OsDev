@@ -12,8 +12,6 @@
 #include "DriverManager.h"
 #include "VgaDriver.h"
 #include "ElfRunner.h"
-#include "syscall_errors.h"
-#include "posix/posix.h"
 
 using namespace kstd;
 using namespace drivers;
@@ -387,7 +385,7 @@ void SysCallHandler::sys_exit_group(s32 status) {
  * @param   entries Output buffer for directory entries
  * @param   max_entries "entries" buffer capacity, max num items
  */
-s32 SysCallHandler::enumerate(u32 fd, middlespace::FsEntry* entries, u32 max_entries) {
+s32 SysCallHandler::enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_entries) {
     auto& files = current().task_group_data->files;
 
     if (fd >= files.size())
@@ -446,7 +444,7 @@ u16 SysCallHandler::vga_get_char_at(u8 x, u8 y) {
 void SysCallHandler::vga_set_char_at(u8 x, u8 y, u16 c) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
-        VgaCharacter* vc = (VgaCharacter*)&c;
+        middlespace::VgaCharacter* vc = (middlespace::VgaCharacter*)&c;
         drv->at(x, y) = *vc;
     }
 }
@@ -454,7 +452,7 @@ void SysCallHandler::vga_set_char_at(u8 x, u8 y, u16 c) {
 void SysCallHandler::vga_flush_char_buffer(const u16* buff) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
-        drv->flush_buffer((VgaCharacter*)buff);
+        drv->flush_buffer((middlespace::VgaCharacter*)buff);
     }
 }
 
@@ -481,7 +479,7 @@ void SysCallHandler::vga_exit_graphics_mode() {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
         drv->set_text_mode_90_30();
-        drv->clear_screen(EgaColor::Black);
+        drv->clear_screen(middlespace::EgaColor::Black);
     }
 }
 

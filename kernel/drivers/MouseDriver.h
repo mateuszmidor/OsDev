@@ -9,8 +9,9 @@
 #define SRC_DRIVERS_MOUSEDRIVER_H_
 
 #include <functional>
+
+#include "Mouse.h"
 #include "DeviceDriver.h"
-#include "MouseState.h"
 
 namespace drivers {
 

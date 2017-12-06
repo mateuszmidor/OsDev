@@ -32,8 +32,8 @@
 #include "Sse.h"
 #include "PageTables.h"
 #include "ElfRunner.h"
+#include "Mouse.h"
 #include "SysCallNumbers.h"
-#include "MouseState.h"
 
 using namespace kstd;
 using namespace logging;

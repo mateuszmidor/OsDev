@@ -53,13 +53,13 @@ void Terminal::install_external_commands(const string& dir) {
     }
 
     // get "dir" contents
-    std::array<FsEntry, 128> entries;
+    std::array<VfsEntry, 128> entries;
     int count = syscalls::enumerate(fd, entries.data(), entries.size());
     syscalls::close(fd);
 
     // install commands that were found
     for (int i = 0; i < count; i++) {
-        FsEntry& e = entries[i];
+        VfsEntry& e = entries[i];
 
         // dont install directory. Should also check if it is actually an ELF file...
         if (e.is_directory)

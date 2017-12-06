@@ -10,5 +10,6 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #endif /* SRC_MIDDLESPACE_POSIX_POSIX_H_ */

@@ -8,9 +8,9 @@
 #ifndef SRC_SCREENPRINTER_H_
 #define SRC_SCREENPRINTER_H_
 
+#include "Vga.h"
 #include "Cursor.h"
 #include "LineBuffer.h"
-#include "VgaCharacter.h"
 #include "StringUtils.h"
 
 namespace terminal {
@@ -48,8 +48,8 @@ private:
     void newline();
     void tab();
     void backspace();
-    void set_at(const Cursor& cursor, drivers::VgaCharacter c);
-    void set_at(u16 x, u16 y, drivers::VgaCharacter c);
+    void set_at(const Cursor& cursor,  middlespace::VgaCharacter c);
+    void set_at(u16 x, u16 y, middlespace::VgaCharacter c);
     void putc(const char c);
     void redraw();
     void draw_scroll_bar();
@@ -59,8 +59,8 @@ private:
 
     const char BG_CHAR      = 176;
     const char BG_SCROLLER  = 219;
-    const drivers::EgaColor foreground = drivers::EgaColor::White;
-    const drivers::EgaColor background = drivers::EgaColor::Black;
+    const middlespace::EgaColor foreground = middlespace::EgaColor::White;
+    const middlespace::EgaColor background = middlespace::EgaColor::Black;
 
     u16 top_line            = 0;    // number of the line that is currently printed as the top line
 
@@ -72,7 +72,7 @@ private:
     u16 printable_area_width;       // printable area dimension
     u16 printable_area_height;
 
-    drivers::VgaCharacter* vga_buffer;
+    middlespace::VgaCharacter* vga_buffer;
     Cursor cursor;
     LineBuffer lines;
 };

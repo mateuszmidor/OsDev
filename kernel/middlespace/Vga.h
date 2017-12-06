@@ -1,18 +1,20 @@
-/*
- * VgaCharacter.h
+/**
+ *   @file: Vga.h
  *
- *  Created on: Oct 20, 2017
- *      Author: mateusz
+ *   @date: Oct 20, 2017
+ * @author: Mateusz Midor
  */
 
-#ifndef SRC_MIDDLESPACE_VGACHARACTER_H_
-#define SRC_MIDDLESPACE_VGACHARACTER_H_
+#ifndef SRC_MIDDLESPACE_VGA_H_
+#define SRC_MIDDLESPACE_VGA_H_
 
 #include "types.h"
 
-namespace drivers {
+namespace middlespace {
 
-// ega 16 color pallete index, mode that GRUB lefts us in
+/**
+ * EGA 16 color pallete index, mode that GRUB lefts us in
+ */
 enum EgaColor : u8 {
     Black      = 0,
     Blue       = 1,
@@ -57,6 +59,6 @@ struct VgaCharacter {
     u8      bg_color    : 4;
 };
 
-}; // namespace drivers
+}; // namespace middlespace
 
-#endif /* SRC_MIDDLESPACE_VGACHARACTER_H_ */
+#endif /* SRC_MIDDLESPACE_VGA_H_ */

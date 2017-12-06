@@ -1,12 +1,12 @@
 /**
- *   @file: Key.h
+ *   @file: Keyboard.h
  *
  *   @date: Oct 30, 2017
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_MIDDLESPACE_KEY_H_
-#define SRC_MIDDLESPACE_KEY_H_
+#ifndef SRC_MIDDLESPACE_KEYBOARD_H_
+#define SRC_MIDDLESPACE_KEYBOARD_H_
 
 #include "types.h"
 
@@ -38,4 +38,4 @@ enum Key : u16 {
 };
 };
 
-#endif /* SRC_MIDDLESPACE_KEY_H_ */
+#endif /* SRC_MIDDLESPACE_KEYBOARD_H_ */

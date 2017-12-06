@@ -7,7 +7,8 @@
 
 #include "KeyboardScanCodeSet.h"
 
-namespace middlespace {
+using middlespace::Key;
+namespace drivers {
 
 
 KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {

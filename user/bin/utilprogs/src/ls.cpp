@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     }
 
     u32 MAX_ENTRIES = 128; // should there be more in a single dir?
-    FsEntry* entries = new FsEntry[MAX_ENTRIES];
+    VfsEntry* entries = new VfsEntry[MAX_ENTRIES];
 
     int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
     for (int i = 0; i < count; i++)

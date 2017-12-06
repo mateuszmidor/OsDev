@@ -8,7 +8,7 @@
 #ifndef SRC_UTILS_TERMINAL_TERMINAL_H_
 #define SRC_UTILS_TERMINAL_TERMINAL_H_
 
-#include "Key.h"
+#include "Keyboard.h"
 #include "CommandHistory.h"
 #include "CommandCollection.h"
 #include "CommandLineInput.h"
