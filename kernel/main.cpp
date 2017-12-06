@@ -155,18 +155,6 @@ void run_userspace_terminal() {
 
     vga_drv->print(0, "Loading terminal, please wait a few secs");
 
-    auto on_expire5 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs....."); };
-    auto on_expire4 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs...."); };
-    auto on_expire1 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs."); };
-    auto on_expire2 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs.."); };
-    auto on_expire3 = [=]() { vga_drv->print(0, "Loading terminal, please wait a few secs..."); };
-    time_manager.emplace(1000, on_expire1);
-    time_manager.emplace(2000, on_expire2);
-    time_manager.emplace(3000, on_expire3);
-    time_manager.emplace(4000, on_expire4);
-    time_manager.emplace(5000, on_expire5);
-
-
     // read elf file data
     u32 size = e->get_size();
     u8* elf_data = new u8[size];
