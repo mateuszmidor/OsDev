@@ -21,6 +21,24 @@ handle_syscall:
     // push %rax; rax will contain syscall result value so no need to remember it
     // push %cr3; not needed for syscall
 
+    sub $256, %rsp
+    movdqu %xmm15, (%rsp)
+    movdqu %xmm14, 16(%rsp)
+    movdqu %xmm13, 32(%rsp)
+    movdqu %xmm12, 48(%rsp)
+    movdqu %xmm11, 64(%rsp)
+    movdqu %xmm10, 80(%rsp)
+    movdqu %xmm9, 96(%rsp)
+    movdqu %xmm8, 112(%rsp)
+    movdqu %xmm7, 128(%rsp)
+    movdqu %xmm6, 144(%rsp)
+    movdqu %xmm5, 160(%rsp)
+    movdqu %xmm4, 176(%rsp)
+    movdqu %xmm3, 192(%rsp)
+    movdqu %xmm2, 208(%rsp)
+    movdqu %xmm1, 224(%rsp)
+    movdqu %xmm0, 240(%rsp)
+
     // remember user stack pointer
     mov %rsp, (user_rsp)
 
@@ -43,6 +61,24 @@ handle_syscall:
 
     // restore user stack
     mov (user_rsp), %rsp
+
+    movdqu (%rsp), %xmm15
+    movdqu 16(%rsp), %xmm14
+    movdqu 32(%rsp), %xmm13
+    movdqu 48(%rsp), %xmm12
+    movdqu 64(%rsp), %xmm11
+    movdqu 80(%rsp), %xmm10
+    movdqu 96(%rsp), %xmm9
+    movdqu 112(%rsp), %xmm8
+    movdqu 128(%rsp), %xmm7
+    movdqu 144(%rsp), %xmm6
+    movdqu 160(%rsp), %xmm5
+    movdqu 176(%rsp), %xmm4
+    movdqu 192(%rsp), %xmm3
+    movdqu 208(%rsp), %xmm2
+    movdqu 224(%rsp), %xmm1
+    movdqu 240(%rsp), %xmm0
+    add $256, %rsp
 
     // pop %cr3; not needed for syscall
     // pop %rax; dont override the on_syscall result value
