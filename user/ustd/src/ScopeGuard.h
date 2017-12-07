@@ -17,11 +17,11 @@ namespace ustd {
  */
 class ScopeGuard {
 public:
-    ScopeGuard() { mtx.lock(); }
+    ScopeGuard(Mutex& mtx) : mtx(mtx) { mtx.lock(); }
     virtual ~ScopeGuard() { mtx.unlock(); }
 
 private:
-    Mutex mtx;
+    Mutex& mtx;
 };
 
 } /* namespace ustd */

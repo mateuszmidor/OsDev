@@ -11,10 +11,10 @@
 size_t bump_addr = 0;
 size_t bump_old_limit = 0;
 size_t bump_limit = 0;
-
+ustd::Mutex umalloc_mutex;
 
 void* umalloc(size_t size) {
-    ustd::ScopeGuard one_thread_at_a_time_here;
+    ustd::ScopeGuard one_thread_at_a_time_here(umalloc_mutex);
 
     // setup dynamic memory allocation start
     if (bump_addr == 0) {
