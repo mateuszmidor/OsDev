@@ -546,7 +546,7 @@ s64 SysCallHandler::task_lightweight_run(u64 entry_point, u64 arg, const char na
         return -EINVAL;
 
     multitasking::TaskManager& mngr = multitasking::TaskManager::instance();
-    multitasking::Task* t = multitasking::TaskFactory::make_lightweight_task(mngr.get_current_task(), entry_point, name, multitasking::Task::DEFAULT_STACK_SIZE);
+    multitasking::Task* t = multitasking::TaskFactory::make_lightweight_task(mngr.get_current_task(), entry_point, name, multitasking::Task::DEFAULT_USER_STACK_SIZE);
     if (!t)
         return -ENOMEM;
 

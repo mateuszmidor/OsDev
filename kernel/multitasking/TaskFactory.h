@@ -28,7 +28,7 @@ public:
         if (!kernel_task_group_ptr)
             kernel_task_group_ptr.reset(&kernel_task_group);
 
-        u64 stack_size = Task::DEFAULT_STACK_SIZE;
+        u64 stack_size = Task::DEFAULT_KERNEL_STACK_SIZE;
         u64 stack_addr = (u64)new char[stack_size];
 
         return new Task(

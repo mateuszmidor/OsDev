@@ -71,7 +71,7 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     delete args;
 
     // run the actual elf task
-    Task* task = TaskFactory::make_lightweight_task(elf_loader_task, entry_point, argv[0], ELF_STACK_SIZE)->set_arg1(argc)->set_arg2(argv); // reuse prepared address space
+    Task* task = TaskFactory::make_lightweight_task(elf_loader_task, entry_point, argv[0], Task::DEFAULT_USER_STACK_SIZE)->set_arg1(argc)->set_arg2(argv); // reuse prepared address space
     task->is_user_space = true;                                                                                                             // but make the elf task a userspace task
 
     // replace elf_loader with actual ELF task

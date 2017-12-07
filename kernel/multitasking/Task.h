@@ -67,8 +67,8 @@ struct Task {
     TaskGroupDataPtr    task_group_data;    // task group where this task belong
 
 
-    static const u64    DEFAULT_STACK_SIZE = 2 * 4096;
-
+    static constexpr u64    DEFAULT_KERNEL_STACK_SIZE   = 2 * 4096;
+    static constexpr u64    DEFAULT_USER_STACK_SIZE     = 4 * 4096;
 };
 
 

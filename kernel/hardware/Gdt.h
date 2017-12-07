@@ -29,7 +29,7 @@ enum Gate64 : u16 {
 };
 
 /**
- * @brief   A struct describing a Task State Segment for long mode
+ * @brief   A struct describing a Task State Segment for long mode. CPU loads stack address and io-privileges from TSS when interrupt comes.
  * @see     https://www.intel.com/content/dam/support/us/en/documents/processors/pentium4/sb/25366821.pdf, 6.7 TASK MANAGEMENT IN 64-BIT MODE
  */
 struct TaskStateSegment64 {

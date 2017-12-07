@@ -76,11 +76,11 @@ void Gdt::install_global_descriptor_table() {
     gdt_size_address.size_minus_1 = sizeof(GdtEntry) * gdt.size() - 1;
 
     asm volatile (
-        "lgdt %0 \n\t"
-        "push %1 \n\t"
-        "push $jump_to_new_gdt \n\t"
-        "lretq \n\t"
-        "jump_to_new_gdt: \n\t"
+        "lgdt %0                ;"
+        "push %1                ;"
+        "push $jump_to_new_gdt  ;"
+        "lretq                  ;"
+        "jump_to_new_gdt:       ;"
         : // no output
         : "m" (gdt_size_address), "g" (get_kernel_code_segment_selector())
     );
@@ -88,7 +88,7 @@ void Gdt::install_global_descriptor_table() {
 
 void Gdt::install_task_state_segment() {
     u64 tss_selector = get_tss_segment_selector();
-    asm volatile("ltrw %0"::"m"(tss_selector));
+    asm volatile("ltrw %0" :: "m"(tss_selector));
 }
 
 GdtEntry Gdt::make_null_entry() {

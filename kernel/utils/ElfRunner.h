@@ -26,7 +26,6 @@ private:
     static char** string_vec_to_argv(const kstd::vector<kstd::string>& src_vec, multitasking::TaskGroupDataPtr tgr);
 
     static constexpr size_t ELF_VIRTUAL_MEM_BYTES   = 1024*1024*1024;  // 1GB of virtual memory can be dynamically mapped on Page Fault, as for now
-    static constexpr size_t ELF_STACK_SIZE          = 4 * 4096;
 };
 
 } /* namespace userspace */
