@@ -63,11 +63,13 @@ syscall_res syscall(middlespace::SysCallNumbers syscall,
                 "syscall                ;"
                 : "=a"(result)
                 : "a"(syscall), "D"(arg1), "S"(arg2), "d"(arg3), "b"(arg4), "c"(arg5)
+                : "r11" // r11 is internally used by syscall for RFLAGS, and RCX for RIP
         );
 
         // 2. reschedule if syscall would block
         if (result == -EWOULDBLOCK)
             yield();
+
     } while (result == -EWOULDBLOCK);
 
     return result;
