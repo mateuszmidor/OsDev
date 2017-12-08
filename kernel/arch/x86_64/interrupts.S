@@ -103,7 +103,7 @@ HandleInterrupt 0x80    # int80 old-style syscall
 .endm
 
 .macro restore_context
-    # restore scratch registers from CpuState struct
+    # restore registers from CpuState struct
     movdqu (%rsp), %xmm15
     movdqu 16(%rsp), %xmm14
     movdqu 32(%rsp), %xmm13

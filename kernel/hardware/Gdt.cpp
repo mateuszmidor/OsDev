@@ -18,7 +18,7 @@ extern u8 kernel_stack_top[];
  *          Used by the means of Interrupt Stack Tables
  * @see     https://software.intel.com/sites/default/files/managed/7c/f1/253668-sdm-vol-3a.pdf, 6.14.5 Interrupt Stack Table
  */
-u8 kernel_stack_safe[1*4096];
+u8 kernel_stack_safe[2*4096] __attribute__ ((aligned (16)));
 
 namespace hardware {
 

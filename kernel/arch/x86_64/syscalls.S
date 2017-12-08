@@ -1,14 +1,12 @@
 .section .text
 
-.extern on_syscall
-.extern kernel_stack_top
-.global handle_syscall
-handle_syscall:
+.macro save_context
+    # save registers to CpuState struct, in the right order that reflects CpuState struct fields
     push %r15
     push %r14
     push %r13
     push %r12
-    push %r11
+    push %r11   // usermode RFLAGS is stored here
     push %r10
     push %r9
     push %r8
@@ -16,10 +14,10 @@ handle_syscall:
     push %rdi
     push %rsi
     push %rdx
-    push %rcx
+    push %rcx   // usermode RIP is stored here
     push %rbx
     // push %rax; rax will contain syscall result value so no need to remember it
-    // push %cr3; not needed for syscall
+    // push %cr3; not needed for syscall as we always come back to the same task(as long as kernel is non-preemptive)
 
     sub $256, %rsp
     movdqu %xmm15, (%rsp)
@@ -38,30 +36,10 @@ handle_syscall:
     movdqu %xmm2, 208(%rsp)
     movdqu %xmm1, 224(%rsp)
     movdqu %xmm0, 240(%rsp)
+.endm
 
-    // remember user stack pointer
-    mov %rsp, (user_rsp)
-
-    // switch to kernel stack
-    mov $kernel_stack_top, %rsp
-
-    // set 5 syscalls params as function args no. 2, 3, 4, 5, 6
-    // see http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64 and https://en.wikipedia.org/wiki/X86_calling_conventions "System V AMD64"
-    mov %r8, %r9
-    mov %r10, %r8
-    mov %rdx, %rcx
-    mov %rsi, %rdx
-    mov %rdi, %rsi
-
-    // set syscall number as function arg no. 1
-    mov %rax, %rdi
-
-    // call C++ syscall handler, result value comes back on %rax
-    call on_syscall
-
-    // restore user stack
-    mov (user_rsp), %rsp
-
+.macro restore_context
+    # restore registers from CpuState struct
     movdqu (%rsp), %xmm15
     movdqu 16(%rsp), %xmm14
     movdqu 32(%rsp), %xmm13
@@ -96,9 +74,40 @@ handle_syscall:
     pop %r13
     pop %r14
     pop %r15
+.endm
+
+.extern on_syscall
+.extern kernel_stack_top
+.global handle_syscall
+handle_syscall:
+    save_context
+
+    # remember user stack pointer
+    mov %rsp, (user_rsp)
+
+    # switch to kernel stack
+    mov $kernel_stack_top, %rsp
+
+    # set 5 syscalls params as function args no. 2, 3, 4, 5, 6
+    # see http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64 and https://en.wikipedia.org/wiki/X86_calling_conventions "System V AMD64"
+    mov %r8, %r9
+    mov %r10, %r8
+    mov %rdx, %rcx
+    mov %rsi, %rdx
+    mov %rdi, %rsi
+
+    # set syscall number as function arg no. 1
+    mov %rax, %rdi
+
+    # call C++ syscall handler, result value comes back on %rax
+    call on_syscall
+
+    # restore user stack
+    mov (user_rsp), %rsp
+
+    restore_context
 
     sysretq
 
 .section .data
-user_rsp:
-    .quad 0
+    user_rsp: .quad 0
