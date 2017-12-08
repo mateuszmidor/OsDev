@@ -235,6 +235,7 @@ void TaskManager::dequeue_current_task(TaskList& list) {
 
     list.push_front(*current_task_it);
     running_queue.remove(current_task_it);
+    current_task_it = list.begin();
 }
 
 /**
