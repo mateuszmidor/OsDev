@@ -45,6 +45,7 @@ public:
     u16 vga_get_char_at(u8 x, u8 y);
     void vga_set_char_at(u8 x, u8 y, u16 c);
     void vga_flush_char_buffer(const u16* buff);
+    void vga_flush_video_buffer(const u8* buff);
     void vga_get_width_height(u16* width, u16* height);
     void vga_enter_graphics_mode();
     void vga_exit_graphics_mode();

@@ -109,8 +109,12 @@ VgaCharacter& VgaDriver::at(u16 x, u16 y) const {
     return vga[y * width + x];
 }
 
-void VgaDriver::flush_buffer(const VgaCharacter* buff) {
+void VgaDriver::flush_char_buffer(const VgaCharacter* buff) {
     memcpy(vga, buff, screen_width() * screen_height() * sizeof(VgaCharacter));
+}
+
+void VgaDriver::flush_video_buffer(const  middlespace::EgaColor* buff) {
+    memcpy(framebuffer_segment, buff, screen_width() * screen_height() * sizeof(EgaColor));
 }
 
 /**

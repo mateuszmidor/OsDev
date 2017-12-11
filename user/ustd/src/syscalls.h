@@ -139,6 +139,8 @@ void vga_set_char_at(unsigned int x, unsigned int y, unsigned short vga_characte
 
 void vga_flush_char_buffer(const unsigned short* text_buffer);
 
+void vga_flush_video_buffer(const unsigned char* video_buffer);
+
 void vga_get_width_height(unsigned short* width, unsigned short* height);
 
 void vga_enter_graphics_mode();

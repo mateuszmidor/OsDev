@@ -23,7 +23,8 @@ public:
     void set_graphics_mode_320_200_256();
     void put_pixel(u16 x, u16 y, u8 color_index) const;
     middlespace::VgaCharacter& at(u16 x, u16 y) const;
-    void flush_buffer(const  middlespace::VgaCharacter* buff);
+    void flush_char_buffer(const  middlespace::VgaCharacter* buff);
+    void flush_video_buffer(const  middlespace::EgaColor* buff);
     void set_cursor_visible(bool visible);
     void set_cursor_pos(u8 x, u8 y);
     u16 screen_width() const;

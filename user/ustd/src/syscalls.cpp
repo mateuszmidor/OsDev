@@ -204,6 +204,10 @@ void vga_flush_char_buffer(const unsigned short* text_buffer) {
     syscall(middlespace::SysCallNumbers::VGA_FLUSH_CHAR_BUFFER, (syscall_arg)text_buffer);
 }
 
+void vga_flush_video_buffer(const unsigned char* video_buffer) {
+    syscall(middlespace::SysCallNumbers::VGA_FLUSH_VIDEO_BUFFER, (syscall_arg)video_buffer);
+}
+
 void vga_get_width_height(unsigned short* width, unsigned short* height) {
     syscall(middlespace::SysCallNumbers::VGA_GET_WIDTH_HEIGHT, (syscall_arg)width, (syscall_arg)height);
 }

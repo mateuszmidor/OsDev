@@ -452,7 +452,14 @@ void SysCallHandler::vga_set_char_at(u8 x, u8 y, u16 c) {
 void SysCallHandler::vga_flush_char_buffer(const u16* buff) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
-        drv->flush_buffer((middlespace::VgaCharacter*)buff);
+        drv->flush_char_buffer((middlespace::VgaCharacter*)buff);
+    }
+}
+
+void SysCallHandler::vga_flush_video_buffer(const u8* buff) {
+    DriverManager& mngr = DriverManager::instance();
+    if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
+        drv->flush_video_buffer((middlespace::EgaColor*)buff);
     }
 }
 
