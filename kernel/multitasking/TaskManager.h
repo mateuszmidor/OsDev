@@ -11,12 +11,11 @@
 #include "kstd.h"
 #include "Task.h"
 #include "TaskList.h"
+#include "TaskRoundRobin.h"
 
 namespace multitasking {
 
 class TaskManager {
-    static constexpr u16 MAX_TASKS = 32;
-
 public:
     static TaskManager& instance();
     static void on_task_finished();
@@ -27,7 +26,6 @@ public:
     void replace_current_task(Task* task);
     Task& get_current_task();
     const TaskList& get_tasks() const;
-    u16 get_num_tasks() const;
     hardware::CpuState* sleep_current_task(hardware::CpuState* cpu_state, u64 millis);
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
@@ -43,11 +41,9 @@ private:
     Task get_boot_task() const;
     static TaskManager _instance;
 
-    Task                            boot_task       = get_boot_task();      // represents "kmain" boot task
-    TaskList                        running_queue;                          // list of tasks that are ready to be run
-    kstd::ListIterator<Task*>       current_task_it = running_queue.end();  // task that is currently running
-    kstd::ListIterator<Task*>       next_task_it    = running_queue.end();  // next task to be run
-    u32                             next_task_id    =  1;                   // id to assign to the next task while adding
+    Task            boot_task       = get_boot_task();      // represents "kmain" boot task
+    TaskRoundRobin  scheduler;
+    u32             next_task_id    = 1;                   // id to assign to the next task while adding
 };
 
 }

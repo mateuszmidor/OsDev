@@ -43,12 +43,10 @@ void TaskManager::on_task_finished() {
 u32 TaskManager::add_task(Task* task) {
     KLockGuard lock;    // prevent reschedule
 
-    if (running_queue.count() >= MAX_TASKS)
-        return 0;
-
     u32 tid = next_task_id;
     task->prepare(tid, TaskManager::on_task_finished);
-    running_queue.push_front(task);
+    if (!scheduler.add(task))
+        return 0;
 
     next_task_id++;
     return tid;
@@ -63,13 +61,11 @@ u32 TaskManager::add_task(Task* task) {
 void TaskManager::replace_current_task(Task* task) {
     KLockGuard lock;    // prevent reschedule, especially between "current_task->pml4_phys_addr = 0" and "Task::exit()"
 
-    if (running_queue.count() >= MAX_TASKS)
-        return;
-
-    Task* current_task = *current_task_it;
-    u32 tid = current_task->task_id;
+    const Task& current_task = get_current_task();
+    u32 tid = current_task.task_id;
     task->prepare(tid, TaskManager::on_task_finished);
-    running_queue.push_front(task);
+    if (!scheduler.add(task))
+        return;
 
     Task::exit();  // current task dies
 }
@@ -81,24 +77,17 @@ void TaskManager::replace_current_task(Task* task) {
 Task& TaskManager::get_current_task() {
     KLockGuard lock;    // prevent reschedule
 
-    if (current_task_it != running_queue.end())
-        return *(*current_task_it);
+    if (Task* task = scheduler.get_current_task())
+        return *task;
     else
-        return boot_task;   // if no even "idle" on running_queue, then we are still in boot "kmain" task
+        return boot_task;   // if not sheduled task, it must be the boot task (multitasking not yet started)
 }
 
 /**
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
 const TaskList& TaskManager::get_tasks() const {
-    return running_queue;
-}
-
-/**
- * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
- */
-u16 TaskManager::get_num_tasks() const {
-    return running_queue.count();
+    return scheduler.get_task_list();
 }
 
 /**
@@ -126,7 +115,7 @@ CpuState* TaskManager::sleep_current_task(CpuState* cpu_state, u64 millis) {
  */
 CpuState* TaskManager::schedule(CpuState* cpu_state) {
     // nothing to schedule?
-    if (running_queue.count() == 0)
+    if (scheduler.count() == 0)
         return cpu_state;
 
     // store cpu state in current task
@@ -147,11 +136,13 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @note    Execution context: Interrupt only (int 80h)
  */
 hardware::CpuState* TaskManager::kill_current_task() {
+    Task* current_task = scheduler.get_current_task();
+
     // enqueue back all waiting tasks and delete the task itself
-    wakeup_waitings_and_delete_task(*current_task_it);
+    wakeup_waitings_and_delete_task(current_task);
 
     // remove the task from running queue
-    running_queue.remove(current_task_it);
+    scheduler.remove(current_task);
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
@@ -168,12 +159,12 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
     //    remove task from the queue
     //    delete task
 
-    const TaskGroupDataPtr current_task_group = (*current_task_it)->task_group_data;
+    const Task& current_task = get_current_task();
+    const TaskGroupDataPtr current_task_group = current_task.task_group_data;
+
     current_task_group->termination_pending = true; // mark the group as to be terminated so when member tasks get awaken they get immediately deleted
 
-    for (auto task_it = running_queue.begin(); task_it != running_queue.end(); task_it++) {
-        Task* task = *task_it;
-
+    for (Task* task : scheduler.get_task_list()) {
         if (task->task_group_data != current_task_group)
             continue;
 
@@ -181,11 +172,7 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
         wakeup_waitings_and_delete_task(task);
 
         // remove the task from running queue
-        running_queue.remove(task_it);
-
-        // invalidate next task if needed
-        if (task_it == next_task_it)
-            next_task_it = running_queue.end();
+        scheduler.remove(task);
     }
 
     // return next task to switch to
@@ -217,7 +204,7 @@ Task TaskManager::get_boot_task() const {
 bool TaskManager::wait(u32 task_id) {
     KLockGuard lock;    // prevent reschedule
 
-    if (Task* t = running_queue.get_by_tid(task_id)) {
+    if (Task* t = scheduler.get_by_tid(task_id)) {
         dequeue_current_task(t->wait_queue);
         return true;
     }
@@ -231,9 +218,9 @@ bool TaskManager::wait(u32 task_id) {
 void TaskManager::dequeue_current_task(TaskList& list) {
     KLockGuard lock;   // prevent reschedule
 
-    list.push_front(*current_task_it);
-    running_queue.remove(current_task_it);
-    current_task_it = list.begin();
+    Task* current_task = scheduler.get_current_task();
+    list.push_front(current_task);
+    scheduler.remove(current_task);
 }
 
 /**
@@ -247,7 +234,7 @@ void TaskManager::enqueue_task_back(Task* task) {
     if (task->task_group_data->termination_pending)
         wakeup_waitings_and_delete_task(task);
     else
-        running_queue.push_front(task);
+        scheduler.add(task);
 }
 
 /**
@@ -256,15 +243,10 @@ void TaskManager::enqueue_task_back(Task* task) {
  * @note    There always need to be at least the "idle" task on the queue
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
-    if (next_task_it == running_queue.end())
-        next_task_it = running_queue.begin();
-
-    current_task_it = next_task_it;
-    next_task_it = next_task_it.get_next();
-
-    u64 pml4_physical_address = get_current_task().task_group_data->pml4_phys_addr;
+    Task* next_task = scheduler.pick_next_task();
+    u64 pml4_physical_address = next_task->task_group_data->pml4_phys_addr;
     PageTables::load_address_space(pml4_physical_address);
 
-    return (*current_task_it)->cpu_state;
+    return next_task->cpu_state;
 }
 } // namespace multitasking {
