@@ -228,6 +228,10 @@ void exit(u64 code) {
     syscall(middlespace::SysCallNumbers::EXIT, (syscall_arg)code);
 }
 
+void exit_group(u64 code) {
+    syscall(middlespace::SysCallNumbers::EXIT_GROUP, (syscall_arg)code);
+}
+
 s64 elf_run(const char path[], const char* nullterm_argv[]) {
     return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)path, (syscall_arg)nullterm_argv);
 }

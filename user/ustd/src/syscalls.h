@@ -151,6 +151,8 @@ void vga_set_pixel_at(unsigned short x, unsigned short y, unsigned char color_in
 
 void exit(u64 code);
 
+void exit_group(u64 code);
+
 s64 elf_run(const char path[], const char* nullterm_argv[]);
 
 s64 task_lightweight_run(unsigned long long entry_point, unsigned long long arg = 0, const char name[] = "lightweight");
