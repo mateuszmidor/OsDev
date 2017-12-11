@@ -143,6 +143,17 @@ public:
         return data;
     }
 
+    const ListIterator<T> find(const T& value) {
+        ListItem* i = m_head;
+        while (i)
+            if (i->data == value)
+                return ListIterator<T>(i);
+            else
+                i = i->next;
+
+        return end();
+    }
+
     void remove(const ListIterator<T>& it) {
         // nothing to remove
         if (!m_head)
