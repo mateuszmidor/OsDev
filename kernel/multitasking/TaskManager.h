@@ -9,16 +9,15 @@
 #define SRC_TASKMANAGER_H_
 
 #include "kstd.h"
+#include "RoundRobinScheduler.h"
 #include "Task.h"
 #include "TaskList.h"
-#include "TaskRoundRobin.h"
 
 namespace multitasking {
 
 class TaskManager {
 public:
     static TaskManager& instance();
-    static void on_task_finished();
     TaskManager operator=(const TaskManager&) = delete;
     TaskManager operator=(TaskManager&&) = delete;
 
@@ -35,14 +34,17 @@ public:
     void enqueue_task_back(Task* task);
 
 private:
+    static void on_task_finished();
     TaskManager() {}
+    void save_current_task_state(hardware::CpuState* cpu_state);
     hardware::CpuState* pick_next_task_and_load_address_space();
     void wakeup_waitings_and_delete_task(Task* task);
     Task get_boot_task() const;
+
     static TaskManager _instance;
 
-    Task            boot_task       = get_boot_task();      // represents "kmain" boot task
-    TaskRoundRobin  scheduler;
+    Task            boot_task       = get_boot_task();     // represents "kmain" boot task
+    RoundRobinScheduler  scheduler;
     u32             next_task_id    = 1;                   // id to assign to the next task while adding
 };
 
