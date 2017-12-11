@@ -217,7 +217,7 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
 
     // 2. locate writing start point
     u32 position_in_cluster = current_byte;
-    u32 cluster = get_cluster_for_write();
+    u32 cluster = get_cluster_for_write(current_cluster);
 
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     const u8* src = (const u8*)data;
@@ -234,11 +234,7 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
         // move on to the next cluster
         src += count;
         position_in_cluster = 0;
-        cluster = fat_table.get_next_cluster(cluster);
-        if (cluster == Fat32Table::CLUSTER_END_OF_CHAIN) {
-            attach_cluster();
-            cluster = get_tail();
-        }
+        cluster = get_cluster_for_write(fat_table.get_next_cluster(cluster));
     }
 
     // 4. done; update file position and size if needed
@@ -253,10 +249,10 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
 }
 
 /**
- * @brief   Get proper cluster for data writing depending on file status and file position
+ * @brief   Get proper cluster for data writing; if current_cluster is writable then use it, if not - attach and return new one
  * @return  Cluster for writing data
  */
-u32 Fat32ClusterChain::get_cluster_for_write() {
+u32 Fat32ClusterChain::get_cluster_for_write(u32 current_cluster) {
     u32 cluster;
 
     if (fat_table.is_allocated_cluster(current_cluster)) {

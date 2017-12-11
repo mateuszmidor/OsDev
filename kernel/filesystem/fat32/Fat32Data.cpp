@@ -109,7 +109,7 @@ bool Fat32Data::write_data_sector_from_byte(u32 cluster, u8 sector_in_cluster, u
 }
 
 /**
- * @brief   Write the cluster starting from "position" byte until "count" bytes is read or end of cluster is reached
+ * @brief   Write the cluster starting from "position" byte until "count" bytes is written or end of cluster is reached
  * @return  Number of bytes actually written
  */
 u32 Fat32Data::write_data_cluster(u32 position, u32 cluster, const u8* data, u32 count) const {

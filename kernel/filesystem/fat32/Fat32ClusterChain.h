@@ -36,15 +36,15 @@ public:
     u32 write(const void* data, u32 count);
 
 private:
-    u32 get_cluster_for_write();
+    u32 get_cluster_for_write(u32 current_cluster);
 
     const Fat32Table    fat_table;
     const Fat32Data     fat_data;
     logging::KernelLog& klog;
     u32                 head_cluster;
     u32                 tail_cluster;
-    u32                 current_cluster;
-    u32                 current_byte;
+    u32                 current_cluster;    // current read/write pos in file
+    u32                 current_byte;       // current read/write pos in file
     u32                 size;
 
 };
