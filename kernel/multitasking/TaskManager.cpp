@@ -130,15 +130,13 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
         return cpu_state;
 
     // store cpu state in current task
-    if (current_task_it != running_queue.end()) {
-        Task* current_task = *current_task_it;
-        if (current_task->is_user_space) {
-            current_task->cpu_state = (CpuState*) (cpu_state->rsp - sizeof(CpuState));  // allocate cpu state on the current task stack
-            *current_task->cpu_state = *cpu_state;                                      // copy cpu state from kernel stack to task stack
-        }
-        else
-            current_task->cpu_state = cpu_state;     // cpu state is already allocated and stored on task stack, just remember the pointer
+    Task& current_task = get_current_task();
+    if (current_task.is_user_space) {
+        current_task.cpu_state = (CpuState*) (cpu_state->rsp - sizeof(CpuState));  // allocate cpu state on the current task stack
+        *current_task.cpu_state = *cpu_state;                                      // copy cpu state from kernel stack to task stack
     }
+    else
+        current_task.cpu_state = cpu_state;     // cpu state is already allocated and stored on kernel task stack, just remember the pointer
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
