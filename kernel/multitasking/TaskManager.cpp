@@ -168,7 +168,9 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
     const Task& current_task = get_current_task();
     const TaskGroupDataPtr current_task_group = current_task.task_group_data;
 
-    current_task_group->termination_pending = true; // mark the group as to be terminated so when member tasks get awaken they get immediately deleted
+    // mark the group as to be terminated so when member tasks get awaken they get immediately deleted
+    // NOTE: if a member task stays somewhere on a wait queue, it may hold the process resources forever
+    current_task_group->termination_pending = true;
 
     for (Task* task : scheduler.get_task_list()) {
         if (task->task_group_data != current_task_group)
