@@ -127,6 +127,8 @@ int getcwd(char* buff, size_t size);
  */
 int chdir(const char path[]);
 
+int clock_gettime(clockid_t clk_id, struct timespec *tp);
+
 int enumerate(unsigned int fd, middlespace::VfsEntry* entries, unsigned int max_enties);
 
 void vga_cursor_setvisible(bool visible);

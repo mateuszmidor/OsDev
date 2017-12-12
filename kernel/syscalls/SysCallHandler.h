@@ -36,6 +36,7 @@ public:
     u64 sys_brk(u64 new_brk);
     s32 sys_get_cwd(char* buff, size_t size);
     s32 sys_chdir(const char path[]);
+    s32 sys_clock_gettime(clockid_t clk_id, struct timespec* tp);
     void sys_exit(s32 status);
     void sys_exit_group(s32 status);
 

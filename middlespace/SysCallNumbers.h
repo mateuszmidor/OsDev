@@ -37,6 +37,8 @@ enum class SysCallNumbers {
     CHDIR                   = 80,
     EXIT_GROUP              = 231,
 
+    CLOCK_GETTIME           = 228,
+
     // NON-POSIX
     VGA_CURSOR_SETVISIBLE   = 500,
     VGA_CURSOR_SETPOS       = 501,

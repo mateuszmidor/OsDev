@@ -9,6 +9,7 @@
 #define SRC_MIDDLESPACE_POSIX_POSIX_H_
 
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 #include <errno.h>
 

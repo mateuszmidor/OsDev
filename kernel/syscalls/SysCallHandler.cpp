@@ -10,6 +10,7 @@
 #include "TaskFactory.h"
 #include "VfsManager.h"
 #include "DriverManager.h"
+#include "TimeManager.h"
 #include "VgaDriver.h"
 #include "ElfRunner.h"
 
@@ -355,6 +356,31 @@ s32 SysCallHandler::sys_chdir(const char path[]) {
         return -ENOTDIR;
 
     current().task_group_data->cwd = absolute_path;
+    return 0;
+}
+
+/**
+ * @brief   Get time of specified "clk_id"
+ * @return  0 on success
+ *          -EINVAL if invalid/unsupported "clk_id" specified
+ *          -EFAULT if invalid "tp" specified
+ * @see     http://man7.org/linux/man-pages/man2/clock_gettime.2.html
+ */
+s32 SysCallHandler::sys_clock_gettime(clockid_t clk_id, struct timespec *tp) {
+    if (!tp)
+        return -EFAULT;
+
+    if (clk_id != CLOCK_MONOTONIC)
+        return -EINVAL;
+
+    constexpr u64 NSEC = 1000*1000*1000;
+    ktime::TimeManager& time_manager = ktime::TimeManager::instance();
+    u64 ticks = time_manager.get_ticks();
+    u64 freq = time_manager.get_hz();
+
+    u64 sec = ticks / freq;
+    tp->tv_sec = sec;
+    tp->tv_nsec = ((ticks * NSEC) / freq) - (sec * NSEC);
     return 0;
 }
 

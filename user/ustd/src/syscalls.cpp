@@ -180,6 +180,15 @@ int chdir(const char path[]) {
     return syscall(middlespace::SysCallNumbers::CHDIR, (syscall_arg)path);
 }
 
+/**
+ * @brief   Get time of specified "clk_id"
+ * @return  0 on success, -EINVAL on invalid/unsupported "clk_id", -EFAULT on invalid "tp"
+ * @note    only CLOCK_MONOTONIC is supported now as "clk_id"
+ */
+int clock_gettime(clockid_t clk_id, struct timespec *tp) {
+    return syscall(middlespace::SysCallNumbers::CLOCK_GETTIME, (syscall_arg)clk_id, (syscall_arg)tp);
+}
+
 int enumerate(unsigned int fd, middlespace::VfsEntry* entries, unsigned int max_enties) {
     return syscall(middlespace::SysCallNumbers::FILE_ENUMERATE, (syscall_arg)fd, (syscall_arg)entries, (syscall_arg)max_enties);
 }

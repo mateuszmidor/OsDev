@@ -89,6 +89,9 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
     case SysCallNumbers::CHDIR:
             return syscall_handler.sys_chdir((const char*)arg1);
 
+    case SysCallNumbers::CLOCK_GETTIME:
+        return syscall_handler.sys_clock_gettime((clockid_t )arg1, (struct timespec*)arg2);
+
     case SysCallNumbers::VGA_CURSOR_SETVISIBLE:
         syscall_handler.vga_cursor_setvisible((bool)arg1);
         return 0;
