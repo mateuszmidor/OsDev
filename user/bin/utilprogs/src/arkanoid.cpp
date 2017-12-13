@@ -167,6 +167,19 @@ public:
         vga_buffer[x + y * width] = c;
     }
 
+    void draw_rect(u16 x, u16 y, u16 width, u16 height, EgaColor c) {
+        for (int i = 0; i < width; i++)
+            for (int j = 0; j < height; j++)
+                set_pixel_at(x + i, y + j, c);
+    }
+
+    void draw_circle(u16 x, u16 y, s16 radius, EgaColor c) {
+        for (int i = -radius; i <= radius; i++)
+            for (int j = -radius; j <= radius; j++)
+                if (i*i + j*j < radius * radius)
+                    set_pixel_at(x + i, y + j, c);
+    }
+
     void flush_to_screen() {
         syscalls::vga_flush_video_buffer((const unsigned char*)vga_buffer.get());
     }
@@ -309,26 +322,17 @@ private:
     }
 
     void draw_background() {
-        for (int x = 0; x < vga.width; x++)
-            for (int y = 0; y < vga.height; y++)
-                vga.set_pixel_at(x, y, EgaColor::Black);
+        vga.draw_rect(0, 0, vga.width, vga.height, EgaColor::Black);
     }
 
     void draw_paddle() {
         auto px = paddle.get()->x;
         auto py = paddle.get()->y;
-
-        for (int y = 0; y < Paddle::PADDLE_HEIGHT; y++)
-            for (int x = 0; x < Paddle::PADDLE_WIDTH; x++)
-                vga.set_pixel_at(x + px, y + py, EgaColor::Green);
-
+        vga.draw_rect(px, py, Paddle::PADDLE_WIDTH, Paddle::PADDLE_HEIGHT, EgaColor::Green);
     }
 
     void draw_ball() {
-        for (int x = -ball.radius; x <= ball.radius; x++)
-            for (int y = -ball.radius; y <= ball.radius; y++)
-                if (x*x + y*y < ball.radius * ball.radius - 1)
-                    vga.set_pixel_at(ball.pos.x + x, ball.pos.y + y, EgaColor::Yellow);
+        vga.draw_circle(ball.pos.x, ball.pos.y, ball.radius, EgaColor::Yellow);
     }
 
     void game_loop() {
