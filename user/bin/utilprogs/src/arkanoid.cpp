@@ -32,7 +32,7 @@ public:
     Optional(T&& value) : value(std::move(value)), invalid(false) {}
     operator bool() const { return !invalid; }
     bool operator!() const { return invalid; }
-    const T value {};
+    T value {};
 
 private:
     bool invalid;
@@ -199,16 +199,50 @@ public:
  */
 struct Paddle {
     Optional<Vector2D> check_collision(const Ray2D& ray) {
-        AABB bb(x, y, PADDLE_WIDTH, PADDLE_HEIGHT);
-        return bb.check_collision(ray);
+        // middle part of the paddle bounces ball keeping its horizontal momentum
+        AABB middle(x + TIP_SIZE, y, Paddle::PADDLE_WIDTH - TIP_SIZE * 2, 0.0);
+        if (const auto collision_result = middle.check_collision(ray))
+            return collision_result;
+
+        // left paddle tip always bounces ball to the left
+        AABB left_tip(x, y, TIP_SIZE, PADDLE_HEIGHT);
+        if (auto collision_result = left_tip.check_collision(ray)) {
+            if (collision_result.value.x > 0.0)
+                collision_result.value.x *= -1.0;
+            return collision_result;
+        }
+        // right paddle tip always bounces ball to the right
+        AABB right_tip(x + PADDLE_WIDTH - TIP_SIZE, y, TIP_SIZE, PADDLE_HEIGHT);
+        if (auto collision_result = right_tip.check_collision(ray)) {
+            if (collision_result.value.x < 0.0)
+                collision_result.value.x *= -1.0;
+            return collision_result;
+        }
+
+        return {};
     }
 
     void draw(Vga& vga) {
-        vga.draw_rect(x, y, Paddle::PADDLE_WIDTH, Paddle::PADDLE_HEIGHT, EgaColor64::Gray);
+        // left paddle tip
+        vga.draw_rect(x, y, TIP_SIZE, Paddle::PADDLE_HEIGHT, TIP_COLOR);
+
+        // middle part of the paddle
+        vga.draw_rect(x + TIP_SIZE, y, Paddle::PADDLE_WIDTH - TIP_SIZE * 2, Paddle::PADDLE_HEIGHT, PADDLE_COLOR);
+
+        // right paddle tip
+        vga.draw_rect(x + Paddle::PADDLE_WIDTH - TIP_SIZE, y, TIP_SIZE, Paddle::PADDLE_HEIGHT, TIP_COLOR);
+
+        vga.set_pixel_at(x, y, EgaColor64::Black);
+        vga.set_pixel_at(x, y + Paddle::PADDLE_HEIGHT - 1, EgaColor64::Black);
+        vga.set_pixel_at(x + Paddle::PADDLE_WIDTH - 1, y, EgaColor64::Black);
+        vga.set_pixel_at(x + Paddle::PADDLE_WIDTH - 1, y + Paddle::PADDLE_HEIGHT - 1, EgaColor64::Black);
     }
 
-    static constexpr u16 PADDLE_WIDTH = 100;
-    static constexpr u16 PADDLE_HEIGHT = 5;
+    static constexpr u16 PADDLE_WIDTH           = 100;
+    static constexpr u16 PADDLE_HEIGHT          = 5;
+    static constexpr u32 TIP_SIZE               = 10;
+    static constexpr EgaColor64 PADDLE_COLOR    = EgaColor64::Gray;
+    static constexpr EgaColor64 TIP_COLOR       = EgaColor64::DarkGreen;
     u16 x;
     u16 y;
 };
@@ -327,7 +361,10 @@ class Game {
 public:
     Game(Vga& vga) : killer_bottom_edge(0, vga.height, vga.width, 50.0), vga(vga), board(vga.width, vga.height) {
         paddle.reset(std::make_shared<Paddle>());
-        syscalls::task_lightweight_run((unsigned long long)mouse_input_thread, (u64)this, "arkanoid_mouse_input");
+        mouse_task_id = syscalls::task_lightweight_run((unsigned long long)mouse_input_thread, (u64)this, "arkanoid_mouse_input");
+    }
+    ~Game() {
+        syscalls::task_wait(mouse_task_id);
     }
 
     void run() {
@@ -346,6 +383,7 @@ public:
 private:
     const AABB killer_bottom_edge;
     bool terminated = false;
+    s64 mouse_task_id;
     Monitor<Paddle> paddle;
     Vga& vga;
     HUD hud;
@@ -365,15 +403,13 @@ private:
         }
 
         MouseState ms;
-        while (!game->terminated && syscalls::read(fd, &ms, sizeof(MouseState)) == sizeof(MouseState)) {
+        while (syscalls::read(fd, &ms, sizeof(MouseState)) == sizeof(MouseState) && !game->terminated) {
             auto gms = game->paddle.get();
             gms->x = clamp(gms->x + ms.dx * 2, 0, game->vga.width - Paddle::PADDLE_WIDTH);
         }
 
-        cout::print("arkanoid: mouse state read error.\n");
         syscalls::close(fd);
-        game->terminated = true;
-        syscalls::exit(1);
+        syscalls::exit(0);
     }
 
     void simulate_game(double delta_time) {
