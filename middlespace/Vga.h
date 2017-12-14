@@ -35,6 +35,37 @@ enum EgaColor : u8 {
 };
 
 /**
+ * @see     https://en.wikipedia.org/wiki/Enhanced_Graphics_Adapter#/media/File:EGA_Table.PNG
+ */
+enum class EgaColor64 : u8 {
+    Black           = 0,
+    Gray            = 7,
+    White           = 63,
+
+    DarkRed         = 12,
+    NormalRed       = 36,
+    LightRed        = 39,
+
+    DarkGreen       = 16,
+    NormalGreen     = 2,
+    LightGreen      = 18,
+
+    DarkBlue        = 1,
+    NormalBlue      = 25,
+    LightBlue       = 11,
+
+    DarkYellow      = 6,
+    NormalYellow    = 62,
+    LightYellow     = 55,
+
+    NormalPink      = 45,
+    LightPink       = 47,
+
+    NormalViolet    = 13,
+    NormalOrange    = 38,
+};
+
+/**
  * This is the structure describing single character in VGA buffer
  */
 struct VgaCharacter {
