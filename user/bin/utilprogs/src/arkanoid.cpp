@@ -67,6 +67,15 @@ public:
                 set_pixel_at(x + i, y + j, c);
     }
 
+    void draw_rect(u16 x, u16 y, u16 width, u16 height, EgaColor frame, EgaColor body) {
+        for (u16 i = 0; i < width; i++)
+            for (u16 j = 0; j < height; j++)
+                if (i == 0 || j == 0 || i == width-1 || j == height - 1)
+                    set_pixel_at(x + i, y + j, frame);
+                else
+                    set_pixel_at(x + i, y + j, body);
+    }
+
     void draw_circle(u16 x, u16 y, s16 radius, EgaColor c) {
         for (s16 i = -radius; i <= radius; i++)
             for (s16 j = -radius; j <= radius; j++)
@@ -302,7 +311,7 @@ private:
     u32 num_bricks {0};
 
     void draw_brick(u16 bx, u16 by, u16 brick_width, u16 brick_height, EgaColor color, Vga& vga) {
-        vga.draw_rect(bx, by, brick_width, brick_height, color);
+        vga.draw_rect(bx, by, brick_width, brick_height, EgaColor::Yellow, color);
     }
 };
 
