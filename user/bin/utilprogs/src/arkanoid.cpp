@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <array>
+#include <utility>
 #include <functional>
 #include "_start.h"
 #include "syscalls.h"
@@ -28,6 +29,7 @@ class Optional {
 public:
     Optional() : invalid(true) {}
     Optional(const T& value) : value(value), invalid(false) {}
+    Optional(T&& value) : value(std::move(value)), invalid(false) {}
     operator bool() const { return !invalid; }
     bool operator!() const { return invalid; }
     const T value {};
@@ -91,10 +93,9 @@ private:
     void draw_char_8x8(u16 px, u16 py, char c, EgaColor color) {
         for (u8 y = 0; y < 8; y++) {
             char char_row_data = g_8x8_font[(u16)c * 8 + y];
-            for (u8 x = 0; x < 8; x++) {
+            for (u8 x = 0; x < 8; x++)
                 if (char_row_data & (1 << (7-x)))
                     set_pixel_at(px + x, py + y, color);
-            }
         }
     }
 };
@@ -168,19 +169,17 @@ class AABB {
 public:
     AABB(u16 x, u16 y, u16 width, u16 height) : x(x), y(y), w(width), h(height) {}
 
-    bool check_collision(const Ray2D& ray, Vector2D& new_dir) const {
+    Optional<Vector2D> check_collision(const Ray2D& ray) const {
         double up_down_edge_collision_distance = min(ray.dist_to_line({x, y}, {x+w, y}), ray.dist_to_line({x, y+h}, {x+w, y+h}));
         double left_right_edge_collision_distance = min(ray.dist_to_line({x, y}, {x, y+h}), ray.dist_to_line({x+w, y+h}, {x+w, y}));
 
         if ((up_down_edge_collision_distance > 1.0) && (left_right_edge_collision_distance > 1.0))
-            return false;
+            return {};
 
         if (up_down_edge_collision_distance < left_right_edge_collision_distance)
-            new_dir = { ray.normalized_dir.x, -ray.normalized_dir.y };    // mirror Y
+            return { {ray.normalized_dir.x, -ray.normalized_dir.y} };    // mirror Y
         else
-            new_dir = { -ray.normalized_dir.x, ray.normalized_dir.y };    // mirror X
-
-        return true;
+            return { {-ray.normalized_dir.x, ray.normalized_dir.y} };    // mirror X
     }
 
     double x, y, w, h;
@@ -190,17 +189,17 @@ public:
  *  GAME LOGIC PART
  */
 struct Paddle {
-    bool check_collision(const Ray2D& ray, Vector2D& new_dir) {
+    Optional<Vector2D> check_collision(const Ray2D& ray) {
         AABB bb(x, y, PADDLE_WIDTH, PADDLE_HEIGHT);
-        return bb.check_collision(ray, new_dir);
+        return bb.check_collision(ray);
     }
 
     void draw(Vga& vga) {
-        vga.draw_rect(x, y, Paddle::PADDLE_WIDTH, Paddle::PADDLE_HEIGHT, EgaColor::Green);
+        vga.draw_rect(x, y, Paddle::PADDLE_WIDTH, Paddle::PADDLE_HEIGHT, EgaColor::LightGray);
     }
 
-    constexpr static u16 PADDLE_WIDTH = 320;
-    constexpr static u16 PADDLE_HEIGHT = 5;
+    static constexpr u16 PADDLE_WIDTH = 100;
+    static constexpr u16 PADDLE_HEIGHT = 5;
     u16 x;
     u16 y;
 };
@@ -212,7 +211,7 @@ struct Ball {
 
     Vector2D        pos {0.0, 0.0};
     Vector2D        dir {-0.7071067811865475, -0.7071067811865475};  // normalized value of (-1, -1)
-    const double    speed {100.0};   // pixels/sec
+    const double    speed {75.0};   // pixels/sec
     const double    radius {4.0};
 };
 
@@ -268,10 +267,13 @@ public:
                     draw_brick(x * brick_width, BRICKS_OFFSET + y * brick_height, brick_width, brick_height, bricks[y][x], vga);
     }
 
-    Optional<u8> check_collision(const Ray2D& ray, Vector2D& new_dir) {
+    // Returns <new direction after collision, brick type>
+    Optional<std::pair<Vector2D, u8>> check_collision(const Ray2D& ray) {
+        constexpr auto NO_BRICK = Board::NO_BRICK;
+
         // collision against board walls
-        if (board_bb.check_collision(ray, new_dir)) {
-            return {NO_BRICK};
+        if (const auto collision_result = board_bb.check_collision(ray)) {
+            return { {collision_result.value, NO_BRICK} };
         }
 
         // collision against bricks on the board
@@ -282,10 +284,10 @@ public:
                     continue;
 
                 AABB brick_bb(x * brick_width, BRICKS_OFFSET + y * brick_height, brick_width, brick_height);
-                if (brick_bb.check_collision(ray, new_dir)) {
+                if (const auto collision_result = brick_bb.check_collision(ray)) {
                     bricks[y][x] = NO_BRICK;
                     num_bricks--;
-                    return {color};
+                    return { {collision_result.value, color} };
                 }
             }
         return {};
@@ -304,6 +306,14 @@ private:
     }
 };
 
+class HUD {
+public:
+    void draw(Vga& vga, u16 score, u16 frame_to_frame_time_ms) {
+        vga.draw_text(2, 5, StringUtils::format("Score: %", score).c_str(), EgaColor::LightRed);
+        vga.draw_text(vga.width - 60, 5, StringUtils::format("dt: %", frame_to_frame_time_ms).c_str(), EgaColor::LightRed);
+    }
+};
+
 class Game {
 public:
     Game(Vga& vga) : killer_bottom_edge(0, vga.height, vga.width, 50.0), vga(vga), board(vga.width, vga.height) {
@@ -312,24 +322,24 @@ public:
     }
 
     void run() {
+//        static constexpr const auto topline_board_constructor = [](u16 x, u16 y) { return EgaColor((y == 0) * EgaColor::LightBlue); };
+//        static constexpr const auto columns_board_constructor = [](u16 x, u16 y) { return EgaColor(((x % 2) == 0) * EgaColor::LightCyan); };
+        static constexpr const auto chessboard_board_constructor = [](u16 x, u16 y) { return EgaColor(((x + y) % 2) * EgaColor::LightGreen); };
+
         paddle.get()->x = vga.width / 2 - Paddle::PADDLE_WIDTH / 2;
         paddle.get()->y = vga.height - 20;
         ball.pos = { vga.width / 2.0, vga.height - 25.0 };
-       // auto topline_board_constructor = [](u16 x, u16 y)  { return EgaColor((y == 0) * EgaColor::LightBlue); };
-       // auto chessboard_board_constructor = [](u16 x, u16 y) { return EgaColor(((x + y) % 2) * EgaColor::LightGreen); };
-        auto columns_board_constructor = [](u16 x, u16 y)  { return EgaColor(((x % 2) == 0) * EgaColor::LightCyan); };
-
-        board.init(columns_board_constructor);
+        board.init(chessboard_board_constructor);
         terminated = false;
         game_loop();
     }
-
 
 private:
     const AABB killer_bottom_edge;
     bool terminated = false;
     Monitor<Paddle> paddle;
     Vga& vga;
+    HUD hud;
     Ball ball;
     Board board;
     Timer timer;
@@ -346,7 +356,7 @@ private:
         }
 
         MouseState ms;
-        while (syscalls::read(fd, &ms, sizeof(MouseState)) == sizeof(MouseState)) {
+        while (!game->terminated && syscalls::read(fd, &ms, sizeof(MouseState)) == sizeof(MouseState)) {
             auto gms = game->paddle.get();
             gms->x = clamp(gms->x + ms.dx * 2, 0, game->vga.width - Paddle::PADDLE_WIDTH);
         }
@@ -359,14 +369,13 @@ private:
 
     void simulate_game(double delta_time) {
         Ray2D ray(ball.pos, ball.dir, ball.speed * delta_time + ball.radius);
-        Vector2D new_dir {};
 
-        if (paddle.get()->check_collision(ray, new_dir))
-            ball.dir = new_dir;
+        if (const auto collision_result = paddle.get()->check_collision(ray))
+            ball.dir = collision_result.value;
 
-        if (auto collision_result = board.check_collision(ray, new_dir)) {
-            score += collision_result.value * 10;
-            ball.dir = new_dir;
+        if (const auto collision_result = board.check_collision(ray)) {
+            ball.dir = collision_result.value.first;
+            score += collision_result.value.second * 10;
         }
 
         // player won
@@ -377,7 +386,7 @@ private:
         }
 
         // player lost
-        if (killer_bottom_edge.check_collision(ray, new_dir)) {
+        if (killer_bottom_edge.check_collision(ray)) {
             syscalls::msleep(2000);
             cout::format("GAME OVER\n");
             terminated = true;
@@ -394,9 +403,7 @@ private:
             board.draw(vga);
             paddle.get()->draw(vga);
             ball.draw(vga);
-            vga.draw_text(2, 5, StringUtils::format("Score: %", score).c_str(), EgaColor::LightRed);
-            u32 dt_ms = (u32)(average_dt * 1000);
-            vga.draw_text(vga.width - 60, 5, StringUtils::format("dt: %", dt_ms).c_str(), EgaColor::LightRed);
+            hud.draw(vga, score, average_dt * 1000);
             vga.flush_to_screen();
         }
     }
