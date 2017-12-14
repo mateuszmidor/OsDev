@@ -54,20 +54,20 @@ public:
         syscalls::vga_exit_graphics_mode();
     }
 
-    void set_pixel_at(s16 x, s16 y, EgaColor c) {
+    void set_pixel_at(s16 x, s16 y, EgaColor64 c) {
         if (x < 0 || y < 0 || x >= width || y >= height)
             return;
 
         vga_buffer[x + y * width] = c;
     }
 
-    void draw_rect(u16 x, u16 y, u16 width, u16 height, EgaColor c) {
+    void draw_rect(u16 x, u16 y, u16 width, u16 height, EgaColor64 c) {
         for (u16 i = 0; i < width; i++)
             for (u16 j = 0; j < height; j++)
                 set_pixel_at(x + i, y + j, c);
     }
 
-    void draw_rect(u16 x, u16 y, u16 width, u16 height, EgaColor frame, EgaColor body) {
+    void draw_rect(u16 x, u16 y, u16 width, u16 height, EgaColor64 frame, EgaColor64 body) {
         for (u16 i = 0; i < width; i++)
             for (u16 j = 0; j < height; j++)
                 if (i == 0 || j == 0 || i == width-1 || j == height - 1)
@@ -76,14 +76,14 @@ public:
                     set_pixel_at(x + i, y + j, body);
     }
 
-    void draw_circle(u16 x, u16 y, s16 radius, EgaColor c) {
+    void draw_circle(u16 x, u16 y, s16 radius, EgaColor64 c) {
         for (s16 i = -radius; i <= radius; i++)
             for (s16 j = -radius; j <= radius; j++)
                 if (i*i + j*j < radius * radius)
                     set_pixel_at(x + i, y + j, c);
     }
 
-    void draw_text(u16 px, u16 py, const char* s, EgaColor color) {
+    void draw_text(u16 px, u16 py, const char* s, EgaColor64 color) {
         while (char c = *s++) {
             draw_char_8x8(px, py, c, color);
             px += 8;
@@ -97,9 +97,9 @@ public:
     u16 width, height;
 
 private:
-    vector<EgaColor> vga_buffer;
+    vector<EgaColor64> vga_buffer;
 
-    void draw_char_8x8(u16 px, u16 py, char c, EgaColor color) {
+    void draw_char_8x8(u16 px, u16 py, char c, EgaColor64 color) {
         for (u8 y = 0; y < 8; y++) {
             char char_row_data = g_8x8_font[(u16)c * 8 + y];
             for (u8 x = 0; x < 8; x++)
@@ -204,7 +204,7 @@ struct Paddle {
     }
 
     void draw(Vga& vga) {
-        vga.draw_rect(x, y, Paddle::PADDLE_WIDTH, Paddle::PADDLE_HEIGHT, EgaColor::LightGray);
+        vga.draw_rect(x, y, Paddle::PADDLE_WIDTH, Paddle::PADDLE_HEIGHT, EgaColor64::Gray);
     }
 
     static constexpr u16 PADDLE_WIDTH = 100;
@@ -215,7 +215,7 @@ struct Paddle {
 
 struct Ball {
     void draw(Vga& vga) {
-        vga.draw_circle(pos.x, pos.y, radius, EgaColor::Yellow);
+        vga.draw_circle(pos.x, pos.y, radius, EgaColor64::Gray);
     }
 
     Vector2D        pos {0.0, 0.0};
@@ -244,15 +244,15 @@ private:
 };
 
 class Board {
-    static constexpr EgaColor NO_BRICK  {(EgaColor)0};
-    static constexpr u8 NUM_ROWS        {10};
-    static constexpr u8 NUM_COLS        {16};
-    static constexpr u32 BRICKS_OFFSET  {20};
+    static constexpr EgaColor64 NO_BRICK    {(EgaColor64)0};
+    static constexpr u8 NUM_ROWS            {10};
+    static constexpr u8 NUM_COLS            {16};
+    static constexpr u32 BRICKS_OFFSET      {20};
     const u16 brick_width;
     const u16 brick_height;
     const AABB board_bb;
-    using BrickRow = std::array<EgaColor, NUM_COLS>;
-    using BoardConstructor = std::function<EgaColor(u16 x, u16 y)>;   // take brick position x & y and return brick color
+    using BrickRow = std::array<EgaColor64, NUM_COLS>;
+    using BoardConstructor = std::function<EgaColor64(u16 x, u16 y)>;   // take brick position x & y and return brick color
 
 public:
     Board(u16 width, u16 height) : brick_width(width / NUM_COLS), brick_height(height / 2 / NUM_ROWS), board_bb(0, 0, width, height) {}
@@ -267,7 +267,7 @@ public:
 
     void draw(Vga& vga) {
         // draw background
-        vga.draw_rect(0, 0, board_bb.w, board_bb.h, EgaColor::Black);
+        vga.draw_rect(0, 0, board_bb.w, board_bb.h, EgaColor64::Black);
 
         // draw bricks
         for (u16 y = 0; y < NUM_ROWS; y++)
@@ -282,13 +282,13 @@ public:
 
         // collision against board walls
         if (const auto collision_result = board_bb.check_collision(ray)) {
-            return { {collision_result.value, NO_BRICK} };
+            return { {collision_result.value, (u8)NO_BRICK} };
         }
 
         // collision against bricks on the board
         for (s16 y = NUM_ROWS-1; y >= 0; y--)
             for (u16 x = 0; x < NUM_COLS; x++)  {
-                EgaColor color = bricks[y][x];
+                EgaColor64 color = bricks[y][x];
                 if (color == NO_BRICK)
                     continue;
 
@@ -296,7 +296,7 @@ public:
                 if (const auto collision_result = brick_bb.check_collision(ray)) {
                     bricks[y][x] = NO_BRICK;
                     num_bricks--;
-                    return { {collision_result.value, color} };
+                    return { {collision_result.value, (u8)color} };
                 }
             }
         return {};
@@ -310,16 +310,16 @@ private:
     std::array<BrickRow, NUM_ROWS> bricks;
     u32 num_bricks {0};
 
-    void draw_brick(u16 bx, u16 by, u16 brick_width, u16 brick_height, EgaColor color, Vga& vga) {
-        vga.draw_rect(bx, by, brick_width, brick_height, EgaColor::Yellow, color);
+    void draw_brick(u16 bx, u16 by, u16 brick_width, u16 brick_height, EgaColor64 color, Vga& vga) {
+        vga.draw_rect(bx, by, brick_width, brick_height, EgaColor64::DarkYellow, color);
     }
 };
 
 class HUD {
 public:
     void draw(Vga& vga, u16 score, u16 frame_to_frame_time_ms) {
-        vga.draw_text(2, 5, StringUtils::format("Score: %", score).c_str(), EgaColor::LightRed);
-        vga.draw_text(vga.width - 60, 5, StringUtils::format("dt: %", frame_to_frame_time_ms).c_str(), EgaColor::LightRed);
+        vga.draw_text(2, 5, StringUtils::format("Score: %", score).c_str(), EgaColor64::NormalRed);
+        vga.draw_text(vga.width - 60, 5, StringUtils::format("dt: %", frame_to_frame_time_ms).c_str(), EgaColor64::NormalRed);
     }
 };
 
@@ -331,9 +331,9 @@ public:
     }
 
     void run() {
-//        static constexpr const auto topline_board_constructor = [](u16 x, u16 y) { return EgaColor((y == 0) * EgaColor::LightBlue); };
-//        static constexpr const auto columns_board_constructor = [](u16 x, u16 y) { return EgaColor(((x % 2) == 0) * EgaColor::LightCyan); };
-        static constexpr const auto chessboard_board_constructor = [](u16 x, u16 y) { return EgaColor(((x + y) % 2) * EgaColor::LightGreen); };
+//        static constexpr const auto topline_board_constructor = [](u16 x, u16 y) { return EgaColor64((y == 0) * EgaColor64::LightBlue); };
+//        static constexpr const auto columns_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x % 2) == 0) * EgaColor64::LightCyan); };
+        static constexpr const auto chessboard_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x + y) % 2) * (u8)EgaColor64::DarkGreen); };
 
         paddle.get()->x = vga.width / 2 - Paddle::PADDLE_WIDTH / 2;
         paddle.get()->y = vga.height - 20;
