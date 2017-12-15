@@ -212,6 +212,7 @@ Task TaskManager::get_boot_task() const {
 bool TaskManager::wait(u32 task_id) {
     KLockGuard lock;    // prevent reschedule
 
+    // NOTE: this will not work if task_id is currently WAITING on some list outside the scheduler!!!
     if (Task* t = scheduler.get_by_tid(task_id)) {
         dequeue_current_task(t->wait_queue);
         return true;
