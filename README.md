@@ -9,7 +9,7 @@ Based on:
  + https://www.intel.com/content/dam/support/us/en/documents/processors/pentium4/sb/25366821.pdf  
  
 Credits to the authors!  
-    
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/rec.gif)
 # Features
  + GRUB2 bootable
  + 64 bit kernel
