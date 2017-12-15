@@ -38,6 +38,25 @@ private:
     bool invalid;
 };
 
+class Timer {
+public:
+    Timer() {
+        syscalls::clock_gettime(CLOCK_MONOTONIC, &last_time);
+    }
+
+    double get_delta_seconds() {
+        constexpr double NSEC = 1000*1000*1000;
+        timespec ts;
+        syscalls::clock_gettime(CLOCK_MONOTONIC, &ts);
+        double dt = (ts.tv_sec - last_time.tv_sec) + (ts.tv_nsec - last_time.tv_nsec) / NSEC;
+        last_time = ts;
+        return dt;
+    }
+
+private:
+    timespec    last_time;
+};
+
 /**
  * VIDEO PART
  */
@@ -197,7 +216,14 @@ public:
 /**
  *  GAME LOGIC PART
  */
+using BrickType = EgaColor64;
+
 struct Paddle {
+    void reset_position(u16 x, u16 y) {
+        this->x = x;
+        this->y = y;
+    }
+
     Optional<Vector2D> check_collision(const Ray2D& ray) {
         // middle part of the paddle bounces ball keeping its horizontal momentum
         AABB middle(x + TIP_SIZE, y, Paddle::PADDLE_WIDTH - TIP_SIZE * 2, 0.0);
@@ -211,6 +237,7 @@ struct Paddle {
                 collision_result.value.x *= -1.0;
             return collision_result;
         }
+
         // right paddle tip always bounces ball to the right
         AABB right_tip(x + PADDLE_WIDTH - TIP_SIZE, y, TIP_SIZE, PADDLE_HEIGHT);
         if (auto collision_result = right_tip.check_collision(ray)) {
@@ -232,6 +259,7 @@ struct Paddle {
         // right paddle tip
         vga.draw_rect(x + Paddle::PADDLE_WIDTH - TIP_SIZE, y, TIP_SIZE, Paddle::PADDLE_HEIGHT, TIP_COLOR);
 
+        // remove corners so the paddle looks more rounded
         vga.set_pixel_at(x, y, EgaColor64::Black);
         vga.set_pixel_at(x, y + Paddle::PADDLE_HEIGHT - 1, EgaColor64::Black);
         vga.set_pixel_at(x + Paddle::PADDLE_WIDTH - 1, y, EgaColor64::Black);
@@ -258,35 +286,16 @@ struct Ball {
     const double    radius {4.0};
 };
 
-class Timer {
-public:
-    Timer() {
-        syscalls::clock_gettime(CLOCK_MONOTONIC, &last_time);
-    }
-
-    double get_delta_seconds() {
-        constexpr double NSEC = 1000*1000*1000;
-        timespec ts;
-        syscalls::clock_gettime(CLOCK_MONOTONIC, &ts);
-        double dt = (ts.tv_sec - last_time.tv_sec) + (ts.tv_nsec - last_time.tv_nsec) / NSEC;
-        last_time = ts;
-        return dt;
-    }
-
-private:
-    timespec    last_time;
-};
-
 class Board {
-    static constexpr EgaColor64 NO_BRICK    {(EgaColor64)0};
+    static constexpr BrickType NO_BRICK     {BrickType::Black};
     static constexpr u8 NUM_ROWS            {10};
     static constexpr u8 NUM_COLS            {16};
-    static constexpr u32 BRICKS_OFFSET      {20};
+    static constexpr u32 BRICKS_Y_OFFSET    {20};
     const u16 brick_width;
     const u16 brick_height;
     const AABB board_bb;
-    using BrickRow = std::array<EgaColor64, NUM_COLS>;
-    using BoardConstructor = std::function<EgaColor64(u16 x, u16 y)>;   // take brick position x & y and return brick color
+    using BrickRow = std::array<BrickType, NUM_COLS>;
+    using BoardConstructor = std::function<BrickType(u16 x, u16 y)>;   // take brick position x & y and return brick type
 
 public:
     Board(u16 width, u16 height) : brick_width(width / NUM_COLS), brick_height(height / 2 / NUM_ROWS), board_bb(0, 0, width, height) {}
@@ -304,35 +313,29 @@ public:
         vga.draw_rect(0, 0, board_bb.w, board_bb.h, EgaColor64::Black);
 
         // draw bricks
-        for (u16 y = 0; y < NUM_ROWS; y++)
-            for (u16 x = 0; x < NUM_COLS; x++)
-                if (bricks[y][x] != NO_BRICK)
-                    draw_brick(x * brick_width, BRICKS_OFFSET + y * brick_height, brick_width, brick_height, bricks[y][x], vga);
+        for (u16 row = 0; row < NUM_ROWS; row++)
+            for (u16 col = 0; col < NUM_COLS; col++)
+                if (bricks[row][col] != NO_BRICK)
+                    draw_brick(col, row, bricks[row][col], vga);
     }
 
     // Returns <new direction after collision, brick type>
-    Optional<std::pair<Vector2D, u8>> check_collision(const Ray2D& ray) {
+    Optional<std::pair<Vector2D, BrickType>> check_collision(const Ray2D& ray) {
         constexpr auto NO_BRICK = Board::NO_BRICK;
 
         // collision against board walls
         if (const auto collision_result = board_bb.check_collision(ray)) {
-            return { {collision_result.value, (u8)NO_BRICK} };
+            return { {collision_result.value, NO_BRICK} };
         }
 
         // collision against bricks on the board
-        for (s16 y = NUM_ROWS-1; y >= 0; y--)
-            for (u16 x = 0; x < NUM_COLS; x++)  {
-                EgaColor64 color = bricks[y][x];
-                if (color == NO_BRICK)
-                    continue;
+        BrickType type ;
+        for (s16 row = NUM_ROWS-1; row >= 0; row--)
+            for (u16 col = 0; col < NUM_COLS; col++)
+                if ((type = bricks[row][col]) != NO_BRICK)
+                    if (const auto collision_result = collide_brick(col, row, ray))
+                        return { {collision_result.value, type} };
 
-                AABB brick_bb(x * brick_width, BRICKS_OFFSET + y * brick_height, brick_width, brick_height);
-                if (const auto collision_result = brick_bb.check_collision(ray)) {
-                    bricks[y][x] = NO_BRICK;
-                    num_bricks--;
-                    return { {collision_result.value, (u8)color} };
-                }
-            }
         return {};
     }
 
@@ -344,8 +347,23 @@ private:
     std::array<BrickRow, NUM_ROWS> bricks;
     u32 num_bricks {0};
 
-    void draw_brick(u16 bx, u16 by, u16 brick_width, u16 brick_height, EgaColor64 color, Vga& vga) {
-        vga.draw_rect(bx, by, brick_width, brick_height, EgaColor64::DarkYellow, color);
+    void draw_brick(u16 brick_col, u16 brick_row, BrickType type, Vga& vga) {
+        u16 x = brick_col * brick_width;
+        u16 y = brick_row * brick_height + BRICKS_Y_OFFSET;
+        EgaColor64 color = (EgaColor64)type; // identity map type to color
+        vga.draw_rect(x, y, brick_width, brick_height, EgaColor64::DarkYellow, color);
+    }
+
+    Optional<Vector2D> collide_brick(u16 brick_col, u16 brick_row, const Ray2D& ray) {
+        u16 x = brick_col * brick_width;
+        u16 y = brick_row * brick_height + BRICKS_Y_OFFSET;
+        AABB brick_bb(x, y, brick_width, brick_height);
+        if (const auto collision_result = brick_bb.check_collision(ray)) {
+            bricks[brick_row][brick_col] = NO_BRICK;
+            num_bricks--;
+            return {collision_result.value};
+        }
+        return {};
     }
 };
 
@@ -361,21 +379,21 @@ class Game {
 public:
     Game(Vga& vga) : killer_bottom_edge(0, vga.height, vga.width, 50.0), vga(vga), board(vga.width, vga.height) {
         paddle.reset(std::make_shared<Paddle>());
-        mouse_task_id = syscalls::task_lightweight_run((unsigned long long)mouse_input_thread, (u64)this, "arkanoid_mouse_input");
+        mouse_input_task_id = syscalls::task_lightweight_run((unsigned long long)mouse_input_task, (u64)this, "arkanoid_mouse_input");
     }
+
     ~Game() {
-        syscalls::task_wait(mouse_task_id);
+        syscalls::task_wait(mouse_input_task_id);
     }
 
     void run() {
-//        static constexpr const auto topline_board_constructor = [](u16 x, u16 y) { return EgaColor64((y == 0) * EgaColor64::LightBlue); };
-//        static constexpr const auto columns_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x % 2) == 0) * EgaColor64::LightCyan); };
+//        static constexpr const auto topline_board_constructor = [](u16 x, u16 y) { return EgaColor64((y == 0) * (u8)EgaColor64::LightBlue); };
+//        static constexpr const auto columns_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x % 2) == 0) * (u8)EgaColor64::LightCyan); };
         static constexpr const auto chessboard_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x + y) % 2) * (u8)EgaColor64::DarkGreen); };
 
-        paddle.get()->x = vga.width / 2 - Paddle::PADDLE_WIDTH / 2;
-        paddle.get()->y = vga.height - 20;
-        ball.pos = { vga.width / 2.0, vga.height - 25.0 };
         board.init(chessboard_board_constructor);
+        ball.pos = { vga.width / 2.0, vga.height - 25.0 };
+        paddle.get()->reset_position(vga.width / 2 - Paddle::PADDLE_WIDTH / 2, vga.height - 20);
         terminated = false;
         game_loop();
     }
@@ -383,7 +401,7 @@ public:
 private:
     const AABB killer_bottom_edge;
     bool terminated = false;
-    s64 mouse_task_id;
+    s64 mouse_input_task_id;
     Monitor<Paddle> paddle;
     Vga& vga;
     HUD hud;
@@ -393,7 +411,7 @@ private:
     u32 score = 0;
     double average_dt {0.02}; // 20 Milliseconds to begin with
 
-    static void mouse_input_thread(u64 arg) {
+    static void mouse_input_task(u64 arg) {
         Game* game = (Game*)arg;
         int fd = syscalls::open("/dev/mouse", 2);
         if (fd < 0) {
@@ -420,19 +438,17 @@ private:
 
         if (const auto collision_result = board.check_collision(ray)) {
             ball.dir = collision_result.value.first;
-            score += collision_result.value.second * 10;
+            score += (u32)collision_result.value.second * 10;
         }
 
         // player won
         if (board.is_board_clear()) {
-            syscalls::msleep(2000);
             cout::format("VICTORY\n");
             terminated = true;
         }
 
         // player lost
         if (killer_bottom_edge.check_collision(ray)) {
-            syscalls::msleep(2000);
             cout::format("GAME OVER\n");
             terminated = true;
         }
@@ -451,6 +467,7 @@ private:
             hud.draw(vga, score, average_dt * 1000);
             vga.flush_to_screen();
         }
+        syscalls::msleep(2000);
     }
 };
 
