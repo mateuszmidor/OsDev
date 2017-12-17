@@ -36,6 +36,11 @@ Terminal::Terminal(u64 arg) : user_input(printer) {
     install_cmd(new cmds::cd, "cd");
     install_cmd(new cmds::elfrun, "elfrun");
 
+    string line(vga_width-1, '=');
+    printer.get()->format("%", line);
+    printer.get()->format("Welcome to PhobOS Terminal.\nUse <TAB> for autocompletion, '&' for running tasks in background\n");
+    printer.get()->format("%\n\n", line);
+
     // install external commands that are in form of separate ELF programs, located under given directory
     install_external_commands("/BIN");
 }
@@ -67,7 +72,7 @@ void Terminal::install_external_commands(const string& dir) {
 
         string cmd_absolute_path = StringUtils::format("%/%", dir, e.name);
         string lowercase_name = StringUtils::to_lower_case(e.name);
-        printer.get()->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
+        //printer.get()->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
         install_cmd(new cmds::specificelfrun(cmd_absolute_path), lowercase_name);
     }
 }

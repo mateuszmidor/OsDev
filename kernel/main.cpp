@@ -70,6 +70,34 @@ PageFaultHandler        page_fault;
 
 const u32               PIT_FREQUENCY_HZ = 20;
 
+
+/**
+ * Simple printer for kernel boot time
+ */
+void println(const char s[], EgaColor c = EgaColor::Yellow) {
+    static u32 current_line {0};
+    vga.print(current_line++, s, c);
+}
+
+void setup_temporary_console() {
+    vga.set_text_mode_90_30();
+    vga.clear_screen();
+    vga.set_cursor_visible(false);
+}
+
+void print_phobos_loading() {
+    println(R"( ____  _           _      ___  ____  )");
+    println(R"(|  _ \| |__   ___ | |__  / _ \/ ___| )");
+    println(R"(| |_) | '_ \ / _ \| '_ \| | | \___ \ )");
+    println(R"(|  __/| | | | (_) | |_) | |_| |___) |)");
+    println(R"(|_|   |_| |_|\___/|_.__/ \___/|____/ )");
+    println("");
+    println("Loading");
+}
+
+/**
+ * Keyboard handling
+ */
 VfsEntryPtr keyboard_vfe;
 void handle_key_press(const Key &key) {
     if (key != Key::INVALID) {
@@ -85,6 +113,9 @@ void handle_key_press(const Key &key) {
     }
 }
 
+/**
+ * Mouse handling
+ */
 middlespace::MouseState mouse_state;
 VfsEntryPtr mouse_vfe;
 void update_mouse() {
@@ -114,6 +145,9 @@ void handle_mouse_move(s8 dx, s8 dy) {
     update_mouse() ;
 }
 
+/**
+ * Programmable Interval Timer handling
+ */
 CpuState* handle_timer_tick(CpuState* cpu_state) {
     time_manager.tick();
     return task_manager.schedule(cpu_state);
@@ -135,25 +169,27 @@ void corner_counter() {
     }
 }
 
+/**
+ * Terminal runner
+ */
 void run_userspace_terminal() {
+    println("  loading terminal...");
+
     auto vga_drv = driver_manager.get_driver<VgaDriver>();
-    if (!vga_drv)
+    if (!vga_drv) {
+        println("VGA driver not installed. No terminal will be available", EgaColor::Red);
         return;
-
-    vga_drv->clear_screen();
-
+    }
 
     VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
     if (!e) {
-        vga_drv->print(0, "/BIN/TERMINAL doesnt exist. No terminal will be available", EgaColor::Red);
+        println("/BIN/TERMINAL doesnt exist. No terminal will be available", EgaColor::Red);
         return;
     }
     if (e->is_directory()) {
-        vga_drv->print(0, "/BIN/TERMINAL is directory? No terminal will be available", EgaColor::Red);
+        println("/BIN/TERMINAL is directory? No terminal will be available", EgaColor::Red);
         return;
     }
-
-    vga_drv->print(0, "Loading terminal, please wait a few secs");
 
     // read elf file data
     u32 size = e->get_size();
@@ -171,9 +207,10 @@ void run_userspace_terminal() {
  */
 void task_init() {
     task_manager.add_task(TaskFactory::make_kernel_task(Task::idle, "idle"));
-    task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
+//    task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
     run_userspace_terminal();
 }
+
 
 /**
  * @name    kmain
@@ -191,10 +228,15 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     // 2. run constructors of global objects
     GlobalConstructorsRunner::run();
 
-    // 3. install new Global Descriptor Table that will allow user-space
-    gdt.reinstall_gdt();
+    // 3. configure temporary console and print PhobOS
+    setup_temporary_console();
+    print_phobos_loading();
 
-    // 4. prepare drivers
+    // 4. install new Global Descriptor Table that will allow user-space
+    gdt.reinstall_gdt();
+    println("  installing GDT...done");
+
+    // 5. prepare drivers & install drivers
     time_manager.set_hz(PIT_FREQUENCY_HZ);
     pit.set_channel0_hz(PIT_FREQUENCY_HZ);
     pit.set_channel0_on_tick(handle_timer_tick);
@@ -203,7 +245,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     mouse.set_on_up(handle_mouse_up);
     mouse.set_on_move(handle_mouse_move);
 
-    // 5. install drivers
+    // 6. install drivers
     //pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
     driver_manager.install_driver(&keyboard);
     driver_manager.install_driver(&mouse);
@@ -211,28 +253,32 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(&ata_primary_bus);
     driver_manager.install_driver(&vga);
     driver_manager.install_driver(&int80h);
+    println("  installing drivers...done");
 
-    // 6. install exceptions
+    // 7. install exceptions
     exception_manager.install_handler(&page_fault);    // this guy allows dynamic memory on-page-fault allocation
+    println("  installing exceptions...done");
 
-    // 7. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
+    // 8. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts(); // on-page-fault allocation available from here, as page_fault handler installed and activated
+    println("  installing interrupts...done");
 
-    // 8. configure dynamic memory management
+    // 9. configure dynamic memory management
     MemoryManager::install_allocation_policy<WyoosAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
+    println("  installing dynamic memory...done");
 
-    // 9. configure and activate system calls through "syscall" instruction
+    // 10. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
+    println("  installing system calls...done");
 
-    // 10. install filesystem root "/"
+    // 11. install filesystem root "/"
     vfs_manager.install_root();
-
-    // 11. configure vga text mode
-    vga.set_text_mode_90_30();
+    println("  installing Virtual File System...done");
 
     // 12. start multitasking
     task_manager.add_task(TaskFactory::make_kernel_task(task_init, "init"));
+    println("  installing multitasking...done");
     Task::idle();
 }
