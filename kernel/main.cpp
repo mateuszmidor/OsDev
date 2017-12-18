@@ -74,9 +74,16 @@ const u32               PIT_FREQUENCY_HZ = 20;
 /**
  * Simple printer for kernel boot time
  */
+u32 current_row {0};
+u32 current_col {0};
+void print(const char s[], EgaColor c = EgaColor::Yellow) {
+    vga.print(current_col, current_row, s, c);
+    current_col+= strlen(s);
+}
+
 void println(const char s[], EgaColor c = EgaColor::Yellow) {
-    static u32 current_line {0};
-    vga.print(current_line++, s, c);
+    vga.print(current_col, current_row++, s, c);
+    current_col = 0;
 }
 
 void setup_temporary_console() {
@@ -173,7 +180,7 @@ void corner_counter() {
  * Terminal runner
  */
 void run_userspace_terminal() {
-    println("  loading terminal...");
+    print("  loading terminal");
 
     auto vga_drv = driver_manager.get_driver<VgaDriver>();
     if (!vga_drv) {
@@ -191,6 +198,10 @@ void run_userspace_terminal() {
         return;
     }
 
+    // terminal loading animation start
+    auto on_expire = [] { print("."); };
+    auto timer_id = time_manager.emplace(1000, 1000, on_expire);
+
     // read elf file data
     u32 size = e->get_size();
     u8* elf_data = new u8[size];
@@ -200,6 +211,9 @@ void run_userspace_terminal() {
     utils::ElfRunner runner;
     if (runner.run(elf_data, new vector<string> { "terminal" }) > 0)
         klog.format("Terminal is running\n");
+
+    // terminal loading animation stop
+    time_manager.cancel(timer_id);
 }
 
 /**
