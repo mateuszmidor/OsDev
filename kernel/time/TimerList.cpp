@@ -28,7 +28,7 @@ void TimerList::push_sorted_ascending_by_expire_time(Timer* t) {
     ListItem* curr = m_head->next;
 
     while (curr) {
-        if (curr->data->ticks_left > t->ticks_left) { // current expires after "t"
+        if (curr->data->remaining_ticks > t->remaining_ticks) { // current expires after "t"
             prev->next = new_item;
             new_item->next = curr;
             m_count++;
@@ -43,6 +43,17 @@ void TimerList::push_sorted_ascending_by_expire_time(Timer* t) {
     // case 3. adding tail item
     prev->next = new_item;
     m_count++;
+}
+
+/**
+ * @brief   Get timer of given tid
+ */
+Timer* TimerList::get_by_tid(u32 timer_id) {
+    for (Timer* t : *this)
+        if (t->timer_id == timer_id)
+            return t;
+
+    return nullptr;
 }
 
 } /* namespace time */

@@ -17,10 +17,13 @@ using OnTimerExpire = std::function<void()>;
 
 class Timer {
 public:
-    Timer(s64 ticks_left, const OnTimerExpire& on_expire) : ticks_left(ticks_left), on_expire(on_expire) {}
+    Timer(s64 remaining_ticks, const OnTimerExpire& on_expire) : remaining_ticks(remaining_ticks), reload_ticks(0), on_expire(on_expire) {}
+    Timer(s64 remaining_ticks, u32 reload_ticks, const OnTimerExpire& on_expire) : remaining_ticks(remaining_ticks), reload_ticks(reload_ticks), on_expire(on_expire) {}
 
     OnTimerExpire   on_expire;
-    s64             ticks_left;     // how many clock ticks left to expire
+    s64             remaining_ticks;        // how many clock ticks left to expire
+    u32             reload_ticks;           // value to reset the remaining_ticks to after timer expires
+    u64             timer_id        {0};    // set by TimeManager when adding timer
 };
 
 } /* namespace time */

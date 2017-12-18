@@ -21,8 +21,10 @@ class Timer;
 class TimerList: public kstd::List<Timer*> {
 public:
     void push_sorted_ascending_by_expire_time(Timer* t);
+    Timer* get_by_tid(u32 timer_id);
 
 };
+
 
 } /* namespace time */
 

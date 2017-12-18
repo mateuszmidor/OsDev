@@ -31,18 +31,22 @@ void TimeManager::tick() {
 
     // time passes
     for (Timer* t : timers)
-        t->ticks_left--;
+        t->remaining_ticks--;
 
     // does the soonest timer expire?
-    if (timers.front()->ticks_left > 0)
+    if (timers.front()->remaining_ticks > 0)
         return;
 
     // soonest timer expires
     Timer* t = timers.pop_front();
 
-    // run expire and get rid of the timer
+    // run expire and reload/remove timer
     t->on_expire();
-    delete t;
+    if (t->reload_ticks) {
+        t->remaining_ticks = t->reload_ticks;
+        timers.push_sorted_ascending_by_expire_time(t);
+    } else
+        delete t;
 }
 
 u64 TimeManager::get_ticks() const {
@@ -58,17 +62,45 @@ u64 TimeManager::get_hz() const {
 }
 
 /**
- * @brief   Emplace a new timer
- * @param   millis After how many milliseconds to expire
+ * @brief   Emplace a new one-shoot timer
+ * @param   expire_millis After how many milliseconds to expire
  * @param   on_expire What to do on expire
+ * @return  Newly added timer id
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-void TimeManager::emplace(u32 millis, const OnTimerExpire& on_expire) {
+u64 TimeManager::emplace(u32 expire_millis, const OnTimerExpire& on_expire) {
+    return emplace(expire_millis, 0, on_expire);
+}
+
+/**
+ * @brief   Emplace a new reloadable timer
+ * @param   expire_millis After how many milliseconds to expire
+ * @param   reload_millis Value to reset the timer to after it expires, 0 means no reload
+ * @param   on_expire What to do on expire
+ * @return  Newly added timer id
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ */
+u64 TimeManager::emplace(u32 expire_millis, u32 reload_millis, const OnTimerExpire& on_expire) {
     KLockGuard lock;    // prevent reschedule
 
-    u32 ticks = get_hz() * millis / 1000;
-    Timer* t = new Timer(ticks, on_expire);
+    u32 remaining_ticks = get_hz() * expire_millis / 1000;
+    u32 reload_ticks = get_hz() * reload_millis / 1000;
+    Timer* t = new Timer(remaining_ticks, reload_ticks, on_expire);
+    t->timer_id = next_timer_id;
     timers.push_sorted_ascending_by_expire_time(t);
+    next_timer_id++;
+    return t->timer_id;
+}
+
+/**
+ * @brief   Cancel timer of given id
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ */
+void TimeManager::cancel(u64 timer_id) {
+    KLockGuard lock;    // prevent reschedule
+
+    if (Timer* t = timers.get_by_tid(timer_id))
+        timers.remove(timers.find(t));
 }
 
 } /* namespace time */
