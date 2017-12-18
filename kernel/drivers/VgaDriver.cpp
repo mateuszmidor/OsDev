@@ -168,8 +168,8 @@ void VgaDriver::clear_screen(EgaColor color) {
             at(x, y) = VgaCharacter(' ', color, color);
 }
 
-void VgaDriver::print(u16 y, const char* text,  EgaColor fg, EgaColor bg) {
-    u32 curr = y * width;
+void VgaDriver::print(u16 x, u16 y, const char* text,  EgaColor fg, EgaColor bg) {
+    u32 curr = y * width + x;
     u32 max_index = width * height;
 
     while (*text && curr < max_index) {

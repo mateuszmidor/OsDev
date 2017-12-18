@@ -32,7 +32,7 @@ public:
 
     // higher level basic functions
     void clear_screen( middlespace::EgaColor color =  middlespace::EgaColor::Black);
-    void print(u16 y, const char* text,  middlespace::EgaColor fg =  middlespace::EgaColor::White,  middlespace::EgaColor bg =  middlespace::EgaColor::Black);
+    void print(u16 x, u16 y, const char* text,  middlespace::EgaColor fg =  middlespace::EgaColor::White,  middlespace::EgaColor bg =  middlespace::EgaColor::Black);
 
 private:
     void write_registers(u8* registers) const;
