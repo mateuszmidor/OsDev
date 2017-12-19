@@ -27,7 +27,11 @@ extern "C" void run_ctors() {
 __asm__ __volatile__(
     ".global _start     ;"
     "_start:            ;"
+    "push %rsi          ;"
+    "push %rdi          ;"
     "call run_ctors     ;"
+    "pop %rdi           ;"
+    "pop %rsi           ;"
     "call main          ;"
     "mov %rax, %rdi     ;"  // error code
     "mov $231, %rax     ;"  // syscall 231: exit_group
