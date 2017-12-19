@@ -19,16 +19,16 @@ namespace terminal {
 
 class Terminal {
 public:
-    Terminal(u64 arg);
+    Terminal(const ustd::string& terminal_binary_name);
     void run();
 
 private:
     bool init();
+    void setup_screen_and_print_welcome();
+    void install_internal_command(cmds::CmdBase* cmd, const ustd::string& cmd_name);
+    void install_external_commands(const ustd::string& dir, const ustd::string& omit_name);
     void on_key_down(middlespace::Key key);
     void process_cmd(const ustd::string& cmd);
-
-    void install_external_commands(const ustd::string& dir);
-    void install_cmd(cmds::CmdBase* cmd, const ustd::string& cmd_name);
 
     static void stdout_printer_thread(Terminal* term);
     static void key_processor_thread(Terminal* term);
@@ -38,6 +38,7 @@ private:
     CommandLineInput    user_input;
 
     ustd::Monitor<ScrollableScreenPrinter> printer; // printer is accessed from multiple threads so it is secured inside Monitor
+    const ustd::string  self_binary_name;           // "TERMINAL"
 
     // file descriptors
     int fd_keyboard     = -1;   // for reading keyboard input

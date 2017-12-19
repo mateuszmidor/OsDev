@@ -9,12 +9,11 @@
 #include "Terminal.h"
 #include "StringUtils.h"
 #include "Cin.h"
+#include "syscalls.h"
 
 #include "cmds/cd.h"
-#include "cmds/elfrun.h"
 #include "cmds/specificelfrun.h"
 
-#include "syscalls.h"
 
 using namespace ustd;
 using namespace cmds;
@@ -22,67 +21,8 @@ using namespace middlespace;
 
 namespace terminal {
 
-Terminal::Terminal(u64 arg) : user_input(printer) {
-    // start at /HOME
-    syscalls::chdir("/HOME");
 
-    // setup screen printer
-    u16 vga_width;
-    u16 vga_height;
-    syscalls::vga_get_width_height(&vga_width, &vga_height);
-    printer.reset(std::make_shared<ScrollableScreenPrinter>(0, 0, vga_width-1, vga_height-1));
-
-    // install internal commands
-    install_cmd(new cmds::cd, "cd");
-    install_cmd(new cmds::elfrun, "elfrun");
-
-    string line(vga_width-1, '=');
-    printer.get()->format("%", line);
-    printer.get()->format("Welcome to PhobOS Terminal.\nUse <TAB> for autocompletion, '&' for running tasks in background\n");
-    printer.get()->format("%\n\n", line);
-
-    // install external commands that are in form of separate ELF programs, located under given directory
-    install_external_commands("/BIN");
-}
-
-/**
- * @brief   Install commands that are exteral ELF files located in filesystem under "dir"
- */
-void Terminal::install_external_commands(const string& dir) {
-    int fd = syscalls::open(dir.c_str());
-
-    // no such directory
-    if (fd < 0) {
-        printer.get()->format("Terminal: cant open directory %\n", dir);
-        return;
-    }
-
-    // get "dir" contents
-    std::array<VfsEntry, 128> entries;
-    int count = syscalls::enumerate(fd, entries.data(), entries.size());
-    syscalls::close(fd);
-
-    // install commands that were found
-    for (int i = 0; i < count; i++) {
-        VfsEntry& e = entries[i];
-
-        // dont install directory. Should also check if it is actually an ELF file...
-        if (e.is_directory)
-            continue;
-
-        string cmd_absolute_path = StringUtils::format("%/%", dir, e.name);
-        string lowercase_name = StringUtils::to_lower_case(e.name);
-        //printer.get()->format("Terminal::installing % from %\n", lowercase_name, cmd_absolute_path);
-        install_cmd(new cmds::specificelfrun(cmd_absolute_path), lowercase_name);
-    }
-}
-
-/**
- * @brief   Install command "cmd" under name "cmd_name"
- */
-void Terminal::install_cmd(cmds::CmdBase* cmd, const string& cmd_name) {
-    user_input.install(cmd_name);
-    cmd_collection.install(cmd_name, cmd);
+Terminal::Terminal(const ustd::string& terminal_binary_name) : self_binary_name(terminal_binary_name), user_input(printer) {
 }
 
 /**
@@ -103,6 +43,8 @@ void Terminal::run() {
         // process command
         process_cmd(cmd);
     };
+
+    // terminal never exits so no need to wait for its slave threads
 }
 
 bool Terminal::init() {
@@ -121,7 +63,17 @@ bool Terminal::init() {
         return false;
     }
 
-    printer.get()->clear_screen();
+    // go /HOME
+    syscalls::chdir("/HOME");
+
+    // setup screen printer and print welcome message
+    setup_screen_and_print_welcome();
+
+    // install internal commands
+    install_internal_command(new cmds::cd, "cd");
+
+    // install external commands that are in form of separate ELF programs, located under given directory
+    install_external_commands("/BIN", self_binary_name);
 
     // start a thread reading /dev/keyboard
     syscalls::task_lightweight_run((unsigned long long)key_processor_thread, (unsigned long long)this, "terminal_key_processor");
@@ -132,7 +84,93 @@ bool Terminal::init() {
     return true;
 }
 
+/**
+ * @brief   Setup screen printing for current resolution, print welcome message
+ */
+void Terminal::setup_screen_and_print_welcome() {
+    // setup
+    u16 vga_width;
+    u16 vga_height;
+    syscalls::vga_get_width_height(&vga_width, &vga_height);
+    printer.reset(std::make_shared<ScrollableScreenPrinter>(0, 0, vga_width - 1, vga_height - 1));
 
+    // print
+    string line(vga_width - 1, '=');
+    auto p = printer.get();
+    p->format(line);
+    p->format("Welcome to PhobOS Terminal.\nUse <TAB> for autocompletion, '&' for running tasks in background\n");
+    p->format(line);
+    p->format("\n\n");
+}
+
+/**
+ * @brief   Install command "cmd" under name "cmd_name"
+ */
+void Terminal::install_internal_command(cmds::CmdBase* cmd, const string& cmd_name) {
+    user_input.install(cmd_name);
+    cmd_collection.install(cmd_name, cmd);
+}
+
+/**
+ * @brief   Install commands that are exteral ELF files located in filesystem under "dir"
+ */
+void Terminal::install_external_commands(const string& dir, const ustd::string& omit_name) {
+    int fd = syscalls::open(dir.c_str());
+
+    // no such directory
+    if (fd < 0) {
+        printer.get()->format("Terminal: cant open directory %\n", dir);
+        return;
+    }
+
+    // get "dir" contents
+    std::array<VfsEntry, 128> entries;
+    int count = syscalls::enumerate(fd, entries.data(), entries.size());
+    syscalls::close(fd);
+
+    // install found commands except for omit_name
+    for (int i = 0; i < count; i++) {
+        VfsEntry& e = entries[i];
+
+        // dont install directory. Should also check if it is actually an ELF file...
+        if (e.is_directory)
+            continue;
+
+        string lowercase_name = StringUtils::to_lower_case(e.name);
+        if (lowercase_name == StringUtils::to_lower_case(omit_name))
+            continue;
+
+        string cmd_absolute_path = StringUtils::format("%/%", dir, e.name);
+        install_internal_command(new cmds::specificelfrun(cmd_absolute_path), lowercase_name);
+    }
+}
+
+/**
+ * @brief   User entered a command. Do something with it
+ */
+void Terminal::process_cmd(const string& cmd) {
+    if (cmd.empty())
+        return;
+
+    auto cmd_args = ustd::StringUtils::split_string(cmd, ' ');
+    bool run_in_background = false;
+    if (cmd_args.back() == "&") {
+        run_in_background = true;
+        cmd_args.pop_back();
+    }
+
+    if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
+        task->run(cmd_args, run_in_background);
+        cmd_history.append(cmd);
+        cmd_history.set_to_latest();
+    }
+    else
+        printer.get()->format("Unknown command: '%'\n", cmd);
+}
+
+/**
+ * @brief   Handle key down event
+ */
 void Terminal::on_key_down(Key key) {
     // functional key
     if (key & Key::FUNCTIONAL) {
@@ -197,30 +235,7 @@ void Terminal::on_key_down(Key key) {
 }
 
 /**
- * @brief   User entered a command. Do something with it
- */
-void Terminal::process_cmd(const string& cmd) {
-    if (cmd.empty())
-        return;
-
-    auto cmd_args = ustd::StringUtils::split_string(cmd, ' ');
-    bool run_in_background = false;
-    if (cmd_args.back() == "&") {
-        run_in_background = true;
-        cmd_args.pop_back();
-    }
-
-    if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
-        task->run(cmd_args, run_in_background);
-        cmd_history.append(cmd);
-        cmd_history.set_to_latest();
-    }
-    else
-        printer.get()->format("Unknown command: '%'\n", cmd);
-}
-
-/**
- * @brief   This function reads /dev/stdout in a loop and print it to the screen
+ * @brief   This function reads /dev/stdout in a loop and prints it to the screen
  * @note    This function is run in a separate thread
  */
 void Terminal::stdout_printer_thread(Terminal* term) {

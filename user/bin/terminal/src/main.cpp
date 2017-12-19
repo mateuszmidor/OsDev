@@ -12,7 +12,7 @@
 using namespace terminal;
 
 int main(int argc, char* argv[]) {
-    Terminal t(0);
+    Terminal t(argv[0]);
     t.run();
     return 0;
 }
