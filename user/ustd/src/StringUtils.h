@@ -18,7 +18,11 @@ class StringUtils {
 public:
     static string from_int(s64 num, u8 base = 10);
 
+    static string from_double(double num);
+
     static s64 to_int(const string& str);
+
+    static double to_double(const string& str);
 
     static string to_lower_case(string s);
 
@@ -32,8 +36,12 @@ public:
         return fmt;
     }
 
-    static string format(s64 num) {
-        return format(from_int(num));
+//    static string format(s64 num) {
+//        return format(from_int(num));
+//    }
+
+    static string format(double num) {
+        return format(from_double(num));
     }
 
     static string format(char const *fmt) {
