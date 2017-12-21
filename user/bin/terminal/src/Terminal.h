@@ -33,12 +33,12 @@ private:
     static void stdout_printer_thread(Terminal* term);
     static void key_processor_thread(Terminal* term);
 
+    const ustd::string  self_binary_name;           // "TERMINAL"
     CommandHistory      cmd_history;
     CommandCollection   cmd_collection;
     CommandLineInput    user_input;
 
     ustd::Monitor<ScrollableScreenPrinter> printer; // printer is accessed from multiple threads so it is secured inside Monitor
-    const ustd::string  self_binary_name;           // "TERMINAL"
 
     // file descriptors
     int fd_keyboard     = -1;   // for reading keyboard input
