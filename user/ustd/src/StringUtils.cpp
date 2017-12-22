@@ -169,7 +169,7 @@ double StringUtils::to_double(const string& str) {
     if (str[i] == '\0')
         return negative ? -res : res;
 
-    // got period, skip it and proceed with fractional part
+    // got period
     i++;
     long long frac = 0;
     size_t len = 1;
@@ -180,7 +180,7 @@ double StringUtils::to_double(const string& str) {
     }
 
     double result = res + frac / (double)len;
-    return negative ? -res : res;
+    return negative ? -result : result;
 }
 
 /**
