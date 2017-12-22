@@ -8,35 +8,11 @@
 #include <utility>
 #include <stack>
 #include "_start.h"
+#include "Math.h"
 #include "Cout.h"
 #include "StringUtils.h"
 
 using namespace ustd;
-
-/**
- * MATH PART
- */
-double pow(double a, double b) {
-    return 0.0;
-}
-
-double sqrt(double a) {
-    double result {0.0};
-    asm volatile("fsqrt" : "=t"(result) : "0"(a));
-    return result;
-}
-
-double sin(double radians) {
-    double result;
-    asm volatile("fsin" : "=t"(result) : "0"(radians));
-    return result;
-}
-
-double cos(double radians) {
-    double result;
-    asm volatile("fcos" : "=t"(result) : "0"(radians));
-    return result;
-}
 
 /**
  * UTILS PART
