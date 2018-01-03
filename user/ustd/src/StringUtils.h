@@ -8,72 +8,59 @@
 #ifndef USER_USTD_SRC_STRINGUTILS_H_
 #define USER_USTD_SRC_STRINGUTILS_H_
 
+#include <type_traits>
+#include "ustd.h"
 #include "types.h"
+#include "Conversions.h"
 #include "String.h"
 #include "Vector.h"
 
 namespace ustd {
 
-
-template <class V>
-struct Formatter;
-
-template <>
-struct Formatter<s64>  {
-    static string format(s64 num) {
-        return "integer";
+// format helper - choose proper conversion to string depending on argument type
+namespace {
+template <class T>
+struct FormatHelper {
+    static string format(T what) {
+        return conversions::int_to_string(what);
     }
 };
 
 template <>
-struct Formatter<u16>  {
-    static string format(u16 num) {
-        return "u16";
+struct FormatHelper<float> {
+    static string format(float what) {
+        return conversions::double_to_string(what);
     }
 };
 
 template <>
-struct Formatter<s32>  {
-    static string format(s32 num) {
-        return "s32";
+struct FormatHelper<double> {
+    static string format(double what) {
+        return conversions::double_to_string(what);
     }
 };
 
 template <>
-struct Formatter<u32>  {
-    static string format(u32 num) {
-        return "u32";
+struct FormatHelper<string> {
+    static string format(string what) {
+        return what;
     }
 };
 
 template <>
-struct Formatter<string>  {
-    static string format(string num) {
-        return "string";
+struct FormatHelper<const char*> {
+    static string format(const char* what) {
+        return {what};
     }
 };
 
 template <>
-struct Formatter<char*>  {
-    static string format(string num) {
-        return "char*";
+struct FormatHelper<char*> {
+    static string format(char* what) {
+        return {what};
     }
 };
-
-template <>
-struct Formatter<const char*>  {
-    static string format(const char* num) {
-        return "char*";
-    }
-};
-
-template <>
-struct Formatter<double>  {
-    static string format(double num) {
-        return "double";
-    }
-};
-
+}
 
 
 class StringUtils {
@@ -94,48 +81,18 @@ public:
 
     static string join_string(const string& separator, const vector<string>& elements);
 
-    static string format(const string& fmt) {
-        return fmt;
-    }
-
-    static string format(s64 num) {
-        return format(from_int(num));
-    }
-
-    static string format_double(double num) {
-        return format(from_double(num));
-    }
-
     static string format(char const *fmt) {
-        return string(fmt);
+        return {fmt};
     }
 
-    template<typename ... Tail>
-    static string format(char const *fmt, double head, Tail ... tail) {
-
-        string result;
-        while (*fmt) {
-            if (*fmt == '%') {
-                result += format_double(head);
-                result += format(++fmt, tail...);
-                break;
-            } else
-                result += (*fmt++);
-        }
-
-        return result;
-    }
-
-//#include  <type_traits>
     template<typename Head, typename ... Tail>
     static string format(char const *fmt, Head& head, Tail ... tail) {
+        using NakedHead = typename std::remove_cv<Head>::type;
 
-//        using F = Formatter<typename std::remove_cv<Head>::type>;
         string result;
         while (*fmt) {
             if (*fmt == '%') {
-                // F::for mat(head);
-                result +=format(head);
+                result += FormatHelper<NakedHead>::format(head);
                 result += format(++fmt, tail...);
                 break;
             } else
@@ -144,8 +101,6 @@ public:
 
         return result;
     }
-
-
 
     template<typename ... Args>
     static string format(const string& fmt, Args ... args) {
