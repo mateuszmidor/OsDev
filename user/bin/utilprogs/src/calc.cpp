@@ -11,34 +11,9 @@
 #include "Math.h"
 #include "Cout.h"
 #include "StringUtils.h"
+#include "Optional.h"
 
 using namespace ustd;
-
-/**
- * UTILS PART
- */
-// This Optional doesnt support "string" as "string" constructor indicates error value
-template <class T>
-class Optional {
-public:
-    Optional() : invalid(true) {}
-    Optional(const string& error) : error_msg(error), invalid(true) {}
-    Optional(const T& value) : value(value), invalid(false) {}
-    Optional(T&& value) : value(std::move(value)), invalid(false) {}
-    operator bool() const { return !invalid; }
-    bool operator!() const { return invalid; }
-
-    string  error_msg {};
-    T       value {};
-
-private:
-    bool    invalid;
-};
-
-// forbidden
-template <>
-class Optional<string> {
-};
 
 /**
  * TOKENIZER PART
