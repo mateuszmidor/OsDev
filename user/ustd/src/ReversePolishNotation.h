@@ -94,7 +94,14 @@ private:
 
 class Calculator {
 public:
-    static Optional<double> calc(const string& eq);
+    Calculator();
+    Optional<bool> parse(const string& eq);
+    void define(const string& name, double value);
+    Optional<double> calc();
+
+private:
+    vector<Token> onp;
+    RpnEvaluator evaluator;
 };
 
 } /* namespace rpn */

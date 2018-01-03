@@ -178,7 +178,7 @@ Optional<vector<Token>> RpnBuilder::build(vector<Token> tokens) {
         case TokenType::F_SIN:
         case TokenType::F_COS:
             while (!op_stack.empty()) {
-                if ((priority(t) == 3) || (priority(t) > priority(op_stack.top())))
+                if ( (priority(t) > priority(op_stack.top()))) // if ((priority(t) == 3) || (priority(t) > priority(op_stack.top())))
                     break;
                 result.push_back(op_stack.top());
                 op_stack.pop(); // na wyjście przesyłamy ze stosu wszystkie
@@ -224,6 +224,7 @@ int RpnBuilder::priority(Token t) {
     case TokenType::POWER:
         return 3;
 
+    // the below are in form of sin(2*x) so brackets enforce highest priority of evaluation
     case TokenType::F_NEG:
     case TokenType::F_ABS:
     case TokenType::F_SQRT:
@@ -390,7 +391,11 @@ Optional<double> RpnEvaluator::get_value_for_name(const string& name) {
     return {};
 }
 
-Optional<double> Calculator::calc(const string& eq) {
+Calculator::Calculator() {
+    define("pi", 3.141592653589793238462);
+}
+
+Optional<bool> Calculator::parse(const string& eq) {
     vector<Token> tokens;
     Tokenizer tokenizer;
     if (auto result = tokenizer.tokenize_equation(eq)) {
@@ -400,7 +405,6 @@ Optional<double> Calculator::calc(const string& eq) {
         return {result.error_msg};
     }
 
-    vector<Token> onp;
     RpnBuilder builder;
     if (auto result = builder.build(tokens)) {
         onp = std::move(result.value);
@@ -408,8 +412,14 @@ Optional<double> Calculator::calc(const string& eq) {
         return {result.error_msg};
     }
 
-    RpnEvaluator evaluator;
-    evaluator.define("pi", 3.141592653589793238462);
+    return {true};
+}
+
+void Calculator::define(const string& name, double value) {
+    evaluator.define(name, value);
+}
+
+Optional<double> Calculator::calc() {
     if (auto result = evaluator.eval(onp))
         return {result.value};
     else

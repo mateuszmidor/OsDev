@@ -27,7 +27,13 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++)
         formula += argv[i];
 
-    if (auto result = rpn::Calculator::calc(formula))
+    rpn::Calculator c;
+    if (auto result = c.parse(formula))
+        void(0); // we are good
+    else
+        cout::format("ERROR: %\n", result.error_msg);
+
+    if (auto result = c.calc())
         cout::format("RESULT: %\n", result.value);
     else
         cout::format("ERROR: %\n", result.error_msg);
