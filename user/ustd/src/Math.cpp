@@ -54,13 +54,32 @@ double FYL2X(double x, double y) {
 }
 
 /**
+ * @brief   x^y where y is an integer and x can be negative
+ */
+double pow_int(double x, long long y) {
+    if (y < 0) {
+        x = 1.0 / x;
+        y = -y;
+    }
+
+    double result = x;
+    for (unsigned i = 1; i < y; i++) {
+        result *= x;
+    }
+    return result;
+}
+
+/**
  * @brief   x^y
- * @param   x Base. Must be > 0
+ * @param   x Base
  * @param   y Exponent.
  * @note    x^y =2^[y*log2(x)] ; so there is inner part a=y*log2(x) and outer part 2^a
  * @see     http://www.website.masmforum.com/tutorials/fptute/fpuchap11.htm, "F2XM1 (2 to the X power Minus 1)"
  */
 double pow(double x, double y) {
+    if (x < 0 && y == (long long)y)
+        return pow_int(x, y);
+
     double result {};
     long fpu_flags {};
     long fpu_flags_copy {};
