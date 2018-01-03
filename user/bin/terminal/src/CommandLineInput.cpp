@@ -58,7 +58,7 @@ void CommandLineInput::help_me_out() {
     if (input.find(' ') == string::npos) { // command not given, suggest command
         std::tie(multiple_results, filter_result) = command_filter(input);
         if (multiple_results)
-            printer.get()->format("\n  % \n% %%", filter_result, cwd, PROMPT, input);
+            printer.get()->format("\n  % \n\n% %%", filter_result, cwd, PROMPT, input);
         else
             suggest_cmd(filter_result);
     }
