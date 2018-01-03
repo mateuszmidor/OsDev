@@ -383,9 +383,9 @@ Optional<double> RpnEvaluator::eval(const vector<Token>& onp) {
 }
 
 Optional<double> RpnEvaluator::get_value_for_name(const string& name) {
-    for (const auto& p : names)
-        if (p.first == name)
-            return {p.second};
+    auto it = names.find(name);
+    if (it != names.end())
+        return {it->second};
 
     return {};
 }

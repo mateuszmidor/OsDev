@@ -10,6 +10,7 @@
 
 #include "Optional.h"
 #include "StringUtils.h"
+#include "Map.h"
 
 namespace ustd {
 namespace rpn {
@@ -83,12 +84,12 @@ class RpnEvaluator {
 public:
     Optional<double> eval(const vector<Token>& onp);
 
-    void define(const string& name, double value) { names.emplace_back(name, value); }
+    void define(const string& name, double value) { names[name] = value; }
 
 private:
     Optional<double> get_value_for_name(const string& name);
 
-    vector<std::pair<string, double> > names;
+    Map<string, double> names;
 };
 
 class Calculator {
