@@ -161,10 +161,17 @@ Optional<vector<Token>> RpnBuilder::build(vector<Token> tokens) {
                 result.push_back(op_stack.top());
                 op_stack.pop();
             }
+
             if (op_stack.empty())
                 return {"too many closing brackets"};
+            else
+                op_stack.pop();
 
-            op_stack.pop();
+            // function with parens constitute a single entity like "sin(x)", so output function if there is one before L_PAR
+            if (!op_stack.empty() && is_function(op_stack.top())) {
+                result.push_back(op_stack.top());
+                op_stack.pop();
+            }
             break;
 
         case TokenType::PLUS:
@@ -214,6 +221,19 @@ string RpnBuilder::to_string(const vector<Token>& tokens) {
     return std::move(result);
 }
 
+bool RpnBuilder::is_function(const Token& t) {
+    switch (t.type) {
+    case TokenType::F_NEG:
+    case TokenType::F_ABS:
+    case TokenType::F_SQRT:
+    case TokenType::F_SIN:
+    case TokenType::F_COS:
+        return true;
+    default:
+        return false;
+    }
+}
+
 int RpnBuilder::priority(const Token& t) {
     switch (t.type) {
     case TokenType::PLUS:
@@ -228,13 +248,11 @@ int RpnBuilder::priority(const Token& t) {
         return 3;
 
     case TokenType::F_NEG:
-        return 4;
-
     case TokenType::F_ABS:
     case TokenType::F_SQRT:
     case TokenType::F_SIN:
     case TokenType::F_COS:
-        return 5;
+        return 4;
 
     default:
         return 0;
@@ -254,13 +272,13 @@ void RpnBuilder::preprocess_unary_tokens(vector<Token>& tokens) {
 
     auto last = TokenType::INVALID;
     for (auto& t : tokens) {
-        if (is_unary(t.type, last))
+        if (is_unary_minus(t.type, last))
             t = {TokenType::F_NEG, "neg"}; // replace unary "-" with "neg" to distinguish from binary "-"
         last = t.type;
     }
 }
 
-bool RpnBuilder::is_unary(TokenType curr, TokenType prev) {
+bool RpnBuilder::is_unary_minus(TokenType curr, TokenType prev) {
     // R_PAR, NUMBER and VARIABLE provide value, so in "VAL - sth" is not unary
     return curr == TokenType::MINUS && prev != TokenType::R_PAR && prev != TokenType::NUMBER && prev != TokenType::VARIABLE;
 }

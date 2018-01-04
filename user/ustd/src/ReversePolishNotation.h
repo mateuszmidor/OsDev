@@ -72,11 +72,13 @@ public:
 private:
     int priority(const Token& t);
 
+    bool is_function(const Token& t);
+
     bool is_right_associative(const Token& t);
 
     void preprocess_unary_tokens(vector<Token>& tokens);
 
-    bool is_unary(TokenType curr, TokenType prev);
+    bool is_unary_minus(TokenType curr, TokenType prev);
 };
 
 /**
