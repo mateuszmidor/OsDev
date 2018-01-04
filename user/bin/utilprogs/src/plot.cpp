@@ -36,8 +36,8 @@ Optional<vector<double>> get_samples(rpn::Calculator& calc, MinMax x_range, size
     for (size_t i = 0; i < num_samples; i++) {
         double x_in_range_0_1 = scale_to_0_1(i, {0.0, num_samples-1.0});
         double x = scale_from_0_1(x_in_range_0_1, x_range);
-        calc.define("x", x);
 
+        calc.define("x", x);
         if (auto result = calc.calc())
             samples[i] = result.value;
         else
@@ -77,16 +77,23 @@ void draw_samples(VgaDevice& vga, const vector<double>& samples) {
     }
 }
 
-void draw_labels(VgaDevice& vga, const vector<double>& samples) {
+void draw_labels(VgaDevice& vga, const MinMax& domain_range, const vector<double>& samples) {
     constexpr auto FONT_HEIGHT = 8; // vga draw_text uses 8 px height font
+    constexpr auto FONT_WIDTH = 8;  // vga draw_text uses 8 px per char width font
+    u16 bottom = vga.height - FONT_HEIGHT;
 
-    MinMax minmax = get_min_max(samples);
 
-    string min = StringUtils::from_double(minmax.min);
-    string max = StringUtils::from_double(minmax.max);
+    MinMax y_range = get_min_max(samples);
+    string y_min = StringUtils::from_double(y_range.min, 5);
+    vga.draw_text(0, bottom, y_min.c_str(), middlespace::EgaColor64::White);
+    string y_max = StringUtils::from_double(y_range.max, 5);
+    vga.draw_text(0, 0, y_max.c_str(), middlespace::EgaColor64::White);
 
-    vga.draw_text(0, 0, max.c_str(), middlespace::EgaColor64::White);
-    vga.draw_text(0, vga.height - FONT_HEIGHT, min.c_str(), middlespace::EgaColor64::White);
+    string x_min = StringUtils::from_double(domain_range.min, 2);
+    string x_max = StringUtils::from_double(domain_range.max, 2);
+    string range = StringUtils::format("x = [%..%]", x_min, x_max);
+    u16 range_x = vga.width - range.length() * FONT_WIDTH;
+    vga.draw_text(range_x, 0, range.c_str(), middlespace::EgaColor64::White);
 }
 
 string build_formula(int argc, char* argv[]) {
@@ -114,14 +121,14 @@ int main(int argc, char* argv[]) {
 
     if (auto result = evaluate_formula(formula, domain_range, vga.width)) {
         draw_samples(vga, result.value);
-        draw_labels(vga, result.value);
+        draw_labels(vga, domain_range, result.value);
         vga.flush_to_screen();
         cin::readln();
-        cout::print("plot done.\n");
-    } else {
+        cout::format("plot done.\n");
+        return 0;
+    }
+    else {
         cout::format("plot error: %\n", result.error_msg);
         return 1;
     }
-
-    return 0;
 }
