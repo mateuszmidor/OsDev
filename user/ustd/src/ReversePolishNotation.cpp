@@ -153,18 +153,18 @@ Optional<vector<Token>> RpnBuilder::build(vector<Token> tokens) {
     for (const auto& t : tokens) {
         switch (t.type) {
         case TokenType::L_PAR:
-            op_stack.push(t); // nawias otwierający zawsze na stos
+            op_stack.push(t);
             break;
 
         case TokenType::R_PAR:
-            while (!op_stack.empty() && op_stack.top().type != TokenType::L_PAR) { // ze stosu przesyłamy na wyjście wszystkie operatory aż do nawiasu otw.
+            while (!op_stack.empty() && op_stack.top().type != TokenType::L_PAR) {
                 result.push_back(op_stack.top());
                 op_stack.pop();
             }
             if (op_stack.empty())
                 return {"too many closing brackets"};
 
-            op_stack.pop();// usuwamy ze stosu nawias otwierający
+            op_stack.pop();
             break;
 
         case TokenType::PLUS:
@@ -178,12 +178,12 @@ Optional<vector<Token>> RpnBuilder::build(vector<Token> tokens) {
         case TokenType::F_SIN:
         case TokenType::F_COS:
             while (!op_stack.empty()) {
-                if ( (priority(t) > priority(op_stack.top()))) // if ((priority(t) == 3) || (priority(t) > priority(op_stack.top())))
+                if (is_right_associative(t) || (priority(t) > priority(op_stack.top())))
                     break;
                 result.push_back(op_stack.top());
-                op_stack.pop(); // na wyjście przesyłamy ze stosu wszystkie
-            }                           // operatory o wyższych priorytetach
-            op_stack.push(t);              // operator umieszczamy na stosie
+                op_stack.pop();
+            }
+            op_stack.push(t);
             break;
 
         case TokenType::NUMBER:
@@ -197,7 +197,10 @@ Optional<vector<Token>> RpnBuilder::build(vector<Token> tokens) {
     }
 
     while (!op_stack.empty()) {
-        result.push_back(op_stack.top());
+        auto token = op_stack.top();
+        if (token.type == TokenType::L_PAR)
+            return {"missing closing bracket"};
+        result.push_back(token);
         op_stack.pop();
     }
 
@@ -211,7 +214,7 @@ string RpnBuilder::to_string(const vector<Token>& tokens) {
     return std::move(result);
 }
 
-int RpnBuilder::priority(Token t) {
+int RpnBuilder::priority(const Token& t) {
     switch (t.type) {
     case TokenType::PLUS:
     case TokenType::MINUS:
@@ -224,17 +227,22 @@ int RpnBuilder::priority(Token t) {
     case TokenType::POWER:
         return 3;
 
-    // the below are in form of sin(2*x) so brackets enforce highest priority of evaluation
     case TokenType::F_NEG:
+        return 4;
+
     case TokenType::F_ABS:
     case TokenType::F_SQRT:
     case TokenType::F_SIN:
     case TokenType::F_COS:
-        return 4;
+        return 5;
 
     default:
         return 0;
     }
+}
+
+bool RpnBuilder::is_right_associative(const Token& t) {
+    return (t.type == TokenType::POWER);
 }
 
 /**
@@ -320,6 +328,8 @@ Optional<double> RpnEvaluator::eval(const vector<Token>& onp) {
 
         case TokenType::POWER: {
             if (pop_value(right) && pop_value(left)) {
+                if (left < 0.0 && (right != (long long)right))
+                    return {"POWER: negative base to non integral power yields complex number"};
                 result = pow(left, right);
                 break;
             }
@@ -348,7 +358,7 @@ Optional<double> RpnEvaluator::eval(const vector<Token>& onp) {
         case TokenType::F_SQRT: {
             if (pop_value(left)) {
                 if (left < 0.0)
-                    return {"F_SQRT: negative sqrt argument"};
+                    return {"F_SQRT: negative sqrt argument yields complex number"};
                 result = sqrt(left);
                 break;
             }

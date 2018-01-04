@@ -70,7 +70,9 @@ public:
     string to_string(const vector<Token>& tokens);
 
 private:
-    int priority(Token t);
+    int priority(const Token& t);
+
+    bool is_right_associative(const Token& t);
 
     void preprocess_unary_tokens(vector<Token>& tokens);
 
