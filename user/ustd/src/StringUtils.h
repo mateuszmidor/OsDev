@@ -74,7 +74,7 @@ class StringUtils {
 public:
     static string from_int(s64 num, u8 base = 10);
 
-    static string from_double(double num);
+    static string from_double(double num, u8 max_frac_digits = 10);
 
     static s64 to_int(const string& str);
 

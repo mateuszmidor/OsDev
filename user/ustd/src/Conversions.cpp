@@ -64,12 +64,15 @@ string int_to_string(s64 num, u8 base) {
  * @brief   Convert integer "num" to string using numeric system "base"
  * @note    Ugly and fixed-fract digits count implementation
  */
-string double_to_string(double num) {
-    const auto MAX_FRAC_DIGITS = 9;
-    char str[20];
+string double_to_string(double num, u8 max_frac_digits) {
+    const auto FRAC_DIGITS_LIMIT = 10;
+    char str[30];
     const int base = 10;
     u8 i = 0;
     bool isNegative = false;
+
+    if (max_frac_digits > FRAC_DIGITS_LIMIT)
+        max_frac_digits = FRAC_DIGITS_LIMIT;
 
     /* Handle 0 explicitly, otherwise empty string is printed for 0 */
     if (num == 0.0)
@@ -82,10 +85,10 @@ string double_to_string(double num) {
     }
 
     double fnum = num - (ssize_t)num;
-    for (i = 0; i < MAX_FRAC_DIGITS; i++) {
+    for (i = 0; i < max_frac_digits; i++) {
         fnum *=10;
         int rem = int(fnum) % base;
-        str[MAX_FRAC_DIGITS-i-1] = rem + '0';
+        str[max_frac_digits-i-1] = rem + '0';
     }
 
     str[i++] = '.';

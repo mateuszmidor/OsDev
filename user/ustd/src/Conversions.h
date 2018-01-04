@@ -15,7 +15,7 @@ namespace ustd {
 namespace conversions {
 
 string int_to_string(s64 num, u8 base = 10);
-string double_to_string(double num);
+string double_to_string(double num, u8 max_frac_digits = 10);
 s64 string_to_int(const string& str);
 double string_to_double(const string& str);
 

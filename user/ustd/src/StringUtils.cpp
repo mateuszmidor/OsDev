@@ -20,8 +20,8 @@ string StringUtils::from_int(s64 num, u8 base) {
 /**
  * @brief   Convert integer "num" to string using numeric system "base"
  */
-string StringUtils::from_double(double num) {
-    return conversions::double_to_string(num);
+string StringUtils::from_double(double num, u8 max_frac_digits) {
+    return conversions::double_to_string(num, max_frac_digits);
 }
 
 /**
