@@ -19,7 +19,7 @@ s64 VfsRamFifoEntry::read(void* data, u32 count) {
 
     // if buffer is empty - block the reader
     if (size == 0) {
-        mngr.dequeue_current_task(read_wait_list);
+        mngr.block_current_task(read_wait_list);
         return -EWOULDBLOCK;
     }
 
@@ -33,8 +33,7 @@ s64 VfsRamFifoEntry::read(void* data, u32 count) {
     size = num_bytes_remaining;
 
     // data got out of the buffer - unblock the writers
-    while (Task* t = write_wait_list.pop_front())
-        mngr.enqueue_task_back(t);
+    mngr.unblock_tasks(write_wait_list);
 
     return num_bytes_to_read;
 }
@@ -44,7 +43,7 @@ s64 VfsRamFifoEntry::write(const void* data, u32 count) {
 
     // if buffer is full - block the writer
     if (size == BUFF_SIZE) {
-        mngr.dequeue_current_task(write_wait_list);
+        mngr.block_current_task(write_wait_list);
         return -EWOULDBLOCK;
     }
 
@@ -57,8 +56,7 @@ s64 VfsRamFifoEntry::write(const void* data, u32 count) {
     size += num_bytes_to_write;
 
     // data got into the buffer - unblock the readers
-    while (Task* t = read_wait_list.pop_front())
-        mngr.enqueue_task_back(t);
+    mngr.unblock_tasks(read_wait_list);
 
     return num_bytes_to_write;
 }
@@ -72,8 +70,7 @@ bool VfsRamFifoEntry::truncate(u32 new_size) {
 
     // buffer clear - unblock the writers
     TaskManager& mngr = TaskManager::instance();
-    while (Task* t = write_wait_list.pop_front())
-        mngr.enqueue_task_back(t);
+    mngr.unblock_tasks(write_wait_list);
 
     return true;
 }

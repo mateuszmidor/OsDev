@@ -49,7 +49,12 @@ s64 VfsPsInfoEntry::read(void* data, u32 count) {
     u32 i = 0;
     const TaskList& tasks = task_manager.get_tasks();
     for (const Task* task : tasks) {
-        info += kstd::StringUtils::format("%. % [%], tid %\n", i, task->name, task->is_user_space ? "User" : "Kernel", task->task_id);
+        info += kstd::StringUtils::format("%. [%] [%] %, tid %\n",
+                                            i,
+                                            task->is_user_space ? "USER" : "KERN",
+                                            task->state == TaskState::RUNNING ? "RUNNING" : "BLOCKED",
+                                            task->name,
+                                            task->task_id);
         i++;
     }
 
