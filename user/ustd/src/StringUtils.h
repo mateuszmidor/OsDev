@@ -27,6 +27,13 @@ struct FormatHelper {
 };
 
 template <>
+struct FormatHelper<bool> {
+    static string format(bool what) {
+        return (what) ? "true" : "false";
+    }
+};
+
+template <>
 struct FormatHelper<float> {
     static string format(float what) {
         return conversions::double_to_string(what);
