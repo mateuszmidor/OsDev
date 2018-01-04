@@ -6,6 +6,7 @@
  */
 
 #include "RoundRobinScheduler.h"
+#include "Task.h"
 
 namespace multitasking {
 
@@ -56,11 +57,13 @@ Task* RoundRobinScheduler::get_current_task() {
  * @brief   Choose and return next task to be executed
  */
 Task* RoundRobinScheduler::pick_next_task() {
-    if (next_task_it == tasks.end())
-        next_task_it = tasks.begin();
+    do {
+        if (next_task_it == tasks.end())
+            next_task_it = tasks.begin();
 
-    current_task = *next_task_it;
-    next_task_it = next_task_it.get_next();
+        current_task = *next_task_it;
+        next_task_it = next_task_it.get_next();
+    } while (current_task->state != TaskState::RUNNING);
     return current_task;
 }
 

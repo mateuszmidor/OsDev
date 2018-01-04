@@ -30,8 +30,10 @@ public:
     hardware::CpuState* kill_current_task();
     hardware::CpuState* kill_current_task_group();
     bool wait(u32 task_id);
-    void dequeue_current_task(TaskList& list);
-    void enqueue_task_back(Task* task);
+//    void dequeue_current_task(TaskList& list);
+//    void enqueue_task_back(Task* task);
+    void block_current_task(TaskList& list);
+    void unblock_tasks(TaskList& list);
 
 private:
     static void on_task_finished();

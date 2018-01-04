@@ -34,7 +34,7 @@ Task::Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bo
         arg1(arg1), arg2(arg2),
         is_user_space(user_space),
         stack_addr(stack_addr), stack_size(stack_size),
-        cpu_state(0), task_id(0),
+        cpu_state(0), task_id(0), state(TaskState::RUNNING),
         task_group_data(task_group_data) {
 }
 

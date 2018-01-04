@@ -19,6 +19,7 @@ using TaskEntryPoint1 = void (*)(u64 arg1);
 using TaskEntryPoint2 = void (*)(u64 arg1, u64 arg2);
 using TaskExitPoint = void (*)();
 
+enum class TaskState { RUNNING, BLOCKED };
 
 struct TaskEpilogue {
     u64 rip;    // rip cpu register value for retq instruction on task function exit
@@ -54,6 +55,7 @@ struct Task {
 
 
     u32                 task_id;            // set by TaskManager when first adding the task
+    TaskState           state;
     TaskEntryPoint2     entrypoint;         // covers TaskEntryPoint0 and TaskEntryPoint1
     kstd::string        name;
     u64                 arg1;

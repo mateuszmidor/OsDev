@@ -98,9 +98,9 @@ CpuState* TaskManager::sleep_current_task(CpuState* cpu_state, u64 millis) {
     if (millis > 0) {
         TaskList* tl = new TaskList();
         TimeManager& mngr = TimeManager::instance();
-        auto on_expire = [tl] () { TaskManager::instance().enqueue_task_back(tl->pop_front()); delete tl; };
+        auto on_expire = [tl] () { TaskManager::instance().unblock_tasks(*tl); delete tl; };
         mngr.emplace(millis, on_expire);
-        dequeue_current_task(*tl);
+        block_current_task(*tl);
     }
 
     return schedule(cpu_state);
@@ -192,7 +192,7 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
  */
 void TaskManager::wakeup_waitings_and_delete_task(Task* task) {
     while (Task* t = task->wait_queue.pop_front())
-        enqueue_task_back(t);
+        t->state = TaskState::RUNNING;
 
     delete task;
 }
@@ -214,7 +214,7 @@ bool TaskManager::wait(u32 task_id) {
 
     // NOTE: this will not work if task_id is currently WAITING on some list outside the scheduler!!!
     if (Task* t = scheduler.get_by_tid(task_id)) {
-        dequeue_current_task(t->wait_queue);
+        block_current_task(t->wait_queue);
         return true;
     }
     return false;
@@ -224,26 +224,50 @@ bool TaskManager::wait(u32 task_id) {
  * @brief   Take the current task out of the running queue and put it on "list"
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-void TaskManager::dequeue_current_task(TaskList& list) {
-    KLockGuard lock;   // prevent reschedule
-
-    Task* current_task = scheduler.get_current_task();
-    list.push_front(current_task);
-    scheduler.remove(current_task);
-}
+//void TaskManager::dequeue_current_task(TaskList& list) {
+//    KLockGuard lock;   // prevent reschedule
+//
+//    Task* current_task = scheduler.get_current_task();
+//    list.push_front(current_task);
+//    scheduler.remove(current_task);
+//}
 
 /**
  * @brief   Put the "task" back on running queue, or remove it if task group is ordered to be terminated
  * @note    TASK MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-void TaskManager::enqueue_task_back(Task* task) {
-    KLockGuard lock;    // prevent reschedule
+//void TaskManager::enqueue_task_back(Task* task) {
+//    KLockGuard lock;    // prevent reschedule
+//
+//    if (task->task_group_data->termination_pending)
+//        wakeup_waitings_and_delete_task(task);
+//    else
+//        scheduler.add(task);
+//}
 
-    if (task->task_group_data->termination_pending)
-        wakeup_waitings_and_delete_task(task);
-    else
-        scheduler.add(task);
+/**
+ * @brief   Block current task and put it on waiting "list"
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ */
+void TaskManager::block_current_task(TaskList& list) {
+    KLockGuard lock;   // prevent reschedule
+
+    Task* current_task = scheduler.get_current_task();
+    current_task->state = TaskState::BLOCKED;
+    list.push_front(current_task);
+}
+
+/**
+ * @brief   Unblock the tasks from waiting "list"
+ * @note    TASK MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
+ * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ */
+void TaskManager::unblock_tasks(TaskList& list) {
+    KLockGuard lock;   // prevent reschedule
+
+    while (Task* t = list.pop_front())
+        t->state = TaskState::RUNNING;
 }
 
 /**
