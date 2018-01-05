@@ -114,7 +114,6 @@ void handle_key_press(const Key &key) {
             keyboard_vfe = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
 
         if (keyboard_vfe) {
-            keyboard_vfe->truncate(0);
             keyboard_vfe->write(&key, sizeof(key));
         }
     }
