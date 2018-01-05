@@ -20,6 +20,16 @@ struct MinMax {
     double span() { return max - min; }
 };
 
+struct ChartData {
+    ChartData(vector<double>&& y_values, const MinMax& x_range) : samples(std::move(y_values)), x_range(x_range) {
+        auto it = std::minmax_element(samples.begin(), samples.end());
+        y_span = {*it.first, *it.second};
+    }
+    vector<double>  samples;
+    MinMax          x_range;
+    MinMax          y_span;
+};
+
 double scale_to_0_1(double val, MinMax from_range) {
     if (from_range.min == from_range.max)
         return 0.5;
@@ -61,36 +71,37 @@ Optional<vector<double>> evaluate_formula(const string& formula, MinMax x_range,
         return {parse_result.error_msg};
 }
 
-MinMax get_min_max(const vector<double>& v) {
-    auto it = std::minmax_element(v.begin(), v.end());
-    return {*it.first, *it.second};
+void draw_axes(VgaDevice& vga, const ChartData& cd) {
+    double y_in_range_0_1 = scale_to_0_1(0.0, cd.y_span);
+    double y = vga.height - scale_from_0_1(y_in_range_0_1, {0.0, (double)vga.height-1}) ;
+    vga.draw_rect(0, y, vga.width-1, 1, middlespace::EgaColor64::Gray);
+
+    double x_in_range_0_1 = scale_to_0_1(0.0, cd.x_range);
+    double x = scale_from_0_1(x_in_range_0_1, {0.0, (double)vga.width-1}) ;
+    vga.draw_rect(x, 0, 1, vga.height-1, middlespace::EgaColor64::Gray);
 }
 
-void draw_samples(VgaDevice& vga, const vector<double>& samples) {
-    MinMax minmax = get_min_max(samples);
-
+void draw_samples(VgaDevice& vga, const ChartData& cd) {
     // assumption: samples.count == vga.width
     for (size_t x = 0; x < vga.width; x++) {
-        double val_in_range_0_1 = scale_to_0_1(samples[x], minmax);
+        double val_in_range_0_1 = scale_to_0_1(cd.samples[x], cd.y_span);
         u16 y = (1.0 - val_in_range_0_1) * vga.height;  // Y-mirror and then scale to window size
         vga.set_pixel_at(x, y, middlespace::EgaColor64::NormalYellow);
     }
 }
 
-void draw_labels(VgaDevice& vga, const MinMax& domain_range, const vector<double>& samples) {
+void draw_labels(VgaDevice& vga, const ChartData& cd) {
     constexpr auto FONT_HEIGHT = 8; // vga draw_text uses 8 px height font
     constexpr auto FONT_WIDTH = 8;  // vga draw_text uses 8 px per char width font
     u16 bottom = vga.height - FONT_HEIGHT;
 
-
-    MinMax y_range = get_min_max(samples);
-    string y_min = StringUtils::from_double(y_range.min, 5);
+    string y_min = StringUtils::from_double(cd.y_span.min, 5);
     vga.draw_text(0, bottom, y_min.c_str(), middlespace::EgaColor64::White);
-    string y_max = StringUtils::from_double(y_range.max, 5);
+    string y_max = StringUtils::from_double(cd.y_span.max, 5);
     vga.draw_text(0, 0, y_max.c_str(), middlespace::EgaColor64::White);
 
-    string x_min = StringUtils::from_double(domain_range.min, 2);
-    string x_max = StringUtils::from_double(domain_range.max, 2);
+    string x_min = StringUtils::from_double(cd.x_range.min, 2);
+    string x_max = StringUtils::from_double(cd.x_range.max, 2);
     string range = StringUtils::format("x = [%..%]", x_min, x_max);
     u16 range_x = vga.width - range.length() * FONT_WIDTH;
     vga.draw_text(range_x, 0, range.c_str(), middlespace::EgaColor64::White);
@@ -120,8 +131,10 @@ int main(int argc, char* argv[]) {
     MinMax domain_range {-3.14, 3.14};
 
     if (auto result = evaluate_formula(formula, domain_range, vga.width)) {
-        draw_samples(vga, result.value);
-        draw_labels(vga, domain_range, result.value);
+        ChartData cd(std::move(result.value), domain_range);
+        draw_axes(vga, cd);
+        draw_samples(vga, cd);
+        draw_labels(vga, cd);
         vga.flush_to_screen();
         cin::readln();
         cout::format("plot done.\n");
