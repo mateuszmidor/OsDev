@@ -130,7 +130,6 @@ void update_mouse() {
         mouse_vfe = filesystem::VfsManager::instance().get_entry("/dev/mouse");
 
     if (mouse_vfe) {
-        mouse_vfe->truncate(0);
         mouse_vfe->write(&mouse_state, sizeof(mouse_state));
     }
 }
