@@ -9,7 +9,20 @@ Based on:
  + https://www.intel.com/content/dam/support/us/en/documents/processors/pentium4/sb/25366821.pdf  
  
 Credits to the authors!  
-![Logo](https://github.com/mateuszmidor/OsDev/blob/master/rec.gif)
+  
+# Showcase
+Booting
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/boot.gif)
+  
+Simple dir tree demo
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/tree.gif)
+  
+Simple plot demo
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/plot.gif)
+  
+Simple arkanoid demo
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/arkanoid.gif)
+  
 # Features
  + GRUB2 bootable
  + 64 bit kernel
