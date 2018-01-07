@@ -11,16 +11,16 @@ Based on:
 Credits to the authors!  
   
 # Showcase
-Booting
+Booting  
 ![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/boot.gif)
   
-Simple dir tree demo
+Simple dir tree demo  
 ![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/tree.gif)
   
-Simple plot demo
+Simple plot demo  
 ![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/plot.gif)
   
-Simple arkanoid demo
+Simple arkanoid demo  
 ![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/arkanoid.gif)
   
 # Features
