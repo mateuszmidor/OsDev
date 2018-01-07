@@ -12,16 +12,16 @@ Credits to the authors!
   
 # Showcase
 Booting
-![Logo](https://github.com/mateuszmidor/OsDev/blob/master/boot.gif)
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/boot.gif)
   
 Simple dir tree demo
-![Logo](https://github.com/mateuszmidor/OsDev/blob/master/tree.gif)
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/tree.gif)
   
 Simple plot demo
-![Logo](https://github.com/mateuszmidor/OsDev/blob/master/plot.gif)
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/plot.gif)
   
 Simple arkanoid demo
-![Logo](https://github.com/mateuszmidor/OsDev/blob/master/arkanoid.gif)
+![Logo](https://github.com/mateuszmidor/OsDev/blob/master/media/arkanoid.gif)
   
 # Features
  + GRUB2 bootable
