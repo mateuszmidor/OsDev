@@ -218,8 +218,8 @@ void run_userspace_terminal() {
  * Here we enter multitasking
  */
 void task_init() {
-    task_manager.add_task(TaskFactory::make_kernel_task(Task::idle, "idle"));
-//    task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
+//    task_manager.set_idle_task(TaskFactory::make_kernel_task(Task::idle, "idle"));
+    //task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
     run_userspace_terminal();
 }
 
@@ -290,6 +290,7 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     println("  installing Virtual File System...done");
 
     // 12. start multitasking
+    task_manager.install_multitasking();
     task_manager.add_task(TaskFactory::make_kernel_task(task_init, "init"));
     println("  installing multitasking...done");
     Task::idle();

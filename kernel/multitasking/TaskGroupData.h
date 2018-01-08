@@ -24,7 +24,6 @@ public:
     ~TaskGroupData();
     void* alloc_static(size_t size);
 
-    bool                                    termination_pending;// is this task group about to be terminated?
     size_t                                  heap_low_limit;     // last address allocated for the heap, current program break
     size_t                                  heap_high_limit;    // last address allocable for the heap
     kstd::string                            cwd;                // current working directory of task group

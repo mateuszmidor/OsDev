@@ -6,9 +6,14 @@
  */
 
 #include "RoundRobinScheduler.h"
+#include "Assert.h"
 #include "Task.h"
 
 namespace multitasking {
+
+void RoundRobinScheduler::set_idle_task(Task* task) {
+    idle = task;
+}
 
 /**
  * @brief   Add new task to the scheduler list
@@ -18,10 +23,7 @@ bool RoundRobinScheduler::add(Task* t) {
     if (tasks.count() == MAX_TASKS)
         return false;
 
-    if (t->name == "idle")
-        idle = t;
-    else
-        tasks.push_front(t);
+    tasks.push_front(t);
     return true;
 }
 
@@ -63,12 +65,12 @@ Task* RoundRobinScheduler::get_current_task() {
 }
 
 /**
- * @brief   Choose and return next task to be executed. Can be the curr task if no other is eligible. Can be idle task if even curr is not eligible
+ * @brief   Choose and return next task to be executed.
+ *          Can be the curr task if no other is eligible.
+ *          Can be idle task if even curr is not eligible
  */
 Task* RoundRobinScheduler::pick_next_task() {
-    // if no tasks were added yet - we are still in the boot task
-    if (tasks.count() == 0)
-        return (current_task = boot);
+    utils::phobos_assert(tasks.count() > 0, "RoundRobinScheduler::pick_next_task: no tasks to pick from");
 
     // find next task in runnable state or even itself if it's the only runnable one
     if (Task* t = find_next_runnable_task())

@@ -21,6 +21,7 @@ public:
     TaskManager operator=(const TaskManager&) = delete;
     TaskManager operator=(TaskManager&&) = delete;
 
+    void install_multitasking();
     u32 add_task(Task* task);
     void replace_current_task(Task* task);
     Task& get_current_task();
@@ -30,8 +31,6 @@ public:
     hardware::CpuState* kill_current_task();
     hardware::CpuState* kill_current_task_group();
     bool wait(u32 task_id);
-//    void dequeue_current_task(TaskList& list);
-//    void enqueue_task_back(Task* task);
     void block_current_task(TaskList& list);
     void unblock_tasks(TaskList& list);
 
@@ -45,9 +44,9 @@ private:
 
     static TaskManager _instance;
 
-    Task                    boot_task      ;     // represents "kmain" boot task
+    Task                    boot_task;              // represents "kmain" boot task
     RoundRobinScheduler     scheduler;
-    u32                     next_task_id    = 1;                   // id to assign to the next task while adding
+    u32                     next_task_id    = 1;    // id to assign to the next task while adding
 };
 
 }

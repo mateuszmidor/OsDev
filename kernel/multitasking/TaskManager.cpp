@@ -35,11 +35,22 @@ void TaskManager::on_task_finished() {
 }
 
 /**
+ * @brief   Prepare multitasking.
+ *          CPU needs always to execute some task. Idle task is scheduled when there is no other tasks to run.
+ * @note    Execution context: Boot, when there is no tasks yet.
+ * @note    Must be called before first "add_task"
+ */
+void TaskManager::install_multitasking() {
+    Task* idle = TaskFactory::make_kernel_task(Task::idle, "idle");
+    idle->prepare(next_task_id++, TaskManager::on_task_finished);
+    scheduler.set_idle_task(idle);
+}
+
+/**
  * @brief   Add new task to the list of scheduler tasks
  * @note    TaskManager takes ownership of "task" pointer
  * @return  Newly added task id or 0 if max task count is reached
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
- * @note    First task to be added must be the "idle" task
  */
 u32 TaskManager::add_task(Task* task) {
     KLockGuard lock;    // prevent reschedule
@@ -114,7 +125,7 @@ CpuState* TaskManager::sleep_current_task(CpuState* cpu_state, u64 millis) {
  * @note    Execution context: Interrupt only (Programmable Interval Timer interrupt, int 80h interrupt)
  */
 CpuState* TaskManager::schedule(CpuState* cpu_state) {
-    // nothing to schedule?
+    // nothing to schedule? Just return current task
     if (scheduler.count() == 0)
         return cpu_state;
 
@@ -170,10 +181,6 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
     const Task& current_task = get_current_task();
     const TaskGroupDataPtr current_task_group = current_task.task_group_data;
 
-    // mark the group as to be terminated so when member tasks get awaken they get immediately deleted
-    // NOTE: if a member task stays somewhere on a wait queue, it may hold the process resources forever
-    current_task_group->termination_pending = true;
-
     for (Task* task : scheduler.get_task_list()) {
         if (task->task_group_data != current_task_group)
             continue;
@@ -221,32 +228,6 @@ bool TaskManager::wait(u32 task_id) {
 }
 
 /**
- * @brief   Take the current task out of the running queue and put it on "list"
- * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
- */
-//void TaskManager::dequeue_current_task(TaskList& list) {
-//    KLockGuard lock;   // prevent reschedule
-//
-//    Task* current_task = scheduler.get_current_task();
-//    list.push_front(current_task);
-//    scheduler.remove(current_task);
-//}
-
-/**
- * @brief   Put the "task" back on running queue, or remove it if task group is ordered to be terminated
- * @note    TASK MUST HAVE BEEN FIRST ADDED AND INITIALIZED WITH "add_task"
- * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
- */
-//void TaskManager::enqueue_task_back(Task* task) {
-//    KLockGuard lock;    // prevent reschedule
-//
-//    if (task->task_group_data->termination_pending)
-//        wakeup_waitings_and_delete_task(task);
-//    else
-//        scheduler.add(task);
-//}
-
-/**
  * @brief   Block current task and put it on waiting "list"
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
@@ -278,20 +259,15 @@ void TaskManager::unblock_tasks(TaskList& list) {
  * @note    There always need to be at least the "idle" task on the queue
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
+    Task* curr_task = scheduler.get_current_task();
     Task* next_task = scheduler.pick_next_task();
-    u64 pml4_physical_address = next_task->task_group_data->pml4_phys_addr;
-    PageTables::load_address_space(pml4_physical_address);
+
+    // reload address space only if task_group changes (each group has its own address space)
+    if (curr_task->task_group_data != next_task->task_group_data) {
+        u64 pml4_physical_address = next_task->task_group_data->pml4_phys_addr;
+        PageTables::load_address_space(pml4_physical_address);
+    }
 
     return next_task->cpu_state;
-
-
-//    if (Task* next_task = scheduler.pick_next_task()) {
-//        u64 pml4_physical_address = next_task->task_group_data->pml4_phys_addr;
-//        PageTables::load_address_space(pml4_physical_address);
-//        return next_task->cpu_state;
-//    }
-//    else {  // scheduler says "Not task eligible for schedule"
-//        return idle_task; // boot_task?
-//    }
 }
 } // namespace multitasking {
