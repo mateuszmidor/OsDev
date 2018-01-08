@@ -20,7 +20,7 @@ add_subdirectory("user")
 # "make iso" - create bootable kernel iso image
 add_custom_target(iso
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND cmake -DCMAKE_BUILD_TYPE=Debug ..
+#    COMMAND cmake -DCMAKE_BUILD_TYPE=Debug ..
     COMMAND make
     COMMAND /usr/bin/env mkdir -p "isofiles/boot/grub"
     COMMAND /usr/bin/env cp kernel/${BIN} "isofiles/boot/kernel.bin"
