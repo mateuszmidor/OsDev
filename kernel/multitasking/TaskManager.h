@@ -37,7 +37,7 @@ public:
 
 private:
     static void on_task_finished();
-    TaskManager() {}
+    TaskManager() : boot_task(get_boot_task()), scheduler(&boot_task) {}
     void save_current_task_state(hardware::CpuState* cpu_state);
     hardware::CpuState* pick_next_task_and_load_address_space();
     void wakeup_waitings_and_delete_task(Task* task);
@@ -45,9 +45,9 @@ private:
 
     static TaskManager _instance;
 
-    Task            boot_task       = get_boot_task();     // represents "kmain" boot task
-    RoundRobinScheduler  scheduler;
-    u32             next_task_id    = 1;                   // id to assign to the next task while adding
+    Task                    boot_task      ;     // represents "kmain" boot task
+    RoundRobinScheduler     scheduler;
+    u32                     next_task_id    = 1;                   // id to assign to the next task while adding
 };
 
 }

@@ -143,7 +143,7 @@ public:
         return data;
     }
 
-    const ListIterator<T> find(const T& value) {
+    const ListIterator<T> find(const T& value) const {
         ListItem* i = m_head;
         while (i)
             if (i->data == value)

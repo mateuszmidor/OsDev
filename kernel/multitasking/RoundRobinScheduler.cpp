@@ -18,7 +18,10 @@ bool RoundRobinScheduler::add(Task* t) {
     if (tasks.count() == MAX_TASKS)
         return false;
 
-    tasks.push_front(t);
+    if (t->name == "idle")
+        idle = t;
+    else
+        tasks.push_front(t);
     return true;
 }
 
@@ -39,6 +42,12 @@ void RoundRobinScheduler::remove(Task* t) {
 }
 
 /**
+ * @brief   Check if "task" is a known task
+ */
+bool RoundRobinScheduler::is_valid_task(Task* task) const {
+    return tasks.find(task) != tasks.end();
+}
+/**
  * @brief   Find a task by its task_id
  * @return  Task pointer on success, nullptr otherwise
  */
@@ -54,19 +63,38 @@ Task* RoundRobinScheduler::get_current_task() {
 }
 
 /**
- * @brief   Choose and return next task to be executed
+ * @brief   Choose and return next task to be executed. Can be the curr task if no other is eligible. Can be idle task if even curr is not eligible
  */
 Task* RoundRobinScheduler::pick_next_task() {
-    do {
+    // if no tasks were added yet - we are still in the boot task
+    if (tasks.count() == 0)
+        return (current_task = boot);
+
+    // find next task in runnable state or even itself if it's the only runnable one
+    if (Task* t = find_next_runnable_task())
+        return (current_task = t);
+
+    // task eligible to run not found, do idle
+    return (current_task = idle);
+}
+
+/**
+ * @brief  Get next task in runnable state. Or even the current task if it's the only runnable task. Or nullptr if no runnable task available at all
+ */
+Task* RoundRobinScheduler::find_next_runnable_task() {
+    for (size_t i = 0; i <= tasks.count(); i++) { // circular list
         if (next_task_it == tasks.end())
             next_task_it = tasks.begin();
 
         current_task = *next_task_it;
         next_task_it = next_task_it.get_next();
-    } while (current_task->state != TaskState::RUNNING);
-    return current_task;
-}
+        if (current_task->state == TaskState::RUNNING)
+            return current_task;
+    }
 
+    // no runnable task found
+    return nullptr;
+}
 /**
  * @brief   Get unmodifiable list of scheduler tasks
  */

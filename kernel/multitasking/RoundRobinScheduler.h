@@ -19,8 +19,10 @@ class RoundRobinScheduler {
     static constexpr u32 MAX_TASKS  {32};   // 32 is arbitrarily chosen, can put here more
 
 public:
+    RoundRobinScheduler(Task* boot_task) : idle(nullptr), boot(boot_task), current_task(boot_task) {}
     bool add(Task* task);
     void remove(Task* t);
+    bool is_valid_task(Task* task) const;
     Task* get_by_tid(u32 task_id);
     Task* get_current_task();
     Task* pick_next_task();
@@ -28,8 +30,12 @@ public:
     u32 count() const;
 
 private:
+    Task* find_next_runnable_task();
+
     TaskList                    tasks;
-    Task*                       current_task    {nullptr};
+    Task*                       boot;
+    Task*                       idle;
+    Task*                       current_task;
     kstd::ListIterator<Task*>   next_task_it    {tasks.end()};  // next task to be run
 
 };

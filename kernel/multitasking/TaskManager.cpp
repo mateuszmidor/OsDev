@@ -39,14 +39,17 @@ void TaskManager::on_task_finished() {
  * @note    TaskManager takes ownership of "task" pointer
  * @return  Newly added task id or 0 if max task count is reached
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ * @note    First task to be added must be the "idle" task
  */
 u32 TaskManager::add_task(Task* task) {
     KLockGuard lock;    // prevent reschedule
 
     u32 tid = next_task_id;
     task->prepare(tid, TaskManager::on_task_finished);
-    if (!scheduler.add(task))
+    if (!scheduler.add(task)) {
+        delete task;
         return 0;
+    }
 
     next_task_id++;
     return tid;
@@ -64,8 +67,10 @@ void TaskManager::replace_current_task(Task* task) {
     const Task& current_task = get_current_task();
     u32 tid = current_task.task_id;
     task->prepare(tid, TaskManager::on_task_finished);
-    if (!scheduler.add(task))
+    if (!scheduler.add(task)) {
+        delete task;
         return;
+    }
 
     Task::exit();  // current task dies
 }
@@ -77,10 +82,7 @@ void TaskManager::replace_current_task(Task* task) {
 Task& TaskManager::get_current_task() {
     KLockGuard lock;    // prevent reschedule
 
-    if (Task* task = scheduler.get_current_task())
-        return *task;
-    else
-        return boot_task;   // if not sheduled task, it must be the boot task (multitasking not yet started)
+    return *scheduler.get_current_task();
 }
 
 /**
@@ -191,9 +193,7 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
  * @brief   Wake up tasks waiting for "task" to finish, then delete the "task" itself
  */
 void TaskManager::wakeup_waitings_and_delete_task(Task* task) {
-    while (Task* t = task->wait_queue.pop_front())
-        t->state = TaskState::RUNNING;
-
+    unblock_tasks(task->wait_queue);
     delete task;
 }
 
@@ -266,8 +266,10 @@ void TaskManager::block_current_task(TaskList& list) {
 void TaskManager::unblock_tasks(TaskList& list) {
     KLockGuard lock;   // prevent reschedule
 
-    while (Task* t = list.pop_front())
-        t->state = TaskState::RUNNING;
+    while (Task* t = list.pop_front()) {
+        if (scheduler.is_valid_task(t)) // task might have been deleted while sleeping (exit_group)
+            t->state = TaskState::RUNNING;
+    }
 }
 
 /**
@@ -281,5 +283,15 @@ CpuState* TaskManager::pick_next_task_and_load_address_space() {
     PageTables::load_address_space(pml4_physical_address);
 
     return next_task->cpu_state;
+
+
+//    if (Task* next_task = scheduler.pick_next_task()) {
+//        u64 pml4_physical_address = next_task->task_group_data->pml4_phys_addr;
+//        PageTables::load_address_space(pml4_physical_address);
+//        return next_task->cpu_state;
+//    }
+//    else {  // scheduler says "Not task eligible for schedule"
+//        return idle_task; // boot_task?
+//    }
 }
 } // namespace multitasking {

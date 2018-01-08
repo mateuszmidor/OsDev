@@ -17,6 +17,12 @@ private:
     static TaskGroupData    kernel_task_group;
     static TaskGroupDataPtr kernel_task_group_ptr;
 
+    static TaskGroupDataPtr get_kernel_task_group_ptr() {
+        if (!kernel_task_group_ptr)
+            kernel_task_group_ptr.reset(&kernel_task_group);
+        return kernel_task_group_ptr;
+    }
+
 public:
     /**
      * @brief   Create kernel space task (runs in protection ring0), with kernel address space and default stack
@@ -25,8 +31,7 @@ public:
     template <class EntrypointT>
     static Task* make_kernel_task(EntrypointT entrypoint, const char name[]) {
         // this init is done only once when "init" task is being created (thus no preemptiom possible)
-        if (!kernel_task_group_ptr)
-            kernel_task_group_ptr.reset(&kernel_task_group);
+
 
         u64 stack_size = Task::DEFAULT_KERNEL_STACK_SIZE;
         u64 stack_addr = (u64)new char[stack_size];
@@ -39,7 +44,7 @@ public:
                         false,                  // user space = false
                         stack_addr,
                         stack_size,
-                        kernel_task_group_ptr   // all kernel tasks belong to one group
+                        get_kernel_task_group_ptr()   // all kernel tasks belong to one group
                     );
     }
 
