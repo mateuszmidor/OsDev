@@ -47,8 +47,11 @@ s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
     if (u32 tid = task_manager.add_task(task)) {
         return tid;
     }
-    else
+    else {
+        delete[] elf_data;
+        delete args;
         return -EPERM;  // running new task not permitted at this time
+    }
 }
 
 /**
