@@ -75,7 +75,7 @@ u32 TaskManager::add_task(Task* task) {
 void TaskManager::replace_current_task(Task* task) {
     KLockGuard lock;    // prevent reschedule, especially between "current_task->pml4_phys_addr = 0" and "Task::exit()"
 
-    const Task& current_task = get_current_task();
+    Task& current_task = get_current_task();
     u32 tid = current_task.task_id;
     task->prepare(tid, TaskManager::on_task_finished);
     if (!scheduler.add(task)) {
@@ -83,6 +83,7 @@ void TaskManager::replace_current_task(Task* task) {
         return;
     }
 
+    task->wait_queue = std::move(current_task.wait_queue);
     Task::exit();  // current task dies
 }
 
@@ -219,7 +220,6 @@ Task TaskManager::get_boot_task() const {
 bool TaskManager::wait(u32 task_id) {
     KLockGuard lock;    // prevent reschedule
 
-    // NOTE: this will not work if task_id is currently WAITING on some list outside the scheduler!!!
     if (Task* t = scheduler.get_by_tid(task_id)) {
         block_current_task(t->wait_queue);
         return true;
