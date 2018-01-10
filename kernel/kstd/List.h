@@ -99,7 +99,7 @@ public:
         l.m_head = nullptr;
     }
 
-    List& operator=(const List&& l) {
+    List& operator=(List&& l) {
         this->m_count = l.m_count;
         l.m_count = 0;
         this->m_head = l.m_head;
