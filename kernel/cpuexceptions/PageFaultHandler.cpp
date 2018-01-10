@@ -55,14 +55,14 @@ CpuState* PageFaultHandler::on_exception(CpuState* cpu_state) {
     if (pf_reason != PageFaultActualReason::PAGE_NOT_PRESENT) {
         klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". %. KILLING] \n",
                     faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current.name.c_str(), PF_REASON[pf_reason]);
-        return mngr.kill_current_task();
+        return mngr.kill_current_task_group();
     }
 
     // try alloc the page
     if (!alloc_page(faulty_address, faulty_page)) {
         klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". Could not alloc frame. KILLING] \n",
                     faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current.name.c_str());
-        return mngr.kill_current_task();
+        return mngr.kill_current_task_group();
     }
 
     // This triggers recursive page faulting, dont use
