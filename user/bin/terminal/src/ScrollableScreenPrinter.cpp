@@ -25,58 +25,29 @@ ScrollableScreenPrinter::~ScrollableScreenPrinter() {
     delete[] vga_buffer;
 }
 
-
 void ScrollableScreenPrinter::putc(const char c) {
     if (c == '\n') {
-        newline();
+        lines.newline();
     } else if (c == '\t') {
-        tab();
+        putc(' '); putc(' ');
     } else if (c == '\x08') {
-        backspace();
-    } else {
-       // set_at(cursor, VgaCharacter(c,  foreground, background)); // redraw will do it
-        cursor++;
+        lines.backspace();
+    } else
         lines.putc(c);
-    }
 
     // enforce text buffer "word" wrap
     if (lines.back().length() == printable_area_width)
         lines.newline();
-
-    // scroll if writing below bottom of the screen
-    scroll_to_end();
-}
-
-void ScrollableScreenPrinter::newline() {
-    cursor.newline();
-    lines.newline();
-    scroll_to_end();
-}
-
-void ScrollableScreenPrinter::tab() {
-    putc(' ');
-    putc(' ');
-    lines.putc(' ');
-    lines.putc(' ');
-}
-
-void ScrollableScreenPrinter::backspace() {
-    // back cursor by 1 char
-    cursor--;
-
-    // clear character under cursor
-    set_at(cursor, VgaCharacter { .character = ' ', .fg_color = foreground, .bg_color = background });
-
-    lines.backspace();
-    scroll_to_end();
 }
 
 void ScrollableScreenPrinter::scroll_up(u16 num_lines) {
     if (lines.count() <= printable_area_height)
         return;
 
-    const u16 FIRST_LINE = 0;
+    const u32 FIRST_LINE = 0;
     top_line = (top_line - num_lines <= FIRST_LINE) ? FIRST_LINE : top_line - num_lines;
+
+    update_cursor_to_current_print_pos();
     redraw();
 }
 
@@ -84,8 +55,9 @@ void ScrollableScreenPrinter::scroll_down(u16 num_lines) {
     if (lines.count() <= printable_area_height)
         return;
 
-    const s16 LAST_LINE = lines.count() - printable_area_height;
+    const u32 LAST_LINE = lines.count() - printable_area_height;
     top_line = (top_line + num_lines  >= LAST_LINE) ? LAST_LINE : top_line + num_lines;
+    update_cursor_to_current_print_pos();
     redraw();
 }
 
@@ -97,6 +69,7 @@ void ScrollableScreenPrinter::scroll_to_begin() {
         return;
 
     top_line = 0;
+    update_cursor_to_current_print_pos();
     redraw();
 }
 
@@ -104,44 +77,73 @@ void ScrollableScreenPrinter::scroll_to_end() {
     if (lines.count() <= printable_area_height)
         return;
 
-    const s16 LAST_LINE = lines.count() - printable_area_height;
-    if (top_line == LAST_LINE)
+    const u32 NEW_TOP_LINE = lines.count() - printable_area_height;
+    if (top_line == NEW_TOP_LINE)
         return;
 
-    top_line = LAST_LINE;
+    top_line = NEW_TOP_LINE;
+    update_cursor_to_current_print_pos();
     redraw();
 }
 
+void ScrollableScreenPrinter::clear_screen() {
+    lines.clear();
+    update_scroll_to_current_print_pos();
+    update_cursor_to_current_print_pos();
+    redraw();
+}
+
+void ScrollableScreenPrinter::update_scroll_to_current_print_pos() {
+    if (lines.count() <= printable_area_height) {
+        top_line = 0;
+        return;
+    }
+
+    const u32 EDIT_TOP_LINE = lines.count() - printable_area_height;
+    if (top_line == EDIT_TOP_LINE)
+        return;
+
+    top_line = EDIT_TOP_LINE;
+}
+
+void ScrollableScreenPrinter::update_cursor_to_current_print_pos() {
+    u16 lines_to_draw = get_num_lines_on_screen();
+    cursor.set_visible(is_edit_line_visible());
+    cursor.set_x(left + lines.back().length());
+    cursor.set_y(top + lines_to_draw -1);
+}
+
 bool ScrollableScreenPrinter::is_edit_line_visible() {
-    return (s16)lines.count() - printable_area_height <= top_line;
+    return (s32)lines.count() - printable_area_height <= (s32)top_line;
 }
 
 /**
  * @brief   Redraw entire printing are. Used when scrolling the text
  */
 void ScrollableScreenPrinter::redraw() {
-    // calc number of buffer lines to  draw
-    u16 lines_to_draw = lines.count() - top_line;
-    if (lines_to_draw > printable_area_height)
-        lines_to_draw = printable_area_height;
-
-    // draw the lines and scroll bar
-    draw_text(lines_to_draw);
+    draw_text();
     draw_scroll_bar();
-
-    cursor.set_visible(is_edit_line_visible());
-    cursor.set_x(left + lines.back().length());
-    cursor.set_y(top + lines_to_draw -1);
 
     flush_vga_buffer();
 }
 
-void ScrollableScreenPrinter::draw_text(u16 num_lines_to_draw) {
+u16 ScrollableScreenPrinter::get_num_lines_on_screen() {
+    u16 lines_to_draw = lines.count() - top_line;
+    if (lines_to_draw > printable_area_height)
+        lines_to_draw = printable_area_height;
+
+    return lines_to_draw;
+}
+
+void ScrollableScreenPrinter::draw_text() {
+    // calc number of buffer lines to  draw
+    u16 lines_to_draw = get_num_lines_on_screen();
+
     // draw the lines
-    for (u16 y = 0; y < num_lines_to_draw; y++)
+    for (u16 y = 0; y < lines_to_draw; y++)
         put_line_and_clear_remaining_space_at(y, lines[top_line + y]);
     // clear remaining lines
-    for (u16 y = num_lines_to_draw; y < printable_area_height; y++)
+    for (u16 y = lines_to_draw; y < printable_area_height; y++)
         put_line_and_clear_remaining_space_at(y, "");
 }
 
@@ -158,12 +160,6 @@ void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u16 y, const
         set_at(x, y, VgaCharacter(' ', foreground, background));
 }
 
-void ScrollableScreenPrinter::clear_screen() {
-    top_line = 0;
-    lines.clear();
-    redraw();
-}
-
 void ScrollableScreenPrinter::draw_scroll_bar() {
     const u16 BAR_X = right + 1;
 
@@ -176,19 +172,15 @@ void ScrollableScreenPrinter::draw_scroll_bar() {
     if (bar_size == 0)
         bar_size = 1;
 
-    s16 max_top_line = lines.count() - printable_area_height;
+    s32 max_top_line = lines.count() - printable_area_height;
     if (max_top_line == 0)
         max_top_line = 1;
 
     u16 move_space = printable_area_height - bar_size;
-    u16 bar_y = top + move_space * top_line / max_top_line;
+    u16 bar_y = top + move_space * top_line / max_top_line ;
 
     for (u16 y = bar_y; y < bar_y + bar_size; y++)
         set_at(BAR_X, y, VgaCharacter(BG_SCROLLER, foreground, background));
-}
-
-void ScrollableScreenPrinter::set_at(const Cursor& cursor, VgaCharacter c) {
-    return set_at(cursor.get_x(), cursor.get_y(), c);
 }
 
 void ScrollableScreenPrinter::set_at(u16 x, u16 y, VgaCharacter c) {

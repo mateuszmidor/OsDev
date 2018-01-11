@@ -247,7 +247,7 @@ void Terminal::stdout_printer_thread(Terminal* term) {
     while (true) {
         ssize_t count = syscalls::read(term->fd_stdout, buff, BUFF_SIZE - 1);
         buff[count] = '\0';
-        term->printer.get()->format("%", buff);
+        term->printer.get()->format(buff);
     }
 }
 

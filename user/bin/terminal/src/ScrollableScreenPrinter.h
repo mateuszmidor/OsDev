@@ -36,27 +36,30 @@ public:
         const ustd::string& str = ustd::StringUtils::format(fmt, args...);
         for (const char& c : str)
             putc(c);
+        update_scroll_to_current_print_pos();
+        update_cursor_to_current_print_pos();
         redraw();
     }
 
     void format(const char c) {
         putc(c);
+        update_scroll_to_current_print_pos();
+        update_cursor_to_current_print_pos();
         redraw();
     }
 
 private:
-    void newline();
-    void tab();
-    void backspace();
-    void set_at(const Cursor& cursor,  middlespace::VgaCharacter c);
     void set_at(u16 x, u16 y, middlespace::VgaCharacter c);
     void putc(const char c);
     void redraw();
-    void draw_text(u16 lines_to_draw);
+    void draw_text();
     void draw_scroll_bar();
     void put_line_and_clear_remaining_space_at(u16 y, const ustd::string& line);
+    void update_scroll_to_current_print_pos();
+    void update_cursor_to_current_print_pos();
     bool is_edit_line_visible();
     void flush_vga_buffer();
+    u16 get_num_lines_on_screen();
 
     const char BG_CHAR      = 176;
     const char BG_SCROLLER  = 219;
@@ -74,7 +77,7 @@ private:
     middlespace::VgaCharacter* vga_buffer;
     Cursor cursor;
 
-    u16 top_line            = 0;    // number of the line that is currently printed as the top line
+    u32 top_line            = 0;    // number of the line that is currently printed as the top line
     LineBuffer lines;
 };
 
