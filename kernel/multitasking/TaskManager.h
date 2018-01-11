@@ -46,7 +46,7 @@ private:
 
     Task                    boot_task;              // represents "kmain" boot task
     RoundRobinScheduler     scheduler;
-    u32                     next_task_id    = 1;    // id to assign to the next task while adding
+    u32                     next_task_id    = 0;    // id to assign to the next task while adding
 };
 
 }
