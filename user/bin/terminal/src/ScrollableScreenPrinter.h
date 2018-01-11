@@ -52,6 +52,7 @@ private:
     void set_at(u16 x, u16 y, middlespace::VgaCharacter c);
     void putc(const char c);
     void redraw();
+    void draw_text(u16 lines_to_draw);
     void draw_scroll_bar();
     void put_line_and_clear_remaining_space_at(u16 y, const ustd::string& line);
     bool is_edit_line_visible();
@@ -61,8 +62,6 @@ private:
     const char BG_SCROLLER  = 219;
     const middlespace::EgaColor foreground = middlespace::EgaColor::White;
     const middlespace::EgaColor background = middlespace::EgaColor::Black;
-
-    u16 top_line            = 0;    // number of the line that is currently printed as the top line
 
     u16 vga_width           = 0;    // screen dimmensions in characters eg 90x30
     u16 vga_height          = 0;
@@ -74,6 +73,8 @@ private:
 
     middlespace::VgaCharacter* vga_buffer;
     Cursor cursor;
+
+    u16 top_line            = 0;    // number of the line that is currently printed as the top line
     LineBuffer lines;
 };
 

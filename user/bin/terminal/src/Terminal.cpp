@@ -12,6 +12,7 @@
 #include "syscalls.h"
 
 #include "cmds/cd.h"
+#include "cmds/cls.h"
 #include "cmds/specificelfrun.h"
 
 
@@ -71,6 +72,7 @@ bool Terminal::init() {
 
     // install internal commands
     install_internal_command(new cmds::cd, "cd");
+    install_internal_command(new cmds::cls(printer), "cls");
 
     // install external commands that are in form of separate ELF programs, located under given directory
     install_external_commands("/BIN", self_binary_name);

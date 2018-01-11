@@ -125,15 +125,8 @@ void ScrollableScreenPrinter::redraw() {
     if (lines_to_draw > printable_area_height)
         lines_to_draw = printable_area_height;
 
-    // draw the lines
-    for (u16 y = 0; y < lines_to_draw; y++) 
-        put_line_and_clear_remaining_space_at(y, lines[top_line + y]);
-   
-
-    // clear remaining lines
-    for (u16 y = lines_to_draw; y < printable_area_height; y++) 
-        put_line_and_clear_remaining_space_at(y, "");
-
+    // draw the lines and scroll bar
+    draw_text(lines_to_draw);
     draw_scroll_bar();
 
     cursor.set_visible(is_edit_line_visible());
@@ -141,6 +134,15 @@ void ScrollableScreenPrinter::redraw() {
     cursor.set_y(top + lines_to_draw -1);
 
     flush_vga_buffer();
+}
+
+void ScrollableScreenPrinter::draw_text(u16 num_lines_to_draw) {
+    // draw the lines
+    for (u16 y = 0; y < num_lines_to_draw; y++)
+        put_line_and_clear_remaining_space_at(y, lines[top_line + y]);
+    // clear remaining lines
+    for (u16 y = num_lines_to_draw; y < printable_area_height; y++)
+        put_line_and_clear_remaining_space_at(y, "");
 }
 
 void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u16 y, const ustd::string& line) {
@@ -157,6 +159,8 @@ void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u16 y, const
 }
 
 void ScrollableScreenPrinter::clear_screen() {
+    top_line = 0;
+    lines.clear();
     redraw();
 }
 
