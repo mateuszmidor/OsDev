@@ -34,6 +34,7 @@
 #include "ElfRunner.h"
 #include "Mouse.h"
 #include "SysCallNumbers.h"
+#include "Assert.h"
 
 using namespace kstd;
 using namespace logging;
@@ -207,11 +208,19 @@ void run_userspace_terminal() {
 
     // run the elf
     utils::ElfRunner runner;
-    if (runner.run(elf_data, new vector<string> { "terminal" }) > 0)
-        klog.format("Terminal is running\n");
+    s32 task_id = runner.run(elf_data, new vector<string> { "terminal" });
+    utils::phobos_assert(task_id > 0, "Terminal run failed.");
 
     // terminal loading animation stop
     time_manager.cancel(timer_id);
+
+    // wait till terminal dies
+    task_manager.wait(task_id);
+    Task::yield();
+
+    // we should never get here unless terminal crash
+    vga_drv->clear_screen();
+    vga_drv->print(0, 1, "Terminal crashed");
 }
 
 /**
@@ -222,7 +231,6 @@ void task_init() {
     //task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
     run_userspace_terminal();
 }
-
 
 /**
  * @name    kmain
