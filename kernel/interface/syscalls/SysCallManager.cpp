@@ -34,12 +34,8 @@ extern "C" void handle_syscall();
  */
 SysCallHandler syscall_handler;
 extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5)  {
-    SysCallManager& mngr = SysCallManager::instance();
-//    logging::KernelLog& klog = logging::KernelLog::instance();
-
-//    klog.format("syscall_handler: % \n", sys_call_num);
-
     SysCallNumbers syscall = (SysCallNumbers)sys_call_num;
+
     switch (syscall) {
     case SysCallNumbers::FILE_READ: // read (unsigned int fd char *buf   size_t count)
         return syscall_handler.sys_read(arg1, (char*)arg2, arg3);
