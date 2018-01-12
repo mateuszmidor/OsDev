@@ -45,7 +45,7 @@ void ScrollableScreenPrinter::scroll_up(u16 num_lines) {
         return;
 
     const u32 FIRST_LINE = 0;
-    top_line = (top_line - num_lines <= FIRST_LINE) ? FIRST_LINE : top_line - num_lines;
+    top_line = ((s64)top_line - num_lines <= FIRST_LINE) ? FIRST_LINE : top_line - num_lines;
 
     update_cursor_to_current_print_pos();
     redraw();
