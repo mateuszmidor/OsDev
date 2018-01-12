@@ -1,8 +1,0 @@
-cmake_minimum_required(VERSION 3.2)
-project(hardware)
-
-file(GLOB SOURCES "*.cpp")
-add_library(${PROJECT_NAME} STATIC ${SOURCES})
-target_link_libraries(${PROJECT_NAME} "arch")
-target_link_libraries(${PROJECT_NAME} "kstd")
-target_include_directories(${PROJECT_NAME} PUBLIC ".")
