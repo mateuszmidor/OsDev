@@ -13,6 +13,7 @@
 
 namespace kstd {
 
+extern "C" size_t strlen ( const char * str );
 using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;;
 
 } /* namespace kstd */
