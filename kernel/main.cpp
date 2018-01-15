@@ -35,6 +35,7 @@
 #include "Mouse.h"
 #include "SysCallNumbers.h"
 #include "Assert.h"
+#include "VgaPrinter.h"
 
 using namespace kstd;
 using namespace logging;
@@ -69,38 +70,20 @@ VgaDriver               vga;
 Int80hDriver            int80h;
 PageFaultHandler        page_fault;
 
+VgaPrinter              printer(vga);
 const u32               PIT_FREQUENCY_HZ = 20;
 
-
 /**
- * Simple printer for kernel boot time
+ * Just print the OS loading header
  */
-u32 current_row {0};
-u32 current_col {0};
-void print(const char s[], EgaColor c = EgaColor::Yellow) {
-    vga.print(current_col, current_row, s, c);
-    current_col+= strlen(s);
-}
-
-void println(const char s[], EgaColor c = EgaColor::Yellow) {
-    vga.print(current_col, current_row++, s, c);
-    current_col = 0;
-}
-
-void setup_temporary_console() {
-    vga.set_text_mode_90_30();
-    vga.clear_screen();
-    vga.set_cursor_visible(false);
-}
-
 void print_phobos_loading() {
-    println(R"( ____  _           _      ___  ____  )");
-    println(R"(|  _ \| |__   ___ | |__  / _ \/ ___| )");
-    println(R"(| |_) | '_ \ / _ \| '_ \| | | \___ \ )");
-    println(R"(|  __/| | | | (_) | |_) | |_| |___) |)");
-    println(R"(|_|   |_| |_|\___/|_.__/ \___/|____/ )");
-    println("");
-    println("Loading");
+    printer.println(R"( ____  _           _      ___  ____  )");
+    printer.println(R"(|  _ \| |__   ___ | |__  / _ \/ ___| )");
+    printer.println(R"(| |_) | '_ \ / _ \| '_ \| | | \___ \ )");
+    printer.println(R"(|  __/| | | | (_) | |_) | |_| |___) |)");
+    printer.println(R"(|_|   |_| |_|\___/|_.__/ \___/|____/ )");
+    printer.println("");
+    printer.println("Loading");
 }
 
 /**
@@ -179,26 +162,26 @@ void corner_counter() {
  * Terminal runner
  */
 void run_userspace_terminal() {
-    print("  loading terminal");
+    printer.print("  loading terminal");
 
     auto vga_drv = driver_manager.get_driver<VgaDriver>();
     if (!vga_drv) {
-        println("VGA driver not installed. No terminal will be available", EgaColor::Red);
+        printer.println("VGA driver not installed. No terminal will be available", EgaColor::Red);
         return;
     }
 
     VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
     if (!e) {
-        println("/BIN/TERMINAL doesnt exist. No terminal will be available", EgaColor::Red);
+        printer.println("/BIN/TERMINAL doesnt exist. No terminal will be available", EgaColor::Red);
         return;
     }
     if (e->is_directory()) {
-        println("/BIN/TERMINAL is directory? No terminal will be available", EgaColor::Red);
+        printer.println("/BIN/TERMINAL is directory? No terminal will be available", EgaColor::Red);
         return;
     }
 
     // terminal loading animation start
-    auto on_expire = [] { print("."); };
+    auto on_expire = [] { printer.print("."); };
     auto timer_id = time_manager.emplace(1000, 1000, on_expire);
 
     // read elf file data
@@ -227,7 +210,6 @@ void run_userspace_terminal() {
  * Here we enter multitasking
  */
 void task_init() {
-//    task_manager.set_idle_task(TaskFactory::make_kernel_task(Task::idle, "idle"));
     //task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
     run_userspace_terminal();
 }
@@ -249,12 +231,11 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     GlobalConstructorsRunner::run();
 
     // 3. configure temporary console and print PhobOS
-    setup_temporary_console();
     print_phobos_loading();
 
     // 4. install new Global Descriptor Table that will allow user-space
     gdt.reinstall_gdt();
-    println("  installing GDT...done");
+    printer.println("  installing GDT...done");
 
     // 5. prepare drivers & install drivers
     time_manager.set_hz(PIT_FREQUENCY_HZ);
@@ -273,33 +254,33 @@ extern "C" void kmain(void *multiboot2_info_ptr) {
     driver_manager.install_driver(&ata_primary_bus);
     driver_manager.install_driver(&vga);
     driver_manager.install_driver(&int80h);
-    println("  installing drivers...done");
+    printer.println("  installing drivers...done");
 
     // 7. install exceptions
     exception_manager.install_handler(&page_fault);    // this guy allows dynamic memory on-page-fault allocation
-    println("  installing exceptions...done");
+    printer.println("  installing exceptions...done");
 
     // 8. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
     interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
     interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
     interrupt_manager.config_and_activate_exceptions_and_interrupts(); // on-page-fault allocation available from here, as page_fault handler installed and activated
-    println("  installing interrupts...done");
+    printer.println("  installing interrupts...done");
 
     // 9. configure dynamic memory management
     MemoryManager::install_allocation_policy<WyoosAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
-    println("  installing dynamic memory...done");
+    printer.println("  installing dynamic memory...done");
 
     // 10. configure and activate system calls through "syscall" instruction
     syscall_manager.config_and_activate_syscalls();
-    println("  installing system calls...done");
+    printer.println("  installing system calls...done");
 
     // 11. install filesystem root "/"
     vfs_manager.install_root();
-    println("  installing Virtual File System...done");
+    printer.println("  installing virtual file system...done");
 
     // 12. start multitasking
     task_manager.install_multitasking();
     task_manager.add_task(TaskFactory::make_kernel_task(task_init, "init"));
-    println("  installing multitasking...done");
+    printer.println("  installing multitasking...done");
     Task::idle();
 }
