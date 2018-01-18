@@ -24,7 +24,7 @@ public:
     bool open() override                    { return true; /* no initialization to do here */ }
     void close() override                   {};
     bool is_directory() const override      { return false; }
-    const kstd::string& get_name() const    { return name; }
+    const cstd::string& get_name() const    { return name; }
 
     // [file interface]
     u32 get_size() const override;
@@ -38,7 +38,7 @@ public:
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; }
 
 private:
-    const kstd::string    name = "kmsg";
+    const cstd::string    name = "kmsg";
 };
 
 } /* namespace filesystem */

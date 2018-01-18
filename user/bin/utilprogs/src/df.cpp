@@ -13,7 +13,9 @@ char buff[1024];
 const char KERNEL_PROC_FILE[]   = "/proc/mountinfo";
 const char ERROR_CANT_OPEN[]    = "df: cant open /proc/mountinfo\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
+
+
 /**
  * @brief   Entry point
  * @return  0 on success, 1 on error

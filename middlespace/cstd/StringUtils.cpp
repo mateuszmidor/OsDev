@@ -1,93 +1,41 @@
 /**
  *   @file: StringUtils.cpp
  *
- *   @date: Nov 24, 2017
+ *   @date: Nov 23, 2017
  * @author: Mateusz Midor
  */
 
 #include <algorithm>
 #include "StringUtils.h"
 
-namespace kstd {
+
+namespace cstd {
 
 /**
  * @brief   Convert integer "num" to string using numeric system "base"
  */
 string StringUtils::from_int(s64 num, u8 base) {
-    char str[12];
-
-    u8 i = 0;
-    bool isNegative = false;
-
-    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-    if (num == 0)
-        return "0";
-
-    // In standard itoa(), negative numbers are handled only with
-    // base 10. Otherwise numbers are considered unsigned.
-    if (num < 0 && base == 10)
-    {
-        isNegative = true;
-        num = -num;
-    }
-
-    // Process individual digits
-    while (num != 0)
-    {
-        int rem = num % base;
-        str[i++] = (rem > 9)? (rem-10) + 'A' : rem + '0';
-        num = num/base;
-    }
-
-    // If number is negative, append '-'
-    if (isNegative)
-        str[i++] = '-';
-
-    str[i] = '\0'; // Append string terminator
-
-    // Reverse the string
-    u8 start = 0;
-    u8 end = i -1;
-    while (start < end) {
-
-        auto tmp = *(str+start);
-        *(str+start) = *(str+end);
-        *(str+end) = tmp;
-        start++;
-        end--;
-    }
-
-    return str;
+    return conversions::int_to_string(num, base);
 }
 
+/**
+ * @brief   Convert integer "num" to string using numeric system "base"
+ */
+string StringUtils::from_double(double num, u8 max_frac_digits) {
+    return conversions::double_to_string(num, max_frac_digits);
+}
 
 /**
- * @brief   Convert decimal string to signed int
+ * @brief   Convert string to long
  */
-s64 StringUtils::dec_to_int(const string& str) {
-    bool negative = false;
-    u32 start = 0;
-    if (str[0] == '-') {
-        start = 1;
-        negative = true;
-    }
-
-    long long res = 0; // Initialize result
-
-    // Iterate through all characters of input string and
-    // update result
-    for (u32 i = start; str[i] != '\0'; ++i) {
-        unsigned char c = str[i];
-        res = res*10 + c - '0';
-    }
-
-    return negative ? -res : res;
+s64 StringUtils::to_int(const string& str) {
+    return conversions::string_to_int(str);
 }
 
 /**
  * @brief   Convert hexadecimal string to unsigned int
  */
-u64 StringUtils::hex_to_uint(const string& str) {
+u64 StringUtils::to_hex(const string& str) {
     unsigned long long res = 0; // Initialize result
 
     // Iterate through all characters of input string and compute number
@@ -104,6 +52,12 @@ u64 StringUtils::hex_to_uint(const string& str) {
     }
 
     return res;
+}
+/**
+ * @brief   Convert string to double
+ */
+double StringUtils::to_double(const string& str) {
+    return conversions::string_to_double(str);
 }
 
 /**
@@ -132,15 +86,6 @@ string StringUtils::to_upper_case(string s) {
     };
     std::transform(s.begin(), s.end(), s.begin(), to_upper);
     return s;
-}
-
-/**
- * @brief   Split "Key=Value" into "Key" and "Value" using given "separator"
- */
-void StringUtils::split_key_value(const string &kv, string &key, string &value, char separator) {
-    auto pivot = kv.rfind(separator);
-    key = kv.substr(0, pivot);
-    value = kv.substr(pivot + 1, kv.length());
 }
 
 /**
@@ -199,6 +144,15 @@ string StringUtils::join_string(const string& separator, const vector<string>& e
 }
 
 /**
+ * @brief   Split "Key=Value" into "Key" and "Value" using given "separator"
+ */
+void StringUtils::split_key_value(const string &kv, string &key, string &value, char separator) {
+    auto pivot = kv.rfind(separator);
+    key = kv.substr(0, pivot);
+    value = kv.substr(pivot + 1, kv.length());
+}
+
+/**
  * @brief   Cut off head of the str that ends with "delimiter" or return whole str if no "delimiter" found
  * @note    Can return empty string in case str starts with delimiter
  */
@@ -224,4 +178,5 @@ string StringUtils::rtrim(const char* in, size_t len) {
     auto last = std::find_if(s.begin(), s.end(), pred);
     return string (s.begin(), last);
 }
-} /* namespace kstd */
+
+} /* namespace ustd */

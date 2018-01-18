@@ -9,7 +9,6 @@
 #define SRC_MULTIBOOT2_H_
 
 #include <cstdint>
-#include "kstd.h"
 #include "Elf64.h"
 
 namespace utils {
@@ -93,7 +92,7 @@ public:
     static void initialize(void *multiboot2_info_ptr);
     static size_t get_available_memory_first_byte();
     static size_t get_available_memory_last_byte();
-    static kstd::string to_string();
+    static cstd::string to_string();
 
 private:
     Multiboot2() = delete;  // don't instantiate this class

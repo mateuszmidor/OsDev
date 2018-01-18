@@ -12,7 +12,8 @@
 #include "StringUtils.h"
 #include "ReversePolishNotation.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 
 struct MinMax {
     double min;
@@ -127,8 +128,8 @@ int main(int argc, char* argv[]) {
     }
 
     VgaDevice vga;
-    string formula = build_formula(argc, argv);
     MinMax domain_range {-3.14, 3.14};
+    string formula = build_formula(argc, argv);
 
     if (auto result = evaluate_formula(formula, domain_range, vga.width)) {
         ChartData cd(std::move(result.value), domain_range);

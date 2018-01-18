@@ -7,7 +7,7 @@
 
 #include "Conversions.h"
 
-namespace ustd {
+namespace cstd {
 namespace conversions {
 
 /**
@@ -188,5 +188,5 @@ double string_to_double(const string& str) {
     double result = res + frac / (double)len;
     return negative ? -result : result;
 }
-};
+} /* namespace conversions */
 } /* namespace ustd */

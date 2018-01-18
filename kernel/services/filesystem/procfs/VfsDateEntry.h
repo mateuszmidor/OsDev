@@ -21,7 +21,7 @@ class VfsDateEntry: public VfsEntry {
     bool open() override;
     void close() override;
     bool is_directory() const override      { return false; }
-    const kstd::string& get_name() const    { return name; }
+    const cstd::string& get_name() const    { return name; }
 
     // [file interface]
     u32 get_size() const override;
@@ -35,8 +35,8 @@ class VfsDateEntry: public VfsEntry {
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; }
 
 private:
-    kstd::string get_date_time() const;
-    const kstd::string  name            = "date";
+    cstd::string get_date_time() const;
+    const cstd::string  name            = "date";
     bool                is_open         = false;
 
     u8 read_byte(u8 offset) const;

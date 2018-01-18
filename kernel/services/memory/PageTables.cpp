@@ -24,16 +24,15 @@ PageTables64  PageTables::kernel_page_tables  __attribute__ ((aligned (4096)));
  *                     -pde
  *                       -pte (not used when 2MB HUGE pages are used)
  */
-void PageTables::map_and_load_kernel_address_space_at_memory_start() {
+void PageTables::map_and_load_kernel_address_space() {
     prepare_higher_half_kernel_page_tables(kernel_page_tables);
     u64 pml4_physical_address = HigherHalf::virt_to_phys(kernel_page_tables.pml4);
     load_address_space(pml4_physical_address);
 }
 
 /**
- * @brief   Map virtual address space 0..num_bytes-1 to physical phys_addr..phys_addr+num_bytes-1
+ * @brief   Prepare virtual memory mapping for user 0..1GB and kernel -2GB..0 of virtual memory
  * @param   pml4_phys_addr Physical address of the already allocated PageTables64
- * @note    Temporary solution until proper frame allocator and memory manager is developed
  */
 void PageTables::map_elf_address_space(size_t pml4_phys_addr) {
     // we need to use kernel virtual addresses for configuring the pages, since no lower 1gb identity mapping exists
@@ -45,7 +44,7 @@ void PageTables::map_elf_address_space(size_t pml4_phys_addr) {
     // zero the page tables
     memset(pt, 0, sizeof(PageTables64));
 
-    // map user elf virtual address space at 1GB
+    // map user elf virtual address space at 0..1GB and kernel at -2GB..0GB
     prepare_elf_page_tables(*pt);
 }
 
@@ -103,6 +102,7 @@ void PageTables::load_address_space(size_t pml4_physical_address) {
 
 /**
  * @brief   Get Kernel space virtual address of page in "pml4_phys_addr" address space that contains "virtual_address"
+ *          or nullptr if "virtual_address" is outside of the address space
  */
 u64* PageTables::get_page_for_virt_address(size_t virtual_address, size_t pml4_phys_addr) {
     u16 pml4_index = (virtual_address >> 39) & 511;

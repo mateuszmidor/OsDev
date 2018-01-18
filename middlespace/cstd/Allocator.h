@@ -5,16 +5,16 @@
  * @author: Mateusz Midor
  */
 
-#ifndef USER_USTD_SRC_ALLOCATOR_H_
-#define USER_USTD_SRC_ALLOCATOR_H_
+#ifndef MIDDLESPACE_CSTD_SRC_ALLOCATOR_H_
+#define MIDDLESPACE_CSTD_SRC_ALLOCATOR_H_
 
 #include <limits>
 
-namespace ustd {
+namespace cstd {
 
 template <class T>
 class Allocator {
-public :
+public:
     //    typedefs
     typedef T value_type;
     typedef value_type* pointer;
@@ -64,6 +64,6 @@ public :
     inline bool operator!=(Allocator const& a) { return !operator==(a); }
 };
 
-} /* namespace ustd */
+} /* namespace cstd */
 
-#endif /* USER_USTD_SRC_ALLOCATOR_H_ */
+#endif /* MIDDLESPACE_CSTD_SRC_ALLOCATOR_H_ */

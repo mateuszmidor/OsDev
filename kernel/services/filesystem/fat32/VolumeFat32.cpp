@@ -8,7 +8,8 @@
 #include "Fat32Utils.h"
 #include "VolumeFat32.h"
 
-using namespace kstd;
+using namespace cstd;
+
 namespace filesystem {
 
 /**

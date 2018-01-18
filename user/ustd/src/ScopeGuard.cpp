@@ -6,7 +6,3 @@
  */
 
 #include "ScopeGuard.h"
-
-namespace ustd {
-
-} /* namespace ustd */

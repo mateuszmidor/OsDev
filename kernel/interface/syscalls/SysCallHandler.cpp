@@ -5,6 +5,8 @@
  * @author: Mateusz Midor
  */
 
+#include <errno.h>
+#include "kstd.h"
 #include "SysCallHandler.h"
 #include "TaskManager.h"
 #include "TaskFactory.h"
@@ -14,9 +16,10 @@
 #include "VgaDriver.h"
 #include "ElfRunner.h"
 
-using namespace kstd;
+using namespace cstd;
 using namespace drivers;
 using namespace filesystem;
+
 namespace syscalls {
 
 SysCallHandler::SysCallHandler() { }
@@ -603,7 +606,7 @@ multitasking::Task& SysCallHandler::current() const {
 /**
  * @brief   Return absolute path made from "path" and current task working directory
  */
-UnixPath SysCallHandler::make_absolute_path(const kstd::string& path) const {
+UnixPath SysCallHandler::make_absolute_path(const string& path) const {
     const string& cwd = current().task_group_data->cwd;
 
     // check if relative_filename specified at all

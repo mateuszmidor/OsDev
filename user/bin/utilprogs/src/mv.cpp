@@ -13,7 +13,7 @@
 const char ERROR_NO_INPUT[]     = "mv: please provide source and destination names\n";
 const char ERROR_CANT_MOVE[]    = "mv: cant move given entities\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point

@@ -1,0 +1,3 @@
+Physical memory frames are of 2MB size.
+The use of memory frames (allocation and deallocation) is tracked by FrameAllocator, that keeps a bitmap of available memory frames.
+The initial state of this bitmap is that all pages are free except for those taken by kernel - see Multiboot2 info.

@@ -7,8 +7,6 @@
 
 #include "String.h"
 
-namespace ustd {
-
 /**
  * @brief   Implementation of <cstring> "strlen" function
  */
@@ -21,5 +19,3 @@ extern "C" size_t strlen ( const char * str ) {
 
     return result;
 }
-
-} /* namespace ustd */

@@ -17,13 +17,13 @@ namespace terminal {
 class CommandHistory {
 public:
     CommandHistory();
-    void append(const ustd::string& cmd);
+    void append(const cstd::string& cmd);
     void set_to_latest();
-    const ustd::string& get_prev();
-    const ustd::string& get_next();
+    const cstd::string& get_prev();
+    const cstd::string& get_next();
 
 private:
-    ustd::vector<ustd::string> history;
+    cstd::vector<cstd::string> history;
     u16 index   {0};
 };
 } /* namespace terminal */

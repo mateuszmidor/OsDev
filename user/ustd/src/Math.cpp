@@ -7,7 +7,9 @@
 
 #include "Math.h"
 
+namespace cstd {
 namespace ustd {
+namespace math {
 
 double sqrt(double x) {
     double result;
@@ -116,4 +118,6 @@ double pow(double x, double y) {
     return result;
 }
 
+} /* namespace math */
 } /* namespace ustd */
+} /* namespace cstd */

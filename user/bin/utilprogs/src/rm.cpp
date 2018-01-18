@@ -15,7 +15,8 @@ const char ERROR_DIRECTORY[]        = "rm: given filename points to a directory.
 const char ERROR_CANT_REMOVE_FILE[] = "rm: cant remove given file\n";
 const char ERROR_CANT_REMOVE_DIR[]  = "rm: cant remove given directory\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
+
 
 bool exists(const char filename[]) {
     struct stat s;

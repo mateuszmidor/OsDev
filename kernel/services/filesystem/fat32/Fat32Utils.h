@@ -15,10 +15,10 @@ namespace filesystem {
 
 class Fat32Utils {
 public:
-    static bool fits_in_8_3(const kstd::string& filename);
-    static kstd::string make_8_3_filename(const kstd::string& filename, u8 seq_num = 0);
-    static void make_8_3_filename(const kstd::string& filename, kstd::string& name, kstd::string& ext, u8 seq_num = 0);
-    static void make_8_3_space_padded_filename(const kstd::string& filename, kstd::string& name, kstd::string& ext);
+    static bool fits_in_8_3(const cstd::string& filename);
+    static cstd::string make_8_3_filename(const cstd::string& filename, u8 seq_num = 0);
+    static void make_8_3_filename(const cstd::string& filename, cstd::string& name, cstd::string& ext, u8 seq_num = 0);
+    static void make_8_3_space_padded_filename(const cstd::string& filename, cstd::string& name, cstd::string& ext);
 };
 
 } /* namespace filesystem */

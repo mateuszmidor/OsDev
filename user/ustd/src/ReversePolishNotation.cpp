@@ -8,7 +8,9 @@
 #include <stack>
 #include "ReversePolishNotation.h"
 #include "Math.h"
+#include "StringUtils.h"
 
+namespace cstd {
 namespace ustd {
 namespace rpn {
 
@@ -348,7 +350,7 @@ Optional<double> RpnEvaluator::eval(const vector<Token>& onp) {
             if (pop_value(right) && pop_value(left)) {
                 if (left < 0.0 && (right != (long long)right))
                     return {"POWER: negative base to non integral power yields complex number"};
-                result = pow(left, right);
+                result = math::pow(left, right);
                 break;
             }
             else
@@ -377,7 +379,7 @@ Optional<double> RpnEvaluator::eval(const vector<Token>& onp) {
             if (pop_value(left)) {
                 if (left < 0.0)
                     return {"F_SQRT: negative sqrt argument yields complex number"};
-                result = sqrt(left);
+                result = math::sqrt(left);
                 break;
             }
             else
@@ -386,7 +388,7 @@ Optional<double> RpnEvaluator::eval(const vector<Token>& onp) {
 
         case TokenType::F_SIN: {
             if (pop_value(left)) {
-                result = sin(left);
+                result = math::sin(left);
                 break;
             }
             else
@@ -395,7 +397,7 @@ Optional<double> RpnEvaluator::eval(const vector<Token>& onp) {
 
         case TokenType::F_COS: {
             if (pop_value(left)) {
-                result = cos(left);
+                result = math::cos(left);
                 break;
             }
             else
@@ -456,3 +458,4 @@ Optional<double> Calculator::calc() {
 }
 } /* namespace rpn */
 } /* namespace ustd */
+} /* namespace cstd */

@@ -21,18 +21,18 @@ class VfsRamFifoEntry: public VfsEntry {
 private:
     static constexpr u32        BUFF_SIZE   = 512;
     u8                          buff[BUFF_SIZE];  // in-memory file buffer
-    kstd::string                name;
+    cstd::string                name;
     u32                         size;
     multitasking::TaskList      read_wait_list;
     multitasking::TaskList      write_wait_list;
 public:
-    VfsRamFifoEntry(const kstd::string& name) : name(name), size(0) {}
+    VfsRamFifoEntry(const cstd::string& name) : name(name), size(0) {}
 
     // [common interface]
     bool open() override                            { return true; /* no initialization to do here */ }
     void close() override                           {};
     bool is_directory() const override              { return false; }
-    const kstd::string& get_name() const override   { return name; }
+    const cstd::string& get_name() const override   { return name; }
 
     // [file interface]
     u32 get_size() const override                   { return size; }

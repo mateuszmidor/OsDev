@@ -11,8 +11,9 @@
 #include "HigherHalf.h"
 
 
-using namespace kstd;
+using namespace cstd;
 using namespace memory;
+
 namespace utils {
 
 size_t Multiboot2::multiboot2_info_addr;
@@ -159,13 +160,13 @@ string Multiboot2::to_string() {
     result += StringUtils::format("memory map: size: %, entry size: %, entry version: %\n", mm->size, mm->entry_size, mm->entry_version);
     result += StringUtils::format("memory areas:\n");
     for (int i = 0; i < mme_count; i++) {
-        kstd::string type =
-                StringUtils::enum_to_str(mme[i]->type,
-                        "Available=0x1",
-                        "Reserved=0x2",
-                        "ACPI reclaimable=0x3",
-                        "ACPI NVS=0x4",
-                        "BAD=0x5");
+        string type =
+            StringUtils::enum_to_str(mme[i]->type,
+                    "Available=0x1",
+                    "Reserved=0x2",
+                    "ACPI reclaimable=0x3",
+                    "ACPI NVS=0x4",
+                    "BAD=0x5");
 
         result += StringUtils::format("   addr: %KB, len: %KB, type: %\n",
                     mme[i]->address / 1024, mme[i]->length / 1024, type.c_str());

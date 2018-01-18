@@ -20,6 +20,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/services/arch/${ARCH}"
     "${PROJECT_SOURCE_DIR}/../middlespace"
+    "${PROJECT_SOURCE_DIR}/../middlespace/cstd"
     "${PROJECT_SOURCE_DIR}/services/cpuexceptions"
     "${PROJECT_SOURCE_DIR}/services/drivers"
     "${PROJECT_SOURCE_DIR}/services/filesystem"

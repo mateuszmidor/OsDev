@@ -7,13 +7,14 @@
 
 #include <errno.h>
 #include "kstd.h"
-#include "types.h"
 #include "StringUtils.h"
 #include "VfsMemInfoEntry.h"
 #include "MemoryManager.h"
 #include "FrameAllocator.h"
 
+using namespace cstd;
 using namespace memory;
+
 namespace filesystem {
 
 
@@ -49,12 +50,12 @@ s64 VfsMemInfoEntry::read(void* data, u32 count) {
         return 0;
 
 
-    const kstd::string info = get_info();
+    const string info = get_info();
     if (info.empty())
         return 0;
 
-    u32 read_start = kstd::max((s64)info.length() - count, 0);
-    u32 num_bytes_to_read = kstd::min(count, info.length());
+    u32 read_start = max((s64)info.length() - count, 0);
+    u32 num_bytes_to_read = min(count, info.length());
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
@@ -62,7 +63,7 @@ s64 VfsMemInfoEntry::read(void* data, u32 count) {
     return num_bytes_to_read;
 }
 
-kstd::string VfsMemInfoEntry::get_info() const {
+string VfsMemInfoEntry::get_info() const {
 //    MemoryManager& mm = MemoryManager::instance();
 //    size_t free_memory = mm.get_total_memory_in_bytes() - mm.get_free_memory_in_bytes();
 //    size_t total_memory = mm.get_total_memory_in_bytes();
@@ -70,7 +71,7 @@ kstd::string VfsMemInfoEntry::get_info() const {
 
     size_t used_frames = FrameAllocator::get_used_frames_count();
     size_t total_frames = FrameAllocator::get_total_frames_count();
-    return kstd::StringUtils::format("Used frames so far: %, total available: %\n", used_frames, total_frames);
+    return StringUtils::format("Used frames so far: %, total available: %\n", used_frames, total_frames);
 }
 
 s64 VfsMemInfoEntry::write(const void* data, u32 count) {

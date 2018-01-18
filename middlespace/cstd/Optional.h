@@ -5,12 +5,12 @@
  * @author: Mateusz Midor
  */
 
-#ifndef USER_USTD_SRC_OPTIONAL_H_
-#define USER_USTD_SRC_OPTIONAL_H_
+#ifndef MIDDLESPACE_CSTD_SRC_OPTIONAL_H_
+#define MIDDLESPACE_CSTD_SRC_OPTIONAL_H_
 
 #include "String.h"
 
-namespace ustd {
+namespace cstd {
 
 // This Optional doesnt support "string" as "string" constructor indicates error value
 template <class T>
@@ -35,6 +35,6 @@ template <>
 class Optional<string> {
 };
 
-} /* namespace ustd */
+} /* namespace cstd */
 
-#endif /* USER_USTD_SRC_OPTIONAL_H_ */
+#endif /* MIDDLESPACE_CSTD_SRC_OPTIONAL_H_ */

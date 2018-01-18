@@ -1,0 +1,6 @@
+This is where std tools specific to kernel space are defined.
+kstd is a namespace nested within cstd so it has access to all the common tools from cstd:
+
+namespace cstd {
+    namespace kstd { ... }
+}

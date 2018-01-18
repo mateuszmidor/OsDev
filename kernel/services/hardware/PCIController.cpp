@@ -5,13 +5,14 @@
  * @author: Mateusz Midor
  */
 
-//#include "KernelLog.h"
 #include "StringUtils.h"
 #include "PCIController.h"
+//#include "KernelLog.h"
 //#include "VgaDriver.h"
 
 //using utils::KernelLog;
-using namespace kstd;
+using namespace cstd;
+
 namespace hardware {
 
 u32 PCIController::read(u16 bus, u16 device, u16 function, u32 register_offset) {

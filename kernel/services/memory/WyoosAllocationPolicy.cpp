@@ -9,6 +9,7 @@
 #include "WyoosAllocationPolicy.h"
 
 using namespace utils;
+
 namespace memory {
 
 /**

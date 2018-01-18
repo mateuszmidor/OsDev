@@ -9,7 +9,6 @@
 #define SRC_UTILS_CURSOR_H_
 
 #include "types.h"
-#include "ustd.h"
 #include "syscalls.h"
 
 namespace terminal {

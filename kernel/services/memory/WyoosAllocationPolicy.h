@@ -8,8 +8,8 @@
 #ifndef KERNEL_MEMORY_WYOOSALLOCATIONPOLICY_H_
 #define KERNEL_MEMORY_WYOOSALLOCATIONPOLICY_H_
 
-#include "AllocationPolicy.h"
 #include <new>
+#include "AllocationPolicy.h"
 
 namespace memory {
 

@@ -13,7 +13,7 @@ char buff[1024];
 const char KERNEL_PROC_FILE[]   = "/proc/psinfo";
 const char ERROR_CANT_OPEN[]    = "ps: cant open /proc/psinfo\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point

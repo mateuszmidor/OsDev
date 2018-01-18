@@ -19,17 +19,17 @@ namespace filesystem {
  */
 class VfsRamDirectoryEntry: public VfsEntry {
 private:
-    kstd::string                name;
-    kstd::vector<VfsEntryPtr>   entries;    // child entries
+    cstd::string                name;
+    cstd::vector<VfsEntryPtr>   entries;    // child entries
 
 public:
-    VfsRamDirectoryEntry(const kstd::string& name) : name(name) {}
+    VfsRamDirectoryEntry(const cstd::string& name) : name(name) {}
 
     // [common interface]
     bool open() override                            { return true; }
     void close() override                           {};
     bool is_directory() const override              { return true; }
-    const kstd::string& get_name() const override   { return name; }
+    const cstd::string& get_name() const override   { return name; }
 
     // [file interface]
     u32 get_size() const override                       { return 0; };

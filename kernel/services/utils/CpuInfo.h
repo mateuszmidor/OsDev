@@ -25,13 +25,13 @@ struct CpuMultimediaExtensions {
     bool sse5   = false;
     bool avx    = false;
 
-    kstd::string to_string() const;
+    cstd::string to_string() const;
 };
 
 class CpuInfo {
 public:
     u32 get_peak_mhz() const;
-    kstd::string get_vendor() const;
+    cstd::string get_vendor() const;
     CpuMultimediaExtensions get_multimedia_extensions() const;
     void print_to_klog() const;
 

@@ -25,7 +25,7 @@ public:
     bool open() override    { return true; /* no initialization to do here */ }
     void close() override   {};
     bool is_directory() const override;
-    const kstd::string& get_name() const;
+    const cstd::string& get_name() const;
 
     // [file interface]
     u32 get_size() const override;

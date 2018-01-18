@@ -10,8 +10,8 @@
 #include "Cout.h"
 #include "Vga.h"
 
+using namespace cstd::ustd;
 using namespace middlespace;
-using namespace ustd;
 
 void clear_screen(u16 height, u16 width) {
     for (int y = 0; y < height; y++)

@@ -5,9 +5,12 @@
  * @author: Mateusz Midor
  */
 
+#include <errno.h>
+#include "kstd.h"
 #include "VfsPciInfoEntry.h"
 #include "PCIController.h"
-#include <errno.h>
+
+using namespace cstd;
 
 namespace filesystem {
 
@@ -43,12 +46,12 @@ s64 VfsPciInfoEntry::read(void* data, u32 count) {
         return 0;
 
     hardware::PCIController pcic;
-    const kstd::string info = pcic.drivers_to_string();
+    const string info = pcic.drivers_to_string();
     if (info.empty())
         return 0;
 
-    u32 read_start = kstd::max((s64)info.length() - count, 0);
-    u32 num_bytes_to_read = kstd::min(count, info.length());
+    u32 read_start = max((s64)info.length() - count, 0);
+    u32 num_bytes_to_read = min(count, info.length());
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 

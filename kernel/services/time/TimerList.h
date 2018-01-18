@@ -18,7 +18,7 @@ class Timer;
 /**
  * @brief   This class is a list of system timers
  */
-class TimerList: public kstd::List<Timer*> {
+class TimerList: public cstd::List<Timer*> {
 public:
     void push_sorted_ascending_by_expire_time(Timer* t);
     Timer* get_by_tid(u32 timer_id);

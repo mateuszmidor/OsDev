@@ -10,7 +10,8 @@
 #include "Cout.h"
 #include "StringUtils.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 
 
 /**

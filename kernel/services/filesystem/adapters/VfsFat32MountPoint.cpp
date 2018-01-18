@@ -16,7 +16,7 @@ VfsFat32MountPoint::VfsFat32MountPoint(const VolumeFat32& volume) : volume(volum
 VfsFat32MountPoint::~VfsFat32MountPoint() {
 }
 
-const kstd::string& VfsFat32MountPoint::get_name() const {
+const cstd::string& VfsFat32MountPoint::get_name() const {
     return name;
 }
 

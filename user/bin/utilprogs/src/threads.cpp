@@ -9,7 +9,7 @@
 #include "syscalls.h"
 #include "Cout.h"
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 void print_a(unsigned ret) {
     for (unsigned i = 0; i < 40; i++) {

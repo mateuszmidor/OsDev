@@ -8,10 +8,10 @@
 #ifndef USER_USTD_SRC_VGADEVICE_H_
 #define USER_USTD_SRC_VGADEVICE_H_
 
-
-#include "Vga.h"
 #include "Vector.h"
+#include "Vga.h"
 
+namespace cstd {
 namespace ustd {
 
 /**
@@ -40,5 +40,6 @@ private:
 
 
 } /* namespace ustd */
+} /* namespace cstd */
 
 #endif /* USER_USTD_SRC_VGADEVICE_H_ */

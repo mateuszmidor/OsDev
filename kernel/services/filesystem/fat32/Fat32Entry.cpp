@@ -5,10 +5,12 @@
  * @author: Mateusz Midor
  */
 
+#include "kstd.h"
 #include "Fat32Entry.h"
 #include "Fat32Utils.h"
 
-using namespace kstd;
+using namespace cstd;
+
 namespace filesystem {
 
 DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32() const {
@@ -46,7 +48,7 @@ Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data) :
 /**
  * Constructor. Create entry that corresponds to an entity in the filesystem
  */
-Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const kstd::string& name,
+Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const string& name,
         u32 size, bool is_directory, u32 data_cluster, u32 parent_data_cluster, u32 parent_index) :
 
         fat_table(fat_table),

@@ -11,7 +11,7 @@
 #include "types.h"
 #include "String.h"
 
-namespace ustd {
+namespace cstd {
 namespace conversions {
 
 string int_to_string(s64 num, u8 base = 10);
@@ -20,7 +20,6 @@ s64 string_to_int(const string& str);
 double string_to_double(const string& str);
 
 } /* namespace conversions */
-
-} /* namespace ustd */
+} /* namespace cstd */
 
 #endif /* USER_USTD_SRC_CONVERSIONS_H_ */

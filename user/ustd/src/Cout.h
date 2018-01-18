@@ -8,9 +8,9 @@
 #ifndef USER_USTD_SRC_COUT_H_
 #define USER_USTD_SRC_COUT_H_
 
-#include "types.h"
 #include "StringUtils.h"
 
+namespace cstd {
 namespace ustd {
 
 class cout {
@@ -29,5 +29,6 @@ private:
 };
 
 } /* namespace ustd */
+} /* namespace cstd */
 
 #endif /* USER_USTD_SRC_COUT_H_ */

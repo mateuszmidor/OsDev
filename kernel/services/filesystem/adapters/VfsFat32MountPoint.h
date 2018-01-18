@@ -24,7 +24,7 @@ public:
     // [common interface]
     bool open() override                        { return true; /* no initialization to do here */ }
     void close() override                       {};
-    const kstd::string& get_name() const;
+    const cstd::string& get_name() const;
 
     // [directory interface]
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
@@ -38,7 +38,7 @@ public:
 private:
     VolumeFat32         volume; // volume comes from MassStorageMsDos which got it from AtaDevice that is being held by AtaPrimaryBusDriver/AtaSecondaryBusDriver :)
     Fat32Entry          root;
-    kstd::string        name;
+    cstd::string        name;
 };
 
 } /* namespace filesystem */

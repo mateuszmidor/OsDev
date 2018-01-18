@@ -6,7 +6,3 @@
  */
 
 #include "CmdBase.h"
-
-namespace cmds {
-
-} /* namespace cmds */

@@ -8,6 +8,7 @@
 #include "syscalls.h"
 #include "Cout.h"
 
+namespace cstd {
 namespace ustd {
 
 int cout::stdout_fd = -1;
@@ -39,3 +40,4 @@ void cout::_print(int fd, const char str[], size_t len) {
 }
 
 } /* namespace ustd */
+} /* namespace cstd */

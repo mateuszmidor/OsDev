@@ -14,7 +14,7 @@
 using namespace memory;
 namespace multitasking {
 
-TaskGroupData::TaskGroupData(u64 pml4_phys_addr, const kstd::string& cwd, size_t heap_low_limit, size_t heap_high_limit) :
+TaskGroupData::TaskGroupData(u64 pml4_phys_addr, const cstd::string& cwd, size_t heap_low_limit, size_t heap_high_limit) :
         pml4_phys_addr(pml4_phys_addr), cwd(cwd), heap_low_limit(heap_low_limit), heap_high_limit(heap_high_limit) {
 }
 
@@ -59,8 +59,8 @@ void TaskGroupData::release_address_space() {
 }
 
 /**
- * @brief   Allocate memory from the top of the heap; this memory will never be released.
- *          This is useful eg. for allocating task stack memory
+ * @brief   Allocate memory from the top of the heap; this memory will not be released until the entire address space is released
+ *          This is useful eg. for allocating stack memory for tasks
  */
 void* TaskGroupData::alloc_static(size_t size) {
     // out of memory

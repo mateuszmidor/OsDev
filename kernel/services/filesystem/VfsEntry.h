@@ -41,7 +41,7 @@ public:
     virtual void close() = 0;	// end file manipulating session.
     virtual bool is_directory() const = 0;
     virtual bool is_mount_point() const { return false; }
-    virtual const kstd::string& get_name() const = 0;
+    virtual const cstd::string& get_name() const = 0;
 
     // [file interface]
     virtual u32 get_size() const = 0;

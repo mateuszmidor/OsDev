@@ -10,6 +10,7 @@
 #include "PageTables.h"
 
 using namespace memory;
+
 namespace multitasking {
 
 TaskGroupData    TaskFactory::kernel_task_group(PageTables::get_kernel_pml4_phys_addr(), "/",

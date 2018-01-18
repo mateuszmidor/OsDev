@@ -13,7 +13,7 @@ char buff[1024*1024];
 const char KERNEL_PROC_FILE[]   = "/proc/kmsg";
 const char ERROR_CANT_OPEN[]    = "dmesg: cant open /proc/kmsg\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point

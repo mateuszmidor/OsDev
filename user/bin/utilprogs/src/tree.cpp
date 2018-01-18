@@ -5,12 +5,12 @@
  * @author: Mateusz Midor
  */
 
+#include <bitset>
 #include "_start.h"
 #include "syscalls.h"
 #include "Cout.h"
-#include "StringUtils.h"
 #include "Vector.h"
-#include <bitset>
+#include "StringUtils.h"
 
 const char ERROR_PATH_NOT_EXISTS[]  = "tree: path doesnt exist\n";
 const char ERROR_OPENING_DIR[]      = "tree: cant open specified directory\n";
@@ -18,7 +18,8 @@ const char ERROR_NOT_DIRECTORY[]    = "tree: path is not directory\n";
 char buff[256];
 std::bitset<64> current_row_levels;
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 using namespace middlespace;
 
 

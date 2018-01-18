@@ -6,24 +6,24 @@
  */
 
 #include <array>
+#include "syscalls.h"
+#include "Cin.h"
 #include "Terminal.h"
 #include "StringUtils.h"
-#include "Cin.h"
-#include "syscalls.h"
 
 #include "cmds/cd.h"
 #include "cmds/cls.h"
 #include "cmds/specificelfrun.h"
 
-
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 using namespace cmds;
 using namespace middlespace;
 
 namespace terminal {
 
 
-Terminal::Terminal(const ustd::string& terminal_binary_name) : self_binary_name(terminal_binary_name), user_input(printer) {
+Terminal::Terminal(const string& terminal_binary_name) : self_binary_name(terminal_binary_name), user_input(printer) {
 }
 
 /**
@@ -116,7 +116,7 @@ void Terminal::install_internal_command(cmds::CmdBase* cmd, const string& cmd_na
 /**
  * @brief   Install commands that are exteral ELF files located in filesystem under "dir"
  */
-void Terminal::install_external_commands(const string& dir, const ustd::string& omit_name) {
+void Terminal::install_external_commands(const string& dir, const string& omit_name) {
     int fd = syscalls::open(dir.c_str());
 
     // no such directory
@@ -154,7 +154,7 @@ void Terminal::process_cmd(const string& cmd) {
     if (cmd.empty())
         return;
 
-    auto cmd_args = ustd::StringUtils::split_string(cmd, ' ');
+    auto cmd_args = StringUtils::split_string(cmd, ' ');
     bool run_in_background = false;
     if (cmd_args.back() == "&") {
         run_in_background = true;

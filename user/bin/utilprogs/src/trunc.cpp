@@ -18,7 +18,8 @@ const char ERROR_FILE_IS_DIR[]      = "trunc: specified filename points to a dir
 const char ERROR_FILE_NOT_EXISTS[]  = "trunc: specified file does not exist\n";
 const char ERROR_TRUNC_ERROR[]      = "trunc: file truncate error\n";
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point

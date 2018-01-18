@@ -11,19 +11,19 @@
 #include "Mouse.h"
 #include "Vga.h"
 
-using namespace ustd;
+using namespace cstd::ustd;
 using namespace middlespace;
 
 
-constexpr u16 screen_width_in_pixels = 720;
-constexpr u16 screen_height_in_pixels = 400;
+constexpr u16 screen_width_in_pixels    {720};
+constexpr u16 screen_height_in_pixels   {400};
 u16 screen_width_in_chars;
 u16 screen_height_in_chars;
 u8 char_width;
 u8 char_height;
 
-s16 mouse_x_in_pixels = screen_width_in_pixels  / 2;
-s16 mouse_y_in_pixels = screen_height_in_pixels / 2;
+s16 mouse_x_in_pixels   {screen_width_in_pixels  / 2};
+s16 mouse_y_in_pixels   {screen_height_in_pixels / 2};
 
 
 

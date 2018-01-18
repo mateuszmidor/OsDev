@@ -8,10 +8,11 @@
 #include "Fat32Utils.h"
 #include "StringUtils.h"
 
-using namespace kstd;
+using namespace cstd;
+
 namespace filesystem {
 
-bool Fat32Utils::fits_in_8_3(const kstd::string& filename) {
+bool Fat32Utils::fits_in_8_3(const cstd::string& filename) {
     if (filename.empty())
         return false;
 
@@ -45,7 +46,7 @@ string Fat32Utils::make_8_3_filename(const string& filename, u8 seq_num) {
  * @brief   Generate valid 8_3 filename
  * @param   seq_num Number used if need to shorten the name, eg for seq_num 1: "longfilename" -> "LONGI~1"
  */
-void Fat32Utils::make_8_3_filename(const kstd::string& filename, kstd::string& name, kstd::string& ext, u8 seq_num) {
+void Fat32Utils::make_8_3_filename(const string& filename, string& name, string& ext, u8 seq_num) {
     // split filename -> name:ext on '.', or use empty ext
     if (filename.rfind('.') == string::npos) {
         name = filename;

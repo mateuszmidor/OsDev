@@ -48,10 +48,10 @@ private:
     void config_interrupts();
     void setup_programmable_interrupt_controllers();
 
-    InterruptHandler interrupt_handler = [](u8, hardware::CpuState* state) { return state; };
-    ExceptionHandler exception_handler = [](u8, hardware::CpuState* state) { return state; };
+    InterruptHandler interrupt_handler      {[](u8, hardware::CpuState* state) { return state; }};
+    ExceptionHandler exception_handler      {[](u8, hardware::CpuState* state) { return state; }};
 
-    static const u8 SLAVE_PIC_IRQ_OFFSET = 8;
+    static const u8 SLAVE_PIC_IRQ_OFFSET    {8};
 };
 }   // namespace hardware
 

@@ -7,6 +7,6 @@
 
 #include "Allocator.h"
 
-namespace ustd {
+namespace cstd {
 
-} /* namespace ustd */
+} /* namespace cstd */

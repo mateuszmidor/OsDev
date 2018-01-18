@@ -9,7 +9,8 @@
 #include "Cout.h"
 #include "StringUtils.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 /**
  * @brief   Recursive Fibonacci; tests stack well
  */
@@ -30,7 +31,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int result = fib_rec(ustd::StringUtils::to_int(argv[1]));
+    int result = fib_rec(StringUtils::to_int(argv[1]));
     cout::format("Fibonacci result: %\n", result);
 
     return 0;

@@ -10,6 +10,7 @@
 
 #include "String.h"
 
+namespace cstd {
 namespace ustd {
 
 class cin {
@@ -21,5 +22,6 @@ private:
 };
 
 } /* namespace ustd */
+} /* namespace cstd */
 
 #endif /* USER_USTD_SRC_CIN_H_ */

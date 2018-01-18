@@ -32,8 +32,8 @@ public:
      * @example format("CPU: %", cpu_vendor_cstr);
      */
     template<typename ... Args>
-    void format(const ustd::string& fmt, Args ... args) {
-        const ustd::string& str = ustd::StringUtils::format(fmt, args...);
+    void format(const cstd::string& fmt, Args ... args) {
+        const cstd::string& str = cstd::StringUtils::format(fmt, args...);
         for (const char& c : str)
             putc(c);
         update_scroll_to_current_print_pos();
@@ -54,7 +54,7 @@ private:
     void redraw();
     void draw_text();
     void draw_scroll_bar();
-    void put_line_and_clear_remaining_space_at(u16 y, const ustd::string& line);
+    void put_line_and_clear_remaining_space_at(u16 y, const cstd::string& line);
     void update_scroll_to_current_print_pos();
     void update_cursor_to_current_print_pos();
     bool is_edit_line_visible();

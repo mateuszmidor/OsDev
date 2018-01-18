@@ -9,10 +9,11 @@
 #include "syscalls.h"
 #include "specificelfrun.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 namespace cmds {
 
-specificelfrun::specificelfrun(const ustd::string& elf_absolute_path) :
+specificelfrun::specificelfrun(const string& elf_absolute_path) :
         elf_path(elf_absolute_path){
 }
 

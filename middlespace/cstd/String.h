@@ -5,16 +5,18 @@
  * @author: Mateusz Midor
  */
 
-#ifndef USER_USTD_SRC_STRING_H_
-#define USER_USTD_SRC_STRING_H_
+#ifndef MIDDLESPACE_CSTD_SRC_STRING_H_
+#define MIDDLESPACE_CSTD_SRC_STRING_H_
 
 #include <string>
 #include "Allocator.h"
 
-namespace ustd {
+namespace cstd {
 
 using string = std::basic_string<char, std::char_traits<char>, Allocator<char>>;
 
-} /* namespace ustd */
+} /* namespace cstd */
 
-#endif /* USER_USTD_SRC_STRING_H_ */
+extern "C" size_t strlen ( const char * str );
+
+#endif /* MIDDLESPACE_CSTD_SRC_STRING_H_ */

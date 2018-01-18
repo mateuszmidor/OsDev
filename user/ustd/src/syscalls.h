@@ -8,13 +8,13 @@
 #ifndef ELFS_SYSCALLS_H_
 #define ELFS_SYSCALLS_H_
 
-#include <cstddef>      // size_t
-#include <sys/types.h>  // ssize_t
-
+#include "types.h"
 #include "SysCallNumbers.h"
 #include "Vfs.h"
 #include "posix/posix.h"
 
+namespace cstd {
+namespace ustd {
 namespace syscalls {
 
 using syscall_res = signed long long;
@@ -161,7 +161,8 @@ s64 task_lightweight_run(unsigned long long entry_point, unsigned long long arg 
 
 s64 task_wait(unsigned int task_id);
 } // namespace syscalls
-
+} // namespace ustd
+} // namespace cstd
 
 
 #endif /* ELFS_SYSCALLS_H_ */

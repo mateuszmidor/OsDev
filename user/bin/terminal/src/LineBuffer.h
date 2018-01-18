@@ -19,15 +19,15 @@ public:
     LineBuffer();
     u32 count() const;
     void clear();
-    void push_back(const ustd::string& line);
+    void push_back(const cstd::string& line);
     void putc(char c);
     void backspace();
     void newline();
-    const ustd::string& back() const;
-    const ustd::string& operator[](u32 index) const;
+    const cstd::string& back() const;
+    const cstd::string& operator[](u32 index) const;
 
 private:
-    ustd::vector<ustd::string> lines;
+    cstd::vector<cstd::string> lines;
 };
 } /* namespace terminal */
 

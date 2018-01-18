@@ -1,2 +1,3 @@
 middlespace. 
+Here the common standard library is defined 
 Here the structures and enums for userspace-kernelspace communication are defined.

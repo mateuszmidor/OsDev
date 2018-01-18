@@ -1,4 +1,13 @@
-ELF user programs are loaded into virtual memory 0..1GB as follows:
+ELF user programs are loaded into virtual memory as follows:
+
++---------------------+
+| -1 B                |
++---------------------+
+| kernel CODE + DATA  |
++---------------------+
+| -2 GB               |
++---------------------+
+| [unused]            |
 +---------------------+
 | 1 GB                |
 +---------------------|

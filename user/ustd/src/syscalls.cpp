@@ -7,6 +7,8 @@
 
 #include "syscalls.h"
 
+namespace cstd {
+namespace ustd {
 namespace syscalls {
 
 
@@ -253,4 +255,6 @@ s64 task_wait(unsigned int task_id) {
     return syscall(middlespace::SysCallNumbers::TASK_WAIT, (syscall_arg)task_id);
 }
 
+}
+}
 }

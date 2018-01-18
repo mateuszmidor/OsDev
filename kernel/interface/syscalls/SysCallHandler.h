@@ -57,7 +57,7 @@ public:
 
 private:
     multitasking::Task& current() const;
-    filesystem::UnixPath make_absolute_path(const kstd::string& path) const;
+    filesystem::UnixPath make_absolute_path(const cstd::string& path) const;
 };
 
 } /* namespace filesystem */

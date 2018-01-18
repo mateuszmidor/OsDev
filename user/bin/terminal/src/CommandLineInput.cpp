@@ -9,14 +9,17 @@
 #include "CommandLineInput.h"
 #include "syscalls.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 using namespace middlespace;
+
 namespace terminal {
+
 
 const char CommandLineInput::PROMPT[] {"> "};
 char CommandLineInput::cwd[256];
 
-CommandLineInput::CommandLineInput(ustd::Monitor<ScrollableScreenPrinter>& printer) : printer(printer) {
+CommandLineInput::CommandLineInput(Monitor<ScrollableScreenPrinter>& printer) : printer(printer) {
 }
 
 void CommandLineInput::prompt() {
@@ -43,7 +46,7 @@ void CommandLineInput::clear() {
     input.clear();
 }
 
-void CommandLineInput::install(const ustd::string& cmd_name) {
+void CommandLineInput::install(const string& cmd_name) {
     known_commands.push_back(cmd_name);
 }
 
@@ -110,7 +113,7 @@ void CommandLineInput::suggest_param(const string& param) {
  *          {true, name_list} if multiple commands found
  */
 std::tuple<bool, string> CommandLineInput::command_filter(const string& pattern) {
-    ustd::vector<string> found;
+    vector<string> found;
     for (const string& c : known_commands)
         if (c.find(pattern) == 0)
             found.push_back(c);
@@ -120,7 +123,7 @@ std::tuple<bool, string> CommandLineInput::command_filter(const string& pattern)
     else if (found.size() == 1)
         return std::make_tuple(false, found.back());
     else
-        return std::make_tuple(true, ustd::StringUtils::join_string(" ", found));
+        return std::make_tuple(true, StringUtils::join_string(" ", found));
 }
 
 std::tuple<bool, string, string> CommandLineInput::folder_filter(const string& cwd, const string& param) {
@@ -148,7 +151,7 @@ std::tuple<bool, string, string> CommandLineInput::folder_filter(const string& c
         return {};
     }
 
-    ustd::vector<string> found;
+    vector<string> found;
 
     // filter results
     int count = syscalls::enumerate(fd, entries, MAX_ENTRIES);
@@ -195,7 +198,7 @@ std::tuple<bool, string, string> CommandLineInput::folder_filter(const string& c
     else if (found.size() == 1)
         return std::make_tuple(false, found.back(), common_pattern);
     else
-        return std::make_tuple(true, ustd::StringUtils::join_string(" ", found), common_pattern);
+        return std::make_tuple(true, StringUtils::join_string(" ", found), common_pattern);
 
 }
 } /* namespace terminal */

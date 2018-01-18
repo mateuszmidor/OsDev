@@ -14,7 +14,7 @@ char buff[1024*1024];
 const char ERROR_NO_INPUT_FILE[]    = "cat: please specify file name\n";
 const char ERROR_OPENING_FILE[]     = "cat: cant open specified file\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point

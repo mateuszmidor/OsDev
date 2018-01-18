@@ -6,16 +6,16 @@
  */
 
 #include "cd.h"
-#include "ustd.h"
 #include "syscalls.h"
 #include "Cout.h"
 #include "StringUtils.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 
 namespace cmds {
 
-ustd::string cd::prev_cwd = "";
+string cd::prev_cwd = "";
 char cwd[256];
 
 void cd::run(const CmdArgs& args, bool run_in_bg) {

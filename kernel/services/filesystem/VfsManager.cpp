@@ -21,9 +21,11 @@
 #include "procfs/VfsMountInfoEntry.h"
 #include "ramfs/VfsRamFifoEntry.h"
 
-using namespace kstd;
+using namespace cstd;
 using namespace drivers;
+
 namespace filesystem {
+
 
 VfsManager VfsManager::_instance;
 
@@ -322,7 +324,7 @@ void VfsManager::install_volumes(AtaDevice& hdd, VfsRamDirectoryEntryPtr parent)
  * @return  Mountpoint if found, nullptr otherwise
  * @note    Path without mountpoint is unmodifiable as there is no manager that can modify it
  */
-VfsMountPointPtr VfsManager::get_mountpoint_path(kstd::string& path) const {
+VfsMountPointPtr VfsManager::get_mountpoint_path(string& path) const {
     if (!root) {
         klog.format("VfsManager::get_mountpoint_path: no root is installed\n");
         return nullptr;

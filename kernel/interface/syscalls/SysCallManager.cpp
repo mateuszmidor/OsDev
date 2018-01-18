@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "kstd.h"
 #include "Gdt.h"
 #include "KernelLog.h"
 #include "SysCallManager.h"

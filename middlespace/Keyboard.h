@@ -34,7 +34,7 @@ enum Key : u16 {
     LCtrl, LCtrl_Released,
     LAlt, LAlt_Released,
     F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
-    FUNCTIONAL = 0xFF00 // this is mask to dig out function keys
+    FUNCTIONAL = 0xFF00 // this is mask to dig out function keys: is_functional = key & Key::FUNCTIONAL
 };
 };
 

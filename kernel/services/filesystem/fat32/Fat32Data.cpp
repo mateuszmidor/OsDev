@@ -9,7 +9,8 @@
 #include "Fat32Data.h"
 #include "KernelLog.h"
 
-using namespace kstd;
+using namespace cstd;
+
 namespace filesystem {
 
 Fat32Data::Fat32Data(const drivers::AtaDevice& hdd) :

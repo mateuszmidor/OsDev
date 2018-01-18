@@ -3,7 +3,7 @@ There is a special kernel stack used when switching from user-space to kernel-sp
 For now there is only one such kernel stack, later a kernel-stack per task can be introduced.
 
 On interrupt (currenly executing user-space task):
-    -CPU automatically switches the stack to predefined TSS.rsp0 (kernel stack)
+    -CPU automatically switches the stack to predefined TSS.rsp0 (kernel stack), but keeps current address space (cr3)
     -pushes rip, cs, rflags, rsp, ss onto the kernel stack
     -enters interrupt gate routine
     
@@ -13,8 +13,10 @@ On interrupt (currenly executing kernel-space task):
     
 If task switch happens (currenly executing user-space task):
     -cpu state is copied from kernel stack to current task stack
+    -new address space (cr3) is loaded if different from current one
     -new cpu state is returned (pointer to the top of new stack where the cpu state was stored)
     
 If task switch happens (currenly executing kernel-space task):
     -cpu state is already on current task stack
+    -new address space (cr3) is loaded if different from current one
     -new cpu state is returned (pointer to the top of new stack where the cpu state was stored)

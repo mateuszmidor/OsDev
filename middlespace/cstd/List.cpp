@@ -7,6 +7,6 @@
 
 #include "List.h"
 
-namespace kstd {
+namespace cstd {
 
-} /* namespace kstd */
+} /* namespace cstd */

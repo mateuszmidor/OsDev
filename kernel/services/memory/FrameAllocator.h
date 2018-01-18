@@ -28,7 +28,7 @@ private:
     static size_t check_consecutive_unused_count_at(size_t start_index, size_t required_frames_count);
 
     static const    u32 FRAME_SIZE = 1024*1024 * 2; // 2MB pages
-    static bool     frame_allocated[]; // each bit maps 1 page
+    static bool     frame_allocated[]; // each entry maps 1 page
 };
 
 } /* namespace memory */

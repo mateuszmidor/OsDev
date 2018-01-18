@@ -57,20 +57,18 @@ struct Task {
     u32                 task_id;            // set by TaskManager when first adding the task
     TaskState           state;
     TaskEntryPoint2     entrypoint;         // covers TaskEntryPoint0 and TaskEntryPoint1
-    kstd::string        name;
+    cstd::string        name;
     u64                 arg1;
     u64                 arg2;
     bool                is_user_space;
     u64                 stack_addr;
     u64                 stack_size;
     hardware::CpuState* cpu_state;
-    TaskList            wait_queue;         // list of tasks waiting for this task to finish
-
+    TaskList            finish_wait_list;   // list of tasks waiting for this task to finish
     TaskGroupDataPtr    task_group_data;    // task group where this task belong
 
-
-    static constexpr u64    DEFAULT_KERNEL_STACK_SIZE   = 2 * 4096;
-    static constexpr u64    DEFAULT_USER_STACK_SIZE     = 4 * 4096;
+    static constexpr u64    DEFAULT_KERNEL_STACK_SIZE   {2 * 4096};
+    static constexpr u64    DEFAULT_USER_STACK_SIZE     {4 * 4096};
 };
 
 

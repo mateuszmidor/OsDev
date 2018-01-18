@@ -19,7 +19,7 @@ class Task;
 /**
  * @brief   This class represents a list of Tasks to hold the running/waiting tasks
  */
-class TaskList : public kstd::List<Task*> {
+class TaskList : public cstd::List<Task*> {
 public:
     bool contains(u32 task_id) const;
     Task* get_by_tid(u32 task_id);

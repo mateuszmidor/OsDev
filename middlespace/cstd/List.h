@@ -5,13 +5,13 @@
  * @author: Mateusz Midor
  */
 
-#ifndef KERNEL_KSTD_LIST_H_
-#define KERNEL_KSTD_LIST_H_
+#ifndef MIDDLESPACE_CSTD_SRC_LIST_H_
+#define MIDDLESPACE_CSTD_SRC_LIST_H_
 
 #include "types.h"
 
-namespace kstd {
-
+namespace cstd {
+namespace details {
 /**
  * @brief   List node that encapsulates "next" pointer and list item "data"
  */
@@ -23,13 +23,14 @@ public:
     T               data;
     ListNode<T>*    next;
 };
+}
 
 /**
  * @brief   Iterator interface for List
  */
 template <class T>
 class ListIterator  {
-    using ListItem = ListNode<T>;
+    using ListItem = details::ListNode<T>;
 
 public:
     ListIterator(ListItem* x) : current(x) {}
@@ -79,7 +80,7 @@ private:
 template <class T>
 class List {
 protected:
-    using ListItem = ListNode<T>;
+    using ListItem = details::ListNode<T>;
     ListItem*   m_head;
     u32         m_count;
 
@@ -213,6 +214,6 @@ public:
 
 };
 
-} /* namespace kstd */
+} /* namespace cstd */
 
-#endif /* KERNEL_KSTD_LIST_H_ */
+#endif /* MIDDLESPACE_CSTD_SRC_LIST_H_ */

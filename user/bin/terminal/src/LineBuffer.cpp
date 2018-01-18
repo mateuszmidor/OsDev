@@ -7,6 +7,8 @@
 
 #include "LineBuffer.h"
 
+using namespace cstd;
+
 namespace terminal {
 
 LineBuffer::LineBuffer() {
@@ -23,7 +25,7 @@ void LineBuffer::clear() {
     newline();
 }
 
-void LineBuffer::push_back(const ustd::string& line) {
+void LineBuffer::push_back(const string& line) {
     lines.push_back(line);
 }
 
@@ -43,11 +45,11 @@ void LineBuffer::newline() {
     lines.push_back("");
 }
 
-const ustd::string& LineBuffer::back() const {
+const string& LineBuffer::back() const {
     return lines.back();
 }
 
-const ustd::string& LineBuffer::operator[](u32 index) const {
+const string& LineBuffer::operator[](u32 index) const {
     return lines[index];
 }
 

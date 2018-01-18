@@ -15,7 +15,7 @@ namespace cmds {
 
 class CmdBase {
 public:
-    using CmdArgs = ustd::vector<ustd::string>;
+    using CmdArgs = cstd::vector<cstd::string>;
 
     CmdBase() {}
     virtual ~CmdBase() {}

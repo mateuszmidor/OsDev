@@ -5,11 +5,12 @@
  * @author: Mateusz Midor
  */
 
-#include "CommandCollection.h"
 #include <algorithm>
+#include "CommandCollection.h"
 
-using namespace ustd;
+using namespace cstd;
 using namespace cmds;
+
 namespace terminal {
 
 CmdBase* CommandCollection::get(const string& cmd_name) const {

@@ -10,6 +10,7 @@
 
 #include <atomic>
 
+namespace cstd {
 namespace ustd {
 
 class Mutex {
@@ -22,5 +23,6 @@ private:
 };
 
 } /* namespace ustd */
+} /* namespace cstd */
 
 #endif /* USER_USTD_SRC_MUTEX_H_ */

@@ -57,11 +57,11 @@ void Cursor::newline() {
 }
 
 void Cursor::set_visible(bool visible) {
-    syscalls::vga_cursor_setvisible(visible);
+    cstd::ustd::syscalls::vga_cursor_setvisible(visible);
 }
 
 void Cursor::update_vga_cursor() {
-    syscalls::vga_cursor_setpos(cursor_x, cursor_y);
+    cstd::ustd::syscalls::vga_cursor_setpos(cursor_x, cursor_y);
 }
 
 } /* namespace terminal */

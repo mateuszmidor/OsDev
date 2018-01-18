@@ -34,9 +34,9 @@ private:
     Task* find_next_runnable_task();
 
     TaskList                    tasks;
-    Task*                       idle            {nullptr};
+    Task*                       idle            {nullptr};      // idle is picked when there is no other runnable task available
     Task*                       current_task;
-    kstd::ListIterator<Task*>   next_task_it    {tasks.end()};
+    cstd::ListIterator<Task*>   next_task_it    {tasks.end()};
 
 };
 

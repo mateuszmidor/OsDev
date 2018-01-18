@@ -102,15 +102,16 @@ struct Elf64_Phdr {
     Elf64_Xword     p_align;        //  Alignment  of  segment
 } __attribute__((packed));
 
+
 /**
  * @brief   This class allows loading of Executable Linkable Format files
  * @see     https://www.uclibc.org/docs/elf-64-gen.pdf
  */
 class Elf64 {
 public:
-    static kstd::string to_string(void* elf64_data);
-    static kstd::string section_header_to_string(const char* section_names, Elf64_Shdr* section_header);
-    static kstd::string segment_header_to_string(Elf64_Phdr* segment_header);
+    static cstd::string to_string(void* elf64_data);
+    static cstd::string section_header_to_string(const char* section_names, Elf64_Shdr* section_header);
+    static cstd::string segment_header_to_string(Elf64_Phdr* segment_header);
     static bool is_elf64(const void* elf64_data);
     static u64 load_into_current_addressspace(void* elf64_data);
     static s64 get_available_memory_first_byte(void* elf64_data);

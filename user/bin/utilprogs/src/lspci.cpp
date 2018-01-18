@@ -14,7 +14,7 @@ char buff[1024];
 const char KERNEL_PROC_FILE[]   = "/proc/pciinfo";
 const char ERROR_CANT_OPEN[]    = "lspci: cant open /proc/pciinfo\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point

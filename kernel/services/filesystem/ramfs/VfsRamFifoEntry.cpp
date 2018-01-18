@@ -10,8 +10,8 @@
 #include "kstd.h"
 #include "VfsRamFifoEntry.h"
 
-
 using namespace multitasking;
+
 namespace filesystem {
 
 s64 VfsRamFifoEntry::read(void* data, u32 count) {
@@ -26,7 +26,7 @@ s64 VfsRamFifoEntry::read(void* data, u32 count) {
     if (count == 0)
         return 0;
 
-    u32 num_bytes_to_read = kstd::min(size, count);
+    u32 num_bytes_to_read = min(size, count);
     u32 num_bytes_remaining = size - num_bytes_to_read;
     memcpy(data, buff, num_bytes_to_read);
     memcpy(buff, buff + num_bytes_to_read, num_bytes_remaining);
@@ -51,7 +51,7 @@ s64 VfsRamFifoEntry::write(const void* data, u32 count) {
         return 0;
 
     u32 remaining_space = BUFF_SIZE - size;
-    u32 num_bytes_to_write = kstd::min(remaining_space, count);
+    u32 num_bytes_to_write = min(remaining_space, count);
     memcpy(buff + size, data, num_bytes_to_write);
     size += num_bytes_to_write;
 

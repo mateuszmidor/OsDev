@@ -150,7 +150,6 @@ WRITE FILE ENTRY
 #define SRC_FILESYSTEM_FAT32_VOLUMEFAT32_H_
 
 #include "KernelLog.h"
-#include "kstd.h"
 #include "AtaDriver.h"
 #include "Fat32Data.h"
 #include "Fat32Entry.h"
@@ -166,8 +165,8 @@ namespace filesystem {
 class VolumeFat32 {
 public:
     VolumeFat32(const drivers::AtaDevice& hdd, bool bootable, u32 partition_offset_in_sectors, u32 partition_size_in_sectors);
-    kstd::string get_label() const;
-    kstd::string get_type() const;
+    cstd::string get_label() const;
+    cstd::string get_type() const;
     u32 get_size_in_bytes() const;
     u32 get_used_space_in_bytes() const;
     u32 get_cluster_size_in_bytes() const;
@@ -178,9 +177,9 @@ public:
     bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const;
 
 private:
-    bool get_free_name_8_3(Fat32Entry& parent, const kstd::string& full_name, kstd::string& name_8_3) const;
+    bool get_free_name_8_3(Fat32Entry& parent, const cstd::string& full_name, cstd::string& name_8_3) const;
     Fat32Entry get_root_dentry() const;
-    Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const kstd::string& name) const;
+    Fat32Entry get_entry_for_name(Fat32Entry& parent_dir, const cstd::string& name) const;
     Fat32Entry empty_entry() const;
 
     const drivers::AtaDevice    hdd;

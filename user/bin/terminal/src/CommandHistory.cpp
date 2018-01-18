@@ -7,7 +7,8 @@
 
 #include "CommandHistory.h"
 
-using namespace ustd;
+using namespace cstd;
+
 namespace terminal {
 
 CommandHistory::CommandHistory() {

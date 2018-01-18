@@ -8,10 +8,12 @@
 #ifndef USER_USTD_SRC_REVERSEPOLISHNOTATION_H_
 #define USER_USTD_SRC_REVERSEPOLISHNOTATION_H_
 
-#include "Optional.h"
-#include "StringUtils.h"
 #include "Map.h"
+#include "String.h"
+#include "Vector.h"
+#include "Optional.h"
 
+namespace cstd {
 namespace ustd {
 namespace rpn {
 
@@ -110,5 +112,6 @@ private:
 
 } /* namespace rpn */
 } /* namespace ustd */
+} /* namespace cstd */
 
 #endif /* USER_USTD_SRC_REVERSEPOLISHNOTATION_H_ */

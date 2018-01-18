@@ -16,11 +16,11 @@ namespace cmds {
 
 class cls: public CmdBase {
 public:
-    cls(ustd::Monitor<terminal::ScrollableScreenPrinter>& printer) : printer(printer) {}
+    cls(cstd::ustd::Monitor<terminal::ScrollableScreenPrinter>& printer) : printer(printer) {}
     void run(const CmdArgs& args,bool run_in_bg = false);
 
 private:
-    ustd::Monitor<terminal::ScrollableScreenPrinter>&    printer;
+    cstd::ustd::Monitor<terminal::ScrollableScreenPrinter>&    printer;
 };
 
 } /* namespace cmds */

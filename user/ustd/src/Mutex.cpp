@@ -8,6 +8,7 @@
 #include "syscalls.h"
 #include "Mutex.h"
 
+namespace cstd {
 namespace ustd {
 
 /**
@@ -26,3 +27,4 @@ void Mutex::unlock() {
 }
 
 } /* namespace ustd */
+} /* namespace cstd */

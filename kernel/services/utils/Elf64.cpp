@@ -9,7 +9,8 @@
 #include "Elf64.h"
 #include "StringUtils.h"
 
-using namespace kstd;
+using namespace cstd;
+
 namespace utils {
 
 string Elf64::to_string(void* elf64_data) {
@@ -151,6 +152,7 @@ u64 Elf64::load_into_current_addressspace(void* elf64_data) {
     Elf64_Phdr* segment = (Elf64_Phdr*)((char*)elf64_data + hdr->e_phoff);
     for (auto i = 0; i < hdr->e_phnum; i++) {
         if (segment->p_type == 1) { // PT_LOAD
+            // TODO: add checks to ensure that segment->p_vaddr..segment->p_vaddr+segment->p_filesz stays out of kernel address space
             memset((u8*)segment->p_vaddr, 0, segment->p_memsz); // clear memory in case file size < memory size
             memcpy((u8*)segment->p_vaddr, (u8*)elf64_data + segment->p_offset, segment->p_filesz); // copy segment
         }

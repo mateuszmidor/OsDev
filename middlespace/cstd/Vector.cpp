@@ -1,12 +1,12 @@
 /**
  *   @file: Vector.cpp
  *
- *   @date: Nov 24, 2017
+ *   @date: Nov 23, 2017
  * @author: Mateusz Midor
  */
 
 #include "Vector.h"
 
-namespace kstd {
+namespace cstd {
 
-} /* namespace kstd */
+} /* namespace cstd */

@@ -10,6 +10,7 @@
 #include "KLockGuard.h"
 
 using namespace multitasking;
+
 namespace memory {
 
 MemoryManager MemoryManager::_instance;

@@ -13,7 +13,6 @@
 #include "Fat32Data.h"
 #include "Fat32Structs.h"
 #include "Fat32Table.h"
-#include "kstd.h"
 #include "KernelLog.h"
 
 namespace filesystem {
@@ -46,7 +45,7 @@ public:
     bool operator!() const;
     bool is_directory() const;
     u32 get_size() const;
-    const kstd::string& get_name() const;
+    const cstd::string& get_name() const;
 
     // [file interface]
     u32 read(void* data, u32 count);
@@ -64,12 +63,13 @@ private:
 
     // default constructor is private so Fat32Entry instance can only be obtained from VolumeFat32
     Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data);
-    Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const kstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 parent_data_cluster, u32 parent_index);
+    Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, const cstd::string& name, u32 size, bool is_directory, u32 data_cluster, u32 parent_data_cluster, u32 parent_index);
     bool update_entry_info_in_parent_dir();
     Fat32Entry make_fat32_entry(const DirectoryEntryFat32& dentry, Fat32ClusterChain parent_data, u32 parent_index) const;
     bool is_initialized() const;
 
     // [file interface]
+    // nothing.
 
     // [directory interface]
     EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
@@ -90,7 +90,7 @@ private:
     logging::KernelLog& klog;
 
     // entry meta data
-    kstd::string        name;
+    cstd::string        name;
     Fat32ClusterChain   data;
     bool                is_dir;
 

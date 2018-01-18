@@ -19,16 +19,16 @@ namespace filesystem {
 class UnixPath {
 public:
     UnixPath(const char path[]);
-    UnixPath(const kstd::string& path = "");
+    UnixPath(const cstd::string& path = "");
     bool is_valid_absolute_path() const;
     bool is_root_path() const;
-    operator kstd::string() const;
-    kstd::string extract_directory() const;
-    kstd::string extract_file_name() const;
+    operator cstd::string() const;
+    cstd::string extract_directory() const;
+    cstd::string extract_file_name() const;
 
 private:
-    kstd::string normalize(const kstd::string& path) const;
-    kstd::string path;
+    cstd::string normalize(const cstd::string& path) const;
+    cstd::string path;
 
 };
 

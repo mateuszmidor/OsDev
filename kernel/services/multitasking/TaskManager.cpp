@@ -83,7 +83,7 @@ void TaskManager::replace_current_task(Task* task) {
         return;
     }
 
-    task->wait_queue = std::move(current_task.wait_queue);
+    task->finish_wait_list = std::move(current_task.finish_wait_list);
     Task::exit();  // current task dies
 }
 
@@ -201,7 +201,7 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
  * @brief   Wake up tasks waiting for "task" to finish, then delete the "task" itself
  */
 void TaskManager::wakeup_waitings_and_delete_task(Task* task) {
-    unblock_tasks(task->wait_queue);
+    unblock_tasks(task->finish_wait_list);
     delete task;
 }
 
@@ -213,15 +213,16 @@ Task TaskManager::get_boot_task() const {
 }
 
 /**
- * @brief   Remove current task from running_queue until "task_id" is  terminated
+ * @brief   Block current task until "task_id" is  terminated
  * @return  True if "task_id" still alive, False if already terminated/not exists
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
+ * @note    To actually reschedule, one should call Task::yield() afterwards
  */
 bool TaskManager::wait(u32 task_id) {
     KLockGuard lock;    // prevent reschedule
 
     if (Task* t = scheduler.get_by_tid(task_id)) {
-        block_current_task(t->wait_queue);
+        block_current_task(t->finish_wait_list);
         return true;
     }
     return false;

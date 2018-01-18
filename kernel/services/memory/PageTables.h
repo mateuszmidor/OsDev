@@ -37,7 +37,7 @@ struct PageTables64 {
  */
 class PageTables {
 public:
-    static void map_and_load_kernel_address_space_at_memory_start();
+    static void map_and_load_kernel_address_space();
     static void map_elf_address_space(size_t pml4_phys_addr);
     static size_t get_kernel_pml4_phys_addr();
     static void load_address_space(size_t pml4_physical_address);

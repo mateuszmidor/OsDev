@@ -6,11 +6,14 @@
  */
 
 #include <errno.h>
+#include "kstd.h"
 #include "VfsPsInfoEntry.h"
 #include "TaskManager.h"
 #include "StringUtils.h"
 
+using namespace cstd;
 using namespace multitasking;
+
 namespace filesystem {
 
 bool VfsPsInfoEntry::open() {
@@ -45,24 +48,24 @@ s64 VfsPsInfoEntry::read(void* data, u32 count) {
         return 0;
 
     TaskManager& task_manager = TaskManager::instance();
-    kstd::string info;
+    string info;
     u32 i = 0;
     const TaskList& tasks = task_manager.get_tasks();
     for (const Task* task : tasks) {
-        info += kstd::StringUtils::format("%. [%] [%] %, tid %\n",
-                                            i,
-                                            task->is_user_space ? "USER" : "KERN",
-                                            task->state == TaskState::RUNNING ? "RUNNING" : "BLOCKED",
-                                            task->name,
-                                            task->task_id);
+        info += StringUtils::format("%. [%] [%] %, tid %\n",
+                                        i,
+                                        task->is_user_space ? "USER" : "KERN",
+                                        task->state == TaskState::RUNNING ? "RUNNING" : "BLOCKED",
+                                        task->name,
+                                        task->task_id);
         i++;
     }
 
     if (info.empty())
         return 0;
 
-    u32 read_start = kstd::max((s64)info.length() - count, 0);
-    u32 num_bytes_to_read = kstd::min(count, info.length());
+    u32 read_start = max((s64)info.length() - count, 0);
+    u32 num_bytes_to_read = min(count, info.length());
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 

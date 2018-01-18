@@ -8,8 +8,8 @@
 #include "MassStorageMsDos.h"
 
 using drivers::AtaDevice;
+using namespace cstd;
 
-using namespace kstd;
 namespace filesystem {
 
 MasterBootRecord MassStorageMsDos::read_mbr(const drivers::AtaDevice& hdd) {

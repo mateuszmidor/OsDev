@@ -8,7 +8,6 @@
 #ifndef SRC_FILESYSTEM_MASSSTORAGEMSDOS_H_
 #define SRC_FILESYSTEM_MASSSTORAGEMSDOS_H_
 
-#include "kstd.h"
 #include "AtaDriver.h"
 #include "VolumeFat32.h"
 
@@ -49,7 +48,7 @@ class MassStorageMsDos {
 public:
     static bool verify(const drivers::AtaDevice& hdd);
     MassStorageMsDos(const drivers::AtaDevice& hdd);
-    kstd::vector<VolumeFat32>& get_volumes();
+    cstd::vector<VolumeFat32>& get_volumes();
 
 private:
     static MasterBootRecord read_mbr(const drivers::AtaDevice& hdd);
@@ -58,7 +57,7 @@ private:
     static const u8 PARTITION_TYPE_NONE     = 0x00;
     static const u8 PARTITION_TYPE_FAT32    = 0x0B;
 
-    kstd::vector<VolumeFat32> volumes;  // in the future should be of type: shared_ptr<GenericVolume>
+    cstd::vector<VolumeFat32> volumes;  // in the future should be of type: shared_ptr<GenericVolume>
 };
 
 } /* namespace cpuexceptions */

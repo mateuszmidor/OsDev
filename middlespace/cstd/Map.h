@@ -5,17 +5,16 @@
  * @author: Mateusz Midor
  */
 
-#ifndef USER_USTD_SRC_MAP_H_
-#define USER_USTD_SRC_MAP_H_
+#ifndef MIDDLESPACE_CSTD_SRC_MAP_H_
+#define MIDDLESPACE_CSTD_SRC_MAP_H_
 
-#include <utility>
 #include <algorithm>
 #include "Vector.h"
 
-namespace ustd {
+namespace cstd {
 
 /**
- * @brief   Primitive and minimal Map with bad access time, to be replaced later
+ * @brief   Primitive and minimal Map with O(n) access time, to be replaced later
  */
 template <class K, class V>
 class Map {
@@ -45,6 +44,6 @@ private:
     KeyValues key_values;
 };
 
-} /* namespace ustd */
+} /* namespace cstd */
 
-#endif /* USER_USTD_SRC_MAP_H_ */
+#endif /* MIDDLESPACE_CSTD_SRC_MAP_H_ */

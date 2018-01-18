@@ -5,10 +5,11 @@
  * @author: Mateusz Midor
  */
 
-#include "VgaDevice.h"
 #include "syscalls.h"
+#include "VgaDevice.h"
 
 using namespace middlespace;
+namespace cstd {
 namespace ustd {
 
 
@@ -331,5 +332,5 @@ unsigned char VgaDevice::font_8x8[2048] {
 };
 
 } /* namespace ustd */
-
+} /* namespace cstd */
 

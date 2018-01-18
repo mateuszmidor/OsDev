@@ -9,7 +9,8 @@
 #include "syscalls.h"
 #include "Cout.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 
 
 const char ERROR_NO_INPUT_PATHS[]       = "cp: please specify src and dst paths\n";

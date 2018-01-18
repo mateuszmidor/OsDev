@@ -10,7 +10,9 @@
 #include "Cout.h"
 #include "ReversePolishNotation.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
+
 
 string build_formula(int argc, char* argv[]) {
     string formula;

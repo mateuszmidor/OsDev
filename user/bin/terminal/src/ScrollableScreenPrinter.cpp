@@ -5,10 +5,13 @@
  * @author: Mateusz Midor
  */
 
-#include "ScrollableScreenPrinter.h"
 #include "syscalls.h"
+#include "ScrollableScreenPrinter.h"
 
+using namespace cstd;
+using namespace cstd::ustd;
 using namespace middlespace;
+
 namespace terminal {
 
 ScrollableScreenPrinter::ScrollableScreenPrinter(u16 left, u16 top, u16 right, u16 bottom) :
@@ -142,12 +145,13 @@ void ScrollableScreenPrinter::draw_text() {
     // draw the lines
     for (u16 y = 0; y < lines_to_draw; y++)
         put_line_and_clear_remaining_space_at(y, lines[top_line + y]);
+
     // clear remaining lines
     for (u16 y = lines_to_draw; y < printable_area_height; y++)
         put_line_and_clear_remaining_space_at(y, "");
 }
 
-void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u16 y, const ustd::string& line) {
+void ScrollableScreenPrinter::put_line_and_clear_remaining_space_at(u16 y, const string& line) {
     u16 num_characters = line.size();
 
     // print the line

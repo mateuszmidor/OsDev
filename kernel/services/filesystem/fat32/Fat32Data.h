@@ -36,7 +36,7 @@ private:
     const drivers::AtaDevice    hdd;
     u32                         data_start_in_sectors   = 0;
     u16                         bytes_per_sector        = 0;
-    u8                          sectors_per_cluster      = 0;
+    u8                          sectors_per_cluster     = 0;
 
 };
 

@@ -8,7 +8,8 @@
 #include "UnixPath.h"
 #include "StringUtils.h"
 
-using namespace kstd;
+using namespace cstd;
+
 namespace filesystem {
 
 UnixPath::UnixPath(const char path[]) :
@@ -41,7 +42,7 @@ UnixPath::operator string() const {
  * @brief   Normalize complex unix-like path eg. /user/home/../data/./   into /user/home/data
  *          In generale, this method takes care of '.' and '..' in the path
  */
-string UnixPath::normalize(const kstd::string& path) const {
+string UnixPath::normalize(const cstd::string& path) const {
     if (path.empty())
         return {};
 

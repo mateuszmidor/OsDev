@@ -9,7 +9,8 @@
 #include "syscalls.h"
 #include "Cout.h"
 
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 
 namespace cmds {
 

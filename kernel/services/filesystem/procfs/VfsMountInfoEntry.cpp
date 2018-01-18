@@ -5,13 +5,16 @@
  * @author: Mateusz Midor
  */
 
-#include "VfsMountInfoEntry.h"
-#include "DriverManager.h"
-#include "fat32/MassStorageMsDos.h"
 #include <errno.h>
+#include "kstd.h"
+#include "DriverManager.h"
+#include "VfsMountInfoEntry.h"
+#include "fat32/MassStorageMsDos.h"
 
+using namespace cstd;
 using namespace drivers;
 using namespace filesystem;
+
 namespace filesystem {
 
 bool VfsMountInfoEntry::open() {
@@ -46,12 +49,12 @@ s64 VfsMountInfoEntry::read(void* data, u32 count) {
         return 0;
 
 
-    const kstd::string info = get_info();
+    const string info = get_info();
     if (info.empty())
         return 0;
 
-    u32 read_start = kstd::max((s64)info.length() - count, 0);
-    u32 num_bytes_to_read = kstd::min(count, info.length());
+    u32 read_start = max((s64)info.length() - count, 0);
+    u32 num_bytes_to_read = min(count, info.length());
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
@@ -59,8 +62,8 @@ s64 VfsMountInfoEntry::read(void* data, u32 count) {
     return num_bytes_to_read;
 }
 
-kstd::string VfsMountInfoEntry::get_info() const {
-    kstd::string result;
+string VfsMountInfoEntry::get_info() const {
+    string result;
     auto& driver_manager = DriverManager::instance();
 
     auto ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>();
@@ -91,23 +94,23 @@ kstd::string VfsMountInfoEntry::get_info() const {
     return result;
 }
 
-kstd::string VfsMountInfoEntry::get_hdd_info(drivers::AtaDevice& hdd) const {
+string VfsMountInfoEntry::get_hdd_info(drivers::AtaDevice& hdd) const {
     if (!MassStorageMsDos::verify(hdd)) {
         return "Not MBR formatted device\n";
     }
 
-    kstd::string result;
+    string result;
     MassStorageMsDos ms(hdd);
     for (auto& v : ms.get_volumes()) {
         u32 size_in_bytes = v.get_size_in_bytes();
         u32 used_space_in_bytes = v.get_used_space_in_bytes();
         u32 cluster_in_bytes = v.get_cluster_size_in_bytes();
-        result += kstd::StringUtils::format("  %, size: %MB, used: %KB (% clusters), cluster size: %B\n",
-                                            v.get_label(),
-                                            size_in_bytes / 1024 / 1024,
-                                            used_space_in_bytes / 1024,
-                                            used_space_in_bytes / cluster_in_bytes,
-                                            cluster_in_bytes);
+        result += StringUtils::format("  %, size: %MB, used: %KB (% clusters), cluster size: %B\n",
+                                        v.get_label(),
+                                        size_in_bytes / 1024 / 1024,
+                                        used_space_in_bytes / 1024,
+                                        used_space_in_bytes / cluster_in_bytes,
+                                        cluster_in_bytes);
     }
 
     return result;

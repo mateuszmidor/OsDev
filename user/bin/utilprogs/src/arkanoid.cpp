@@ -17,28 +17,15 @@
 #include "Monitor.h"
 #include "VgaDevice.h"
 #include "StringUtils.h"
+#include "Optional.h"
 
-
-using namespace ustd;
+using namespace cstd;
+using namespace cstd::ustd;
 using namespace middlespace;
 
 /**
  * UTILS PART
  */
-template <class T>
-class Optional {
-public:
-    Optional() : invalid(true) {}
-    Optional(const T& value) : value(value), invalid(false) {}
-    Optional(T&& value) : value(std::move(value)), invalid(false) {}
-    operator bool() const { return !invalid; }
-    bool operator!() const { return invalid; }
-    T value {};
-
-private:
-    bool invalid;
-};
-
 class Timer {
 public:
     Timer() {
@@ -135,9 +122,9 @@ public:
             return {};
 
         if (up_down_edge_collision_distance < left_right_edge_collision_distance)
-            return { {ray.normalized_dir.x, -ray.normalized_dir.y} };    // mirror Y
+            return { Vector2D{ray.normalized_dir.x, -ray.normalized_dir.y} };    // mirror Y
         else
-            return { {-ray.normalized_dir.x, ray.normalized_dir.y} };    // mirror X
+            return { Vector2D{-ray.normalized_dir.x, ray.normalized_dir.y} };    // mirror X
     }
 
     double x, y, w, h;

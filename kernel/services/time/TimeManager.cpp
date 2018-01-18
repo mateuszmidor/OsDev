@@ -9,6 +9,7 @@
 #include "KLockGuard.h"
 
 using namespace multitasking;
+
 namespace ktime {
 
 TimeManager TimeManager::_instance;

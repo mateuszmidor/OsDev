@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+#include "kstd.h"
 #include "Elf64.h"
 #include "TaskManager.h"
 #include "TaskFactory.h"
@@ -12,9 +13,10 @@
 #include "MemoryManager.h"
 #include "ElfRunner.h"
 
-using namespace kstd;
+using namespace cstd;
 using namespace memory;
 using namespace multitasking;
+
 namespace utils {
 
 /**
@@ -23,7 +25,7 @@ namespace utils {
  * @param   args User-provided cmd line arguments in kernel memory. This function finally free the "args"
  * @return  Error code on error, task id on success
  */
-s32 ElfRunner::run(u8* elf_data, kstd::vector<kstd::string>* args) const {
+s32 ElfRunner::run(u8* elf_data, vector<string>* args) const {
     if (!Elf64::is_elf64(elf_data))
         return -ENOEXEC; // not executable
 

@@ -23,7 +23,7 @@ u32 VfsFat32Entry::get_size() const {
     return entry.get_size();
 }
 
-const kstd::string& VfsFat32Entry::get_name() const {
+const cstd::string& VfsFat32Entry::get_name() const {
     return entry.get_name();
 }
 

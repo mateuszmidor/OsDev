@@ -15,7 +15,7 @@ namespace logging {
 class KernelLog {
 public:
     static KernelLog& instance();
-    const kstd::string& get_text() const;
+    const cstd::string& get_text() const;
     void clear();
 
     /**
@@ -23,14 +23,14 @@ public:
      * @example format("CPU: %", cpu_vendor_cstr);
      */
     template<typename ... Args>
-    void format(const kstd::string& fmt, Args ... args) {
-        log_str += kstd::StringUtils::format(fmt, args...);
+    void format(const cstd::string& fmt, Args ... args) {
+        log_str += cstd::StringUtils::format(fmt, args...);
     }
 
 private:
     KernelLog();
     static KernelLog _instance;
-    kstd::string log_str;
+    cstd::string log_str;
 };
 
 } // namespace logging

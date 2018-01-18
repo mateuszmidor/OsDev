@@ -18,7 +18,7 @@ const char ERROR_FILE_NOT_EXISTS[]  = "tail: specified file does not exist\n";
 const char ERROR_OPENING_FILE[]     = "tail: cant open specified file\n";
 const char ERROR_SEEK_ERROR[]       = "tail: file seek error\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point

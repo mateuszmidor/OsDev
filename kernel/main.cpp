@@ -37,7 +37,7 @@
 #include "Assert.h"
 #include "VgaPrinter.h"
 
-using namespace kstd;
+using namespace cstd;
 using namespace logging;
 using namespace drivers;
 using namespace cpuexceptions;
@@ -90,16 +90,17 @@ void print_phobos_loading() {
  * Keyboard handling
  */
 VfsEntryPtr keyboard_vfe;
+
+/**
+ * @brief   Interrupt handling. No blocking allowed
+ */
 void handle_key_press(const Key &key) {
-    if (key != Key::INVALID) {
+    // write key to /dev/keyboard RAM file
+    if (!keyboard_vfe)
+        keyboard_vfe = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
 
-        // write key to /dev/keyboard RAM file
-        if (!keyboard_vfe)
-            keyboard_vfe = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
-
-        if (keyboard_vfe) {
-            keyboard_vfe->write(&key, sizeof(key));
-        }
+    if (keyboard_vfe) {
+        keyboard_vfe->write(&key, sizeof(key));
     }
 }
 
@@ -108,12 +109,17 @@ void handle_key_press(const Key &key) {
  */
 middlespace::MouseState mouse_state;
 VfsEntryPtr mouse_vfe;
+
+/**
+ * @brief   Interrupt handling. No blocking allowed
+ */
 void update_mouse() {
     // write key to /dev/mouse RAM file
     if (!mouse_vfe)
         mouse_vfe = filesystem::VfsManager::instance().get_entry("/dev/mouse");
 
     if (mouse_vfe) {
+        mouse_vfe->truncate(0);
         mouse_vfe->write(&mouse_state, sizeof(mouse_state));
     }
 }
@@ -222,7 +228,7 @@ void task_init() {
 extern "C" void kmain(void *multiboot2_info_ptr) {
     // 0. activate the SSE so the kernel code compiled under -O2 can actually run, remap the kernel to higher half
     Sse::activate_legacy_sse();
-    PageTables::map_and_load_kernel_address_space_at_memory_start();
+    PageTables::map_and_load_kernel_address_space();
 
     // 1. initialize multiboot2 info from the data provided by the boot loader
     Multiboot2::initialize(multiboot2_info_ptr);

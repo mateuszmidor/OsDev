@@ -18,16 +18,16 @@ public:
     void run(const CmdArgs& args,bool run_in_bg = false);
 
 private:
-    void navigate_path(const ustd::string& path);
+    void navigate_path(const cstd::string& path);
     void cd_root();
     void navigate_back();
-    void cd_directory(const ustd::string& path);
-    ustd::string normalize_path(const ustd::string& path) const;
+    void cd_directory(const cstd::string& path);
+    cstd::string normalize_path(const cstd::string& path) const;
     void store_last_location();
-    ustd::string get_cwd() const;
+    cstd::string get_cwd() const;
 
     // for navigating "back". Maybe should be stored in TerminalEnv?
-    static ustd::string prev_cwd;
+    static cstd::string prev_cwd;
 };
 
 } /* namespace cmds */

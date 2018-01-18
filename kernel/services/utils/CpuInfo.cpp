@@ -11,9 +11,10 @@
 #include "DriverManager.h"
 #include "InterruptManager.h"
 
-using namespace kstd;
+using namespace cstd;
 using namespace drivers;
 using namespace logging;
+
 namespace utils {
 
 /**
@@ -84,7 +85,7 @@ u32 CpuInfo::get_peak_mhz() const {
 string CpuInfo::get_vendor() const {
     string result {"____________"};
 
-    __asm__ __volatile__ (
+    asm volatile (
          "movq %0, %%rdi;            "
          "xor %%rax, %%rax;          "
          "cpuid;                     "
@@ -156,7 +157,7 @@ CpuMultimediaExtensions CpuInfo::get_multimedia_extensions() const {
  */
 u64 CpuInfo::rtdsc() const {
     u32 hi, lo;
-    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
     return ((u64)lo | ((u64)hi << 32));
 }
 
@@ -164,7 +165,7 @@ u64 CpuInfo::rtdsc() const {
  * @see     https://gist.github.com/hi2p-perim/7855506
  */
 void CpuInfo::__cpuid(int* cpuinfo, int info) const {
-    __asm__ __volatile__(
+    asm volatile(
         "xchg %%ebx, %%edi;"
         "cpuid;"
         "xchg %%ebx, %%edi;"
@@ -179,7 +180,7 @@ void CpuInfo::__cpuid(int* cpuinfo, int info) const {
  */
 unsigned long long CpuInfo::_xgetbv(unsigned int index) const {
     unsigned int eax, edx;
-    __asm__ __volatile__(
+    asm volatile(
         "xgetbv;"
         : "=a" (eax), "=d"(edx)
         : "c" (index)

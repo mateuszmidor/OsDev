@@ -11,6 +11,9 @@
 
 namespace multitasking {
 
+/**
+ * @brief   Idle is the task that is picked when there is no other runnable task available
+ */
 void RoundRobinScheduler::set_idle_task(Task* task) {
     idle = task;
 }

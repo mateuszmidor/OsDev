@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
 
     int result = 0;
     for (int i = 1; i < argc; i++)
-        result += ustd::StringUtils::to_int(argv[i]);
+        result += cstd::StringUtils::to_int(argv[i]);
 
     return result;
 }

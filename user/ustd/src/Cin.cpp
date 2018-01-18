@@ -8,6 +8,7 @@
 #include "syscalls.h"
 #include "Cin.h"
 
+namespace cstd {
 namespace ustd {
 
 int cin::stdin_fd = -1;
@@ -31,3 +32,4 @@ string cin::readln() {
 }
 
 } /* namespace ustd */
+} /* namespace cstd */

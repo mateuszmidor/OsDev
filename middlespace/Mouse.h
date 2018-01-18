@@ -22,7 +22,7 @@ struct MouseState {
     s8      dx;             // X-Axis movement
     s8      dy;             // Y-Axis movement
     bool    buttons[3];     // see: MouseButton::LEFT, MouseButton::MIDDLE, MouseButton::RIGHT
-};;
+};
 
 } /* namespace middlespace */
 

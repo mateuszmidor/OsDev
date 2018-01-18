@@ -11,6 +11,7 @@
 #include <memory>
 #include "Mutex.h"
 
+namespace cstd {
 namespace ustd {
 
 /**
@@ -43,5 +44,6 @@ private:
 };
 
 } /* namespace ustd */
+} /* namespace cstd */
 
 #endif /* USER_USTD_SRC_MONITOR_H_ */

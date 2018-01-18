@@ -12,7 +12,7 @@
 #include "Mouse.h"
 #include "Vga.h"
 
-using namespace ustd;
+using namespace cstd::ustd;
 using namespace middlespace;
 
 

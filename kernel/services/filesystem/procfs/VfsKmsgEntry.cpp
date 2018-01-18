@@ -12,6 +12,7 @@
 #include "procfs/VfsKmsgEntry.h"
 
 using namespace logging;
+
 namespace filesystem {
 
 /**
@@ -30,12 +31,12 @@ s64 VfsKmsgEntry::read(void* data, u32 count) {
         return 0;
 
     KernelLog& klog = KernelLog::instance();
-    const kstd::string& log = klog.get_text();
+    const cstd::string& log = klog.get_text();
     if (log.empty())
         return 0;
 
-    u32 read_start = kstd::max((s64)log.length() - count, 0);
-    u32 num_bytes_to_read = kstd::min(count, log.length());
+    u32 read_start = max((s64)log.length() - count, 0);
+    u32 num_bytes_to_read = min(count, log.length());
 
     memcpy(data, log.c_str() + read_start, num_bytes_to_read);
 

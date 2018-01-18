@@ -23,7 +23,7 @@ enum class SysCallNumbers {
     FILE_STAT               = 4,
     FILE_SEEK               = 8,
     BRK                     = 12,
-    NANOSLEEP               = 35,
+//    NANOSLEEP               = 35, // nanosleeps requires rescheduling capability and is implemented by means of int 80h, see: Int80hDriver
     FILE_TRUNCATE           = 76,
     FILE_RENAME             = 82,
     FILE_MKDIR              = 83,

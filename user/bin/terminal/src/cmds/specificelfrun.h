@@ -14,12 +14,12 @@ namespace cmds {
 
 class specificelfrun: public CmdBase {
 public:
-    specificelfrun(const ustd::string& elf_absolute_path);
+    specificelfrun(const cstd::string& elf_absolute_path);
     ~specificelfrun() override {}
     void run(const CmdArgs& args, bool run_in_bg = false) override;
 
 private:
-    ustd::string elf_path;
+    cstd::string elf_path;
 };
 
 } /* namespace cmds */

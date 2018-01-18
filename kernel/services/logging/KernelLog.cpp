@@ -18,7 +18,7 @@ KernelLog& KernelLog::instance() {
     return _instance;
 }
 
-const kstd::string& KernelLog::get_text() const {
+const cstd::string& KernelLog::get_text() const {
     return log_str;
 }
 

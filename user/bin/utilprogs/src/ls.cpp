@@ -15,7 +15,8 @@ const char ERROR_PATH_NOT_EXISTS[]  = "ls: path doesnt exist\n";
 const char ERROR_OPENING_DIR[]      = "ls: cant open specified directory\n";
 char buff[256];
 
-using namespace ustd;
+
+using namespace cstd::ustd;
 using namespace middlespace;
 
 void print_file(const char name[], u32 size) {

@@ -10,6 +10,8 @@
 #include "VfsDateEntry.h"
 #include "StringUtils.h"
 
+using namespace cstd;
+
 namespace filesystem {
 
 
@@ -44,12 +46,12 @@ s64 VfsDateEntry::read(void* data, u32 count) {
     if (count == 0)
         return 0;
 
-    const kstd::string info = get_date_time();
+    const string info = get_date_time();
     if (info.empty())
         return 0;
 
-    u32 read_start = kstd::max((s64)info.length() - count, 0);
-    u32 num_bytes_to_read = kstd::min(count, info.length());
+    u32 read_start = max((s64)info.length() - count, 0);
+    u32 num_bytes_to_read = min(count, info.length());
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
@@ -57,7 +59,7 @@ s64 VfsDateEntry::read(void* data, u32 count) {
     return num_bytes_to_read;
 }
 
-kstd::string VfsDateEntry::get_date_time() const {
+string VfsDateEntry::get_date_time() const {
     u16 year    = read_byte(0x9);
     u16 month   = read_byte(0x8);
     u16 day     = read_byte(0x7);
@@ -65,7 +67,7 @@ kstd::string VfsDateEntry::get_date_time() const {
     u16 minute  = read_byte(0x2);
     u16 second  = read_byte(0x0);
 
-    return kstd::StringUtils::format("%-%-% %:%:% UTC\n", bin(year) + 2000, bin(month), bin(day), bin(hour), bin(minute), bin(second));
+    return StringUtils::format("%-%-% %:%:% UTC\n", bin(year) + 2000, bin(month), bin(day), bin(hour), bin(minute), bin(second));
 }
 
 u8 VfsDateEntry::read_byte(u8 offset) const {

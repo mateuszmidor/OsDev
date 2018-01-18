@@ -13,7 +13,7 @@
 const char ERROR_NO_INPUT_FILE[]    = "mkdir: please provide directory path\n";
 const char ERROR_CANT_CREATE[]      = "mkdir: cant create given directory\n";
 
-using namespace ustd;
+using namespace cstd::ustd;
 
 /**
  * @brief   Entry point
