@@ -7,7 +7,7 @@
 
 #include "AllocationPolicy.h"
 
-namespace memory {
+namespace cstd {
 
 /**
  * Constructor.
@@ -21,4 +21,4 @@ AllocationPolicy::AllocationPolicy(size_t first_byte, size_t last_byte) {
     available_memory_last_byte = last_byte;
 }
 
-} /* namespace memory */
+} /* namespace cstd */

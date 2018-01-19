@@ -10,7 +10,7 @@
 
 #include "types.h"
 
-namespace memory {
+namespace cstd {
 
 /**
  * @class   AllocationPolicy
@@ -36,6 +36,6 @@ protected:
     size_t available_memory_last_byte   = 0;    // last byte of physical memory available for allocation
 };
 
-} /* namespace memory */
+} /* namespace cstd */
 
 #endif /* SRC_MEMORY_ALLOCATIONPOLICY_H_ */

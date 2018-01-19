@@ -10,7 +10,7 @@
 
 #include "AllocationPolicy.h"
 
-namespace memory {
+namespace cstd {
 
 class BumpAllocationPolicy: public AllocationPolicy {
 public:
@@ -25,6 +25,6 @@ private:
     volatile size_t bump_addr;
 };
 
-} /* namespace memory */
+} /* namespace cstd */
 
 #endif /* SRC_MEMORY_BUMPALLOCATIONPOLICY_H_ */

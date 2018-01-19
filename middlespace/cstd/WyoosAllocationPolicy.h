@@ -11,7 +11,7 @@
 #include <new>
 #include "AllocationPolicy.h"
 
-namespace memory {
+namespace cstd {
 
 /**
  * @brief   This class represents an element of doubly-linked list of memory chunks
@@ -59,6 +59,6 @@ private:
     MemoryChunk* m_head;
 };
 
-} /* namespace memory */
+} /* namespace cstd */
 
 #endif /* KERNEL_MEMORY_WYOOSALLOCATIONPOLICY_H_ */

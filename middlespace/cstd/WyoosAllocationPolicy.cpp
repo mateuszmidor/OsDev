@@ -7,9 +7,7 @@
 
 #include "WyoosAllocationPolicy.h"
 
-//using namespace utils;
-
-namespace memory {
+namespace cstd {
 
 /**
  * Constructor.
@@ -18,8 +16,6 @@ namespace memory {
  */
 WyoosAllocationPolicy::WyoosAllocationPolicy(size_t first_byte, size_t last_byte):
         AllocationPolicy(first_byte, last_byte) {
-
-//    phobos_assert(last_byte - first_byte >= sizeof(MemoryChunk), "Not enough memory given to init WyoosAllocationPolicy.");
 
     // make entire available addresspace a big MemoryChunk
     m_head =  MemoryChunk::create(first_byte);
@@ -137,4 +133,4 @@ size_t WyoosAllocationPolicy::total_memory_in_bytes() {
     return available_memory_last_byte - available_memory_first_byte;
 }
 
-} /* namespace memory */
+} /* namespace cstd */

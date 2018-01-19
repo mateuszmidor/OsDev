@@ -7,7 +7,7 @@
 
 #include "BumpAllocationPolicy.h"
 
-namespace memory {
+namespace cstd {
 
 /**
  * Constructor.
@@ -47,4 +47,4 @@ size_t BumpAllocationPolicy::free_memory_in_bytes() {
 }
 
 
-} /* namespace memory */
+} /* namespace cstd */

@@ -50,7 +50,7 @@ private:
     MemoryManager() {};
 
     static MemoryManager _instance;
-    static AllocationPolicy* allocation_policy;
+    static cstd::AllocationPolicy* allocation_policy;
 };
 
 } /* namespace memory */

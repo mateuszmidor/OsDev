@@ -14,7 +14,7 @@ using namespace multitasking;
 namespace memory {
 
 MemoryManager MemoryManager::_instance;
-AllocationPolicy* MemoryManager::allocation_policy;
+cstd::AllocationPolicy* MemoryManager::allocation_policy;
 
 MemoryManager& MemoryManager::instance() {
     return _instance;
