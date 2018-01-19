@@ -16,6 +16,7 @@ namespace filesystem {
 /**
  * @brief   This class is VfsEntry implementation for an in-memory fifo (first in first out) file entry.
  * @note    It acts like FIFO; you always read the head of it, and write the tail, thus get_position() always return 0
+ *          It blocks reader if empty, it blocks writer if full.
  */
 class VfsRamFifoEntry: public VfsEntry {
 private:

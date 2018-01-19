@@ -95,11 +95,16 @@ VfsEntryPtr keyboard_vfe;
  * @brief   Interrupt handling. No blocking allowed
  */
 void handle_key_press(const Key &key) {
+    constexpr u32 MAX_KEYS_IN_FILE {10};
+
     // write key to /dev/keyboard RAM file
     if (!keyboard_vfe)
-        keyboard_vfe = filesystem::VfsManager::instance().get_entry("/dev/keyboard");
+        keyboard_vfe = vfs_manager.get_entry("/dev/keyboard");
 
     if (keyboard_vfe) {
+        // dont let the keyboard file overflow and block (we are in interrupt not task context)
+        if (keyboard_vfe->get_size() > sizeof(key) * MAX_KEYS_IN_FILE)
+            keyboard_vfe->truncate(sizeof(key) * MAX_KEYS_IN_FILE);
         keyboard_vfe->write(&key, sizeof(key));
     }
 }
@@ -114,12 +119,16 @@ VfsEntryPtr mouse_vfe;
  * @brief   Interrupt handling. No blocking allowed
  */
 void update_mouse() {
+    constexpr u32 MAX_STATES_IN_FILE {10};
+
     // write key to /dev/mouse RAM file
     if (!mouse_vfe)
-        mouse_vfe = filesystem::VfsManager::instance().get_entry("/dev/mouse");
+        mouse_vfe = vfs_manager.get_entry("/dev/mouse");
 
     if (mouse_vfe) {
-        mouse_vfe->truncate(0);
+        // dont let the mouse state file overflow and block (we are in interrupt not task context)
+        if (mouse_vfe->get_size() > sizeof(mouse_state) * MAX_STATES_IN_FILE)
+            mouse_vfe->truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
         mouse_vfe->write(&mouse_state, sizeof(mouse_state));
     }
 }
