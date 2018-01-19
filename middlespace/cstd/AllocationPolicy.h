@@ -21,6 +21,9 @@ public:
     AllocationPolicy(size_t memory_start, size_t memory_end);   // continuous memory range to be used
     virtual ~AllocationPolicy() = default;
 
+    // extend memory pool available  for allocation
+    virtual void extend_memory_pool(size_t num_bytes) = 0;
+
     // alloc a block of memory and return its address;
     virtual void* alloc_bytes(size_t size) = 0;
 

@@ -23,6 +23,31 @@ WyoosAllocationPolicy::WyoosAllocationPolicy(size_t first_byte, size_t last_byte
 }
 
 /**
+ * @brief   Extend available memory pool by "num_bytes"
+ */
+void WyoosAllocationPolicy::extend_memory_pool(size_t num_bytes) {
+    available_memory_last_byte += num_bytes;
+
+    // add bytes to the last memory chunk
+    // find last memory chunk
+    MemoryChunk* curr = m_head;
+    while (curr->next) {
+        curr = curr->next;
+    }
+
+    // curr points to the very last MemoryChunk
+    // if allocated - needs to be enlarged and split
+    if (curr->is_allocated()) {
+        size_t allocated_size = curr->size;
+        curr->size += num_bytes;
+        split_chunk_if_worthwhile(curr, allocated_size);
+    }
+    // if not allocated - needs just to be enlarged
+    else
+        curr->size += num_bytes;
+}
+
+/**
  * @brief   Find and alloc MemoryChunk that can accomodate "size" bytes
  */
 void* WyoosAllocationPolicy::alloc_bytes(size_t size) {
@@ -50,7 +75,7 @@ void* WyoosAllocationPolicy::alloc_bytes(size_t size) {
  */
 void WyoosAllocationPolicy::split_chunk_if_worthwhile(MemoryChunk* c, size_t chop_size) {
     const size_t HDR_SIZE = sizeof(MemoryChunk);
-    const size_t MIN_SIZE = HDR_SIZE + 1;    // so we would be able to alloc at least 1 byte
+    const ssize_t MIN_SIZE = HDR_SIZE + 1;    // so we would be able to alloc at least 1 byte
     const ssize_t REMAINING_SIZE = c->size - chop_size;
 
     // dont split the chunk as the resulting second chunk would be too small

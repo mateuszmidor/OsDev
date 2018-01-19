@@ -16,6 +16,7 @@ class BumpAllocationPolicy: public AllocationPolicy {
 public:
     BumpAllocationPolicy(size_t available_memory_start, size_t available_memory_end);
 
+    void extend_memory_pool(size_t num_bytes) override;
     void* alloc_bytes(size_t size) override;
     void free_bytes(void* address) override;
     size_t free_memory_in_bytes() override;

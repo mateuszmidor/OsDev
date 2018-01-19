@@ -47,6 +47,7 @@ class WyoosAllocationPolicy: public AllocationPolicy {
 public:
     WyoosAllocationPolicy(size_t first_byte, size_t last_byte);
 
+    void extend_memory_pool(size_t num_bytes) override;
     void* alloc_bytes(size_t size) override;
     void free_bytes(void* address) override;
     size_t free_memory_in_bytes() override;

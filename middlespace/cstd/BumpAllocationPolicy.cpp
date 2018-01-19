@@ -20,6 +20,13 @@ BumpAllocationPolicy::BumpAllocationPolicy(size_t first_byte, size_t last_byte):
 }
 
 /**
+ * @brief   Extend available memory pool by "num_bytes"
+ */
+void BumpAllocationPolicy::extend_memory_pool(size_t num_bytes) {
+    available_memory_last_byte += num_bytes;
+}
+
+/**
  * @brief   Allocate a physical memory chunk that can hold "size" bytes, if enough memory is available.
  *          Corresponding physical memory frames will be allocated by OnPageFault handler.
  * @return  Allocated memory chunk physical address on success, nullptr on failure
