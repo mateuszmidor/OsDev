@@ -5,7 +5,6 @@
  * @author: Mateusz Midor
  */
 
-#include "FrameAllocator.h"
 #include "BumpAllocationPolicy.h"
 
 namespace memory {

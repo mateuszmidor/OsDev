@@ -340,7 +340,7 @@ private:
         MouseState ms;
         while (syscalls::read(fd, &ms, sizeof(MouseState)) == sizeof(MouseState) && !game->terminated) {
             auto gms = game->paddle.get();
-            gms->x = clamp(gms->x + ms.dx * 2, 0, game->vga.width - Paddle::PADDLE_WIDTH);
+            gms->x = clamp(gms->x + ms.dx, 0, game->vga.width - Paddle::PADDLE_WIDTH);
         }
 
         syscalls::close(fd);
