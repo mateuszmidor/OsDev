@@ -13,6 +13,7 @@
 #include "_start.h"
 #include "syscalls.h"
 #include "Cout.h"
+#include "Timer.h"
 #include "Mouse.h"
 #include "Monitor.h"
 #include "VgaDevice.h"
@@ -22,28 +23,6 @@
 using namespace cstd;
 using namespace cstd::ustd;
 using namespace middlespace;
-
-/**
- * UTILS PART
- */
-class Timer {
-public:
-    Timer() {
-        syscalls::clock_gettime(CLOCK_MONOTONIC, &last_time);
-    }
-
-    double get_delta_seconds() {
-        constexpr double NSEC = 1000*1000*1000;
-        timespec ts;
-        syscalls::clock_gettime(CLOCK_MONOTONIC, &ts);
-        double dt = (ts.tv_sec - last_time.tv_sec) + (ts.tv_nsec - last_time.tv_nsec) / NSEC;
-        last_time = ts;
-        return dt;
-    }
-
-private:
-    timespec    last_time;
-};
 
 /**
  * MATH PART
