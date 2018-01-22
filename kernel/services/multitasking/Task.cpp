@@ -71,7 +71,11 @@ void Task::idle() {
 }
 
 void Task::yield() {
-    asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP), "b"(0));
+    msleep(0);
+}
+
+void Task::msleep(u64 milliseconds) {
+    asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::NANOSLEEP), "b"(milliseconds*1000*1000));
 }
 
 void Task::exit(u64 result_code) {

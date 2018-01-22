@@ -177,48 +177,64 @@ void corner_counter() {
  * Terminal runner
  */
 void run_userspace_terminal() {
-    printer.print("  loading terminal");
+    // run in loop so terminal restarts in case of crash
+    while (true) {
+        printer.print("  loading terminal");
 
-    auto vga_drv = driver_manager.get_driver<VgaDriver>();
-    if (!vga_drv) {
-        printer.println("VGA driver not installed. No terminal will be available", EgaColor::Red);
-        return;
+        VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
+        if (!e) {
+            printer.println(" /BIN/TERMINAL doesnt exist. System Halted", EgaColor::Red);
+            utils::phobos_halt();
+        }
+        if (e->is_directory()) {
+            printer.println(" /BIN/TERMINAL is directory? System Halted", EgaColor::Red);
+            utils::phobos_halt();
+        }
+
+        // terminal loading animation start
+        auto on_expire = [] { printer.print("."); };
+        auto timer_id = time_manager.emplace(1000, 1000, on_expire);
+
+        // read elf file data
+        u32 size = e->get_size();
+        u8* elf_data = new u8[size];
+        e->read(elf_data, size);
+
+        // run the elf
+        utils::ElfRunner runner;
+        s32 task_id = runner.run(elf_data, new vector<string> { "terminal" });
+        switch (task_id) {
+        case -ENOMEM:
+            printer.println(" Terminal run failed - no enough memory. System Halted.", EgaColor::Red);
+            utils::phobos_halt();
+            break;
+
+        case -ENOEXEC:
+            printer.println(" Terminal run failed - not an executable. System Halted.", EgaColor::Red);
+            utils::phobos_halt();
+            break;
+
+        case -EPERM:
+            printer.println(" Terminal run failed - manager didnt allow. System Halted.", EgaColor::Red);
+            utils::phobos_halt();
+            break;
+
+        default:
+            break;
+        }
+
+        // terminal loading animation stop
+        time_manager.cancel(timer_id);
+
+        // wait till terminal dies
+        task_manager.wait(task_id);
+        Task::yield();
+
+        // we should never get here unless terminal crash
+        printer.clear_screen();
+        printer.println("Terminal crashed. Check kernel logs");
+        Task::msleep(3000);
     }
-
-    VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
-    if (!e) {
-        printer.println("/BIN/TERMINAL doesnt exist. No terminal will be available", EgaColor::Red);
-        return;
-    }
-    if (e->is_directory()) {
-        printer.println("/BIN/TERMINAL is directory? No terminal will be available", EgaColor::Red);
-        return;
-    }
-
-    // terminal loading animation start
-    auto on_expire = [] { printer.print("."); };
-    auto timer_id = time_manager.emplace(1000, 1000, on_expire);
-
-    // read elf file data
-    u32 size = e->get_size();
-    u8* elf_data = new u8[size];
-    e->read(elf_data, size);
-
-    // run the elf
-    utils::ElfRunner runner;
-    s32 task_id = runner.run(elf_data, new vector<string> { "terminal" });
-    utils::phobos_assert(task_id > 0, "Terminal run failed.");
-
-    // terminal loading animation stop
-    time_manager.cancel(timer_id);
-
-    // wait till terminal dies
-    task_manager.wait(task_id);
-    Task::yield();
-
-    // we should never get here unless terminal crash
-    vga_drv->clear_screen();
-    vga_drv->print(0, 1, "Terminal crashed");
 }
 
 /**

@@ -42,6 +42,7 @@ struct Task {
 
     static void idle();
     static void yield();
+    static void msleep(u64 milliseconds);
     static void exit(u64 result_code = 0);
     static void exit_group(u64 result_code = 0);
 

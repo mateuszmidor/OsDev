@@ -16,6 +16,12 @@ VgaPrinter::VgaPrinter(drivers::VgaDriver& vga) : vga(vga) {
     vga.set_cursor_visible(false);
 }
 
+void VgaPrinter::clear_screen() {
+    vga.clear_screen();
+    current_col = 0;
+    current_row = 0;
+}
+
 void VgaPrinter::print(const char s[], middlespace::EgaColor c) {
     vga.print(current_col, current_row, s, c);
     current_col+= strlen(s);

@@ -13,6 +13,7 @@
 namespace utils {
 
 void phobos_assert(bool condition, const char* msg);
+void phobos_halt();
 
 } /* namespace utils */
 

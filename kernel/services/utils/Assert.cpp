@@ -30,6 +30,10 @@ void phobos_assert(bool condition, const char* msg) {
     }
 
     // halt the kernel
+    phobos_halt();
+}
+
+void phobos_halt() {
     asm volatile ("cli; hlt");
 }
 } /* namespace utils */

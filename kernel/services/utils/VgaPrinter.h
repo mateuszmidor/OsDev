@@ -16,6 +16,7 @@ namespace utils {
 class VgaPrinter {
 public:
     VgaPrinter(drivers::VgaDriver& vga);
+    void clear_screen();
     void print(const char s[], middlespace::EgaColor c = middlespace::EgaColor::Yellow);
     void println(const char s[], middlespace::EgaColor c = middlespace::EgaColor::Yellow);
 
