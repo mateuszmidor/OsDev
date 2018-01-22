@@ -5,9 +5,10 @@
  * @author: Mateusz Midor
  */
 
+#include "syscalls.h"
+#include "Cout.h"
 #include "StringUtils.h"
 #include "CommandLineInput.h"
-#include "syscalls.h"
 
 using namespace cstd;
 using namespace cstd::ustd;
@@ -19,27 +20,25 @@ namespace terminal {
 const char CommandLineInput::PROMPT[] {"> "};
 char CommandLineInput::cwd[256];
 
-CommandLineInput::CommandLineInput(Monitor<ScrollableScreenPrinter>& printer) : printer(printer) {
-}
 
 void CommandLineInput::prompt() {
     char cwd[256];
     if (syscalls::getcwd(cwd, 255) < 0)
-        printer.get()->format("[UNKNOWN CWD] %", PROMPT);
+        cout::format("[UNKNOWN CWD] %", PROMPT);
     else
-        printer.get()->format("% %", cwd, PROMPT);
+        cout::format("% %", cwd, PROMPT);
 }
 
 void CommandLineInput::backspace() {
     if (!input.empty()) {
         input.pop_back();
-        printer.get()->format('\x08');    // backspace
+        cout::print("\x08");    // backspace
     }
 }
 
 void CommandLineInput::putc(char c) {
     input.push_back(c);
-    printer.get()->format(c);
+    cout::print(&c, 1);
 }
 
 void CommandLineInput::clear() {
@@ -61,7 +60,7 @@ void CommandLineInput::help_me_out() {
     if (input.find(' ') == string::npos) { // command not given, suggest command
         std::tie(multiple_results, filter_result) = command_filter(input);
         if (multiple_results)
-            printer.get()->format("\n  % \n\n% %%", filter_result, cwd, PROMPT, input);
+            cout::format("\n  % \n\n% %%", filter_result, cwd, PROMPT, input);
         else
             suggest_cmd(filter_result);
     }
@@ -70,7 +69,7 @@ void CommandLineInput::help_me_out() {
         string common_pattern;
         std::tie(multiple_results, filter_result, common_pattern) = folder_filter(cwd, second_segment);
         if (multiple_results)
-            printer.get()->format("\n  % \n% %%", filter_result, cwd, PROMPT, input);
+            cout::format("\n  % \n% %%", filter_result, cwd, PROMPT, input);
       //  else
         if (!common_pattern.empty())
             suggest_param(common_pattern);
@@ -81,9 +80,9 @@ void CommandLineInput::help_me_out() {
  */
 void CommandLineInput::suggest_cmd(const string& cmd) {
     for (s16 i = input.length()-1; i >= 0 ; i--)
-        printer.get()->format('\x08');    // backspace
+        cout::print("\x08");    // backspace
 
-    printer.get()->format(cmd);
+    cout::format(cmd);
     input =  cmd;
 }
 
@@ -98,11 +97,11 @@ void CommandLineInput::suggest_param(const string& param) {
         if (input[i] == '/')    // path break (beginnig of path segment)
             break;
 
-        printer.get()->format('\x08');    // backspace
+        cout::print("\x08");    // backspace
         input.pop_back();
     }
 
-    printer.get()->format(param);
+    cout::format(param);
     input += param;
 }
 

@@ -8,11 +8,13 @@
 #include <array>
 #include "syscalls.h"
 #include "Cin.h"
+#include "Cout.h"
 #include "Terminal.h"
 #include "StringUtils.h"
 
 #include "cmds/cd.h"
 #include "cmds/cls.h"
+#include "cmds/timeit.h"
 #include "cmds/specificelfrun.h"
 
 using namespace cstd;
@@ -23,7 +25,7 @@ using namespace middlespace;
 namespace terminal {
 
 
-Terminal::Terminal(const string& terminal_binary_name) : self_binary_name(terminal_binary_name), user_input(printer) {
+Terminal::Terminal(const string& terminal_binary_name) : self_binary_name(terminal_binary_name) {
 }
 
 /**
@@ -45,7 +47,7 @@ void Terminal::run() {
         process_cmd(cmd);
     };
 
-    // terminal never exits so no need to wait for its slave threads
+    // terminal never exits (unless crash) so no need to wait for its slave threads
 }
 
 bool Terminal::init() {
@@ -72,6 +74,7 @@ bool Terminal::init() {
 
     // install internal commands
     install_internal_command(new cmds::cd, "cd");
+    install_internal_command(new cmds::timeit([this](const vector<string>& args) { this->run_cmd(args, false); }), "time");
     install_internal_command(new cmds::cls(printer), "cls");
 
     // install external commands that are in form of separate ELF programs, located under given directory
@@ -80,7 +83,7 @@ bool Terminal::init() {
     // start a thread reading /dev/keyboard
     syscalls::task_lightweight_run((unsigned long long)key_processor_thread, (unsigned long long)this, "terminal_key_processor");
 
-    // start a thread printing /dev/stdout to the screen
+    // start a thread printing /dev/stdout to the screen. From now on cout::print works
     syscalls::task_lightweight_run((unsigned long long)stdout_printer_thread, (unsigned long long)this, "terminal_stdout_printer");
 
     return true;
@@ -90,19 +93,18 @@ bool Terminal::init() {
  * @brief   Setup screen printing for current resolution, print welcome message
  */
 void Terminal::setup_screen_and_print_welcome() {
-    // setup
+    // setup screen and printer
     u16 vga_width;
     u16 vga_height;
     syscalls::vga_get_width_height(&vga_width, &vga_height);
     printer.reset(std::make_shared<ScrollableScreenPrinter>(0, 0, vga_width - 1, vga_height - 1));
 
-    // print
+    // print welcome message
     string line(vga_width - 1, '=');
-    auto p = printer.get();
-    p->format(line);
-    p->format("Welcome to PhobOS Terminal.\nUse <TAB> for autocompletion, '&' for running tasks in background\n");
-    p->format(line);
-    p->format("\n\n");
+    cout::print(line);
+    cout::print("Welcome to PhobOS Terminal.\nUse <TAB> for autocompletion, '&' for running tasks in background\n");
+    cout::print(line);
+    cout::print("\n\n");
 }
 
 /**
@@ -121,7 +123,7 @@ void Terminal::install_external_commands(const string& dir, const string& omit_n
 
     // no such directory
     if (fd < 0) {
-        printer.get()->format("Terminal: cant open directory %\n", dir);
+        cout::format("Terminal: cant open directory %\n", dir);
         return;
     }
 
@@ -156,18 +158,33 @@ void Terminal::process_cmd(const string& cmd) {
 
     auto cmd_args = StringUtils::split_string(cmd, ' ');
     bool run_in_background = false;
+
     if (cmd_args.back() == "&") {
         run_in_background = true;
         cmd_args.pop_back();
     }
 
-    if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
-        task->run(cmd_args, run_in_background);
+    if (run_cmd(cmd_args, run_in_background)) {
         cmd_history.append(cmd);
         cmd_history.set_to_latest();
     }
-    else
-        printer.get()->format("Unknown command: '%'\n", cmd);
+}
+
+/**
+ * @brief   Run a command using cmd_args, and return if succeeded
+ */
+bool Terminal::run_cmd(const vector<string>& cmd_args, bool run_in_bg) {
+    if (cmd_args.empty())
+        return false;
+
+    if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
+        task->run(cmd_args, run_in_bg);
+        return true;
+    }
+    else {
+        cout::format("Unknown command: '%'\n", cmd_args[0]);
+        return false;
+    }
 }
 
 /**

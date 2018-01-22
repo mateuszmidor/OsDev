@@ -13,6 +13,7 @@
 #include "CommandHistory.h"
 #include "CommandCollection.h"
 #include "CommandLineInput.h"
+#include "ScrollableScreenPrinter.h"
 
 namespace terminal {
 
@@ -28,6 +29,7 @@ private:
     void install_external_commands(const cstd::string& dir, const cstd::string& omit_name);
     void on_key_down(middlespace::Key key);
     void process_cmd(const cstd::string& cmd);
+    bool run_cmd(const cstd::vector<cstd::string>& cmd_args, bool run_in_bg);
 
     static void stdout_printer_thread(Terminal* term);
     static void key_processor_thread(Terminal* term);

@@ -9,15 +9,11 @@
 #define ELFS_TERMINAL_COMMANDLINEINPUT_H_
 
 #include <tuple>
-#include "Monitor.h"
-#include "ScrollableScreenPrinter.h"
 
 namespace terminal {
 
 class CommandLineInput {
 public:
-    CommandLineInput(cstd::ustd::Monitor<ScrollableScreenPrinter>& printer);
-
     void prompt();
     void backspace();
     void putc(char c);
@@ -28,8 +24,6 @@ public:
     void suggest_cmd(const cstd::string& cmd);
     void suggest_param(const cstd::string& param);
     void help_me_out();
-
-    cstd::ustd::Monitor<ScrollableScreenPrinter>&    printer;
 
 private:
     std::tuple<bool, cstd::string> command_filter(const cstd::string& pattern);
