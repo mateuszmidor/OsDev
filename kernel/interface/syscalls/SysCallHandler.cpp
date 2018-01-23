@@ -465,7 +465,7 @@ void SysCallHandler::vga_cursor_setpos(u8 x, u8 y) {
 u16 SysCallHandler::vga_get_char_at(u8 x, u8 y) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
-        return (u16)drv->at(x, y);
+        return (u16)drv->char_at(x, y);
     }
     return 0;
 }
@@ -474,7 +474,7 @@ void SysCallHandler::vga_set_char_at(u8 x, u8 y, u16 c) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
         middlespace::VgaCharacter* vc = (middlespace::VgaCharacter*)&c;
-        drv->at(x, y) = *vc;
+        drv->char_at(x, y) = *vc;
     }
 }
 
@@ -488,7 +488,7 @@ void SysCallHandler::vga_flush_char_buffer(const u16* buff) {
 void SysCallHandler::vga_flush_video_buffer(const u8* buff) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
-        drv->flush_video_buffer((middlespace::EgaColor*)buff);
+        drv->flush_video_buffer((middlespace::EgaColor64*)buff);
     }
 }
 
@@ -522,7 +522,7 @@ void SysCallHandler::vga_exit_graphics_mode() {
 void SysCallHandler::vga_set_pixel_at(u16 x, u16 y, u8 c) {
     DriverManager& mngr = DriverManager::instance();
     if (VgaDriver* drv = mngr.get_driver<VgaDriver>()) {
-        drv->put_pixel(x, y, c);
+        drv->put_pixel(x, y, (middlespace::EgaColor64)c);
     }
 }
 

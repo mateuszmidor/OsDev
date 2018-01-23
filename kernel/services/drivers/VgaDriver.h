@@ -19,20 +19,23 @@ public:
     static s16 handled_interrupt_no();
     hardware::CpuState* on_interrupt(hardware::CpuState* cpu_state) override;
 
-    void set_text_mode_90_30();
-    void set_graphics_mode_320_200_256();
-    void put_pixel(u16 x, u16 y, u8 color_index) const;
-    middlespace::VgaCharacter& at(u16 x, u16 y) const;
-    void flush_char_buffer(const  middlespace::VgaCharacter* buff);
-    void flush_video_buffer(const  middlespace::EgaColor* buff);
-    void set_cursor_visible(bool visible);
-    void set_cursor_pos(u8 x, u8 y);
+    // common interface
     u16 screen_width() const;
     u16 screen_height() const;
 
-    // higher level basic functions
-    void clear_screen( middlespace::EgaColor color =  middlespace::EgaColor::Black);
-    void print(u16 x, u16 y, const char* text,  middlespace::EgaColor fg =  middlespace::EgaColor::White,  middlespace::EgaColor bg =  middlespace::EgaColor::Black);
+    // text interface
+    void set_text_mode_90_30();
+    middlespace::VgaCharacter& char_at(u16 x, u16 y) const;
+    void flush_char_buffer(const middlespace::VgaCharacter* buff);
+    void set_cursor_visible(bool visible);
+    void set_cursor_pos(u8 x, u8 y);
+    void clear_screen(middlespace::EgaColor color = middlespace::EgaColor::Black);
+    void print(u16 x, u16 y, const char* text, middlespace::EgaColor fg = middlespace::EgaColor::White, middlespace::EgaColor bg = middlespace::EgaColor::Black);
+
+    // graphical interface
+    void set_graphics_mode_320_200_256();
+    void put_pixel(u16 x, u16 y, middlespace::EgaColor64 color_index) const;
+    void flush_video_buffer(const middlespace::EgaColor64* buff);
 
 private:
     void write_registers(u8* registers) const;
@@ -40,7 +43,7 @@ private:
 
     u8* framebuffer_segment                             {nullptr};
     u8* framebuffer_segment_copy                        {nullptr};
-    middlespace::VgaCharacter* const vga                {( middlespace::VgaCharacter*)0xFFFFFFFF800b8000};
+    middlespace::VgaCharacter* const vga                {(middlespace::VgaCharacter*)0xFFFFFFFF800b8000};
     u16 width                                           {80};  // in characters (text mode)
     u16 height                                          {25};  // in characters (text mode)
     // text mode

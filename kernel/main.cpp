@@ -5,243 +5,117 @@
  * @author: Mateusz Midor
  */
 
-#include "kstd.h"
-#include "GlobalConstructorsRunner.h"
-#include "Gdt.h"
-#include "KernelLog.h"
-#include "Multiboot2.h"
-#include "KeyboardScanCodeSet.h"
-#include "InterruptManager.h"
-#include "DriverManager.h"
-#include "KeyboardDriver.h"
-#include "MouseDriver.h"
-#include "PitDriver.h"
-#include "Int80hDriver.h"
-#include "PCIController.h"
-#include "ExceptionManager.h"
-#include "VgaDriver.h"
-#include "TaskManager.h"
-#include "TaskFactory.h"
-#include "PageFaultHandler.h"
-#include "MemoryManager.h"
-#include "BumpAllocationPolicy.h"
-#include "WyoosAllocationPolicy.h"
-#include "SysCallManager.h"
-#include "VfsManager.h"
-#include "TimeManager.h"
-#include "Sse.h"
-#include "PageTables.h"
-#include "ElfRunner.h"
-#include "Mouse.h"
-#include "SysCallNumbers.h"
-#include "Assert.h"
-#include "VgaPrinter.h"
+#include "phobos.h"
 
 using namespace cstd;
-using namespace logging;
 using namespace drivers;
-using namespace cpuexceptions;
-using namespace hardware;
-using namespace multitasking;
-using namespace memory;
-using namespace syscalls;
-using namespace utils;
 using namespace filesystem;
-using namespace ktime;
+using namespace multitasking;
 using namespace middlespace;
 
-KernelLog& klog                     = KernelLog::instance();
-MemoryManager& memory_manager       = MemoryManager::instance();
-TaskManager& task_manager           = TaskManager::instance();
-DriverManager& driver_manager       = DriverManager::instance();
-ExceptionManager& exception_manager = ExceptionManager::instance();
-InterruptManager& interrupt_manager = InterruptManager::instance();
-SysCallManager& syscall_manager     = SysCallManager::instance();
-VfsManager& vfs_manager             = VfsManager::instance();
-TimeManager& time_manager           = TimeManager::instance();
-Gdt                     gdt;
-PCIController           pcic;
-KeyboardScanCodeSet1    scs1;
-KeyboardDriver          keyboard(scs1);
-MouseDriver             mouse;
-PitDriver               pit;
-AtaPrimaryBusDriver     ata_primary_bus;
-VgaDriver               vga;
-Int80hDriver            int80h;
-PageFaultHandler        page_fault;
-
-VgaPrinter              printer(vga);
-const u32               PIT_FREQUENCY_HZ = 20;
-
 /**
- * Just print the OS loading header
- */
-void print_phobos_loading() {
-    printer.println(R"( ____  _           _      ___  ____  )");
-    printer.println(R"(|  _ \| |__   ___ | |__  / _ \/ ___| )");
-    printer.println(R"(| |_) | '_ \ / _ \| '_ \| | | \___ \ )");
-    printer.println(R"(|  __/| | | | (_) | |_) | |_| |___) |)");
-    printer.println(R"(|_|   |_| |_|\___/|_.__/ \___/|____/ )");
-    printer.println("");
-    printer.println("Loading");
-}
-
-/**
- * Keyboard handling
- */
-VfsEntryPtr keyboard_vfe;
-
-/**
- * @brief   Interrupt handling. No blocking allowed
- */
-void handle_key_press(const Key &key) {
-    constexpr u32 MAX_KEYS_IN_FILE {10};
-
-    // write key to /dev/keyboard RAM file
-    if (!keyboard_vfe)
-        keyboard_vfe = vfs_manager.get_entry("/dev/keyboard");
-
-    if (keyboard_vfe) {
-        // dont let the keyboard file overflow and block (we are in interrupt not task context)
-        if (keyboard_vfe->get_size() > sizeof(key) * MAX_KEYS_IN_FILE)
-            keyboard_vfe->truncate(sizeof(key) * MAX_KEYS_IN_FILE);
-        keyboard_vfe->write(&key, sizeof(key));
-    }
-}
-
-/**
- * Mouse handling
- */
-middlespace::MouseState mouse_state;
-VfsEntryPtr mouse_vfe;
-
-/**
- * @brief   Interrupt handling. No blocking allowed
- */
-void update_mouse() {
-    constexpr u32 MAX_STATES_IN_FILE {10};
-
-    // write key to /dev/mouse RAM file
-    if (!mouse_vfe)
-        mouse_vfe = vfs_manager.get_entry("/dev/mouse");
-
-    if (mouse_vfe) {
-        // dont let the mouse state file overflow and block (we are in interrupt not task context)
-        if (mouse_vfe->get_size() > sizeof(mouse_state) * MAX_STATES_IN_FILE)
-            mouse_vfe->truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
-        mouse_vfe->write(&mouse_state, sizeof(mouse_state));
-    }
-}
-
-void handle_mouse_down(MouseButton button) {
-    mouse_state.buttons[button] = true;
-    update_mouse() ;
-}
-
-void handle_mouse_up(MouseButton button) {
-    mouse_state.buttons[button] = false;
-    update_mouse() ;
-}
-
-void handle_mouse_move(s8 dx, s8 dy) {
-    mouse_state.dx = dx;
-    mouse_state.dy = dy;
-    update_mouse() ;
-}
-
-/**
- * Programmable Interval Timer handling
- */
-CpuState* handle_timer_tick(CpuState* cpu_state) {
-    time_manager.tick();
-    return task_manager.schedule(cpu_state);
-}
-
-/**
- *  Little counter in the right-top corner
+ *  Little counter in the right-top corner that indicates the kernel is still alive
  */
 void corner_counter() {
-    if (auto vga_drv = driver_manager.get_driver<VgaDriver>()) {
+    if (auto vga_drv = phobos::driver_manager.get_driver<VgaDriver>()) {
         u64 i = 0;
 
         while (true) {
             u8 c = (i % 10) + '0';
-            vga_drv->at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
+            vga_drv->char_at(vga_drv->screen_width() - 2, 0) = VgaCharacter { c, EgaColor::White, EgaColor::Black };
             i++;
             Task::yield();
         }
     }
 }
 
+u64 start_loading_animation() {
+    phobos::printer.print("  loading terminal");
+    auto on_expire = [] { phobos::printer.print("."); };
+    return phobos::time_manager.emplace(1000, 1000, on_expire);
+}
+
+void stop_loading_animation(u64 timer_id) {
+    phobos::time_manager.cancel(timer_id);
+}
+
+VfsEntryPtr try_open_terminal_elf_file() {
+    VfsEntryPtr e = phobos::vfs_manager.get_entry("/BIN/TERMINAL");
+    if (!e) {
+        phobos::printer.println(" /BIN/TERMINAL doesnt exist. System Halt", EgaColor::Red);
+        phobos::halt();
+    }
+    if (e->is_directory()) {
+        phobos::printer.println(" /BIN/TERMINAL is directory? System Halt", EgaColor::Red);
+        phobos::halt();
+    }
+    return e;
+}
+
+s32 try_load_and_run_terminal(VfsEntryPtr elf_file) {
+    // read elf file data
+    u32 size = elf_file->get_size();
+    u8* elf_data = new u8[size];
+    elf_file->read(elf_data, size);
+
+    // run the elf
+    utils::ElfRunner runner;
+    s32 task_id = runner.run(elf_data, new vector<string> { "terminal" });
+    switch (task_id) {
+    case -ENOMEM:
+        phobos::printer.println(" Run failed - no enough memory. System Halt.", EgaColor::Red);
+        phobos::halt();
+        break;
+
+    case -ENOEXEC:
+        phobos::printer.println(" Run failed - not an executable. System Halt.", EgaColor::Red);
+        phobos::halt();
+        break;
+
+    case -EPERM:
+        phobos::printer.println(" Run failed - manager didnt allow. System Halt.", EgaColor::Red);
+        phobos::halt();
+        break;
+
+    default:
+        break;
+    }
+
+    return task_id;
+}
+
+void wait_terminal_crash(s32 task_id) {
+    phobos::task_manager.wait(task_id);
+    Task::yield();
+}
+
+void print_terminal_crashed() {
+    phobos::printer.clear_screen();
+    phobos::printer.println("Terminal crashed. Check kernel logs");
+    Task::msleep(3000);
+}
+
 /**
  * Terminal runner
  */
 void run_userspace_terminal() {
-    // run in loop so terminal restarts in case of crash
+    // run in a loop so terminal restarts in case of a crash and kernel log can be read
     while (true) {
-        printer.print("  loading terminal");
+        auto timer_id = start_loading_animation();
+        auto terminal_elf_file = try_open_terminal_elf_file();
+        auto terminal_task_id = try_load_and_run_terminal(terminal_elf_file);
+        stop_loading_animation(timer_id);
 
-        VfsEntryPtr e = vfs_manager.get_entry("/BIN/TERMINAL");
-        if (!e) {
-            printer.println(" /BIN/TERMINAL doesnt exist. System Halted", EgaColor::Red);
-            utils::phobos_halt();
-        }
-        if (e->is_directory()) {
-            printer.println(" /BIN/TERMINAL is directory? System Halted", EgaColor::Red);
-            utils::phobos_halt();
-        }
-
-        // terminal loading animation start
-        auto on_expire = [] { printer.print("."); };
-        auto timer_id = time_manager.emplace(1000, 1000, on_expire);
-
-        // read elf file data
-        u32 size = e->get_size();
-        u8* elf_data = new u8[size];
-        e->read(elf_data, size);
-
-        // run the elf
-        utils::ElfRunner runner;
-        s32 task_id = runner.run(elf_data, new vector<string> { "terminal" });
-        switch (task_id) {
-        case -ENOMEM:
-            printer.println(" Terminal run failed - no enough memory. System Halted.", EgaColor::Red);
-            utils::phobos_halt();
-            break;
-
-        case -ENOEXEC:
-            printer.println(" Terminal run failed - not an executable. System Halted.", EgaColor::Red);
-            utils::phobos_halt();
-            break;
-
-        case -EPERM:
-            printer.println(" Terminal run failed - manager didnt allow. System Halted.", EgaColor::Red);
-            utils::phobos_halt();
-            break;
-
-        default:
-            break;
-        }
-
-        // terminal loading animation stop
-        time_manager.cancel(timer_id);
-
-        // wait till terminal dies
-        task_manager.wait(task_id);
-        Task::yield();
-
-        // we should never get here unless terminal crash
-        printer.clear_screen();
-        printer.println("Terminal crashed. Check kernel logs");
-        Task::msleep(3000);
+        wait_terminal_crash(terminal_task_id);
+        print_terminal_crashed();
     }
 }
 
 /**
  * Here we enter multitasking
  */
-void task_init() {
-    //task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
+void initial_task() {
+//    phobos::task_manager.add_task(TaskFactory::make_kernel_task(corner_counter, "corner_counter"));
     run_userspace_terminal();
 }
 
@@ -250,68 +124,7 @@ void task_init() {
  * @brief   Kernel entry point, we jump here right from long_mode_init.S
  * @note    We are starting with just stack in place, no dynamic memory available, no global objects constructed yet
  */
-extern "C" void kmain(void *multiboot2_info_ptr) {
-    // 0. activate the SSE so the kernel code compiled under -O2 can actually run, remap the kernel to higher half
-    Sse::activate_legacy_sse();
-    PageTables::map_and_load_kernel_address_space();
-
-    // 1. initialize multiboot2 info from the data provided by the boot loader
-    Multiboot2::initialize(multiboot2_info_ptr);
-
-    // 2. run constructors of global objects
-    GlobalConstructorsRunner::run();
-
-    // 3. configure temporary console and print PhobOS
-    print_phobos_loading();
-
-    // 4. install new Global Descriptor Table that will allow user-space
-    gdt.reinstall_gdt();
-    printer.println("  installing GDT...done");
-
-    // 5. prepare drivers & install drivers
-    time_manager.set_hz(PIT_FREQUENCY_HZ);
-    pit.set_channel0_hz(PIT_FREQUENCY_HZ);
-    pit.set_channel0_on_tick(handle_timer_tick);
-    keyboard.set_on_key_press(handle_key_press);
-    mouse.set_on_down(handle_mouse_down);
-    mouse.set_on_up(handle_mouse_up);
-    mouse.set_on_move(handle_mouse_move);
-
-    // 6. install drivers
-    //pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
-    driver_manager.install_driver(&keyboard);
-    driver_manager.install_driver(&mouse);
-    driver_manager.install_driver(&pit);
-    driver_manager.install_driver(&ata_primary_bus);
-    driver_manager.install_driver(&vga);
-    driver_manager.install_driver(&int80h);
-    printer.println("  installing drivers...done");
-
-    // 7. install exceptions
-    exception_manager.install_handler(&page_fault);    // this guy allows dynamic memory on-page-fault allocation
-    printer.println("  installing exceptions...done");
-
-    // 8. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
-    interrupt_manager.set_exception_handler([] (u8 exc_no, CpuState *cpu) { return exception_manager.on_exception(exc_no, cpu); } );
-    interrupt_manager.set_interrupt_handler([] (u8 int_no, CpuState *cpu) { return driver_manager.on_interrupt(int_no, cpu); } );
-    interrupt_manager.config_and_activate_exceptions_and_interrupts(); // on-page-fault allocation available from here, as page_fault handler installed and activated
-    printer.println("  installing interrupts...done");
-
-    // 9. configure dynamic memory management
-    MemoryManager::install_allocation_policy<WyoosAllocationPolicy>(Multiboot2::get_available_memory_first_byte(), Multiboot2::get_available_memory_last_byte());
-    printer.println("  installing dynamic memory...done");
-
-    // 10. configure and activate system calls through "syscall" instruction
-    syscall_manager.config_and_activate_syscalls();
-    printer.println("  installing system calls...done");
-
-    // 11. install filesystem root "/"
-    vfs_manager.install_root();
-    printer.println("  installing virtual file system...done");
-
-    // 12. start multitasking
-    task_manager.install_multitasking();
-    task_manager.add_task(TaskFactory::make_kernel_task(task_init, "init"));
-    printer.println("  installing multitasking...done");
-    Task::idle();
+extern "C" [[noreturn]] void kmain(void* multiboot2_info_ptr) {
+    phobos::boot_and_start_multitasking(multiboot2_info_ptr, initial_task);
+    __builtin_unreachable();
 }

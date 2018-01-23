@@ -33,7 +33,8 @@ void phobos_assert(bool condition, const char* msg) {
     phobos_halt();
 }
 
-void phobos_halt() {
+[[noreturn]] void phobos_halt() {
     asm volatile ("cli; hlt");
+    __builtin_unreachable();
 }
 } /* namespace utils */

@@ -8,9 +8,9 @@
 #include "kstd.h"
 #include "VgaDriver.h"
 
-using middlespace::EgaColor;
-using middlespace::VgaCharacter;
 using namespace hardware;
+using namespace middlespace;
+
 namespace drivers {
 
 s16 VgaDriver::handled_interrupt_no() {
@@ -94,15 +94,15 @@ void VgaDriver::set_graphics_mode_320_200_256() {
     memcpy(framebuffer_segment_copy, framebuffer_segment, width*height);
 }
 
-void VgaDriver::put_pixel(u16 x, u16 y, u8 color_index) const {
+void VgaDriver::put_pixel(u16 x, u16 y, middlespace::EgaColor64 color_index) const {
     if (x >= width || y >= height || !framebuffer_segment)
         return;
 
-    u8* ptr = framebuffer_segment + y * width + x;
+    EgaColor64* ptr = (EgaColor64*)framebuffer_segment + y * width + x;
     *ptr = color_index;
 }
 
-VgaCharacter& VgaDriver::at(u16 x, u16 y) const {
+VgaCharacter& VgaDriver::char_at(u16 x, u16 y) const {
     if ((x >= width) || (y >= height))
         return vga[0];
 
@@ -113,8 +113,8 @@ void VgaDriver::flush_char_buffer(const VgaCharacter* buff) {
     memcpy(vga, buff, screen_width() * screen_height() * sizeof(VgaCharacter));
 }
 
-void VgaDriver::flush_video_buffer(const  middlespace::EgaColor* buff) {
-    memcpy(framebuffer_segment, buff, screen_width() * screen_height() * sizeof(EgaColor));
+void VgaDriver::flush_video_buffer(const EgaColor64* buff) {
+    memcpy(framebuffer_segment, buff, screen_width() * screen_height() * sizeof(EgaColor64));
 }
 
 /**
@@ -141,6 +141,7 @@ void VgaDriver::set_cursor_pos(u8 x, u8 y) {
    // cursor LOW port to vga INDEX register
    cursor_cmd_port.write(0x0F);
    cursor_data_port.write(position & 0xFF);
+
    // cursor HIGH port to vga INDEX register
    cursor_cmd_port.write(0x0E);
    cursor_data_port.write(position >> 8);
@@ -165,7 +166,7 @@ u16 VgaDriver::screen_height() const {
 void VgaDriver::clear_screen(EgaColor color) {
     for (u16 y = 0; y < height; y++)
         for (u16 x = 0; x < width; x++)
-            at(x, y) = VgaCharacter(' ', color, color);
+            char_at(x, y) = VgaCharacter(' ', color, color);
 }
 
 void VgaDriver::print(u16 x, u16 y, const char* text,  EgaColor fg, EgaColor bg) {

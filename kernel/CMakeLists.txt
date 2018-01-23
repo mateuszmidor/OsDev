@@ -36,6 +36,7 @@ set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/services/time"
     "${PROJECT_SOURCE_DIR}/services/utils"
     "${PROJECT_SOURCE_DIR}/interface/syscalls"
+    "${PROJECT_SOURCE_DIR}"
 )
 
 # Collect source files
