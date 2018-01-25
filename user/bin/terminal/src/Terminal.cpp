@@ -194,6 +194,11 @@ void Terminal::on_key_down(Key key) {
     // functional key
     if (key & Key::FUNCTIONAL) {
         switch (key) {
+        case Key::F1: {
+            asm volatile("div %%rbx" : : "a"(0)); // divide by zero
+            break;
+        }
+
         case Key::Up: {
             user_input.suggest_cmd(cmd_history.get_prev());
             break;
