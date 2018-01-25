@@ -42,9 +42,10 @@ s32 ElfRunner::run(u8* elf_data, vector<string>* args) const {
 
     const size_t HEAP_LOW_LIMIT = Elf64::get_available_memory_first_byte(elf_data);     // first free byte after ELF segments
     const size_t HEAP_HIGH_LIMIT = ELF_VIRTUAL_MEM_BYTES;
-    const string& CWD = task_manager.get_current_task().task_group_data->cwd;           // inherit current working directory
+    const auto& current = task_manager.get_current_task();
+    const string& CWD = current.task_group_data->cwd;           // inherit current working directory
     Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(args); // kernel task so it can run "load_and_run_elf"
-    task->task_group_data  = std::make_shared<TaskGroupData>(pml4_phys_addr, CWD, HEAP_LOW_LIMIT, HEAP_HIGH_LIMIT); // but in its own address space
+    task->task_group_data  = std::make_shared<TaskGroupData>(pml4_phys_addr, CWD, HEAP_LOW_LIMIT, HEAP_HIGH_LIMIT, current.task_id); // but in its own address space
 
     if (u32 tid = task_manager.add_task(task)) {
         return tid;

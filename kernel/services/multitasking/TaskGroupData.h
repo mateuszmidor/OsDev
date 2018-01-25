@@ -20,7 +20,7 @@ namespace multitasking {
  */
 class TaskGroupData {
 public:
-    TaskGroupData(u64 pml4_phys_addr, const cstd::string& cwd, size_t heap_low_limit, size_t heap_high_limit);
+    TaskGroupData(u64 pml4_phys_addr, const cstd::string& cwd, size_t heap_low_limit, size_t heap_high_limit, u32 parent_id);
     ~TaskGroupData();
     void* alloc_static(size_t size);
     void* alloc_stack_and_mark_guard_page(size_t num_bytes);
@@ -30,6 +30,7 @@ public:
     cstd::string                            cwd;                // current working directory of task group
     u64                                     pml4_phys_addr;     // address space of task group. This uniquely identifies the group
     std::array<filesystem::VfsEntryPtr, 16> files;              // list of open files. TODO: concurrent access to the same file. How?
+    u32                                     parent_task_id;
 
 private:
     void close_files();
