@@ -66,6 +66,14 @@ bool Terminal::init() {
         return false;
     }
 
+    // start a thread reading /dev/keyboard
+    if (syscalls::task_lightweight_run((unsigned long long)key_processor_thread, (unsigned long long)this, "terminal_key_processor") < 0)
+        return false;
+
+    // start a thread printing /dev/stdout to the screen. From now on cout::print works
+    if (syscalls::task_lightweight_run((unsigned long long)stdout_printer_thread, (unsigned long long)this, "terminal_stdout_printer") < 0)
+        return false;
+
     // go /HOME
     syscalls::chdir("/HOME");
 
@@ -79,12 +87,6 @@ bool Terminal::init() {
 
     // install external commands that are in form of separate ELF programs, located under given directory
     install_external_commands("/BIN", self_binary_name);
-
-    // start a thread reading /dev/keyboard
-    syscalls::task_lightweight_run((unsigned long long)key_processor_thread, (unsigned long long)this, "terminal_key_processor");
-
-    // start a thread printing /dev/stdout to the screen. From now on cout::print works
-    syscalls::task_lightweight_run((unsigned long long)stdout_printer_thread, (unsigned long long)this, "terminal_stdout_printer");
 
     return true;
 }
