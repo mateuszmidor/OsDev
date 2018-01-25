@@ -14,7 +14,7 @@ using namespace cstd::ustd;
 /**
  * @brief   Recursive Fibonacci; tests stack well
  */
-int fib_rec(int n) {
+unsigned long long fib_rec(int n) {
     if(n <= 1) {
         return n;
     }
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int result = fib_rec(StringUtils::to_int(argv[1]));
+    auto result = fib_rec(StringUtils::to_int(argv[1]));
     cout::format("Fibonacci result: %\n", result);
 
     return 0;
