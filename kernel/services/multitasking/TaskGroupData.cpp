@@ -48,7 +48,7 @@ void TaskGroupData::release_address_space() {
     memory::MemoryManager& mngr = memory::MemoryManager::instance();
     klog.format("Rmoving address space\n");
     for (u32 i = 0; i < 512; i++)   // scan 512 * 2MB pages
-        if (pde_virt_addr[i] != 0) {
+        if ((pde_virt_addr[i] & PageAttr::PRESENT) == PageAttr::PRESENT) {
             klog.format("  Releasing mem frame: %\n", pde_virt_addr[i] / FrameAllocator::get_frame_size());
             mngr.free_frames((void*)pde_virt_addr[i], 1); // 1 byte will always correspond to just 1 frame
         }
@@ -59,11 +59,11 @@ void TaskGroupData::release_address_space() {
 }
 
 /**
- * @brief   Allocate memory from the top of the heap; this memory will not be released until the entire address space is released
- *          This is useful eg. for allocating stack memory for tasks
+ * @brief   Allocate memory from the top of the heap
+ * @note    This memory will not be released until the entire address space is released
  */
 void* TaskGroupData::alloc_static(size_t size) {
-    // out of memory
+    // check for out of memory
     if (heap_high_limit - size < heap_low_limit)
         return nullptr;
 
@@ -71,4 +71,35 @@ void* TaskGroupData::alloc_static(size_t size) {
     return (void*)heap_high_limit;
 }
 
+/**
+ * @brief   Allocate memory from the top of the heap for a stack and mark a page below as stack guard page
+ * @note    It will actually allocate a multiplicity of PAGE_SIZE that can accommodate "num_bytes"
+ * @note    This memory will not be released until the entire address space is released
+ */
+void* TaskGroupData::alloc_stack_and_mark_guard_page(size_t num_bytes) {
+    const auto PAGE_SIZE    = PageTables::get_page_size();
+    const auto NUM_PAGES    = PageTables::bytes_to_pages(num_bytes);
+
+    // round heap_high_limit down to be page-aligned
+    auto heap_high_limit_page_aligned = heap_high_limit & (~(PAGE_SIZE-1));
+
+    // stack is at the very top of memory page
+    auto stack_top = heap_high_limit_page_aligned - 1;
+
+    // guard page is right below the stack
+    auto guard_top = stack_top - NUM_PAGES * PAGE_SIZE;
+
+    // first usable byte is right below the guard page
+    auto new_heap_high_limit = guard_top - PAGE_SIZE;
+
+    // check for out of memory
+    if (new_heap_high_limit < heap_low_limit)
+        return nullptr;
+
+    // setup guard page
+    PageTables::map_stack_guard_page(guard_top, pml4_phys_addr);
+
+    heap_high_limit = new_heap_high_limit;
+    return (void*)stack_top;
+}
 } /* namespace multitasking */

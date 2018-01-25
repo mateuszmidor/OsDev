@@ -194,8 +194,18 @@ void Terminal::on_key_down(Key key) {
     // functional key
     if (key & Key::FUNCTIONAL) {
         switch (key) {
+
+        // divide by zero
         case Key::F1: {
-            asm volatile("div %%rbx" : : "a"(0)); // divide by zero
+            asm volatile("div %%ebx" : : "a"(0));
+            break;
+        }
+
+        // stack overflow
+        case Key::F2: {
+            using Rec = std::function<void()>;
+            Rec recursive = [&recursive]() -> void { recursive(); };
+            recursive();
             break;
         }
 

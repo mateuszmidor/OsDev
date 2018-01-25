@@ -56,7 +56,7 @@ public:
     template <class EntrypointT>
     static Task* make_lightweight_task(const Task& src, EntrypointT entrypoint, const char name[], u64 stack_size) {
         TaskGroupDataPtr task_group_data = src.task_group_data;
-        u64 stack_addr = (u64)task_group_data->alloc_static(stack_size);
+        u64 stack_addr = (u64)task_group_data->alloc_stack_and_mark_guard_page(stack_size);
 
         // out of memory
         if (stack_addr == 0)

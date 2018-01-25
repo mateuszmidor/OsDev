@@ -23,6 +23,7 @@ public:
     TaskGroupData(u64 pml4_phys_addr, const cstd::string& cwd, size_t heap_low_limit, size_t heap_high_limit);
     ~TaskGroupData();
     void* alloc_static(size_t size);
+    void* alloc_stack_and_mark_guard_page(size_t num_bytes);
 
     size_t                                  heap_low_limit;     // last address allocated for the heap, current program break
     size_t                                  heap_high_limit;    // last address allocable for the heap

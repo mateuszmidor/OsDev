@@ -27,16 +27,17 @@ Simple arkanoid demo
  + GRUB2 bootable
  + 64 bit kernel
  + memory paging (2MB pages) and on-page-fault allocator
- + dynamic memory (linked list of free and allocated memory chunks)
- + higher-half (kernel mapped at virt. 0xFFFFFFFF80000000; dynamic memory allocation starts at virt. 0xFFFFFFFFC0000000)
+ + stack guard page
+ + managed dynamic memory
+ + higher-half kernel
  + multitasking
- + kernel/user space (with kernel memory protected from user-space access)
+ + kernel/user space
  + ELF64 support (statically linked only) - some basic syscalls implemented, see: syscalls.h
- + virtual filesystem (unix-like)
+ + virtual filesystem 
  + MBR/Fat32 driver (no long names)
  + PS/2 mouse driver
  + Keyboard driver
- + VGA driver (90x30 text mode, 320x200x8bit graphics mode for now)
+ + VGA driver (90x30 text mode, 320x200 graphics mode for now)
  + Simple terminal emulator (with TAB auto-completion) and a few basic system commands like cd, cat, cp, mkdir
  
 # Need install

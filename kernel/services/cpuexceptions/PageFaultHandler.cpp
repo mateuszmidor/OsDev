@@ -29,6 +29,7 @@ const char* PageFaultHandler::PF_REASON[] = {
         "PRIVILEGE_VIOLATION",
         "RESERVED_WRITE_VIOLATION",
         "INSTRUCTION_FETCH",
+        "STACK_OVERFLOW",
         "PROTECTION_VIOLATION",
         "INVALID_ADDRESS_SPACE"
 };
@@ -94,10 +95,15 @@ PageFaultActualReason PageFaultHandler::page_fault_reason(u64* violated_page_add
 
     u64 violated_page = *violated_page_addr;
 
-    // if PageFault caused by page not present - simply return true
+    // if PageFault caused by page not present - check if this page is marked as stack guard
     bool page_not_present = (error_code & PageFaultErrorCode::PRESENT) != PageFaultErrorCode::PRESENT;
-    if (page_not_present)
-        return PageFaultActualReason::PAGE_NOT_PRESENT;
+    if (page_not_present) {
+        bool stack_guard_page = (violated_page & PageAttr::STACK_GUARD_PAGE) == PageAttr::STACK_GUARD_PAGE;
+        if (stack_guard_page)
+            return PageFaultActualReason::STACK_OVERFLOW;
+        else
+            return PageFaultActualReason::PAGE_NOT_PRESENT;
+    }
 
     // if PageFault caused by page-protection violation, examine the actual reason
     bool caused_by_write = (error_code & PageFaultErrorCode::WRITE) == PageFaultErrorCode::WRITE;

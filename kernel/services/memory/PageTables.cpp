@@ -49,6 +49,17 @@ void PageTables::map_elf_address_space(size_t pml4_phys_addr) {
 }
 
 /**
+ * @brief   Setup page table entry for "virtual_address" to be a stack guard,
+ *          so accessing it can be recognized as stack overflow when page fault occurs
+ * @param   virtual_address Address that maps to the page supposed to be used as stack guard page
+ */
+void PageTables::map_stack_guard_page(size_t virtual_address, size_t pml4_phys_addr) {
+    if (u64* page = get_page_for_virt_address(virtual_address, pml4_phys_addr)) {
+        *page = PageAttr::STACK_GUARD_PAGE ;
+    }
+}
+
+/**
  * @brief   Fill PageTables64 with mapping of -2..-1GB virt addresses to 0..1GB phys addresses
  * @note    Kernel memory is not accessible from user space
  */
@@ -121,7 +132,14 @@ u64* PageTables::get_page_for_virt_address(size_t virtual_address, size_t pml4_p
         return nullptr;
     u64* pde_virt_addr =  (u64*)HigherHalf::phys_to_virt(pdpt_virt_addr[pdpt_index] & ~4095); // & ~4095 to remove page flags
 
-    return  &pde_virt_addr[pde_index];
+    return &pde_virt_addr[pde_index];
+}
+
+/**
+ * @brief   Return number of memory pages needed to accomodate num_bytes
+ */
+size_t PageTables::bytes_to_pages(size_t num_bytes) {
+    return (num_bytes / get_page_size()) + 1;
 }
 
 } /* namespace hardware */
