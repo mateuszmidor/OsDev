@@ -62,7 +62,7 @@ CpuState* UnhandledExceptionHandler::on_exception(u8 exception_no, CpuState* cpu
                 current.is_user_space ? "User" : "Kernel",
                 cpu_state->error_code);
 
-    return mngr.kill_current_task();
+    return mngr.kill_current_task_group();
 }
 
 } /* namespace cpuexceptions */
