@@ -26,7 +26,8 @@ void timeit::run(const CmdArgs& args, bool run_in_bg) {
     Timer t;
     run_cmd(args_no_head);
     double dt = t.get_delta_seconds();
-    cout::format("execution took %s\n", dt);
+    string seconds = StringUtils::from_double(dt, 3);
+    cout::format("execution took %s\n", seconds);
 }
 
 } /* namespace cmds */
