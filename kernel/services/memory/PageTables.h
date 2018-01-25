@@ -45,7 +45,7 @@ public:
     static void load_address_space(size_t pml4_physical_address);
     static u64* get_page_for_virt_address(size_t virtual_address, size_t pml4_phys_addr);
     static size_t bytes_to_pages(size_t num_bytes);
-    static size_t get_page_size() { return PAGE_SIZE; };
+    static constexpr size_t get_page_size() { return PAGE_SIZE; };
 
 private:
     static constexpr size_t PAGE_SIZE = 2 * 1024 * 1024; // 2MB huge pages

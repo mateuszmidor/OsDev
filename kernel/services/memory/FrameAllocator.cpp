@@ -5,21 +5,25 @@
  * @author: Mateusz Midor
  */
 
+#include "cstd.h"
 #include "FrameAllocator.h"
 
 namespace memory {
 
-bool   FrameAllocator::frame_allocated[64]; // map 64 * 2MB pages = 128MB of physical memory
+size_t  FrameAllocator::total_frames {0};
+bool    FrameAllocator::frames_allocated[128*1024*1024 / FrameAllocator::get_frame_size()]; // map enough pages to handle 128MB
+
 
 void FrameAllocator::init(size_t first_available_memory_byte, size_t last_available_memory_byte) {
-    const size_t first_index = first_available_memory_byte / FRAME_SIZE + 1;
-    const size_t last_index = last_available_memory_byte / FRAME_SIZE;
+    const size_t first_index = first_available_memory_byte / get_frame_size() + 1;
+    const size_t last_index = last_available_memory_byte / get_frame_size();
+    total_frames = min(last_index + 1, sizeof(frames_allocated) / sizeof(frames_allocated[0]));
 
     for (size_t i = 0; i < first_index; i++)
-        frame_allocated[i] = true;
+        frames_allocated[i] = true;
 
     for (size_t i = last_index + 1; i < get_total_frames_count(); i++)
-        frame_allocated[i] = true;
+        frames_allocated[i] = true;
 }
 
 /**
@@ -32,17 +36,17 @@ ssize_t FrameAllocator::alloc_frame() {
     if (index == -1)
         return -1; // no free page available
 
-    frame_allocated[index] = true;
-    return index * FRAME_SIZE;
+    frames_allocated[index] = true;
+    return index * get_frame_size();
 }
 
 /**
  * @brief   Find frame that starts at "physical_address" and deallocate it
  */
 void FrameAllocator::free_frame(size_t physical_address) {
-    const size_t index = physical_address / FRAME_SIZE;
+    const size_t index = physical_address / get_frame_size();
     if (index < get_total_frames_count())
-        frame_allocated[index] = false;
+        frames_allocated[index] = false;
 }
 
 /**
@@ -50,7 +54,7 @@ void FrameAllocator::free_frame(size_t physical_address) {
  * @return  -1 on failure, first frame physical address on success
  */
 ssize_t FrameAllocator::alloc_consecutive_frames(size_t num_bytes) {
-    const size_t num_needed_frames = num_bytes / FRAME_SIZE + 1;
+    const size_t num_needed_frames = num_bytes / get_frame_size() + 1;
 
     ssize_t index = 0;
     size_t consecutive_unused_count = 0;
@@ -68,9 +72,9 @@ ssize_t FrameAllocator::alloc_consecutive_frames(size_t num_bytes) {
 
     // mark frames as allocated
     for (size_t i = index; i < index + num_needed_frames; i++)
-        frame_allocated[i] = true;
+        frames_allocated[i] = true;
 
-    return index  * FRAME_SIZE;
+    return index  * get_frame_size();
 }
 
 /**
@@ -79,7 +83,7 @@ ssize_t FrameAllocator::alloc_consecutive_frames(size_t num_bytes) {
  */
 ssize_t FrameAllocator::find_unused_starting_at(size_t start_index) {
     for (size_t i = start_index; i < get_total_frames_count(); i++)
-        if (!frame_allocated[i])
+        if (!frames_allocated[i])
             return i;
 
     return -1;  // not found
@@ -94,7 +98,7 @@ size_t FrameAllocator::check_consecutive_unused_count_at(size_t start_index, siz
         if (result == required_frames_count)
             break;
 
-        if (frame_allocated[i])
+        if (frames_allocated[i])
            break; // break if no more consecutive free frames
 
         result++;
@@ -107,12 +111,12 @@ size_t FrameAllocator::check_consecutive_unused_count_at(size_t start_index, siz
  * @brief   Find consecutive frame chain that starts at "physical_address" and deallocate all its frames
  */
 void FrameAllocator::free_consecutive_frames(size_t physical_address, size_t num_bytes) {
-    const size_t index = physical_address / FRAME_SIZE;
-    const size_t num_frames = num_bytes / FRAME_SIZE + 1;
+    const size_t index = physical_address / get_frame_size();
+    const size_t num_frames = num_bytes / get_frame_size() + 1;
 
     if (index < get_total_frames_count())
         for (size_t i = index; i < index + num_frames; i++)
-            frame_allocated[index] = false;
+            frames_allocated[index] = false;
 }
 
 /**
@@ -122,7 +126,7 @@ size_t FrameAllocator::get_used_frames_count() {
     size_t result = 0;
 
     for (u32 i = 0; i < get_total_frames_count(); i++)
-        if (frame_allocated[i])
+        if (frames_allocated[i])
             result++;
 
     return result;
@@ -132,14 +136,7 @@ size_t FrameAllocator::get_used_frames_count() {
  * @brief   What is the total amount of available frames?
  */
 size_t FrameAllocator::get_total_frames_count() {
-    return sizeof(frame_allocated) / sizeof(frame_allocated[0]);
-}
-
-/**
- * @brief   What is the frame size in bytes?
- */
-size_t FrameAllocator::get_frame_size() {
-    return FRAME_SIZE;
+    return total_frames;
 }
 
 } /* namespace memory */
