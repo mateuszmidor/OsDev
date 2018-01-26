@@ -199,15 +199,22 @@ void Terminal::on_key_down(Key key) {
 
         // divide by zero
         case Key::F1: {
-            asm volatile("div %%ebx" : : "a"(0));
+            asm volatile("div %%ebx" : : "b"(0));
             break;
         }
 
         // stack overflow
         case Key::F2: {
-            using Rec = std::function<void()>;
-            Rec recursive = [&recursive]() -> void { recursive(); };
+            using Rec = std::function<u64()>;
+            Rec recursive = [&recursive]() { return 1 + recursive(); };
             recursive();
+            break;
+        }
+
+        // heap exhausted
+        case Key::F3: {
+            while(true)
+                (new char[1024])[0] = 'a';
             break;
         }
 
