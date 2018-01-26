@@ -68,8 +68,8 @@ struct Task {
     TaskList            finish_wait_list;   // list of tasks waiting for this task to finish
     TaskGroupDataPtr    task_group_data;    // task group where this task belong
 
-    static constexpr u64    DEFAULT_KERNEL_STACK_SIZE   {2 * 4096};
-    static constexpr u64    DEFAULT_USER_STACK_SIZE     {4 * 4096};
+    static constexpr u64    DEFAULT_KERNEL_STACK_SIZE   {2  * 4096};
+    static constexpr u64    DEFAULT_USER_STACK_SIZE     {32 * 4096};    // after inserting stack guard page we see 16KB is not enough :)
 };
 
 

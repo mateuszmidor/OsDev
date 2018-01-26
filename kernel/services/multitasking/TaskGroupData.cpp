@@ -78,28 +78,24 @@ void* TaskGroupData::alloc_static(size_t size) {
  */
 void* TaskGroupData::alloc_stack_and_mark_guard_page(size_t num_bytes) {
     const auto PAGE_SIZE    = PageTables::get_page_size();
-    const auto NUM_PAGES    = PageTables::bytes_to_pages(num_bytes);
 
-    // round heap_high_limit down to be page-aligned
-    auto heap_high_limit_page_aligned = heap_high_limit & (~(PAGE_SIZE-1));
-
-    // stack is at the very top of memory page
-    auto stack_top = heap_high_limit_page_aligned - 1;
+    // stack bottom is page aligned
+    auto stack_bottom_page_aligned = (heap_high_limit - num_bytes) & (~(PAGE_SIZE-1));
 
     // guard page is right below the stack
-    auto guard_top = stack_top - NUM_PAGES * PAGE_SIZE;
+    auto guard_bottom_page_aligned = stack_bottom_page_aligned - PAGE_SIZE;
 
     // first usable byte is right below the guard page
-    auto new_heap_high_limit = guard_top - PAGE_SIZE;
+    auto new_heap_high_limit = guard_bottom_page_aligned - 1;
 
     // check for out of memory
     if (new_heap_high_limit < heap_low_limit)
         return nullptr;
 
     // setup guard page
-    PageTables::map_stack_guard_page(guard_top, pml4_phys_addr);
+    PageTables::map_stack_guard_page(guard_bottom_page_aligned, pml4_phys_addr);
 
     heap_high_limit = new_heap_high_limit;
-    return (void*)stack_top;
+    return (void*)stack_bottom_page_aligned;
 }
 } /* namespace multitasking */
