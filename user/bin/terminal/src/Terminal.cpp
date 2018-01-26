@@ -205,16 +205,18 @@ void Terminal::on_key_down(Key key) {
 
         // stack overflow
         case Key::F2: {
-            using Rec = std::function<u64()>;
-            Rec recursive = [&recursive]() { return 1 + recursive(); };
-            recursive();
+            asm volatile(
+                    "LOOP:      ;"
+                    "push $42   ;"
+                    "jmp LOOP   ;"
+            );
             break;
         }
 
         // heap exhausted
         case Key::F3: {
-            while(true)
-                (new char[1024])[0] = 'a';
+            while(auto ptr = new int)
+                *ptr = 0xBAAD;
             break;
         }
 
