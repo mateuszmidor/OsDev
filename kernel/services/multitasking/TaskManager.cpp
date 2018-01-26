@@ -191,7 +191,12 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
         if (task->task_group_data == current_task_group)
             mark_task_tree_to_terminate(task);
 
-    return kill_current_task();
+    // remove marked tasks
+    for (Task* task : scheduler.get_task_list())
+        if (task->task_group_data->terminated)
+            kill_task(task);
+
+    return pick_next_task_and_load_address_space();
 }
 
 /**
@@ -271,13 +276,7 @@ void TaskManager::unblock_tasks(TaskList& list) {
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
     Task* curr_task {scheduler.get_current_task()};
-    Task* next_task {nullptr};
-
-    // kill tasks that are marked for termination
-    while (next_task = scheduler.pick_next_task(), next_task->task_group_data->terminated) {
-        kill_task(next_task);
-        next_task = scheduler.pick_next_task();
-    }
+    Task* next_task {scheduler.pick_next_task()};
 
     // reload address space only if task_group changes (each group has its own address space)
     if (curr_task->task_group_data != next_task->task_group_data) {
