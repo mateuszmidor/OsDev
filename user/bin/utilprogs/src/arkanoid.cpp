@@ -279,7 +279,7 @@ public:
     }
 
     ~Game() {
-        syscalls::task_wait(mouse_input_task_id);
+       // syscalls::task_wait(mouse_input_task_id);
     }
 
     void run() {

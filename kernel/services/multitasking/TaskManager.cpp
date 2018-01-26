@@ -83,8 +83,11 @@ void TaskManager::replace_current_task(Task* task) {
         return;
     }
 
+    // replacement task inherits waiting tasks from current
     task->finish_wait_list = std::move(current_task.finish_wait_list);
-    Task::exit();  // current task dies
+
+    // current task dies
+    Task::exit();
 }
 
 /**
@@ -146,9 +149,9 @@ void TaskManager::save_current_task_state(CpuState* cpu_state) {
     Task& current_task = get_current_task();
     if (current_task.is_user_space) {
         current_task.cpu_state = (CpuState*) ((cpu_state->rsp - sizeof(CpuState))); // allocate cpu state on the current task stack
-        *current_task.cpu_state = *cpu_state; // copy cpu state from kernel stack to task stack
+        *current_task.cpu_state = *cpu_state;   // copy cpu state from kernel stack to task stack
     } else
-        current_task.cpu_state = cpu_state; // cpu state is already allocated and stored on kernel task stack, just remember the pointer
+        current_task.cpu_state = cpu_state;     // cpu state is already allocated and stored on kernel task stack, just remember the pointer
 }
 
 /**
@@ -159,13 +162,18 @@ hardware::CpuState* TaskManager::kill_current_task() {
     Task* current_task = scheduler.get_current_task();
 
     // enqueue back all waiting tasks and delete the task itself
-    wakeup_waitings_and_delete_task(current_task);
-
-    // remove the task from running queue
-    scheduler.remove(current_task);
+    kill_task(current_task);
 
     // return next task to switch to
     return pick_next_task_and_load_address_space();
+}
+
+void TaskManager::kill_task(Task* task) {
+    // enqueue back all waiting tasks and delete the task itself
+    wakeup_waitings_and_delete_task(task);
+
+    // remove the task from running queue
+    scheduler.remove(task);
 }
 
 /**
@@ -173,28 +181,30 @@ hardware::CpuState* TaskManager::kill_current_task() {
  * @note    Execution context: Interrupt only (int 80h)
  */
 hardware::CpuState* TaskManager::kill_current_task_group() {
-    // for each task
-    //  if task belong to the group
-    //    enqueue back waiting tasks
-    //    remove task from the queue
-    //    delete task
+    auto current_task_group = get_current_task().task_group_data;
 
-    const Task& current_task = get_current_task();
-    const TaskGroupDataPtr current_task_group = current_task.task_group_data;
+    // mark current task group to terminate
+    current_task_group->terminated = true;
 
-    for (Task* task : scheduler.get_task_list()) {
-        if (task->task_group_data != current_task_group)
-            continue;
+    // mark entire task subtree to terminate
+    for (Task* task : scheduler.get_task_list())
+        if (task->task_group_data == current_task_group)
+            mark_task_tree_to_terminate(task);
 
-        // enqueue back all waiting tasks and delete the task itself
-        wakeup_waitings_and_delete_task(task);
+    return kill_current_task();
+}
 
-        // remove the task from running queue
-        scheduler.remove(task);
-    }
-
-    // return next task to switch to
-    return pick_next_task_and_load_address_space();
+/**
+ * @brief   Wake up and mark entire task subtree as terminated
+ */
+void TaskManager::mark_task_tree_to_terminate(Task* root) {
+    root->state = TaskState::RUNNING;
+    for (Task* task : scheduler.get_task_list())
+        if (task->task_group_data->parent_task_id == root->task_id) {
+            task->task_group_data->terminated = true;
+            task->state = TaskState::RUNNING;
+            mark_task_tree_to_terminate(task);
+        }
 }
 
 /**
@@ -260,8 +270,14 @@ void TaskManager::unblock_tasks(TaskList& list) {
  * @note    There always need to be at least the "idle" task on the queue
  */
 CpuState* TaskManager::pick_next_task_and_load_address_space() {
-    Task* curr_task = scheduler.get_current_task();
-    Task* next_task = scheduler.pick_next_task();
+    Task* curr_task {scheduler.get_current_task()};
+    Task* next_task {nullptr};
+
+    // kill tasks that are marked for termination
+    while (next_task = scheduler.pick_next_task(), next_task->task_group_data->terminated) {
+        kill_task(next_task);
+        next_task = scheduler.pick_next_task();
+    }
 
     // reload address space only if task_group changes (each group has its own address space)
     if (curr_task->task_group_data != next_task->task_group_data) {
