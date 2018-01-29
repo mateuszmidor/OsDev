@@ -39,6 +39,8 @@ struct Task {
     ~Task();
     void prepare(u32 tid, TaskExitPoint exitpoint);
 
+    bool is_parent_of(const Task& t) const;
+    bool is_in_group(const TaskGroupDataPtr& g) const;
 
     static void idle();
     static void yield();

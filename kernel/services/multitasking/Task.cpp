@@ -65,6 +65,14 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
     task_id = tid;
 }
 
+bool Task::is_parent_of(const Task& t) const {
+    return task_id == t.task_group_data->parent_task_id;
+}
+
+bool Task::is_in_group(const TaskGroupDataPtr& g) const {
+    return task_group_data == g;
+}
+
 void Task::idle() {
     while (true)
         asm volatile("hlt");

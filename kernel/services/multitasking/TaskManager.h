@@ -29,7 +29,7 @@ public:
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
     hardware::CpuState* kill_current_task_group();
-    void mark_task_tree_to_terminate(Task* task);
+    void collect_children_tasks_recursively(const Task* parent, TaskList& kill_list);
     bool wait(u32 task_id);
     void block_current_task(TaskList& list);
     void unblock_tasks(TaskList& list);
@@ -41,7 +41,7 @@ private:
     hardware::CpuState* pick_next_task_and_load_address_space();
     void wakeup_waitings_and_delete_task(Task* task);
     Task get_boot_task() const;
-    void kill_task(Task* current_task);
+    void remove_task(Task* current_task);
 
     static TaskManager _instance;
 

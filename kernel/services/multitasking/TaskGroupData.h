@@ -31,7 +31,6 @@ public:
     u64                                     pml4_phys_addr;     // address space of task group. This uniquely identifies the group
     std::array<filesystem::VfsEntryPtr, 16> files;              // list of open files. TODO: concurrent access to the same file. How?
     u32                                     parent_task_id;
-    bool                                    terminated  {false};
 
 private:
     void close_files();

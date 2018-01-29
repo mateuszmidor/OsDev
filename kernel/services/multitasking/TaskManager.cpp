@@ -75,8 +75,8 @@ u32 TaskManager::add_task(Task* task) {
 void TaskManager::replace_current_task(Task* task) {
     KLockGuard lock;    // prevent reschedule, especially between "current_task->pml4_phys_addr = 0" and "Task::exit()"
 
-    Task& current_task = get_current_task();
-    u32 tid = current_task.task_id;
+    Task* current_task = scheduler.get_current_task();
+    u32 tid = current_task->task_id;
     task->prepare(tid, TaskManager::on_task_finished);
     if (!scheduler.add(task)) {
         delete task;
@@ -84,7 +84,7 @@ void TaskManager::replace_current_task(Task* task) {
     }
 
     // replacement task inherits waiting tasks from current
-    task->finish_wait_list = std::move(current_task.finish_wait_list);
+    task->finish_wait_list = std::move(current_task->finish_wait_list);
 
     // current task dies
     Task::exit();
@@ -144,14 +144,15 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
  * @brief   Save cpu_state in current task
  * @note    cpu_state IS LOCATED ON THE KERNEL STACK AND NEEDS TO BE COPIED TO THE TASK-SPECIFIC LOCATION IF SWITCHING FROM RING 3 (USER SPACE)!!!
  *          This can be improved by storing cpu_state directly in task-specific location or using per-task kernel stack. To be done later.
+ * @note    Execution context: Interrupt only
  */
 void TaskManager::save_current_task_state(CpuState* cpu_state) {
-    Task& current_task = get_current_task();
-    if (current_task.is_user_space) {
-        current_task.cpu_state = (CpuState*) ((cpu_state->rsp - sizeof(CpuState))); // allocate cpu state on the current task stack
-        *current_task.cpu_state = *cpu_state;   // copy cpu state from kernel stack to task stack
+    Task* current_task = scheduler.get_current_task();
+    if (current_task->is_user_space) {
+        current_task->cpu_state = (CpuState*) ((cpu_state->rsp - sizeof(CpuState))); // allocate cpu state on the current task stack
+        *current_task->cpu_state = *cpu_state;   // copy cpu state from kernel stack to task stack
     } else
-        current_task.cpu_state = cpu_state;     // cpu state is already allocated and stored on kernel task stack, just remember the pointer
+        current_task->cpu_state = cpu_state;     // cpu state is already allocated and stored on kernel task stack, just remember the pointer
 }
 
 /**
@@ -160,15 +161,15 @@ void TaskManager::save_current_task_state(CpuState* cpu_state) {
  */
 hardware::CpuState* TaskManager::kill_current_task() {
     Task* current_task = scheduler.get_current_task();
+    remove_task(current_task);
 
-    // enqueue back all waiting tasks and delete the task itself
-    kill_task(current_task);
-
-    // return next task to switch to
     return pick_next_task_and_load_address_space();
 }
 
-void TaskManager::kill_task(Task* task) {
+/**
+ * @brief   Remove "task", wake up all awaiting tasks
+ */
+void TaskManager::remove_task(Task* task) {
     // enqueue back all waiting tasks and delete the task itself
     wakeup_waitings_and_delete_task(task);
 
@@ -177,38 +178,36 @@ void TaskManager::kill_task(Task* task) {
 }
 
 /**
- * @brief   Remove all the tasks in current task group effectively killing process and return new task to be run
+ * @brief   Remove entire task group subtree, return new task to be run
  * @note    Execution context: Interrupt only (int 80h)
  */
 hardware::CpuState* TaskManager::kill_current_task_group() {
-    auto current_task_group = get_current_task().task_group_data;
+    auto current_task_group = scheduler.get_current_task()->task_group_data;
 
-    // mark current task group to terminate
-    current_task_group->terminated = true;
+    // collect tasks in current group and their children
+    TaskList kill_list;
+    for (auto task : scheduler.get_task_list())
+        if (task->is_in_group(current_task_group)) {
+            kill_list.push_front(task);
+            collect_children_tasks_recursively(task, kill_list);
+        }
 
-    // mark entire task subtree to terminate
-    for (Task* task : scheduler.get_task_list())
-        if (task->task_group_data == current_task_group)
-            mark_task_tree_to_terminate(task);
+    // remove tasks
+    while (auto task = kill_list.pop_front())
+        remove_task(task);
 
-    // remove marked tasks
-    for (Task* task : scheduler.get_task_list())
-        if (task->task_group_data->terminated)
-            kill_task(task);
-
+    // select next task to run
     return pick_next_task_and_load_address_space();
 }
 
 /**
- * @brief   Wake up and mark entire task subtree as terminated
+ * @brief   Traverse tree of child tasks and add them to "child_list"
  */
-void TaskManager::mark_task_tree_to_terminate(Task* root) {
-    root->state = TaskState::RUNNING;
-    for (Task* task : scheduler.get_task_list())
-        if (task->task_group_data->parent_task_id == root->task_id) {
-            task->task_group_data->terminated = true;
-            task->state = TaskState::RUNNING;
-            mark_task_tree_to_terminate(task);
+void TaskManager::collect_children_tasks_recursively(const Task* parent, TaskList& out_child_list) {
+    for (auto task : scheduler.get_task_list())
+        if (parent->is_parent_of(*task)) {
+            out_child_list.push_front(task);
+            collect_children_tasks_recursively(task, out_child_list);
         }
 }
 
