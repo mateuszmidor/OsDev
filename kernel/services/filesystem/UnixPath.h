@@ -23,6 +23,7 @@ public:
     bool is_valid_absolute_path() const;
     bool is_root_path() const;
     operator cstd::string() const;
+    bool operator==(const UnixPath& other) const;
     cstd::string extract_directory() const;
     cstd::string extract_file_name() const;
 

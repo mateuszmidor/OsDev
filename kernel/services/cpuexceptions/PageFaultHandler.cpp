@@ -132,15 +132,21 @@ PageFaultActualReason PageFaultHandler::page_fault_reason(u64* violated_page_add
 
 /**
  * @brief   Allocate missing page.
- *          Give WRITABLE and USER_ACCESSIBLE permissions, as the privilege is already tested on pml4 and pdpt levels.
- *          This can change in future to provide more detailed control eg for elf readonly and read/write data sections.
+ *          Give WRITABLE permission by default.
+ *          This can change in future to provide more detailed control eg. for kernel/elf readonly and read/write data sections.
  */
 bool PageFaultHandler::alloc_page(size_t virtual_address, u64* page_virt_addr) const {
     size_t frame_phys_addr = memory::FrameAllocator::alloc_frame();
     if (frame_phys_addr == -1)
         return false;
 
-    *page_virt_addr =  frame_phys_addr | PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::USER_ACCESSIBLE | PageAttr::HUGE_PAGE;
+    *page_virt_addr = frame_phys_addr | PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::HUGE_PAGE;
+
+    bool is_kernel_address_space = (size_t)page_virt_addr >= HigherHalf::get_kernel_heap_low_limit();
+    if (is_kernel_address_space)
+        *page_virt_addr |= PageAttr::GLOBAL_PAGE;
+    else
+        *page_virt_addr |= PageAttr::USER_ACCESSIBLE;
 
     asm volatile("invlpg (%0)" ::"r" (virtual_address) : "memory");
 

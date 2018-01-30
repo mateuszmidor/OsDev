@@ -25,6 +25,13 @@ PageTables64  PageTables::kernel_page_tables  __attribute__ ((aligned (4096)));
  *                       -pte (not used when 2MB HUGE pages are used)
  */
 void PageTables::map_and_load_kernel_address_space() {
+    asm volatile (
+            // enable Global Page Extension (CR4 bit 7), so later setting PageAttr::GLOBAL_PAGE takes effect
+            // see: http://developer.amd.com/wordpress/media/2012/10/24593_APM_v21.pdf, 5.5.1 Global Pages
+            "mov %cr4, %rax ;"
+            "or $0x80, %rax ;"
+            "mov %rax, %cr4 ;"
+    );
     prepare_higher_half_kernel_page_tables(kernel_page_tables);
     u64 pml4_physical_address = HigherHalf::virt_to_phys(kernel_page_tables.pml4);
     load_address_space(pml4_physical_address);
@@ -65,13 +72,13 @@ void PageTables::map_stack_guard_page(size_t virtual_address, size_t pml4_phys_a
  */
 void PageTables::prepare_higher_half_kernel_page_tables(PageTables64& pt) {
     const u16 PRESENT_WRITABLE = PageAttr::PRESENT | PageAttr::WRITABLE;
-    const u16 PRESENT_WRITABLE_HUGE = PRESENT_WRITABLE | PageAttr::HUGE_PAGE;
+    const u16 PRESENT_WRITABLE_HUGE_GLOBAL = PRESENT_WRITABLE | PageAttr::HUGE_PAGE | PageAttr::GLOBAL_PAGE;
     // prepare kernel virtual address space in -2..0GB.
-    pt.pml4[511] = HigherHalf::virt_to_phys(pt.pdpt)                | PRESENT_WRITABLE;         // last 512 GB chunk
-    pt.pdpt[510] = HigherHalf::virt_to_phys(pt.pde_kernel_static)   | PRESENT_WRITABLE;         // -2BG..-1GB chunk
-    pt.pdpt[511] = HigherHalf::virt_to_phys(pt.pde_kernel_dynamic)  | PRESENT_WRITABLE;         // -1GB..0GB chunk
+    pt.pml4[511] = HigherHalf::virt_to_phys(pt.pdpt)                | PRESENT_WRITABLE;             // last 512 GB chunk
+    pt.pdpt[510] = HigherHalf::virt_to_phys(pt.pde_kernel_static)   | PRESENT_WRITABLE;             // -2BG..-1GB chunk
+    pt.pdpt[511] = HigherHalf::virt_to_phys(pt.pde_kernel_dynamic)  | PRESENT_WRITABLE;             // -1GB..0GB chunk
     for (u16 i = 0; i < 512; i++)
-        pt.pde_kernel_static[i] = (0x200000 * i)                    | PRESENT_WRITABLE_HUGE;    // map static memory pages
+        pt.pde_kernel_static[i] = (0x200000 * i)                    | PRESENT_WRITABLE_HUGE_GLOBAL; // map static memory pages
 }
 
 /**

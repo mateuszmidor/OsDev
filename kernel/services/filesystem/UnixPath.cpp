@@ -38,6 +38,10 @@ UnixPath::operator string() const {
     return path;
 }
 
+bool UnixPath::operator==(const UnixPath& other) const {
+    return path == other.path;
+}
+
 /**
  * @brief   Normalize complex unix-like path eg. /user/home/../data/./   into /user/home/data
  *          In generale, this method takes care of '.' and '..' in the path

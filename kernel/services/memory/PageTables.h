@@ -22,6 +22,7 @@ enum PageAttr {
     WRITABLE            = 2,    // page can be read/written
     USER_ACCESSIBLE     = 4,    // page can be accessed from protection ring 3 (user space)
     HUGE_PAGE           = 128,  // page is 2MB (if used in pde) or 1GB (if used in pdpt) instead of standard 4096 bytes
+    GLOBAL_PAGE         = 256,  // page is shared across processes (useful for kernel pages)
     STACK_GUARD_PAGE    = 512,  // page is a stack guard; together with "non present" allows for detection of stack overflows
 };
 
