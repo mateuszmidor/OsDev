@@ -8,22 +8,16 @@
 #ifndef SRC_FILESYSTEM_PROCFS_VFSKMSGENTRY_H_
 #define SRC_FILESYSTEM_PROCFS_VFSKMSGENTRY_H_
 
-#include "VfsEntry.h"
+#include "VfsFileEntry.h"
 
 namespace filesystem {
 
 /**
  * @brief   This class exposes kernel log as virtual filesystem entry
  */
-class VfsKmsgEntry: public VfsEntry {
+class VfsKmsgEntry: public VfsFileEntry {
 public:
-    VfsKmsgEntry() {}
-    virtual ~VfsKmsgEntry() {}
-
     // [common interface]
-    bool open() override                    { return true; /* no initialization to do here */ }
-    void close() override                   {};
-    bool is_directory() const override      { return false; }
     const cstd::string& get_name() const    { return name; }
 
     // [file interface]
@@ -34,11 +28,8 @@ public:
     bool truncate(u32 new_size) override    { return false; }
     u32 get_position() const override       { return 0; }
 
-    // [directory interface]
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; }
-
 private:
-    const cstd::string    name = "kmsg";
+    const cstd::string    name              {"kmsg"};
 };
 
 } /* namespace filesystem */

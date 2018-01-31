@@ -8,7 +8,7 @@
 #ifndef SRC_FILESYSTEM_PROCFS_VFSDATEENTRY_H_
 #define SRC_FILESYSTEM_PROCFS_VFSDATEENTRY_H_
 
-#include "VfsEntry.h"
+#include "VfsFileEntry.h"
 #include "Port.h"
 
 namespace filesystem {
@@ -16,11 +16,11 @@ namespace filesystem {
 /**
  * @brief   This class exposes system date and time as virtual filesystem entry
  */
-class VfsDateEntry: public VfsEntry {
+class VfsDateEntry: public VfsFileEntry {
+public:
     // [common interface]
     bool open() override;
     void close() override;
-    bool is_directory() const override      { return false; }
     const cstd::string& get_name() const    { return name; }
 
     // [file interface]
@@ -31,18 +31,15 @@ class VfsDateEntry: public VfsEntry {
     bool truncate(u32 new_size) override    { return false; }
     u32 get_position() const override       { return 0; }
 
-    // [directory interface]
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; }
 
 private:
     cstd::string get_date_time() const;
-    const cstd::string  name            = "date";
-    bool                is_open         = false;
-
     u8 read_byte(u8 offset) const;
-    u8 bin(u8 bcd) const;
-    hardware::Port8bitSlow address  { 0x70 };
-    hardware::Port8bitSlow data     { 0x71 };
+    u8 to_bin(u8 bcd) const;
+    const cstd::string      name            {"date"};
+    bool                    is_open         {false};
+    hardware::Port8bitSlow  address         {0x70};
+    hardware::Port8bitSlow  data            {0x71};
 };
 
 } /* namespace filesystem */

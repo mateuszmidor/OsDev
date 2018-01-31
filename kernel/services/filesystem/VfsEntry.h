@@ -1,8 +1,8 @@
-/*
- * VfsEntry.h
+/**
+ *   @file: VfsEntry.h
  *
- *  Created on: Oct 16, 2017
- *      Author: mateusz
+ *   @date: Oct 16, 2017
+ * @author: Mateusz Midor
  */
 
 #ifndef SRC_FILESYSTEM_VFSENTRY_H_
@@ -13,13 +13,14 @@
 #include "types.h"
 #include "String.h"
 
+
 namespace filesystem {
 
 // directory enumeration result
 enum class VfsEnumerateResult {
     ENUMERATION_FINISHED,   // all entries in directory have been enumerated
     ENUMERATION_STOPPED,    // OnEntryFound callback returned false
-    ENUMERATION_CONTINUE,   // more entries to enumerate in following cluster
+    ENUMERATION_CONTINUE,   // more entries to enumerate exist
     ENUMERATION_FAILED      // could not enumerate eg. because entry is not a directory or is not initialized
 };
 
@@ -40,7 +41,7 @@ public:
     virtual bool open() = 0;	// start file manipulating session. this can be used to eg. implement exclusive access to a file
     virtual void close() = 0;	// end file manipulating session.
     virtual bool is_directory() const = 0;
-    virtual bool is_mount_point() const { return false; }
+    virtual bool is_mount_point() const = 0;
     virtual const cstd::string& get_name() const = 0;
 
     // [file interface]
@@ -52,6 +53,7 @@ public:
     virtual u32 get_position() const = 0;
 
     // [directory interface]
+    virtual void attach_entry(const VfsEntryPtr entry) = 0;
     virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;
 };
 

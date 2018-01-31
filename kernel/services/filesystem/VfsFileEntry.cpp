@@ -1,11 +1,11 @@
 /**
- *   @file: VfsEntry.cpp
+ *   @file: VfsFileEntry.cpp
  *
- *   @date: Oct 16, 2017
+ *   @date: Jan 30, 2018
  * @author: Mateusz Midor
  */
 
-#include "VfsEntry.h"
+#include "VfsFileEntry.h"
 
 namespace filesystem {
 

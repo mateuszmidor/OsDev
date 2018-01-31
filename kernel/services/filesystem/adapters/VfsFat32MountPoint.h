@@ -19,12 +19,9 @@ namespace filesystem {
 class VfsFat32MountPoint: public VfsMountPoint {
 public:
     VfsFat32MountPoint(const VolumeFat32& volume);
-    virtual ~VfsFat32MountPoint();
 
     // [common interface]
-    bool open() override                        { return true; /* no initialization to do here */ }
-    void close() override                       {};
-    const cstd::string& get_name() const;
+    const cstd::string& get_name() const override   { return name; }
 
     // [directory interface]
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
@@ -36,6 +33,8 @@ public:
     bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const override;
 
 private:
+    VfsEntryPtr wrap_entry(const Fat32Entry& e) const;
+
     VolumeFat32         volume; // volume comes from MassStorageMsDos which got it from AtaDevice that is being held by AtaPrimaryBusDriver/AtaSecondaryBusDriver :)
     Fat32Entry          root;
     cstd::string        name;

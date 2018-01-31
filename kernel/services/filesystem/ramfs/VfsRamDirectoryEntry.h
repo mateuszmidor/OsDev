@@ -10,38 +10,21 @@
 
 #include <errno.h>
 #include "Vector.h"
-#include "VfsEntry.h"
+#include "VfsDirectoryEntry.h"
 
 namespace filesystem {
 
 /**
  * @brief   This class is VfsEntry implementation for an in-memory directory.
  */
-class VfsRamDirectoryEntry: public VfsEntry {
-private:
-    cstd::string                name;
-    cstd::vector<VfsEntryPtr>   entries;    // child entries
-
+class VfsRamDirectoryEntry: public VfsDirectoryEntry {
 public:
-    VfsRamDirectoryEntry(const cstd::string& name) : name(name) {}
-
     // [common interface]
-    bool open() override                            { return true; }
-    void close() override                           {};
-    bool is_directory() const override              { return true; }
-    const cstd::string& get_name() const override   { return name; }
+    VfsRamDirectoryEntry(const cstd::string& name) : name(name) {}
+    const cstd::string& get_name() const override   { return name; };
 
-    // [file interface]
-    u32 get_size() const override                       { return 0; };
-    s64 read(void* data, u32 count) override            { return -EISDIR; };
-    s64 write(const void* data, u32 count) override     { return -EISDIR; };
-    bool seek(u32 new_position) override                { return false; };
-    bool truncate(u32 new_size) override                { return false; };
-    u32 get_position() const override                   { return 0; }
-
-    // [directory interface]
-    void push_back(const VfsEntryPtr entry)             { entries.push_back(entry); }
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
+private:
+    const cstd::string  name;
 };
 
 using VfsRamDirectoryEntryPtr = std::shared_ptr<VfsRamDirectoryEntry>;

@@ -67,7 +67,7 @@ string VfsDateEntry::get_date_time() const {
     u16 minute  = read_byte(0x2);
     u16 second  = read_byte(0x0);
 
-    return StringUtils::format("%-%-% %:%:% UTC\n", bin(year) + 2000, bin(month), bin(day), bin(hour), bin(minute), bin(second));
+    return StringUtils::format("%-%-% %:%:% UTC\n", to_bin(year) + 2000, to_bin(month), to_bin(day), to_bin(hour), to_bin(minute), to_bin(second));
 }
 
 u8 VfsDateEntry::read_byte(u8 offset) const {
@@ -76,7 +76,7 @@ u8 VfsDateEntry::read_byte(u8 offset) const {
 }
 
 // convert bcd to bin
-u8 VfsDateEntry::bin(u8 bcd) const {
+u8 VfsDateEntry::to_bin(u8 bcd) const {
     return (bcd / 16) * 10 + (bcd & 0xF);
 }
 

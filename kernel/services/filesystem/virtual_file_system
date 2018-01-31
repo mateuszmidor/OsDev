@@ -1,3 +1,20 @@
-Virtual File System is a tree made of VfsEntry nodes, which represent files/directories.
+Since UnixPath doesnt say if the pointed entry is a File or Directory, the base VfsEntry represents interface of both.
+Virtual File System is a tree made of VfsEntry nodes.
 VfsManager holds the root node "/" and manages the tree by means of get/create/copy/move/delete actions.
 To mount an actual physical filesystem under the root, you need to add VfsMountPoint, which exposes get/create/move/delete actions of specific filesystem to the VfsManager.
+
+                +----------+
+                | VfsEntry |
+                +----------+
+                  ^      ^   
+                  |      |
++-------------------+  +--------------+          
+| VfsDirectoryEntry |  | VfsFileEntry |  
++-------------------+  +--------------+  
+          ^
+          |
+  +---------------+
+  | VfsMountPoint |
+  +---------------+
+  
+VfsMountPoint adds get/create/move/delete actions to the directory interface.

@@ -8,7 +8,7 @@
 #ifndef SRC_FILESYSTEM_VFSRAMFIFOENTRY_H_
 #define SRC_FILESYSTEM_VFSRAMFIFOENTRY_H_
 
-#include "VfsEntry.h"
+#include "VfsFileEntry.h"
 #include "TaskManager.h"
 
 namespace filesystem {
@@ -18,21 +18,11 @@ namespace filesystem {
  * @note    It acts like FIFO; you always read the head of it, and write the tail, thus get_position() always return 0
  *          It blocks reader if empty, it blocks writer if full.
  */
-class VfsRamFifoEntry: public VfsEntry {
-private:
-    static constexpr u32        BUFF_SIZE   = 512;
-    u8                          buff[BUFF_SIZE];  // in-memory file buffer
-    cstd::string                name;
-    u32                         size;
-    multitasking::TaskList      read_wait_list;
-    multitasking::TaskList      write_wait_list;
+class VfsRamFifoEntry: public VfsFileEntry {
 public:
     VfsRamFifoEntry(const cstd::string& name) : name(name), size(0) {}
 
     // [common interface]
-    bool open() override                            { return true; /* no initialization to do here */ }
-    void close() override                           {};
-    bool is_directory() const override              { return false; }
     const cstd::string& get_name() const override   { return name; }
 
     // [file interface]
@@ -43,8 +33,14 @@ public:
     bool truncate(u32 new_size) override;
     u32 get_position() const override               { return 0; }
 
-    // [directory interface]
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; }
+private:
+    static constexpr u32        BUFF_SIZE           {512};
+    const cstd::string          name;
+    u8                          buff[BUFF_SIZE];  // in-memory file buffer
+    u32                         size;
+    multitasking::TaskList      read_wait_list;
+    multitasking::TaskList      write_wait_list;
+
 };
 
 using VfsRamFifoEntryPtr = std::shared_ptr<VfsRamFifoEntry>;

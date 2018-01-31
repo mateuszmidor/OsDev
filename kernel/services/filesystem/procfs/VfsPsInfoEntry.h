@@ -8,18 +8,18 @@
 #ifndef SRC_FILESYSTEM_PROCFS_VFSPSINFOENTRY_H_
 #define SRC_FILESYSTEM_PROCFS_VFSPSINFOENTRY_H_
 
-#include "VfsEntry.h"
+#include "VfsFileEntry.h"
 
 namespace filesystem {
 
 /**
  * @brief   This class exposes running processes information as virtual filesystem entry
  */
-class VfsPsInfoEntry: public VfsEntry {
+class VfsPsInfoEntry: public VfsFileEntry {
+public:
     // [common interface]
     bool open() override;
     void close() override;
-    bool is_directory() const override      { return false; }
     const cstd::string& get_name() const    { return name; }
 
     // [file interface]
@@ -30,13 +30,9 @@ class VfsPsInfoEntry: public VfsEntry {
     bool truncate(u32 new_size) override    { return false; }
     u32 get_position() const override       { return 0; }
 
-    // [directory interface]
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; }
-
 private:
-    cstd::string get_date_time() const;
-    const cstd::string  name            = "psinfo";
-    bool                is_open         = false;
+    const cstd::string  name                {"psinfo"};
+    bool                is_open             {false};
 
 };
 

@@ -8,7 +8,7 @@
 #ifndef SRC_FILESYSTEM_VFSMANAGER_H_
 #define SRC_FILESYSTEM_VFSMANAGER_H_
 
-#include "ramfs/VfsRamDirectoryEntry.h"
+#include "VfsRamDirectoryEntry.h"
 #include "VfsMountPoint.h"
 #include "AtaDriver.h"
 #include "UnixPath.h"
@@ -38,8 +38,8 @@ private:
     VfsMountPointPtr get_mountpoint_path(cstd::string& path) const;
     static VfsManager _instance;
 
-    logging::KernelLog&     klog;
-    VfsRamDirectoryEntryPtr root;
+    logging::KernelLog&         klog;
+    VfsRamDirectoryEntryPtr     root;
 };
 
 } /* namespace filesystem */
