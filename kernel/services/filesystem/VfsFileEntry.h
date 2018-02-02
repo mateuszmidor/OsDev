@@ -25,6 +25,7 @@ public:
 
     // [directory interface - not applicable for file]
     void attach_entry(const VfsEntryPtr entry) override { }
+    void detach_entry(const cstd::string& name) override { }
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override { return VfsEnumerateResult::ENUMERATION_FAILED; } ;
 };
 

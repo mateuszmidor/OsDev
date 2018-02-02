@@ -32,6 +32,7 @@ public:
 
     // [directory interface]
     void attach_entry(const VfsEntryPtr entry) override  { nonpersistent_entries.push_back(entry); }
+    void detach_entry(const cstd::string& name) override;
     VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
 
 private:

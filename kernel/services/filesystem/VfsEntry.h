@@ -54,6 +54,7 @@ public:
 
     // [directory interface]
     virtual void attach_entry(const VfsEntryPtr entry) = 0;
+    virtual void detach_entry(const cstd::string& name) = 0;
     virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;
 };
 
