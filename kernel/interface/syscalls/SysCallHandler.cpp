@@ -435,8 +435,11 @@ s32 SysCallHandler::enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_en
         entries[entry_no].is_directory = e->is_directory();
         entries[entry_no].size = e->get_size();
 
-        // TODO: possible buff overflow, implement and use strncpy
-        memcpy(entries[entry_no].name, e->get_name().c_str(), e->get_name().length() + 1);
+        // safely copy the entry name
+        auto name_len = min(e->get_name().length(), sizeof(entries[entry_no].name) - 1);
+        memcpy(entries[entry_no].name, e->get_name().c_str(), name_len);
+        entries[entry_no].name[name_len] = '\0';
+
         entry_no++;
 
         return true;
