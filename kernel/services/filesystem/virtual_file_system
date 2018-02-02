@@ -18,3 +18,20 @@ To mount an actual physical filesystem under the root, you need to add VfsMountP
   +---------------+
   
 VfsMountPoint adds get/create/move/delete actions to the directory interface.
+
+
+
+
++----------------------+   +---------------------+           
+| VfsPersistentStorage |   |    VfsRamStorage    |   
+|   (tree of VfsEntry) |   | (map path-VfsEntry) |
++----------------------+   +---------------------+   
+                    ^         ^
+                    |         |  
++------------------------------------------------+
+|                    VfsManager                  |
+|           (open/close/create/delete)           |
++------------------------------------------------+
+                 
+VfsManager looks for an entry of given path in VfsRamStorage. If not found - it brings proper entry from VfsPersistentStorage.
+VfsRamStorage allows attaching extra, memory-only, entries to the persistent directories, eg pipes, sockets.

@@ -91,6 +91,7 @@ void PageTables::prepare_elf_page_tables(PageTables64& pt) {
     // prepare elf virtual address space of 0..1GB as user accessible
     pt.pml4[0] = HigherHalf::virt_to_phys(pt.pdpt)                                  | PRESENT_WRITABLE_USERSPACE;
     pt.pdpt[0] = HigherHalf::virt_to_phys(pt.pde_user)                              | PRESENT_WRITABLE_USERSPACE;
+    // should we map pt.pde_user[0] as invalid for detection of null pointers? :)
 
     // prepare kernel virtual address space in -2..0GB. This is necessary so syscall handlers can use kernel addresses
     pt.pml4[511] = HigherHalf::virt_to_phys(kernel_page_tables.pdpt)                | PRESENT_WRITABLE;     // last 512 GB chunk
@@ -129,6 +130,7 @@ u64* PageTables::get_page_for_virt_address(size_t virtual_address, size_t pml4_p
 
     if (pml4_phys_addr == 0)
         return nullptr;
+
     u64* pml4_virt_addr = (u64*)HigherHalf::phys_to_virt(pml4_phys_addr);
 
     if (pml4_virt_addr[pml4_index] == 0)
@@ -137,6 +139,7 @@ u64* PageTables::get_page_for_virt_address(size_t virtual_address, size_t pml4_p
 
     if (pdpt_virt_addr[pdpt_index] == 0)
         return nullptr;
+
     u64* pde_virt_addr =  (u64*)HigherHalf::phys_to_virt(pdpt_virt_addr[pdpt_index] & ~4095); // & ~4095 to remove page flags
 
     return &pde_virt_addr[pde_index];

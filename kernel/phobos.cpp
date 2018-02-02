@@ -27,7 +27,19 @@
 #include "Assert.h"
 #include "KernelLog.h"
 
+#include "VfsRamDirectoryEntry.h"
+#include "VfsRamFifoEntry.h"
+#include "procfs/VfsKmsgEntry.h"
+#include "procfs/VfsMemInfoEntry.h"
+#include "procfs/VfsDateEntry.h"
+#include "procfs/VfsCpuInfoEntry.h"
+#include "procfs/VfsPciInfoEntry.h"
+#include "procfs/VfsPsInfoEntry.h"
+#include "procfs/VfsMountInfoEntry.h"
+#include "ramfs/VfsRamFifoEntry.h"
+
 #include "phobos.h"
+
 
 using namespace cstd;
 using namespace logging;
@@ -62,7 +74,52 @@ namespace phobos {
         PageFaultHandler        page_fault;
 
         /**
-         * Keyboard handling
+         * @brief   Install ram fs /dev
+         */
+        void install_dev_fs() {
+            VfsEntryPtr root = vfs_manager.get_entry("/");
+            VfsEntryPtr dev = std::make_shared<VfsRamDirectoryEntry>("dev");
+            root->attach_entry(dev);
+
+            VfsRamFifoEntryPtr keyboard = std::make_shared<VfsRamFifoEntry>("keyboard");
+            dev->attach_entry(keyboard);
+
+            VfsRamFifoEntryPtr mouse = std::make_shared<VfsRamFifoEntry>("mouse");
+            dev->attach_entry(mouse);
+        }
+
+        /**
+         * @brief   Install ram fs /proc
+         */
+        void install_proc_fs() {
+            VfsEntryPtr root = vfs_manager.get_entry("/");
+            VfsEntryPtr proc = std::make_shared<VfsRamDirectoryEntry>("proc");
+            root->attach_entry(proc);
+
+            VfsEntryPtr kmsg = std::make_shared<VfsKmsgEntry>();
+            proc->attach_entry(kmsg);
+
+            VfsEntryPtr meminfo = std::make_shared<VfsMemInfoEntry>();
+            proc->attach_entry(meminfo);
+
+            VfsEntryPtr date = std::make_shared<VfsDateEntry>();
+            proc->attach_entry(date);
+
+            VfsEntryPtr cpuinfo = std::make_shared<VfsCpuInfoEntry>();
+            proc->attach_entry(cpuinfo);
+
+            VfsEntryPtr pciinfo = std::make_shared<VfsPciInfoEntry>();
+            proc->attach_entry(pciinfo);
+
+            VfsEntryPtr psinfo = std::make_shared<VfsPsInfoEntry>();
+            proc->attach_entry(psinfo);
+
+            VfsEntryPtr mountinfo = std::make_shared<VfsMountInfoEntry>();
+            proc->attach_entry(mountinfo);
+        }
+
+        /**
+         * @brief   Keyboard handling
          */
         VfsEntryPtr keyboard_vfe;
 
@@ -85,7 +142,7 @@ namespace phobos {
         }
 
         /**
-         * Mouse handling
+         * @brief   Mouse handling
          */
         middlespace::MouseState mouse_state;
         VfsEntryPtr mouse_vfe;
@@ -125,7 +182,7 @@ namespace phobos {
         }
 
         /**
-         * Programmable Interval Timer handling
+         * @brief   Programmable Interval Timer handling
          */
         CpuState* handle_timer_tick(CpuState* cpu_state) {
             time_manager.tick();
@@ -133,7 +190,7 @@ namespace phobos {
         }
 
         /**
-         * Print the OS loading header
+         * @brief    Print the OS loading header
          */
         void print_phobos_loading() {
             printer.println(R"( ____  _           _      ___  ____  )");
@@ -219,7 +276,9 @@ namespace phobos {
         printer.println("  installing system calls...done");
 
         // 11. install filesystem root "/"
-        vfs_manager.install_root();
+        vfs_manager.install();
+        install_dev_fs();
+        install_proc_fs();
         printer.println("  installing virtual file system...done");
 
         // 12. start multitasking
