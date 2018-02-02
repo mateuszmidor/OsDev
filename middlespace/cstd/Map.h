@@ -37,6 +37,15 @@ public:
         return std::find_if(begin(), end(), pred);
     }
 
+    Iterator find_by_val(const V& val) {
+        auto pred = [&val] (const KeyValue& kv) { return kv.second == val;};
+        return std::find_if(begin(), end(), pred);
+    }
+
+    void erase(Iterator it) {
+        key_values.erase(it);
+    }
+
     Iterator begin() { return key_values.begin(); }
     Iterator end() { return key_values.end(); }
 
