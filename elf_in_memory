@@ -1,21 +1,18 @@
 ELF user programs are loaded into virtual memory as follows:
 
-+---------------------+
-| -1 B                |
-+---------------------+
-| kernel CODE + DATA  |
-+---------------------+
-| -2 GB               |
-+---------------------+
-| [unused]            |
-+---------------------+
-| 1 GB                |
-+---------------------|
-|"main" argv          |
-|"main" thread stack  |
-| other thread stacks |
-| HEAP                |
-| ELF CODE + DATA     |
-+---------------------+
-| 0 GB                |
-+---------------------+   
++-----------------------------+
+| -1GB kernel dynamic memory  |
++-----------------------------+
+| -2GB kernel CODE+DATA       |
++-----------------------------+
+| [unused]                    |
++-----------------------------+
+| 1023MB "main" argv          |
+|        "main" thread stack  |
+|         other thread stacks |
+| ...                         |
+| HEAP                        |
+| 4MB ELF CODE + DATA         |
++-----------------------------+
+| 0B                          |
++-----------------------------+   
