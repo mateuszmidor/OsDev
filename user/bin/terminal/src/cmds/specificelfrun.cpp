@@ -41,7 +41,7 @@ void specificelfrun::run(const CmdArgs& args, bool run_in_bg) {
         break;
 
     case -ENOEXEC:
-        cout::print("specificelfrun: give filename points to non-executable\n");
+        cout::format("specificelfrun: given filename points to non-executable: %\n", elf_path);
         break;
 
     case -EPERM:

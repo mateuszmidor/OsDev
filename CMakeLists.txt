@@ -23,8 +23,8 @@ add_custom_target(iso
 #    COMMAND cmake -DCMAKE_BUILD_TYPE=Debug ..
     COMMAND make
     COMMAND /usr/bin/env mkdir -p "isofiles/boot/grub"
-    COMMAND /usr/bin/env cp kernel/${BIN} "isofiles/boot/kernel.bin"
     COMMAND /usr/bin/env cp ${GRUB_CFG} "isofiles/boot/grub"
+    COMMAND /usr/bin/env cp kernel/${BIN} "isofiles/boot/kernel.bin"
     COMMAND grub-mkrescue -o ${ISO} "isofiles"
     COMMAND /usr/bin/env rm -r "isofiles"
 )
