@@ -21,6 +21,7 @@ class Map {
     using KeyValue = std::pair<K, V>;
     using KeyValues = vector<KeyValue>;
     using Iterator = typename KeyValues::iterator;
+    using ConstIterator = typename KeyValues::const_iterator;
 
 public:
     V& operator[](const K& key) {
@@ -37,6 +38,11 @@ public:
         return std::find_if(begin(), end(), pred);
     }
 
+    ConstIterator find(const K& key) const {
+        auto pred = [&key] (const KeyValue& kv) { return kv.first == key;};
+        return std::find_if(cbegin(), cend(), pred);
+    }
+
     Iterator find_by_val(const V& val) {
         auto pred = [&val] (const KeyValue& kv) { return kv.second == val;};
         return std::find_if(begin(), end(), pred);
@@ -48,6 +54,9 @@ public:
 
     Iterator begin() { return key_values.begin(); }
     Iterator end() { return key_values.end(); }
+    ConstIterator cbegin() const { return key_values.cbegin(); }
+    ConstIterator cend() const { return key_values.cend(); }
+
 
 private:
     KeyValues key_values;
