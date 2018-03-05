@@ -18,15 +18,15 @@ DriverManager& DriverManager::instance() {
     return _instance;
 }
 
-DriverManager::~DriverManager() {
-}
-
 DriverManager::DriverManager() {
     for (int i = 0; i < drivers.size(); i++)
-        drivers[i] = &unhandled_device_driver;
+        drivers[i] = nullptr;
 }
 
 CpuState* DriverManager::on_interrupt(u8 interrupt_no, CpuState* cpu_state) const {
-    return drivers[interrupt_no]->on_interrupt(cpu_state);
+    if (auto driver = drivers[interrupt_no])
+        return driver->on_interrupt(cpu_state);
+    else
+        return unhandled_device_driver.on_interrupt(cpu_state);
 }
 } /* namespace drivers */

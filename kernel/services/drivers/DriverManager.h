@@ -22,8 +22,6 @@ public:
     DriverManager operator=(const DriverManager&) = delete;
     DriverManager operator=(DriverManager&&) = delete;
 
-    virtual ~DriverManager();
-
     template <class DrvType>
     void install_driver(DrvType* drv) {
         auto interrupt_no = DrvType::handled_interrupt_no();
@@ -45,8 +43,6 @@ private:
     DriverManager();
 
     std::array<DeviceDriverPtr, 256> drivers; // this array maps interrupt_no to handling driver
-    u8 driver_count = 0;
-
 };
 
 } /* namespace drivers */
