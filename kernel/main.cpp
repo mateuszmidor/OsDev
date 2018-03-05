@@ -6,6 +6,7 @@
  */
 
 #include "phobos.h"
+#include "VfsRamFifoEntry.h"
 
 using namespace cstd;
 using namespace drivers;
@@ -40,13 +41,13 @@ void stop_loading_animation(u64 timer_id) {
 }
 
 VfsEntryPtr try_open_terminal_elf_file() {
-    VfsEntryPtr e = phobos::vfs_manager.get_entry("/BIN/TERMINAL");
+    VfsEntryPtr e = phobos::vfs_manager.get_entry("/BIN/TERMINAL").value;
     if (!e) {
         phobos::printer.println(" /BIN/TERMINAL doesnt exist. System Halt", EgaColor::Red);
         phobos::halt();
     }
-    if (e->is_directory()) {
-        phobos::printer.println(" /BIN/TERMINAL is directory? System Halt", EgaColor::Red);
+    if (e->get_type() != VfsEntryType::FILE) {
+        phobos::printer.println(" /BIN/TERMINAL is not a file? System Halt", EgaColor::Red);
         phobos::halt();
     }
     return e;
@@ -54,7 +55,7 @@ VfsEntryPtr try_open_terminal_elf_file() {
 
 s32 try_load_and_run_terminal(VfsEntryPtr elf_file) {
     // read elf file data
-    u32 size = elf_file->get_size();
+    u32 size = elf_file->get_size().value;
     u8* elf_data = new u8[size];
     elf_file->read(elf_data, size);
 
@@ -100,8 +101,8 @@ void print_terminal_crashed() {
  */
 void run_userspace_terminal() {
     // create pipes used by terminal and user space programs for cin and cout
-    phobos::vfs_manager.create_fifo("/dev/stdin");
-    phobos::vfs_manager.create_fifo("/dev/stdout");
+    phobos::vfs_manager.attach_special("/dev", std::make_shared<VfsRamFifoEntry>("stdin"));
+    phobos::vfs_manager.attach_special("/dev", std::make_shared<VfsRamFifoEntry>("stdout"));
 
     // run in a loop so terminal restarts in case of a crash and kernel log can be read
     while (true) {

@@ -186,7 +186,7 @@ bool VolumeFat32::get_free_name_8_3(Fat32Entry& parent, const string& full_name,
  *          -path does not exist
  *          -path points to a dir that is not empty
  */
-bool VolumeFat32::delete_entry(const UnixPath& unix_path) const{
+bool VolumeFat32::delete_entry(const UnixPath& unix_path) const {
     if (!unix_path.is_valid_absolute_path()) {
         klog.format("VolumeFat32::delete_entry: path '%' is empty or it is not an absolute path\n", unix_path);
         return false;
@@ -194,7 +194,7 @@ bool VolumeFat32::delete_entry(const UnixPath& unix_path) const{
 
     if (unix_path.is_root_path()) {
         klog.format("VolumeFat32::delete_entry: path '%' root. Cant delete root\n", unix_path);
-        return empty_entry();
+        return false;
     }
 
     // get entry parent dir to be updated

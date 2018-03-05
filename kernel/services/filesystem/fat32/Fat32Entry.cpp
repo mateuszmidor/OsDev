@@ -226,15 +226,15 @@ u32 Fat32Entry::get_position() const {
  * @return  ENUMERATION_FINISHED if all entries have been enumerated,
  *          ENUMERATION_STOPPED if enumeration stopped by on_entry() returning false
  */
-EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
+Fat32EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
     if (!is_initialized()) {
         klog.format("Fat32Entry::enumerate_entries: uninitialized entry\n");
-        return EnumerateResult::ENUMERATION_FAILED;
+        return Fat32EnumerateResult::ENUMERATION_FAILED;
     }
 
     if (!is_dir){
         klog.format("Fat32Entry::enumerate_entries: not a directory\n");
-        return EnumerateResult::ENUMERATION_FAILED;
+        return Fat32EnumerateResult::ENUMERATION_FAILED;
     }
 
     vector<DirectoryEntryFat32> entries(get_entries_per_sector());
@@ -246,7 +246,7 @@ EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
             const auto& e = entries[i];
 
             if (e.is_nomore()) {    // no more entries for this dir
-                return EnumerateResult::ENUMERATION_FINISHED;
+                return Fat32EnumerateResult::ENUMERATION_FINISHED;
             }
 
             if (e.is_unused()) {    // unused entry, skip
@@ -266,13 +266,13 @@ EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
 
             Fat32Entry se = make_fat32_entry(e, data, entry_index);
             if (!on_entry(se)) {
-                return EnumerateResult::ENUMERATION_STOPPED;
+                return Fat32EnumerateResult::ENUMERATION_STOPPED;
             }
 
             entry_index++;
         }
     }
-    return EnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
+    return Fat32EnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
 }
 
 bool Fat32Entry::is_directory_empty() {
@@ -283,7 +283,7 @@ bool Fat32Entry::is_directory_empty() {
             return false;   // entry found, stop
     };
 
-    return enumerate_entries(on_entry) != EnumerateResult::ENUMERATION_STOPPED;
+    return enumerate_entries(on_entry) != Fat32EnumerateResult::ENUMERATION_STOPPED;
 }
 
 /**
@@ -299,7 +299,7 @@ bool Fat32Entry::update_entry_info_in_parent_dir() {
 /**
  * @brief   Enumerate entries in single directory cluster, starting from  [start_sector][start_index]
  */
-EnumerateResult Fat32Entry::enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector, u8 start_index) const {
+Fat32EnumerateResult Fat32Entry::enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector, u8 start_index) const {
     vector<DirectoryEntryFat32> entries(get_entries_per_sector());
     u32 entries_size_in_bytes = entries.size() * sizeof(DirectoryEntryFat32);
 
@@ -311,7 +311,7 @@ EnumerateResult Fat32Entry::enumerate_directory_cluster(u32 cluster, const OnEnt
         for (u8 i = start_index; i < entries.size(); i++) { // iterate directory entries
             auto& e = entries[i];
             if (e.is_nomore())
-                return EnumerateResult::ENUMERATION_FINISHED;    // no more entries for this dir
+                return Fat32EnumerateResult::ENUMERATION_FINISHED;    // no more entries for this dir
 
             if (e.is_unused())
                 continue;       // unused entry, skip
@@ -324,10 +324,10 @@ EnumerateResult Fat32Entry::enumerate_directory_cluster(u32 cluster, const OnEnt
 
             Fat32Entry se = make_fat32_entry(e, data, 0);
             if (!on_entry(se))
-                return EnumerateResult::ENUMERATION_STOPPED;
+                return Fat32EnumerateResult::ENUMERATION_STOPPED;
         }
     }
-    return EnumerateResult::ENUMERATION_CONTINUE; // continue reading the entries in next cluster
+    return Fat32EnumerateResult::ENUMERATION_CONTINUE; // continue reading the entries in next cluster
 }
 
 Fat32Entry Fat32Entry::make_fat32_entry(const DirectoryEntryFat32& dentry, Fat32ClusterChain parent_data, u32 parent_index) const {
@@ -444,7 +444,7 @@ bool Fat32Entry::is_no_more_entires_after(const Fat32Entry& entry) {
         return true;
     };
 
-    return (enumerate_entries(on_entry) == EnumerateResult::ENUMERATION_FINISHED); // finished means no more entries after entry in parent_dir
+    return (enumerate_entries(on_entry) == Fat32EnumerateResult::ENUMERATION_FINISHED); // finished means no more entries after entry in parent_dir
 }
 
 bool Fat32Entry::mark_entry_as_nomore(Fat32Entry& e) const {
@@ -484,7 +484,7 @@ bool Fat32Entry::is_directory_cluster_empty(u32 cluster) {
     auto on_entry = [](const Fat32Entry& e) -> bool {
         return false; // file found, stop enumeration
     };
-    return (enumerate_directory_cluster(cluster, on_entry) != EnumerateResult::ENUMERATION_STOPPED);
+    return (enumerate_directory_cluster(cluster, on_entry) != Fat32EnumerateResult::ENUMERATION_STOPPED);
 }
 
 u8 Fat32Entry::get_entries_per_sector() const {

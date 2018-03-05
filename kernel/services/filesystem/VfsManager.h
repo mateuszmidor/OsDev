@@ -8,35 +8,43 @@
 #ifndef SRC_FILESYSTEM_VFSMANAGER_H_
 #define SRC_FILESYSTEM_VFSMANAGER_H_
 
-#include "VfsPersistentStorage.h"
 #include "KernelLog.h"
-#include "VfsRamStorage.h"
+#include "SyscallResult.h"
+#include "VfsCache.h"
+#include "VfsCachedEntry.h"
+#include "VfsStorage.h"
 
 namespace filesystem {
 
+/**
+ * @brief   This class provides and interface to the Virtual File System.
+ */
 class VfsManager {
 public:
     static VfsManager& instance();
     VfsManager operator=(const VfsManager&) = delete;
     VfsManager operator=(VfsManager&&) = delete;
-    void install();
 
-    VfsEntryPtr get_entry(const UnixPath& unix_path);
-    void close_entry(VfsEntryPtr& entry);
-    VfsEntryPtr create_entry(const UnixPath& unix_path, bool is_directory);
-    bool delete_entry(const UnixPath& unix_path);
-    bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to);
-    bool copy_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to);
-    VfsEntryPtr create_fifo(const UnixPath& unix_path);
+    void install_root();
+    utils::SyscallResult<void> mount(const VfsEntryPtr& mount_point);
+    utils::SyscallResult<void> attach_special(const UnixPath& path, const VfsEntryPtr& entry);
+
+//    void close_entry(VfsEntryPtr& entry);
+    utils::SyscallResult<void> entry_exists(const UnixPath& path) const;
+    utils::SyscallResult<VfsEntryPtr> get_entry(const UnixPath& path);
+    utils::SyscallResult<VfsEntryPtr> create_entry(const UnixPath& path, bool is_directory);
+    utils::SyscallResult<void> delete_entry(const UnixPath& path);
+    utils::SyscallResult<void> move_entry(const UnixPath& path_from, const UnixPath& path_to);
+//    bool copy_entry(const UnixPath& path_from, const UnixPath& path_to);
 
 private:
     VfsManager() : klog(logging::KernelLog::instance()) {}
+    utils::SyscallResult<VfsCachedEntryPtr> get_or_cache_directory(const UnixPath& path);
 
-    static VfsManager _instance;
-
-    logging::KernelLog&         klog;
-    VfsPersistentStorage        persistent_storage;
-    VfsRamStorage               cache_storage;
+    static VfsManager   _instance;
+    logging::KernelLog& klog;
+    VfsStorage          storage;
+    VfsCache            directory_cache;
 };
 
 } /* namespace filesystem */

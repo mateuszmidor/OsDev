@@ -16,30 +16,24 @@ using namespace multitasking;
 
 namespace filesystem {
 
-bool VfsPsInfoEntry::open() {
+utils::SyscallResult<void> VfsPsInfoEntry::open() {
     if (is_open)
-        return false;
+        return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return true;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
-void VfsPsInfoEntry::close() {
+utils::SyscallResult<void> VfsPsInfoEntry::close() {
     is_open = false;
-}
-
-/**
- * @brief   The size of the info is not known until the info string is built
- */
-u32 VfsPsInfoEntry::get_size() const {
-    return 0;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
 /**
  * @brief   Read the last "count" info bytes
  * @return  Num of read bytes
  */
-s64 VfsPsInfoEntry::read(void* data, u32 count) {
+utils::SyscallResult<u64> VfsPsInfoEntry::read(void* data, u32 count) {
     if (!is_open) {
         return 0;
     }
@@ -73,7 +67,4 @@ s64 VfsPsInfoEntry::read(void* data, u32 count) {
     return num_bytes_to_read;
 }
 
-s64 VfsPsInfoEntry::write(const void* data, u32 count) {
-    return -EPERM;
-}
 } /* namespace filesystem */

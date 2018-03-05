@@ -14,22 +14,34 @@ namespace filesystem {
 /**
  * @brief   Enumerate directory contents
  * @param   on_entry Callback called for every valid element in the directory
- * @return  ENUMERATION_FINISHED if all entries have been enumerated,
- *          ENUMERATION_STOPPED if enumeration stopped by on_entry() returning false
  */
-VfsEnumerateResult VfsFat32DirectoryEntry::enumerate_entries(const OnVfsEntryFound& on_entry) {
-    // first enumerate the non-persistent entries like pipes, sockets, etc
-    VfsDirectoryEntry::enumerate_entries(on_entry);
-
+utils::SyscallResult<void> VfsFat32DirectoryEntry::enumerate_entries(const OnVfsEntryFound& on_entry) {
     // then enumerate the actual Fat32 directory entries
     auto on_fat_entry = [&](const Fat32Entry& e) -> bool {
         return on_entry(wrap_entry(e));
     };
 
-    if (entry.enumerate_entries(on_fat_entry) == EnumerateResult::ENUMERATION_STOPPED)
-        return VfsEnumerateResult::ENUMERATION_STOPPED;
+    if (entry.enumerate_entries(on_fat_entry) == Fat32EnumerateResult::ENUMERATION_FAILED)
+        return {middlespace::ErrorCode::EC_NOTDIR};
 
-    return VfsEnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
+    return {middlespace::ErrorCode::EC_OK};
+}
+
+utils::SyscallResult<VfsEntryPtr> VfsFat32DirectoryEntry::get_entry(const UnixPath& unix_path) {
+    VfsEntryPtr result;
+    auto on_entry = [&](VfsEntryPtr e) -> bool {
+        if (e->get_name() == (cstd::string)unix_path) {
+            result = e;
+            return false;   // entry found. stop enumeration
+        }
+        else
+            return true;    // continue searching for entry
+    };
+
+    if (result)
+        return {result};
+    else
+        return {middlespace::ErrorCode::EC_NOENT};
 }
 
 VfsEntryPtr VfsFat32DirectoryEntry::wrap_entry(const Fat32Entry& e) const {

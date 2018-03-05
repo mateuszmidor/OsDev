@@ -12,12 +12,19 @@ using namespace cstd;
 
 namespace filesystem {
 
+UnixPath::UnixPath(const UnixPath& o) : path(o.path) {
+}
+
 UnixPath::UnixPath(const char path[]) :
     path(normalize(path)) {
 }
 
 UnixPath::UnixPath(const string& path) :
     path(normalize(path)) {
+}
+
+bool UnixPath::is_valid_path() const {
+    return !path.empty();
 }
 
 bool UnixPath::is_valid_absolute_path() const {

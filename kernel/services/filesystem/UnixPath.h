@@ -18,8 +18,10 @@ namespace filesystem {
  */
 class UnixPath {
 public:
+    UnixPath(const UnixPath& path);
     UnixPath(const char path[]);
     UnixPath(const cstd::string& path = "");
+    bool is_valid_path() const;
     bool is_valid_absolute_path() const;
     bool is_root_path() const;
     operator cstd::string() const;

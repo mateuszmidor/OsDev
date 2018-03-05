@@ -16,36 +16,30 @@ using namespace cstd;
 namespace filesystem {
 
 
-bool VfsCpuInfoEntry::open() {
+utils::SyscallResult<void> VfsCpuInfoEntry::open() {
     if (is_open)
-        return false;
+        return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return true;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
-void VfsCpuInfoEntry::close() {
+utils::SyscallResult<void> VfsCpuInfoEntry::close() {
     is_open = false;
-}
-
-/**
- * @brief   The size of date info is not known until the info string is built
- */
-u32 VfsCpuInfoEntry::get_size() const {
-    return 0;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
 /**
  * @brief   Read the last "count" date time bytes
  * @return  Num of read bytes
  */
-s64 VfsCpuInfoEntry::read(void* data, u32 count) {
+utils::SyscallResult<u64> VfsCpuInfoEntry::read(void* data, u32 count) {
     if (!is_open) {
-        return 0;
+        return {0};
     }
 
     if (count == 0)
-        return 0;
+        return {0};
 
     utils::CpuInfo cpu_info;
     const string info = StringUtils::format("CPU: % @ %MHz, %\n",
@@ -54,7 +48,7 @@ s64 VfsCpuInfoEntry::read(void* data, u32 count) {
             cpu_info.get_multimedia_extensions().to_string());
 
     if (info.empty())
-        return 0;
+        return {0};
 
     u32 read_start = max((s64)info.length() - count, 0);
     u32 num_bytes_to_read = min(count, info.length());
@@ -62,10 +56,7 @@ s64 VfsCpuInfoEntry::read(void* data, u32 count) {
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
     close();
-    return num_bytes_to_read;
+    return {num_bytes_to_read};
 }
 
-s64 VfsCpuInfoEntry::write(const void* data, u32 count) {
-    return -EPERM;
-}
 } /* namespace filesystem */

@@ -8,25 +8,28 @@
 #ifndef KERNEL_SERVICES_FILESYSTEM_ADAPTERS_VFSFAT32FILEENTRY_H_
 #define KERNEL_SERVICES_FILESYSTEM_ADAPTERS_VFSFAT32FILEENTRY_H_
 
-#include "VfsFileEntry.h"
+#include "VfsEntry.h"
 #include "fat32/Fat32Entry.h"
 
 namespace filesystem {
 
-class VfsFat32FileEntry: public VfsFileEntry {
+class VfsFat32FileEntry: public VfsEntry {
 public:
     VfsFat32FileEntry(const Fat32Entry& e);
 
     // [common interface]
-    const cstd::string& get_name() const;
+    const cstd::string& get_name() const override                           { return entry.get_name(); }
+    VfsEntryType get_type() const override                                  { return VfsEntryType::FILE; }
+    utils::SyscallResult<void> open() override                              { return {middlespace::ErrorCode::EC_OK}; }
+    utils::SyscallResult<void> close() override                             { return {middlespace::ErrorCode::EC_OK}; }
 
     // [file interface]
-    u32 get_size() const override;
-    s64 read(void* data, u32 count) override;
-    s64 write(const void* data, u32 count) override;
-    bool seek(u32 new_position) override;
-    bool truncate(u32 new_size) override;
-    u32 get_position() const override;
+    utils::SyscallResult<u64> get_size() const override                     { return {entry.get_size()}; }
+    utils::SyscallResult<u64> read(void* data, u32 count) override          { return {entry.read(data, count)}; }
+    utils::SyscallResult<u64> write(const void* data, u32 count) override   { return {entry.write(data, count)}; }
+    utils::SyscallResult<void> seek(u32 new_position) override;
+    utils::SyscallResult<void> truncate(u32 new_size) override;
+    utils::SyscallResult<u64> get_position() const override                 { return {entry.get_position()}; }
 
 private:
     Fat32Entry      entry;

@@ -1,24 +1,24 @@
 /**
- *   @file: VfsFat32MountPoint.h
+ *   @file: VfsRamMountPoint.h
  *
- *   @date: Oct 17, 2017
+ *   @date: Feb 2, 2018
  * @author: Mateusz Midor
  */
 
-#ifndef SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_
-#define SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_
+#ifndef KERNEL_SERVICES_FILESYSTEM_RAMFS_VFSRAMMOUNTPOINT_H_
+#define KERNEL_SERVICES_FILESYSTEM_RAMFS_VFSRAMMOUNTPOINT_H_
 
-#include "VfsEntry.h"
-#include "fat32/VolumeFat32.h"
+#include "VfsRamDirectoryEntry.h"
+#include "KernelLog.h"
 
 namespace filesystem {
 
 /**
- * @brief   This class is VfsMountPoint adapter for Fat32Volume, so Fat32Volume can be mounted in VFS
+ * @brief   This class represents an in-memory filesystem, to be used eg. for userspace-kernelspace communication; /proc, /dev
  */
-class VfsFat32MountPoint: public VfsEntry {
+class VfsRamMountPoint: public VfsEntry {
 public:
-    VfsFat32MountPoint(const VolumeFat32& volume);
+    VfsRamMountPoint(const cstd::string& name);
 
     // [common interface]
     const cstd::string& get_name() const override   { return name; }
@@ -35,13 +35,13 @@ public:
     utils::SyscallResult<void> move_entry(const UnixPath& from, const UnixPath& to) override;
 
 private:
-    VfsEntryPtr wrap_entry(const Fat32Entry& e) const;
+    bool is_non_empty_directory(const VfsEntryPtr& e) const;
 
-    VolumeFat32         volume; // volume comes from MassStorageMsDos which got it from AtaDevice that is being held by AtaPrimaryBusDriver/AtaSecondaryBusDriver :)
-    Fat32Entry          root;
-    cstd::string        name;
+    const cstd::string          name;
+    VfsRamDirectoryEntryPtr     root;
+    logging::KernelLog&         klog;
 };
 
-} /* namespace filesystem */
+}  /* namespace filesystem */
 
-#endif /* SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_ */
+#endif /* KERNEL_SERVICES_FILESYSTEM_RAMFS_VFSRAMMOUNTPOINT_H_ */

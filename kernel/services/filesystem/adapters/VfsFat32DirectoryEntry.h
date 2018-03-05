@@ -8,24 +8,26 @@
 #ifndef KERNEL_SERVICES_FILESYSTEM_ADAPTERS_VFSFAT32DIRECTORYENTRY_H_
 #define KERNEL_SERVICES_FILESYSTEM_ADAPTERS_VFSFAT32DIRECTORYENTRY_H_
 
-#include "VfsDirectoryEntry.h"
+#include "VfsEntry.h"
 #include "fat32/Fat32Entry.h"
 
 namespace filesystem {
 
-class VfsFat32DirectoryEntry: public VfsDirectoryEntry {
+class VfsFat32DirectoryEntry: public VfsEntry {
 public:
     VfsFat32DirectoryEntry(const Fat32Entry& e) : entry(e) {}
 
     // [common interface]
     const cstd::string& get_name() const override   { return entry.get_name(); }
+    VfsEntryType get_type() const override          { return VfsEntryType::DIRECTORY; }
 
     // [directory interface]
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
+    utils::SyscallResult<VfsEntryPtr> get_entry(const UnixPath& path) override;
+    utils::SyscallResult<void> enumerate_entries(const OnVfsEntryFound& on_entry) override;
 
 private:
     VfsEntryPtr wrap_entry(const Fat32Entry& e) const;
-    Fat32Entry      entry;
+    Fat32Entry  entry;
 
 };
 

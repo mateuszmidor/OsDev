@@ -7,8 +7,9 @@
 
 #include "StringUtils.h"
 #include "VfsManager.h"
-#include "VfsRamFifoEntry.h"
 
+using namespace utils;
+using namespace middlespace;
 
 namespace filesystem {
 
@@ -21,149 +22,194 @@ VfsManager& VfsManager::instance() {
 /**
  * @brief   Install filesystem root and available ata volumes under the root
  */
-void VfsManager::install() {
-    persistent_storage.install();
+void VfsManager::install_root() {
+    storage.install();
 }
 
 /**
- * @brief   Get an entry that exists somewhere under the root
- * @param   unix_path Absolute entry path starting at root "/"
- * @return  Pointer to entry if found, nullptr otherwise
+ * @brief   Mount a filesystem under the root "/"
  */
-VfsEntryPtr VfsManager::get_entry(const UnixPath& unix_path) {
-    if (!unix_path.is_valid_absolute_path()) {
-        klog.format("VfsManager::get_entry: path '%' is empty or it is not an absolute path\n", unix_path);
-        return {};
+utils::SyscallResult<void> VfsManager::mount(const VfsEntryPtr& mount_point) {
+    if (!mount_point->is_mountpoint()) {
+        klog.format("VfsManager::mount: provided entry is not a mountpoint\n");
+        return {ErrorCode::EC_INVAL};
     }
 
-    if (auto e = cache_storage.get_entry(unix_path))
-        return e;
+    auto root_dir = storage.get_root();
+    if (!root_dir)
+        return {ErrorCode::EC_NOENT};   // root doesn't exist
 
-    if (auto e = persistent_storage.get_entry(unix_path)) {
-        cache_storage.add_entry(unix_path, e);
-        return e;
-    }
+    if (root_dir->attach_entry(mount_point))
+        return {ErrorCode::EC_OK};
 
-    return {};
+    klog.format("VfsManager::mount: path '/%' already exists\n", mount_point->get_name());
+    return {ErrorCode::EC_EXIST};   // entry already exists under the root
 }
 
-void VfsManager::close_entry(VfsEntryPtr& entry) {
+/**
+ * @brief   Check if absolute "path" exists
+ */
+utils::SyscallResult<void> VfsManager::entry_exists(const UnixPath& path) const {
+    if (directory_cache.entry_exists(path))
+        return {ErrorCode::EC_OK};
+
+    if (storage.entry_exists(path))
+        return {ErrorCode::EC_OK};
+
+    return {ErrorCode::EC_NOENT};
+}
+
+/**
+ * @brief   Get an entry that exists under "path"
+ * @param   path Absolute entry path starting at root "/"
+ */
+SyscallResult<VfsEntryPtr> VfsManager::get_entry(const UnixPath& path) {
+    if (!path.is_valid_absolute_path()) {
+        klog.format("VfsManager::get_entry: path '%' is empty or it is not an absolute path\n", path);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    // check for entry in directory cache; cached directory can hold extra-attachment entries
+    if (auto e = directory_cache.get_entry(path))
+        return {e};
+
+    // check for entry in actual storage
+    if (auto e = storage.get_entry(path))
+        return {e};
+
+    // path doesnt exist
+    return {ErrorCode::EC_NOENT};
+}
+
+/**
+ * @brief   Get directory entry from cache or bring it to cache if not there yet
+ * @return  Error if "path" doesnt exists or points to a non-directory
+ * @note    Watch out for caching files; they contain state (current read/write position) that should not be shared between different tasks
+ */
+utils::SyscallResult<VfsCachedEntryPtr> VfsManager::get_or_cache_directory(const UnixPath& path) {
+    if (!path.is_valid_absolute_path()) {
+        klog.format("VfsManager::get_cached_entry: path '%' is empty or it is not an absolute path\n", path);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    // check for entry in cache
+    if (auto cached = directory_cache.get_entry(path))
+        if (cached->get_type() == VfsEntryType::DIRECTORY)
+            return {cached};
+        else
+            return {ErrorCode::EC_INVAL};
+
+    // check for entry in actual storage
+    if (auto e = storage.get_entry(path))
+        if (e->get_type() == VfsEntryType::DIRECTORY)
+            return directory_cache.add_entry(path, e);
+        else
+            return {ErrorCode::EC_INVAL};
+
+    return {ErrorCode::EC_NOENT};
+}
+
+//void VfsManager::close_entry(VfsEntryPtr& entry) {
 //    entry->close();
 //    cache.remove_entry(entry); // but only remove if entry has no references
-}
+//}
 
 /**
- * @brief   Create new file/directory for given unix path
- * @param   unix_path Absolute entry path starting at root "/"
- * @return  Entry pointer if created successfully, nullptr entry otherwise
+ * @brief   Create new file/directory under given absolute "path"
  */
-VfsEntryPtr VfsManager::create_entry(const UnixPath& unix_path, bool is_directory) {
-    if (!unix_path.is_valid_absolute_path()) {
-        klog.format("VfsManager::create_entry: path '%' is empty or it is not an absolute path\n", unix_path);
-        return {};
+utils::SyscallResult<VfsEntryPtr> VfsManager::create_entry(const UnixPath& path, bool is_directory) {
+    if (!path.is_valid_absolute_path()) {
+        klog.format("VfsManager::create_entry: path '%' is empty or it is not an absolute path\n", path);
+        return {ErrorCode::EC_INVAL};
     }
 
-    if (auto e = persistent_storage.create_entry(unix_path, is_directory)) {
-        cache_storage.add_entry(unix_path, e);
-        return e;
+    // check such entry already exists
+    if (entry_exists(path)) {
+        klog.format("VfsManager::create_entry: entry % already exists\n", path);
+        return {ErrorCode::EC_EXIST};
     }
 
-    return {};
+    if (auto e = storage.create_entry(path, is_directory))
+        return {e};
+
+    return {ErrorCode::EC_PERM};
 }
 
 /**
  * @brief   Delete file or empty directory
- * @param   unix_path Absolute entry path starting at root "/"
- * @return  True on successful deletion, False otherwise
+ * @param   path Absolute entry path starting at root "/"
  */
-bool VfsManager::delete_entry(const UnixPath& unix_path) {
-    if (!unix_path.is_valid_absolute_path()) {
-        klog.format("VfsManager::delete_entry: path '%' is empty or it is not an absolute path\n", unix_path);
-        return false;
+utils::SyscallResult<void> VfsManager::delete_entry(const UnixPath& path) {
+    if (!path.is_valid_absolute_path()) {
+        klog.format("VfsManager::delete_entry: path '%' is empty or it is not an absolute path\n", path);
+        return {ErrorCode::EC_INVAL};
     }
 
-    bool cache_deleted = cache_storage.delete_entry(unix_path);
-    bool persistent_deleted = persistent_storage.delete_entry(unix_path);
-    return cache_deleted || persistent_deleted;
+    // entry may be in cache, but must be in storage or it is an error to delete
+    bool cache_deleted = directory_cache.delete_entry(path);
+    auto storage_delete_result = storage.delete_entry(path);
+    return (cache_deleted || storage_delete_result) ? ErrorCode::EC_OK : storage_delete_result.ec;
 }
 
 /**
  * @brief   Move file/directory within virtual filesystem
- * @param   unix_path_from Absolute source entry path
- * @param   unix_path_to Absolute destination path/destination directory to move the entry into
- * @return  True on success, False otherwise
+ * @param   path_from Absolute source entry path
+ * @param   path_to Absolute destination path/destination directory to move the entry into
  */
-bool VfsManager::move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) {
-    if (!unix_path_from.is_valid_absolute_path()) {
-        klog.format("VfsManager::move_entry: path_from '%' is empty or it is not an absolute path\n", unix_path_from);
-        return false;
+utils::SyscallResult<void> VfsManager::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
+    if (!path_from.is_valid_absolute_path()) {
+        klog.format("VfsManager::move_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
+        return {ErrorCode::EC_INVAL};
     }
 
-    if (!unix_path_to.is_valid_absolute_path()) {
-        klog.format("VfsManager::move_entry: path_to '%' is empty or it is not an absolute path\n", unix_path_to);
-        return false;
+    if (!path_to.is_valid_absolute_path()) {
+        klog.format("VfsManager::move_entry: path_to '%' is empty or it is not an absolute path\n", path_to);
+        return {ErrorCode::EC_INVAL};
     }
 
-    bool cache_moved = cache_storage.move_entry(unix_path_from, unix_path_to);
-    bool persistent_moved = persistent_storage.move_entry(unix_path_from, unix_path_to);
-    return cache_moved || persistent_moved;
+    bool cache_moved = directory_cache.move_entry(path_from, path_to);
+    bool storage_moved = storage.move_entry(path_from, path_to);
+    return (cache_moved || storage_moved) ? ErrorCode::EC_OK : ErrorCode::EC_NOENT;
 }
 
 /**
  * @brief   Copy file within virtual filesystem. Copying entire directories not available; use make_entry(is_dir=true) + copy_entry
- * @param   unix_path_from Absolute source entry path
- * @param   unix_path_to Absolute destination path/destination directory to copy the entry into
+ * @param   path_from Absolute source entry path
+ * @param   path_to Absolute destination path/destination directory to copy the entry into
  * @return  True on success, False otherwise
  */
-bool VfsManager::copy_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) {
-    if (!unix_path_from.is_valid_absolute_path()) {
-        klog.format("VfsManager::copy_entry: path_from '%' is empty or it is not an absolute path\n", unix_path_from);
-        return false;
-    }
-
-    if (!unix_path_to.is_valid_absolute_path()) {
-        klog.format("VfsManager::copy_entry: path_to '%' is empty or it is not an absolute path\n", unix_path_to);
-        return false;
-    }
-
-    bool cache_copied = cache_storage.copy_entry(unix_path_from, unix_path_to);
-    bool persistent_copied = persistent_storage.copy_entry(unix_path_from, unix_path_to);
-    return cache_copied || persistent_copied;
-}
+//bool VfsManager::copy_entry(const UnixPath& path_from, const UnixPath& path_to) {
+//    if (!path_from.is_valid_absolute_path()) {
+//        klog.format("VfsManager::copy_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
+//        return false;
+//    }
+//
+//    if (!path_to.is_valid_absolute_path()) {
+//        klog.format("VfsManager::copy_entry: path_to '%' is empty or it is not an absolute path\n", path_to);
+//        return false;
+//    }
+//
+//    bool cache_copied = cache.copy_entry(path_from, path_to);
+//    bool persistent_copied = storage.copy_entry(path_from, path_to);
+//    return cache_copied || persistent_copied;
+//}
 
 /**
- * @brief   Attach a ram-only fifo entry at "unix_path", if the path is valid
- * @param   unix_path Absolute path for the fifo to be created
- * @return  Newly created fifo pointer on success, empty pointer otherwise
+ * @brief   Attach "entry" at given "path", where "path" must point to a DIRECTORY
  */
-VfsEntryPtr VfsManager::create_fifo(const UnixPath& unix_path) {
-    if (!unix_path.is_valid_absolute_path()) {
-        klog.format("VfsManager::create_fifo: path '%' is empty or it is not an absolute path\n", unix_path);
-        return {};
+utils::SyscallResult<void> VfsManager::attach_special(const UnixPath& path, const VfsEntryPtr& entry) {
+    if (!path.is_valid_absolute_path()) {
+        klog.format("VfsManager::attach_special: path '%' is empty or it is not an absolute path\n", path);
+        return {ErrorCode::EC_INVAL};
     }
 
-    auto dir = unix_path.extract_directory();
-    auto parent = get_entry(dir);
-    if (!parent || !parent->is_directory()) {
-        klog.format("VfsManager::create_fifo: invalid directory path: %\n", dir);
-        return {};
+    auto parent = get_or_cache_directory(path).value;
+    if (!parent) {
+        klog.format("VfsManager::attach_special: invalid parent directory path: %\n", path);
+        return {ErrorCode::EC_INVAL};
     }
 
-    auto fifo_name = unix_path.extract_file_name();
-
-    auto on_entry = [&fifo_name](VfsEntryPtr e) -> bool {
-        return (e->get_name() != fifo_name); // continue enumerating if name doesnt match
-    };
-
-    // such name already exists
-    if (parent->enumerate_entries(on_entry) == VfsEnumerateResult::ENUMERATION_STOPPED) {
-        klog.format("VfsManager::create_fifo: name % already exists in %\n", fifo_name, dir);
-        return {};
-    }
-
-    auto fifo = std::make_shared<VfsRamFifoEntry>(fifo_name);
-    parent->attach_entry(fifo);
-    return fifo;
+    return (parent->attach_entry(entry)) ? ErrorCode::EC_OK : ErrorCode::EC_EXIST;
 }
 
 } /* namespace filesystem */

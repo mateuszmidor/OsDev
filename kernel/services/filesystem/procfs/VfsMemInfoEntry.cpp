@@ -17,42 +17,33 @@ using namespace memory;
 
 namespace filesystem {
 
-
-bool VfsMemInfoEntry::open() {
+utils::SyscallResult<void> VfsMemInfoEntry::open() {
     if (is_open)
-        return false;
+        return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return true;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
-void VfsMemInfoEntry::close() {
+utils::SyscallResult<void> VfsMemInfoEntry::close() {
     is_open = false;
-}
-
-/**
- * @brief   The size of memory info is not known until the info string is built
- */
-u32 VfsMemInfoEntry::get_size() const {
-    return 0;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
 /**
  * @brief   Read the last "count" of kernel log bytes and clear the log
  * @return  Num of read bytes
  */
-s64 VfsMemInfoEntry::read(void* data, u32 count) {
-    if (!is_open) {
-        return 0;
-    }
+utils::SyscallResult<u64> VfsMemInfoEntry::read(void* data, u32 count) {
+    if (!is_open)
+        return {0};
 
     if (count == 0)
-        return 0;
-
+        return {0};
 
     const string info = get_info();
     if (info.empty())
-        return 0;
+        return {0};
 
     u32 read_start = max((s64)info.length() - count, 0);
     u32 num_bytes_to_read = min(count, info.length());
@@ -60,7 +51,7 @@ s64 VfsMemInfoEntry::read(void* data, u32 count) {
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
     close();
-    return num_bytes_to_read;
+    return {num_bytes_to_read};
 }
 
 string VfsMemInfoEntry::get_info() const {
@@ -74,8 +65,5 @@ string VfsMemInfoEntry::get_info() const {
     return StringUtils::format("Used frames so far: %, total available: %\n", used_frames, total_frames);
 }
 
-s64 VfsMemInfoEntry::write(const void* data, u32 count) {
-    return -EPERM;
-}
 
 } /* namespace filesystem */

@@ -15,40 +15,34 @@ using namespace cstd;
 namespace filesystem {
 
 
-bool VfsDateEntry::open() {
+utils::SyscallResult<void> VfsDateEntry::open() {
     if (is_open)
-        return false;
+        return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return true;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
-void VfsDateEntry::close() {
+utils::SyscallResult<void> VfsDateEntry::close() {
     is_open = false;
-}
-
-/**
- * @brief   The size of date info is not known until the info string is built
- */
-u32 VfsDateEntry::get_size() const {
-    return 0;
+    return {middlespace::ErrorCode::EC_OK};
 }
 
 /**
  * @brief   Read the last "count" date time bytes
  * @return  Num of read bytes
  */
-s64 VfsDateEntry::read(void* data, u32 count) {
+utils::SyscallResult<u64> VfsDateEntry::read(void* data, u32 count) {
     if (!is_open) {
-        return 0;
+        return {0};
     }
 
     if (count == 0)
-        return 0;
+        return {0};
 
     const string info = get_date_time();
     if (info.empty())
-        return 0;
+        return {0};
 
     u32 read_start = max((s64)info.length() - count, 0);
     u32 num_bytes_to_read = min(count, info.length());
@@ -56,7 +50,7 @@ s64 VfsDateEntry::read(void* data, u32 count) {
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
     close();
-    return num_bytes_to_read;
+    return {num_bytes_to_read};
 }
 
 string VfsDateEntry::get_date_time() const {
@@ -78,10 +72,6 @@ u8 VfsDateEntry::read_byte(u8 offset) const {
 // convert bcd to bin
 u8 VfsDateEntry::to_bin(u8 bcd) const {
     return (bcd / 16) * 10 + (bcd & 0xF);
-}
-
-s64 VfsDateEntry::write(const void* data, u32 count) {
-    return -EPERM;
 }
 
 
