@@ -3,35 +3,32 @@ Virtual File System is a tree made of VfsEntry nodes.
 VfsManager holds the root node "/" and manages the tree by means of get/create/copy/move/delete actions.
 To mount an actual physical filesystem under the root, you need to add VfsMountPoint, which exposes get/create/move/delete actions of specific filesystem to the VfsManager.
 
-                +----------+
-                | VfsEntry |
-                +----------+
-                  ^      ^   
-                  |      |
-+-------------------+  +--------------+          
-| VfsDirectoryEntry |  | VfsFileEntry |  
-+-------------------+  +--------------+  
-          ^
-          |
-  +---------------+
-  | VfsMountPoint |
-  +---------------+
-  
-VfsMountPoint adds get/create/move/delete actions to the directory interface.
++----------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Vfs Key Class Diagram                                                                                                                                    |
++----------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                                                                                                                                                          |
+|  +-----------------------------------------+       +--------------------------------------------------------------------------------------------------+  |
+|  | VfsManager                              +-------+  VfsEntry(def impl returning errors)                                                             |  |
+|  +------+----------------------+-----------+       +-------------+-----------------------+-------------------+--------------------------+-------------+  |
+|         |                      |                                 ^                       ^                   ^                          ^                |
+|         |   +------------------+-----------+                     |                       |                   |                          |                |
+|         |   | VfsStorage                   |                     |                       |                   |                          |                |
+|         |   +------------------------------+                     |                       |                   |                 ++       |                |
+|         |   | get(unix_path) : VfsEntry    |                     |                       |                   |                          |                |
+|         |   | create(unix_path) : VfsEntry |                     |                       |                   |                          |                |
+|         |   | delete(unix_path) : bool     |                     |                       |                   |                          |                |
+|         |   +------------------------------+                     |                       |                   |                          |                |
+|         |                                          +-------------+-------------+   +-----+------+   +--------+--------+   +-------------+------------+   |
+|  +------+-----------------------------+            |VfsCachedEntry             |   |VfsFileEntry|   |VfsDirectoryEntry|   | VfsMountPoint            |   |
+|  | VfsDirCache(allows attaching)      |            +---------------------------+   +------------+   +-----------------+   +--------------------------+   |
+|  +------------------------------------+            |attach_entry(entry_ptr)    |                                          | get_entry : VfsEntry     |   |
+|  | get(unix_path) : VfsCachedEntry    |            |detach_entry(name)         |                                          | create_entry : VfsEntry  |   |
+|  | add(VfsEntry) : VfsCachedEntry     |            +---------------------------+                                          | delete_entry : bool      |   |
+|  | delete(unix_path) : bool           |                                                                                   +--------------------------+   |
+|  +------------------------------------+                                                                                                                  |
+|                                                                                                                                                          |
++----------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-
-
-
-+----------------------+   +---------------------+           
-| VfsPersistentStorage |   |    VfsRamStorage    |   
-|   (tree of VfsEntry) |   | (map path-VfsEntry) |
-+----------------------+   +---------------------+   
-                    ^         ^
-                    |         |  
-+------------------------------------------------+
-|                    VfsManager                  |
-|           (open/close/create/delete)           |
-+------------------------------------------------+
                  
-VfsManager looks for an entry of given path in VfsRamStorage. If not found - it brings proper entry from VfsPersistentStorage.
-VfsRamStorage allows attaching extra, memory-only, entries to the persistent directories, eg pipes, sockets.
+VfsManager looks for an entry of given path in VfsDirCache. If not found - it brings proper entry from VfsStorage.
+VfsStorage allows attaching extra, memory-only, entries to the directories, eg pipes, sockets.
