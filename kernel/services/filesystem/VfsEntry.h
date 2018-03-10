@@ -8,10 +8,11 @@
 #ifndef SRC_FILESYSTEM_VFSENTRY_H_
 #define SRC_FILESYSTEM_VFSENTRY_H_
 
-#include <memory>   // shared_ptr
 #include "types.h"
 #include "UnixPath.h"
 #include "SyscallResult.h"
+#include <memory>     // shared_ptr
+#include <functional> // function
 
 namespace filesystem {
 
