@@ -49,7 +49,8 @@ public:
     bool attach_entry(const VfsEntryPtr& entry);
     bool detach_entry(const cstd::string& name);
     VfsCachedEntryPtr get_attached_entry(const cstd::string& name);
-
+    u32 attachment_count() const                                                            { return attached_entries.size(); }
+    u32 refcount {0};
 private:
     cstd::vector<VfsCachedEntryPtr>::iterator find_attached_entry(const cstd::string& name);
 
