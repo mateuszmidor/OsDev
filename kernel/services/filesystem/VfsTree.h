@@ -8,38 +8,32 @@
 #ifndef KERNEL_SERVICES_FILESYSTEM_VFSTREE_H_
 #define KERNEL_SERVICES_FILESYSTEM_VFSTREE_H_
 
-#include "VfsCachedEntry.h"
+
 #include "KernelLog.h"
 #include "SyscallResult.h"
-#include "Map.h"
-#include "Optional.h"
+#include "EntryCache.h"
 
 namespace filesystem {
 
-using GlobalFileDescriptor = u32;
-
+/**
+ * @brief   This class represents a virtual file system tree that can be extended by attaching entries to it
+ */
 class VfsTree {
 public:
     VfsTree() : klog(logging::KernelLog::instance()) { }
+    void install();
 
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
     void close(GlobalFileDescriptor fd);
     bool exists(const UnixPath& path) const;
-    void install();
 
 private:
-    cstd::Optional<GlobalFileDescriptor> get_fd_for_path(const UnixPath& path) const;
-    void set_fd_for_path(GlobalFileDescriptor fd, const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> get_or_bring_entry_to_cache(const UnixPath& path);
-
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
-    cstd::Optional<GlobalFileDescriptor> allocate_entry_in_open_table(const VfsEntryPtr& e);
-    cstd::Optional<GlobalFileDescriptor> find_free_fd_in_open_table() const;
 
-    cstd::Map<UnixPath, GlobalFileDescriptor>   path_to_filedescriptor;
-    cstd::vector<VfsCachedEntryPtr>             cached_entries;// root is always here
-    logging::KernelLog&                         klog;
+    EntryCache          entry_cache;
+    logging::KernelLog& klog;
 };
 
 } /* namespace filesystem */
