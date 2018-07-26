@@ -17,18 +17,14 @@ using namespace middlespace;
 namespace filesystem {
 
 /**
- * @brief   Cut off the last segment of "path" and return it, "path" itself becomes shorter
- * @note    If last segment cut, "path" becomes the root "/"
+ * @brief   This struct holds a mountpoint vfs entry and a path to an element under that mountpoint
  */
-static string snap_path_tail(string& path) {
-    string result = StringUtils::snap_tail(path, '/');
-
-    // when last segment has been cut, the root remains
-    if (path.empty())
-        path = "/";
-
-    return result;
-}
+struct MountpointPath {
+    VfsEntryPtr     mountpoint;
+    cstd::string    path;       // path that lives in mountpoint
+    operator bool() { return (bool)mountpoint; }
+    bool operator!(){ return !mountpoint; }
+};
 
 /**
  * @brief   Get entry in "parent_dir"
@@ -47,6 +43,57 @@ static VfsEntryPtr get_entry_in_dir(const string& name, VfsEntryPtr parent_dir) 
     };
 
     parent_dir->enumerate_entries(on_entry);
+    return result;
+}
+
+/**
+ * @brief   Get mountpoint installed on the "path" and a new path relative to that mountpoint
+ *          eg. for /mnt/USB/pictures/logo.jpg
+ *              mountpoint would be USB and resulting path would be /pictures/logo.jpg
+ * @param   path Absolute unix path
+ * @return  Mountpoint and relative path, if there is a mountpoint installed on the "path", empty otherwise
+ */
+static MountpointPath get_mountpoint_path(const VfsEntryPtr& root, const string& path) {
+    if (!root)
+        return {};
+
+    VfsEntryPtr deepest_mountpoint;
+    string deepest_mountpoint_relative_path;
+
+    VfsEntryPtr e = root;
+    string remaining_path = path;
+    do  {
+        string path_segment = StringUtils::snap_head(remaining_path, '/');
+        if (path_segment.empty())
+            continue;
+
+        e = get_entry_in_dir(path_segment, e);
+        if (!e)
+            break;
+
+        if (e->is_mountpoint()) {
+            deepest_mountpoint = e;
+            deepest_mountpoint_relative_path = remaining_path;
+        }
+    } while (!remaining_path.empty());
+
+    if (!deepest_mountpoint)
+        return {};
+
+    return {deepest_mountpoint, "/" + deepest_mountpoint_relative_path};
+}
+
+/**
+ * @brief   Cut off the last segment of "path" and return it, "path" itself becomes shorter
+ * @note    If last segment cut, "path" becomes the root "/"
+ */
+static string snap_path_tail(string& path) {
+    string result = StringUtils::snap_tail(path, '/');
+
+    // when last segment has been cut, the root remains
+    if (path.empty())
+        path = "/";
+
     return result;
 }
 
@@ -75,6 +122,45 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
         return {ErrorCode::EC_EXIST};
     }
 
+    return {ErrorCode::EC_OK};
+}
+
+/**
+ * @brief   Create file/directory pointed by "path" and return its file descriptor on success, or error code otherwise
+ * @note    The actual entry creation is delegated to a mountpoint on the "path" thus mountpoint is required
+ */
+utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path, bool is_directory) {
+    auto root_fd = entry_cache.get_fd_for_path("/");
+    const auto& root = entry_cache[root_fd.value];
+
+    // find the mountpoint responsible for managing the "path"
+    auto mp = get_mountpoint_path(root, path);
+    if (!mp) {
+        klog.format("VfsTree::create: target located on unmodifiable filesystem: %\n", path);
+        return {ErrorCode::EC_ROFS};
+    }
+
+    // make it create the entry
+    auto result = mp.mountpoint->create_entry(mp.path, is_directory);
+    if (!result) {
+        klog.format("VfsTree::create: target filesystem refused to create entry: %\n", path);
+        return {result.ec};
+    }
+
+    // cache the created entry
+    auto fd = entry_cache.allocate_entry(result.value, path);
+    if (!fd) {
+        klog.format("VfsTree::create: open file limit reached");
+        return {ErrorCode::EC_MFILE};
+    }
+
+    return {fd.value};
+}
+
+/**
+ * @brief   Delete file or an empty directory pointed by "path"
+ */
+utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
     return {ErrorCode::EC_OK};
 }
 

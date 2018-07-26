@@ -24,6 +24,8 @@ public:
     void install();
 
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
+    utils::SyscallResult<GlobalFileDescriptor> create(const UnixPath& path, bool is_directory);
+    utils::SyscallResult<void> remove(const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
     void close(GlobalFileDescriptor fd);
     bool exists(const UnixPath& path) const;
