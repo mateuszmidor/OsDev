@@ -77,15 +77,12 @@ static MountpointPath get_mountpoint_path(const VfsEntryPtr& root, const string&
         }
     } while (!remaining_path.empty());
 
-    if (!deepest_mountpoint)
-        return {};
-
     return {deepest_mountpoint, "/" + deepest_mountpoint_relative_path};
 }
 
 /**
  * @brief   Cut off the last segment of "path" and return it, "path" itself becomes shorter
- * @note    If last segment cut, "path" becomes the root "/"
+ * @note    If last segment is cut, "path" becomes the root "/"
  */
 static string snap_path_tail(string& path) {
     string result = StringUtils::snap_tail(path, '/');
@@ -110,15 +107,16 @@ void VfsTree::install() {
  */
 utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixPath& parent_path) {
     // get the parent from depths of virtual file system and cache it so we can attach to it
-    auto fd = get_or_bring_entry_to_cache(parent_path);
+    auto parent_fd = get_or_bring_entry_to_cache(parent_path);
 
-    if (!fd) {
-        klog.format("VfsTree::attach: can't attach to '%s'", parent_path);
-        return {fd.ec};
+    if (!parent_fd) {
+        klog.format("VfsTree::attach: can't attach to '%s'\n", parent_path);
+        return {parent_fd.ec};
     }
 
-    if (!entry_cache[fd.value]->attach_entry(entry)) {
-        klog.format("VfsTree::attach: entry '%s' already exists at '%s'", entry->get_name(), parent_path);
+    // attach entry to parent
+    if (!entry_cache[parent_fd.value]->attach_entry(entry)) {
+        klog.format("VfsTree::attach: entry '%s' already exists at '%s'\n", entry->get_name(), parent_path);
         return {ErrorCode::EC_EXIST};
     }
 
@@ -130,8 +128,7 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
  * @note    The actual entry creation is delegated to a mountpoint on the "path" thus mountpoint is required
  */
 utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path, bool is_directory) {
-    auto root_fd = entry_cache.get_fd_for_path("/");
-    const auto& root = entry_cache[root_fd.value];
+    const auto root = entry_cache["/"];
 
     // find the mountpoint responsible for managing the "path"
     auto mp = get_mountpoint_path(root, path);
@@ -148,20 +145,48 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path,
     }
 
     // cache the created entry
-    auto fd = entry_cache.allocate_entry(result.value, path);
+    auto fd = entry_cache.allocate(result.value, path);
     if (!fd) {
-        klog.format("VfsTree::create: open file limit reached");
+        klog.format("VfsTree::create: open file limit reached\n");
         return {ErrorCode::EC_MFILE};
     }
 
+    // create also opens, and open increases refcount
+    entry_cache[fd.value]->refcount++;
     return {fd.value};
 }
 
 /**
  * @brief   Delete file or an empty directory pointed by "path"
+ *          From persistent (mountpoint) + from cache + from cache attachment, uff
  */
 utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
-    return {ErrorCode::EC_OK};
+    bool detached {false};
+
+    // check if entry in cache and eligible for removal
+    if (VfsCachedEntryPtr e = entry_cache[path]) {
+        if (e->refcount > 0) {
+            klog.format("VfsTree::remove: cant remove; entry '%s' is open\n", path);
+            return {ErrorCode::EC_ISOPEN};
+        }
+
+        if (e->attachment_count() > 0) {
+            klog.format("VfsTree::remove: cant remove; entry '%s' not empty\n", path);
+            return {ErrorCode::EC_NOTEMPTY};
+        }
+
+        // remove from cache
+        detached = uncache(path);
+    }
+
+    // remove from persistent storage if eligible
+    bool uncreated = uncreate(path);
+
+    // any removal is a success
+    if (detached || uncreated)
+        return {ErrorCode::EC_OK};
+
+    return {ErrorCode::EC_NOENT};
 }
 
 /**
@@ -191,7 +216,51 @@ void VfsTree::close(GlobalFileDescriptor fd) {
 
     // remove from cache if no longer needed. This needs testing
     if (entry_cache[fd]->refcount == 0 && entry_cache[fd]->attachment_count() == 0)
-        entry_cache.deallocate_entry(fd);
+        entry_cache.deallocate(fd);
+}
+
+/**
+ * @brief   Remove entry from cache
+ */
+bool VfsTree::uncache(const UnixPath& path) {
+    // try uncache directly stored entry
+    if (auto fd = entry_cache.find(path)) {
+        entry_cache.deallocate(fd.value);
+        return true;
+    }
+
+    // try detach parent-child
+    if (auto fd = entry_cache.find(path.extract_directory())) {
+        entry_cache[fd.value]->detach_entry(path.extract_file_name());
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * @brief   Remove entry from persistent storage
+ */
+bool VfsTree::uncreate(const UnixPath& path) {
+    const auto root = entry_cache["/"];
+
+    // find the mountpoint responsible for managing the "path"
+    auto mp = get_mountpoint_path(root, path);
+    if (!mp) {
+//        klog.format("VfsTree::remove: target located on unmodifiable filesystem: %\n", path);
+//        return {ErrorCode::EC_ROFS};
+        return false;
+    }
+
+    // make it remove the entry
+    auto result = mp.mountpoint->delete_entry(mp.path);
+    if (!result) {
+//        klog.format("VfsTree::remove: target filesystem refused to remove entry: %\n", path);
+//        return {result.ec};
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -200,7 +269,7 @@ void VfsTree::close(GlobalFileDescriptor fd) {
  */
 utils::SyscallResult<GlobalFileDescriptor> VfsTree::get_or_bring_entry_to_cache(const UnixPath& path) {
     // if file already in cache, just return the file descriptor
-    if (auto fd = entry_cache.get_fd_for_path(path))
+    if (auto fd = entry_cache.find(path))
         return {fd.value};
 
     // otherwise lookup the file, allocate it in cache and return the file descriptor
@@ -210,7 +279,7 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::get_or_bring_entry_to_cache(
         return {ErrorCode::EC_NOENT};
     }
 
-    auto fd = entry_cache.allocate_entry(e, path);
+    auto fd = entry_cache.allocate(e, path);
     if (!fd) {
         klog.format("VfsTree::get_or_bring_entry_to_cache: open file limit reached");
         return {ErrorCode::EC_MFILE};
@@ -223,7 +292,7 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::get_or_bring_entry_to_cache(
  * @brief   Check for entry existence at "path"
  */
 bool VfsTree::exists(const UnixPath& path) const {
-    if (entry_cache.get_fd_for_path(path))
+    if (entry_cache.find(path))
         return true;
 
     if (lookup_entry(path))
@@ -242,17 +311,14 @@ VfsEntryPtr VfsTree::lookup_entry(const UnixPath& path) const {
 
     // first find the cached parent on the path. Root "/" can also be the parent
     string subpath = path;
-    Optional<GlobalFileDescriptor> fd;
+    VfsEntryPtr e;
 
     // ascend up the path eventually to the root if no parent is found in cache
-    while (!fd) {
+    while (!e) {
         string segment = snap_path_tail(subpath);
         path_segments.push_front(segment);
-        fd = entry_cache.get_fd_for_path(subpath);
+        e = entry_cache[subpath];
     }
-
-    // get the parent
-    VfsEntryPtr e = entry_cache[fd.value];
 
     // now descent from the parent along the remembered segments
     for (const auto& path_segment : path_segments) {

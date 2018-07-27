@@ -18,7 +18,7 @@ namespace filesystem {
 void EntryCache::install(const VfsEntryPtr& root_dir) {
     const u32 CACHE_MAX_ENTRIES {128};
     cached_entries.resize(CACHE_MAX_ENTRIES);
-    allocate_entry(root_dir, "/");
+    allocate(root_dir, "/");
 }
 
 /**
@@ -33,9 +33,31 @@ const VfsCachedEntryPtr& EntryCache::operator[](GlobalFileDescriptor fd) const {
 }
 
 /**
+ * @brief   Checked access method for cached entries and attachment entries
+ */
+VfsCachedEntryPtr EntryCache::operator[](const UnixPath& path) {
+    if (auto fd = find(path))
+        return cached_entries[fd.value];
+
+    if (auto fd = find(path.extract_directory()))
+        return cached_entries[fd.value]->get_attached_entry(path.extract_file_name());
+
+    return {};
+}
+
+const VfsCachedEntryPtr EntryCache::operator[](const UnixPath& path) const {
+    if (auto fd = find(path))
+        return cached_entries[fd.value];
+
+    if (auto fd = find(path.extract_directory()))
+        return cached_entries[fd.value]->get_attached_entry(path.extract_file_name());
+
+    return {};
+}
+/**
  * @brief   Get global file descriptor if file pointed by "path" is already in cache, empty otherwise
  */
-Optional<GlobalFileDescriptor> EntryCache::get_fd_for_path(const UnixPath& path) const {
+Optional<GlobalFileDescriptor> EntryCache::find(const UnixPath& path) const {
     const auto found = path_to_filedescriptor.find(path);
     if (found == path_to_filedescriptor.cend())
         return {};
@@ -46,7 +68,7 @@ Optional<GlobalFileDescriptor> EntryCache::get_fd_for_path(const UnixPath& path)
 /**
  * @brief   Put entry to cache and return its file descriptor or empty if cache is full
  */
-Optional<GlobalFileDescriptor> EntryCache::allocate_entry(const VfsEntryPtr& e, const UnixPath& path) {
+Optional<GlobalFileDescriptor> EntryCache::allocate(const VfsEntryPtr& e, const UnixPath& path) {
     if (auto fd = find_free_fd()) {
         cached_entries[fd.value] = std::make_shared<VfsCachedEntry>(e);
         path_to_filedescriptor[path] = fd.value;
@@ -59,9 +81,9 @@ Optional<GlobalFileDescriptor> EntryCache::allocate_entry(const VfsEntryPtr& e, 
 /**
  * @brief   Remove entry pointed by valid file descriptor from cache
  */
-void EntryCache::deallocate_entry(GlobalFileDescriptor fd) {
-    path_to_filedescriptor.erase(path_to_filedescriptor.find_by_val(fd));
+void EntryCache::deallocate(GlobalFileDescriptor fd) {
     cached_entries[fd].reset();
+    path_to_filedescriptor.erase(path_to_filedescriptor.find_by_val(fd));
 }
 
 /**

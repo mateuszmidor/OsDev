@@ -16,7 +16,26 @@
 namespace filesystem {
 
 /**
- * @brief   This class represents a virtual file system tree that can be extended by attaching entries to it
+ * @brief   This class represents a virtual file system tree that can be extended by attaching entries like mountpoints and fifos to it
+ *          An entry is stored either as
+ *          1. directly cached entry in vector
+ *          2. attachment to directly cached entry
+ *          3. child of directly cached entry eg. in case of mountpoint
+ *
+ *          On close():
+ *              make sure refcount is 0 (no one else has it open)
+ *              AND it has no attachments (directory empty),
+ *              then delete it from vector and map
+ *              if marked remove-pending, remove it from persistent storage?
+ *
+ *          To remove entry:
+ *          1. from cache - make sure refcount is 0 (no one has it open)
+ *              AND it has no attachments (directory empty),
+ *              then delete it from vector and map
+ *
+ *          2. from persistent storage - make sure refcount is 0 (no one has it open)
+ *              AND it has no attachments (directory empty),
+ *              then just delegate removing to mountpoint
  */
 class VfsTree {
 public:
@@ -31,6 +50,8 @@ public:
     bool exists(const UnixPath& path) const;
 
 private:
+    bool uncache(const UnixPath& path);
+    bool uncreate(const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> get_or_bring_entry_to_cache(const UnixPath& path);
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
 

@@ -49,6 +49,9 @@ enum class ErrorCode {
    EC_PIPE       = 32,  /* Broken pipe */
    EC_DOM        = 33,  /* Math argument out of domain of func */
    EC_RANGE      = 34,  /* Math result not representable */
+
+   EC_ISOPEN    = 50,   /* Filesystem entry is in open state */
+   EC_NOTEMPTY,         /* Directory not empty */
 };
 
 } /* namespace middlespace */
