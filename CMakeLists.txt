@@ -3,10 +3,6 @@ cmake_minimum_required (VERSION 3.2)
 # Setup project name
 project (phobos)
 
-# download google test and enable ctest
-include(gtest.cmake)
-enable_testing()
-
 # Setup global constants
 set(ARCH "x86_64")
 set(HDD "hdd.vdi")
@@ -20,7 +16,8 @@ add_subdirectory("kernel")
 # Build user binaries
 add_subdirectory("user")
 
-# Temporary, for automatic gtest download purposes
+# Build unittests
+enable_testing()
 add_subdirectory("test")
 
 # "make iso" - create bootable kernel iso image
