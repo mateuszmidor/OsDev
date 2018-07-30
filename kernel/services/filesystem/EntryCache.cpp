@@ -15,10 +15,9 @@ namespace filesystem {
 /**
  * @brief   Prepare the entry cache to work with dynamic memory once it is available in system
  */
-void EntryCache::install(const VfsEntryPtr& root_dir) {
+void EntryCache::install() {
     const u32 CACHE_MAX_ENTRIES {128};
     cached_entries.resize(CACHE_MAX_ENTRIES);
-    allocate(root_dir, "/");
 }
 
 /**
@@ -32,28 +31,6 @@ const VfsCachedEntryPtr& EntryCache::operator[](GlobalFileDescriptor fd) const {
     return cached_entries[fd];
 }
 
-/**
- * @brief   Checked access method for cached entries and attachment entries
- */
-VfsCachedEntryPtr EntryCache::operator[](const UnixPath& path) {
-    if (auto fd = find(path))
-        return cached_entries[fd.value];
-
-    if (auto fd = find(path.extract_directory()))
-        return cached_entries[fd.value]->get_attached_entry(path.extract_file_name());
-
-    return {};
-}
-
-const VfsCachedEntryPtr EntryCache::operator[](const UnixPath& path) const {
-    if (auto fd = find(path))
-        return cached_entries[fd.value];
-
-    if (auto fd = find(path.extract_directory()))
-        return cached_entries[fd.value]->get_attached_entry(path.extract_file_name());
-
-    return {};
-}
 /**
  * @brief   Get global file descriptor if file pointed by "path" is already in cache, empty otherwise
  */

@@ -28,11 +28,9 @@ using GlobalFileDescriptor = u32;
  */
 class EntryCache {
 public:
-    void install(const VfsEntryPtr& root_dir);
+    void install();
     VfsCachedEntryPtr& operator[](GlobalFileDescriptor fd);
     const VfsCachedEntryPtr& operator[](GlobalFileDescriptor fd) const;
-    VfsCachedEntryPtr operator[](const UnixPath& path);
-    const VfsCachedEntryPtr operator[](const UnixPath& path) const;
     cstd::Optional<GlobalFileDescriptor> find(const UnixPath& path) const;
     cstd::Optional<GlobalFileDescriptor> allocate(const VfsEntryPtr& e, const UnixPath& path);
     void deallocate(GlobalFileDescriptor fd);

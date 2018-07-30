@@ -99,7 +99,8 @@ static string snap_path_tail(string& path) {
  */
 void VfsTree::install() {
     auto root_dir = std::make_shared<VfsRamDirectoryEntry>("/"); // empty root dir
-    entry_cache.install(root_dir);
+    entry_cache.install();
+    entry_cache.allocate(root_dir, "/");
 }
 
 /**
@@ -128,7 +129,7 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
  * @note    The actual entry creation is delegated to a mountpoint on the "path" thus mountpoint is required
  */
 utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path, bool is_directory) {
-    const auto root = entry_cache["/"];
+    const auto root = lookup_cached_entry("/");
 
     // find the mountpoint responsible for managing the "path"
     auto mp = get_mountpoint_path(root, path);
@@ -164,7 +165,7 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
     bool detached {false};
 
     // check if entry in cache and eligible for removal
-    if (VfsCachedEntryPtr e = entry_cache[path]) {
+    if (VfsCachedEntryPtr e = lookup_cached_entry(path)) {
         if (e->refcount > 0) {
             klog.format("VfsTree::remove: cant remove; entry '%s' is open\n", path);
             return {ErrorCode::EC_ISOPEN};
@@ -242,7 +243,7 @@ bool VfsTree::uncache(const UnixPath& path) {
  * @brief   Remove entry from persistent storage
  */
 bool VfsTree::uncreate(const UnixPath& path) {
-    const auto root = entry_cache["/"];
+    const auto root = lookup_cached_entry("/");
 
     // find the mountpoint responsible for managing the "path"
     auto mp = get_mountpoint_path(root, path);
@@ -302,6 +303,19 @@ bool VfsTree::exists(const UnixPath& path) const {
 }
 
 /**
+ * @brief   Lookup entry that is directly cached or directly cached attachment
+ */
+VfsCachedEntryPtr VfsTree::lookup_cached_entry(const UnixPath& path) const {
+    if (auto fd = entry_cache.find(path))
+        return entry_cache[fd.value];
+
+    if (auto fd = entry_cache.find(path.extract_directory()))
+        return entry_cache[fd.value]->get_attached_entry(path.extract_file_name());
+
+    return {};
+}
+
+/**
  * @brief   Lookup entry pointed by "path" in the depths of virtual file system.
  *          Directly cached entries are not taken into account, but their children are,
  *          eg. for mountpoints that live in cache but their children are maintained by mountpoints themselves
@@ -317,7 +331,7 @@ VfsEntryPtr VfsTree::lookup_entry(const UnixPath& path) const {
     while (!e) {
         string segment = snap_path_tail(subpath);
         path_segments.push_front(segment);
-        e = entry_cache[subpath];
+        e = lookup_cached_entry(subpath);
     }
 
     // now descent from the parent along the remembered segments
