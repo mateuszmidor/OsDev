@@ -45,6 +45,7 @@ set(SOURCE_DIRECTORIES
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/EntryCache.cpp"
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/VfsTree.cpp"
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/ramfs/VfsRamDirectoryEntry.cpp"
+        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/ramfs/VfsRamMountPoint.cpp"
  )
  
 add_library(kernel_test "${SOURCES}")
