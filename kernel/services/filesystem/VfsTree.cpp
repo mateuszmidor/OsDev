@@ -126,7 +126,7 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path,
  *          From persistent (mountpoint) + from cache + from cache attachment, uff
  */
 utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
-    bool detached {false};
+    bool uncached {false};
 
     // check if entry in cache and eligible for removal
     if (VfsCachedEntryPtr e = lookup_cached_entry(path)) {
@@ -141,17 +141,21 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
         }
 
         // remove from cache
-        detached = uncache(path);
+        uncached = uncache(path);
     }
 
     // remove from persistent storage if eligible
     bool uncreated = uncreate(path);
 
     // any removal is a success
-    if (detached || uncreated)
+    if (uncached || uncreated)
         return {ErrorCode::EC_OK};
 
     return {ErrorCode::EC_NOENT};
+}
+
+utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
+
 }
 
 /**
@@ -192,19 +196,21 @@ utils::SyscallResult<void> VfsTree::close(GlobalFileDescriptor fd) {
  * @brief   Remove entry from cache
  */
 bool VfsTree::uncache(const UnixPath& path) {
+    bool uncached {false};
+
     // try uncache directly stored entry
     if (auto fd = entry_cache.find(path)) {
         entry_cache.deallocate(fd.value);
-        return true;
+        uncached = true;
     }
 
     // try detach parent-child
     if (auto fd = entry_cache.find(path.extract_directory())) {
         entry_cache[fd.value]->detach_entry(path.extract_file_name());
-        return true;
+        uncached = true;
     }
 
-    return false;
+    return uncached;
 }
 
 /**
