@@ -47,40 +47,6 @@ static VfsEntryPtr get_entry_in_dir(const string& name, VfsEntryPtr parent_dir) 
 }
 
 /**
- * @brief   Get mountpoint installed on the "path" and a new path relative to that mountpoint
- *          eg. for /mnt/USB/pictures/logo.jpg
- *              mountpoint would be USB and resulting path would be /pictures/logo.jpg
- * @param   path Absolute unix path
- * @return  Mountpoint and relative path, if there is a mountpoint installed on the "path", empty otherwise
- */
-static MountpointPath get_mountpoint_path(const VfsEntryPtr& root, const string& path) {
-    if (!root)
-        return {};
-
-    VfsEntryPtr deepest_mountpoint;
-    string deepest_mountpoint_relative_path;
-
-    VfsEntryPtr e = root;
-    string remaining_path = path;
-    do  {
-        string path_segment = StringUtils::snap_head(remaining_path, '/');
-        if (path_segment.empty())
-            continue;
-
-        e = get_entry_in_dir(path_segment, e);
-        if (!e)
-            break;
-
-        if (e->is_mountpoint()) {
-            deepest_mountpoint = e;
-            deepest_mountpoint_relative_path = remaining_path;
-        }
-    } while (!remaining_path.empty());
-
-    return {deepest_mountpoint, "/" + deepest_mountpoint_relative_path};
-}
-
-/**
  * @brief   Cut off the last segment of "path" and return it, "path" itself becomes shorter
  * @note    If last segment is cut, "path" becomes the root "/"
  */
@@ -129,10 +95,8 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
  * @note    The actual entry creation is delegated to a mountpoint on the "path" thus mountpoint is required
  */
 utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path, bool is_directory) {
-    const auto root = lookup_cached_entry("/");
-
     // find the mountpoint responsible for managing the "path"
-    auto mp = get_mountpoint_path(root, path);
+    auto mp = get_mountpoint_path(path);
     if (!mp) {
         klog.format("VfsTree::create: target located on unmodifiable filesystem: %\n", path);
         return {ErrorCode::EC_ROFS};
@@ -209,15 +173,19 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::open(const UnixPath& path) {
 /**
  * @brief   Close the file and remove it from cache if no longer needed
  */
-void VfsTree::close(GlobalFileDescriptor fd) {
+utils::SyscallResult<void> VfsTree::close(GlobalFileDescriptor fd) {
     if (!entry_cache.is_in_cache(fd))
-        return;
+        return {ErrorCode::EC_BADF};
 
     entry_cache[fd]->refcount--;
 
     // remove from cache if no longer needed. This needs testing
-    if (entry_cache[fd]->refcount == 0 && entry_cache[fd]->attachment_count() == 0)
-        entry_cache.deallocate(fd);
+    if (entry_cache[fd]->refcount > 0 && entry_cache[fd]->attachment_count() > 0)
+        return {ErrorCode::EC_PERM};
+
+
+    entry_cache.deallocate(fd);
+    return {ErrorCode::EC_OK};
 }
 
 /**
@@ -243,10 +211,8 @@ bool VfsTree::uncache(const UnixPath& path) {
  * @brief   Remove entry from persistent storage
  */
 bool VfsTree::uncreate(const UnixPath& path) {
-    const auto root = lookup_cached_entry("/");
-
     // find the mountpoint responsible for managing the "path"
-    auto mp = get_mountpoint_path(root, path);
+    auto mp = get_mountpoint_path(path);
     if (!mp) {
 //        klog.format("VfsTree::remove: target located on unmodifiable filesystem: %\n", path);
 //        return {ErrorCode::EC_ROFS};
@@ -322,17 +288,15 @@ VfsCachedEntryPtr VfsTree::lookup_cached_entry(const UnixPath& path) const {
  */
 VfsEntryPtr VfsTree::lookup_entry(const UnixPath& path) const {
     List<string> path_segments;
-
-    // first find the cached parent on the path. Root "/" can also be the parent
     string subpath = path;
     VfsEntryPtr e;
 
     // ascend up the path eventually to the root if no parent is found in cache
-    while (!e) {
+    do {
         string segment = snap_path_tail(subpath);
         path_segments.push_front(segment);
         e = lookup_cached_entry(subpath);
-    }
+    } while (!e);
 
     // now descent from the parent along the remembered segments
     for (const auto& path_segment : path_segments) {
@@ -351,5 +315,29 @@ VfsEntryPtr VfsTree::lookup_entry(const UnixPath& path) const {
     return e;
 }
 
+/**
+ * @brief   Get mountpoint installed on the "path" and a new path relative to that mountpoint
+ *          eg. for /mnt/USB/pictures/logo.jpg
+ *              mountpoint would be USB and resulting path would be /pictures/logo.jpg
+ * @param   path Absolute unix path
+ * @return  Mountpoint and relative path, if there is a mountpoint installed on the "path", empty otherwise
+ */
+MountpointPath VfsTree::get_mountpoint_path(const cstd::string& path) {
+    string subpath = path;
+    string relative_path;
+    VfsCachedEntryPtr e;
+
+    // ascend up the path looking for the mountpoint in cache. Mountpoint always lives as attachment in cache
+    do {
+        e = lookup_cached_entry(subpath);
+        if (e && e->is_mountpoint())
+            break;
+        string segment = snap_path_tail(subpath);
+        relative_path = "/" + segment + relative_path;
+
+    } while (subpath != "/");
+
+    return {e, relative_path};
+}
 
 } /* namespace filesystem */

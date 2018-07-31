@@ -15,6 +15,8 @@
 
 namespace filesystem {
 
+struct MountpointPath;
+
 /**
  * @brief   This class represents a virtual file system tree that can be extended by attaching entries like mountpoints and fifos to it
  *          An entry is stored either as
@@ -25,13 +27,12 @@ namespace filesystem {
  *          On close():
  *              make sure refcount is 0 (no one else has it open)
  *              AND it has no attachments (directory empty),
- *              then delete it from vector and map
- *              if marked remove-pending, remove it from persistent storage?
+ *              then delete it from entry cache
  *
  *          To remove entry:
  *          1. from cache - make sure refcount is 0 (no one has it open)
  *              AND it has no attachments (directory empty),
- *              then delete it from vector and map
+ *              then delete it
  *
  *          2. from persistent storage - make sure refcount is 0 (no one has it open)
  *              AND it has no attachments (directory empty),
@@ -46,7 +47,7 @@ public:
     utils::SyscallResult<GlobalFileDescriptor> create(const UnixPath& path, bool is_directory);
     utils::SyscallResult<void> remove(const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
-    void close(GlobalFileDescriptor fd);
+    utils::SyscallResult<void> close(GlobalFileDescriptor fd);
     bool exists(const UnixPath& path) const;
 
 private:
@@ -55,6 +56,7 @@ private:
     utils::SyscallResult<GlobalFileDescriptor> get_or_bring_entry_to_cache(const UnixPath& path);
     VfsCachedEntryPtr lookup_cached_entry(const UnixPath& path) const;
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
+    MountpointPath get_mountpoint_path(const cstd::string& path);
 
     EntryCache          entry_cache;
     logging::KernelLog& klog;
