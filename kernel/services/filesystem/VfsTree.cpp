@@ -159,26 +159,36 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
  * @note    Can move attachments only; open files should stay where they are until no one has them open
  */
 utils::SyscallResult<void> VfsTree::move_attachment(const UnixPath& path_from, const UnixPath& path_to) {
-    if (exists(path_to)) {
-        klog.format("VfsTree::move_attachment: cant move to '%'; target exists\n", path_to);
-        return {ErrorCode::EC_EXIST};
-    }
-
-    VfsCachedEntryPtr e = lookup_cached_entry(path_from);
-    if (!e) {
+    VfsCachedEntryPtr src = lookup_cached_entry(path_from);
+    if (!src) {
         klog.format("VfsTree::move_attachment: cant move from '%'; source doesnt exist\n", path_from);
         return {ErrorCode::EC_NOENT};
     }
 
     // check if entry in cache and eligible for removal
-    if (e->refcount > 0) {
+    if (src->refcount > 0) {
         klog.format("VfsTree::move_attachment: cant move from '%'; source is open\n", path_from);
         return {ErrorCode::EC_ISOPEN};
     }
 
+    // check if path_to is file and already exists
+
+    UnixPath final_path_to;
+    VfsCachedEntryPtr dst = lookup_cached_entry(path_to);
+    if (dst && dst->get_type() != VfsEntryType::DIRECTORY) {
+        klog.format("VfsTree::move_attachment: cant move to '%'; target exists\n", path_to);
+        return {ErrorCode::EC_EXIST};
+    }
+
+    // check if path_to describes destination directory or final path with filename
+    if (dst && dst->get_type() == VfsEntryType::DIRECTORY)
+        final_path_to = StringUtils::format("%/%", path_to, path_from.extract_file_name());
+    else
+        final_path_to = path_to;
+
     uncache(path_from);
-    e->set_name(path_to.extract_file_name());
-    return attach(e->get_cached_entry(), path_to.extract_directory());
+    src->set_name(final_path_to.extract_file_name());
+    return attach(src->get_cached_entry(), final_path_to.extract_directory());
 }
 
 utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
