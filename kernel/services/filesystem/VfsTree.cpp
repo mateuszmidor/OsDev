@@ -77,13 +77,13 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
     auto parent_fd = get_or_bring_entry_to_cache(parent_path);
 
     if (!parent_fd) {
-        klog.format("VfsTree::attach: can't attach to '%s'\n", parent_path);
+        klog.format("VfsTree::attach: can't attach to '%'\n", parent_path);
         return {parent_fd.ec};
     }
 
     // attach entry to parent
     if (!entry_cache[parent_fd.value]->attach_entry(entry)) {
-        klog.format("VfsTree::attach: entry '%s' already exists at '%s'\n", entry->get_name(), parent_path);
+        klog.format("VfsTree::attach: entry '%' already exists at '%'\n", entry->get_name(), parent_path);
         return {ErrorCode::EC_EXIST};
     }
 
@@ -154,8 +154,51 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
     return {ErrorCode::EC_NOENT};
 }
 
-utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
+/**
+ * @brief
+ * @note    Can move attachments only; open files should stay where they are until no one has them open
+ */
+utils::SyscallResult<void> VfsTree::move_attachment(const UnixPath& path_from, const UnixPath& path_to) {
+    if (exists(path_to)) {
+        klog.format("VfsTree::move_attachment: cant move to '%'; target exists\n", path_to);
+        return {ErrorCode::EC_EXIST};
+    }
 
+    VfsCachedEntryPtr e = lookup_cached_entry(path_from);
+    if (!e) {
+        klog.format("VfsTree::move_attachment: cant move from '%'; source doesnt exist\n", path_from);
+        return {ErrorCode::EC_NOENT};
+    }
+
+    // check if entry in cache and eligible for removal
+    if (e->refcount > 0) {
+        klog.format("VfsTree::move_attachment: cant move from '%'; source is open\n", path_from);
+        return {ErrorCode::EC_ISOPEN};
+    }
+
+    uncache(path_from);
+    e->set_name(path_to.extract_file_name());
+    return attach(e->get_cached_entry(), path_to.extract_directory());
+}
+
+utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
+    if (!path_from.is_valid_absolute_path()) {
+        klog.format("VfsTree::move_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    if (!path_to.is_valid_absolute_path()) {
+        klog.format("VfsTree::move_entry: path_to '%' is empty or it is not an absolute path\n", path_to);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    bool cache_moved = (bool)move_attachment(path_from, path_to);
+    bool mountpoint_moved = false;
+
+    if (cache_moved || mountpoint_moved)
+        return {ErrorCode::EC_OK};
+
+    return {ErrorCode::EC_PERM};
 }
 
 /**

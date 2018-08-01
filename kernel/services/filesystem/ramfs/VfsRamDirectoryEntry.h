@@ -22,6 +22,7 @@ public:
 
     // [common interface]
     const cstd::string& get_name() const override                                   { return name; };
+    utils::SyscallResult<void> set_name(const cstd::string& name) override;
     VfsEntryType get_type() const override                                          { return VfsEntryType::DIRECTORY; }
 
     // [directory interface]
@@ -35,7 +36,7 @@ private:
     cstd::vector<VfsEntryPtr>::iterator find_entry(const cstd::string& name);
     cstd::vector<VfsEntryPtr>  entries;
 
-    const cstd::string  name;
+    cstd::string  name;
 };
 
 using VfsRamDirectoryEntryPtr = std::shared_ptr<VfsRamDirectoryEntry>;

@@ -29,6 +29,7 @@ public:
 
     // [common interface]
     const cstd::string& get_name() const override                                           { return e->get_name();         }
+    utils::SyscallResult<void> set_name(const cstd::string& name) override                  { return e->set_name(name);     }
     VfsEntryType get_type() const override                                                  { return e->get_type();         }
     bool is_mountpoint() const override                                                     { return e->is_mountpoint();    }
     utils::SyscallResult<void> open()  override                                             { return e->open();             }
@@ -55,12 +56,13 @@ public:
     bool attach_entry(const VfsEntryPtr& entry);
     bool detach_entry(const cstd::string& name);
     VfsCachedEntryPtr get_attached_entry(const cstd::string& name);
+    VfsEntryPtr get_cached_entry() const                                                    { return e; }
     u32 attachment_count() const                                                            { return attached_entries.size(); }
     u32 refcount {0};
 private:
     cstd::vector<VfsCachedEntryPtr>::iterator find_attached_entry(const cstd::string& name);
 
-    VfsEntryPtr e;  // decorated entry
+    VfsEntryPtr e;      // decorated entry
     cstd::vector<VfsCachedEntryPtr> attached_entries;    // child entries that are memory-stored, eg PIPE, SOCKET
 };
 

@@ -10,6 +10,11 @@
 
 namespace filesystem {
 
+utils::SyscallResult<void> VfsRamDirectoryEntry::set_name(const cstd::string& name) {
+    this->name = name;
+    return {middlespace::ErrorCode::EC_OK};
+}
+
 /**
  * @brief   Get entry for given name, or nullptr if not exists
  */

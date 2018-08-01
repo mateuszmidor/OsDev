@@ -59,6 +59,8 @@ private:
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
     MountpointPath get_mountpoint_path(const cstd::string& path);
 
+    utils::SyscallResult<void> move_attachment(const UnixPath& path_from, const UnixPath& path_to) ;
+
     EntryCache          entry_cache;
     logging::KernelLog& klog;
 };

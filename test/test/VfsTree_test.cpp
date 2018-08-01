@@ -210,13 +210,28 @@ TEST_F(VfsTreeTest, test_close_neveropened) {
 /**************************************************************************
  * VfsTree::move
  *************************************************************************/
-//TEST_F(VfsTreeTest, test_move_attachment) {
-//    // setup
-//    ASSERT_TRUE(tree.attach(mkdir("home"), "/"));
-//
-//    // test
-//    (tree.move_entry("/home", "/mydocs"));
-////    (tree.exists("/home"));
-////    (tree.exists("/mydocs"));
-//    print_log();
-//}
+TEST_F(VfsTreeTest, test_rename_attachment) {
+    // setup
+    ASSERT_TRUE(tree.attach(mkdir("home"), "/"));
+
+    // test
+    ASSERT_TRUE(tree.move_entry("/home", "/mydocs"));
+    ASSERT_FALSE(tree.exists("/home"));
+    ASSERT_TRUE(tree.exists("/mydocs"));
+}
+
+TEST_F(VfsTreeTest, test_rename_root) {
+    // test
+    ASSERT_FALSE(tree.move_entry("/", "|"));
+}
+
+TEST_F(VfsTreeTest, test_move_attachment) {
+    // setup
+    ASSERT_TRUE(tree.attach(mkdir("home"), "/"));
+    ASSERT_TRUE(tree.attach(mkdir("images"), "/home"));
+
+    // test
+    ASSERT_TRUE(tree.move_entry("/home/images", "/images"));
+    ASSERT_FALSE(tree.exists("/home/images"));
+    ASSERT_TRUE(tree.exists("/images"));
+}

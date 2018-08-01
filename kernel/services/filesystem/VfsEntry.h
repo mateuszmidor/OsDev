@@ -46,6 +46,7 @@ public:
 
     // [common interface]
     virtual const cstd::string& get_name() const = 0;
+    virtual utils::SyscallResult<void> set_name(const cstd::string& name)                                   { return {INVALID_OP};  }
     virtual VfsEntryType get_type() const = 0;
     virtual bool is_mountpoint() const                                                                      { return false;         }
     virtual utils::SyscallResult<void> open()                                                               { return {SUCCESS_OP};  }
