@@ -155,6 +155,67 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
 }
 
 /**
+ * @brief   Copy persistent entry from one location to another
+ */
+utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const UnixPath& path_to) {
+    klog.format("coping from % to %\n", path_from, path_to);
+    if (!path_from.is_valid_absolute_path()) {
+        klog.format("VfsTree::copy_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    if (!path_to.is_valid_absolute_path()) {
+        klog.format("VfsTree::copy_entry '%' is empty or it is not an absolute path\n", path_to);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    // source must exist
+    VfsEntryPtr src = lookup_entry(path_from);
+    if (!src) {
+        klog.format("VfsTree::copy_entry: src doesnt exist: %\n", path_from);
+        return {ErrorCode::EC_NOENT};
+    }
+
+    // source must be a file, not a directory
+    if (src->get_type() == VfsEntryType::DIRECTORY) {
+        klog.format("VfsTree::copy_entry: src is a directory: %\n", path_from);
+        return {ErrorCode::EC_ISDIR};
+    }
+
+    // destination must have its managing mountpoint
+    auto mp_to = get_mountpoint_path(path_to);
+    if (!mp_to) {
+        klog.format("VfsTree::copy_entry: dst located on unmodifiable filesystem: %\n", path_to);
+        return {ErrorCode::EC_ROFS};
+    }
+
+    UnixPath final_path_to;
+    VfsEntryPtr dst = mp_to.mountpoint->get_entry(mp_to.path).value;
+    if (dst && dst->get_type() == VfsEntryType::DIRECTORY)
+        final_path_to = StringUtils::format("%/%", path_to, path_from.extract_file_name());
+    else
+        final_path_to = path_to;
+
+    // create actual dest entry
+    if (auto result = mp_to.mountpoint->create_entry(final_path_to, false))
+        dst = result.value;
+    else {
+        klog.format("VfsTree::copy_entry: can't create dst entry '%'\n", final_path_to);
+        return {result.ec};
+    }
+
+
+    // dest entry created, just copy contents
+    const u32 BUFF_SIZE = 1024;
+    char buff[BUFF_SIZE];
+    u32 count;
+    while ((count = src->read(buff, BUFF_SIZE).value) > 0)
+        dst->write(buff, count);
+
+    return {ErrorCode::EC_OK};
+}
+
+/**
  * @brief
  * @note    Can move attachments only; open files should stay where they are until no one has them open
  */
@@ -172,7 +233,6 @@ utils::SyscallResult<void> VfsTree::move_attachment(const UnixPath& path_from, c
     }
 
     // check if path_to is file and already exists
-
     UnixPath final_path_to;
     VfsCachedEntryPtr dst = lookup_cached_entry(path_to);
     if (dst && dst->get_type() != VfsEntryType::DIRECTORY) {
@@ -191,7 +251,43 @@ utils::SyscallResult<void> VfsTree::move_attachment(const UnixPath& path_from, c
     return attach(src->get_cached_entry(), final_path_to.extract_directory());
 }
 
+utils::SyscallResult<void> VfsTree::move_mountpoint(const UnixPath& path_from, const UnixPath& path_to) {
+//    auto mp_from = get_mountpoint_path(path_from);
+//    if (!mp_from) {
+//        klog.format("VfsTree::move_mountpoint: src located on unmodifiable filesystem: %\n", path_from);
+//        return {ErrorCode::EC_PERM};
+//    }
+//
+//    // check if moving mountpoint itself, cant do that
+//    if (mp_from.path == "/") {
+//        klog.format("VfsStorage::move_entry: can't move a mountpoint just like that :) %\n", path_from);
+//        return false;
+//    }
+//
+//    auto mp_to = get_mountpoint_path(path_to);
+//    if (!mp_to) {
+//        klog.format("VfsTree::move_mountpoint: dst located on unmodifiable filesystem: %\n", path_to);
+//        return {ErrorCode::EC_PERM};
+//    }
+//
+//    // check if move within same mount point, this is more optimal scenario
+//    if (mp_from.mountpoint == mp_to.mountpoint) {
+//        klog.format("VfsStorage::move_entry: moving within same mountpoint: % -> %\n", path_from, path_to);
+//        return (bool)mp_from.mountpoint->move_entry(mp_from.path, mp_to.path);
+//    }
+//
+//    // nope, move between different mountpoints
+//    klog.format("VfsStorage::move_entry: moving between 2 mountpoints: % -> %\n", path_from, path_to);
+//    return copy_entry(path_from, path_to) && mp_from.mountpoint->delete_entry(mp_from.path);
+    return {ErrorCode::EC_PERM};
+}
+
 utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
+    if (path_from == "/") {
+        klog.format("VfsTree::move_entry: cannot move root\n", path_from);
+        return {ErrorCode::EC_INVAL};
+    }
+
     if (!path_from.is_valid_absolute_path()) {
         klog.format("VfsTree::move_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
         return {ErrorCode::EC_INVAL};
@@ -203,7 +299,7 @@ utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const 
     }
 
     bool cache_moved = (bool)move_attachment(path_from, path_to);
-    bool mountpoint_moved = false;
+    bool mountpoint_moved = (bool)move_mountpoint(path_from, path_to);
 
     if (cache_moved || mountpoint_moved)
         return {ErrorCode::EC_OK};

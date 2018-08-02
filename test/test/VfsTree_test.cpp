@@ -7,11 +7,11 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <iostream>
 #include "VfsTree.h"
 #include "VfsRamDirectoryEntry.h"
 #include "VfsRamMountPoint.h"
 #include "KernelLog.h"
-#include <iostream>
 
 using namespace filesystem;
 
@@ -208,6 +208,20 @@ TEST_F(VfsTreeTest, test_close_neveropened) {
 }
 
 /**************************************************************************
+ * VfsTree::copy
+ *************************************************************************/
+//TEST_F(VfsTreeTest, test_copy_within_mountpoint) {
+//    // setup
+//    tree.attach(std::make_shared<VfsRamMountPoint>("HOME"), "/");
+//    tree.create("/HOME/images", false);
+//
+//    // test
+//    (tree.copy_entry("/HOME/images", "/HOME/pictures"));
+//
+//    print_log();
+//}
+
+/**************************************************************************
  * VfsTree::move
  *************************************************************************/
 TEST_F(VfsTreeTest, test_rename_attachment) {
@@ -222,7 +236,7 @@ TEST_F(VfsTreeTest, test_rename_attachment) {
 
 TEST_F(VfsTreeTest, test_rename_root) {
     // test
-    ASSERT_FALSE(tree.move_entry("/", "|"));
+    ASSERT_FALSE(tree.move_entry("/", "root"));
 }
 
 TEST_F(VfsTreeTest, test_move_attachment) {

@@ -6,6 +6,7 @@
  */
 
 #include "VfsRamMountPoint.h"
+#include "VfsRamDummyFileEntry.h"
 #include "StringUtils.h"
 
 using namespace cstd;
@@ -58,14 +59,8 @@ utils::SyscallResult<void> VfsRamMountPoint::enumerate_entries(const OnVfsEntryF
 
 /**
  * @brief   Create an entry under given "path"
- * @note    Only directories can be created as for now - "is_directory" must equal true
  */
 utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::create_entry(const UnixPath& path, bool is_directory) {
-    if (!is_directory) {
-        klog.format("VfsRamMountPoint::create_entry: can only create in-ram directories and no files");
-        return {middlespace::ErrorCode::EC_INVAL};
-    }
-
     auto parent_path = path.extract_directory();
     auto parent = get_entry(parent_path).value;
     if (!parent || parent->get_type() != VfsEntryType::DIRECTORY) {
@@ -75,7 +70,12 @@ utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::create_entry(const UnixPath&
     auto parent_dir = std::static_pointer_cast<VfsRamDirectoryEntry>(parent);
 
     auto entry_name = path.extract_file_name();
-    auto entry = std::make_shared<VfsRamDirectoryEntry>(entry_name);
+    VfsEntryPtr entry;
+    if (is_directory)
+        entry = std::make_shared<VfsRamDirectoryEntry>(entry_name);
+    else
+        entry = std::make_shared<VfsRamDummyFileEntry>(entry_name);
+
     if (parent_dir->attach_entry(entry))
         return {entry};
     else

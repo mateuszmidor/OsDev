@@ -46,6 +46,7 @@ public:
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> create(const UnixPath& path, bool is_directory);
     utils::SyscallResult<void> remove(const UnixPath& path);
+    utils::SyscallResult<void> copy_entry(const UnixPath& path_from, const UnixPath& path_to);
     utils::SyscallResult<void> move_entry(const UnixPath& path_from, const UnixPath& path_to);
     utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
     utils::SyscallResult<void> close(GlobalFileDescriptor fd);
@@ -59,7 +60,8 @@ private:
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
     MountpointPath get_mountpoint_path(const cstd::string& path);
 
-    utils::SyscallResult<void> move_attachment(const UnixPath& path_from, const UnixPath& path_to) ;
+    utils::SyscallResult<void> move_attachment(const UnixPath& path_from, const UnixPath& path_to);
+    utils::SyscallResult<void> move_mountpoint(const UnixPath& path_from, const UnixPath& path_to);
 
     EntryCache          entry_cache;
     logging::KernelLog& klog;
