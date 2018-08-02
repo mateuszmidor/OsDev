@@ -10,11 +10,20 @@
 
 namespace filesystem {
 
+/**
+ * @brief   This dummy file implementation is used for testing the VFS
+ */
 class VfsRamDummyFileEntry: public VfsEntry {
 public:
     VfsRamDummyFileEntry(const cstd::string name) : name(name) {}
-    const cstd::string& get_name() const override   { return name;                  }
-    VfsEntryType get_type() const override          { return VfsEntryType::FILE;    }
+
+    // [common interface]
+    const cstd::string& get_name() const override                                                               { return name;                  }
+    VfsEntryType get_type() const override                                                                      { return VfsEntryType::FILE;    }
+
+    // [file interface]
+    utils::SyscallResult<u64> read(void* data, u32 count) override                                              { return {0};   }
+    utils::SyscallResult<u64> write(const void* data, u32 count) override                                       { return {0};   }
 
 private:
     cstd::string name;

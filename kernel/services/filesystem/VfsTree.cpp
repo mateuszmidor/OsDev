@@ -192,9 +192,10 @@ utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const 
     UnixPath final_path_to;
     VfsEntryPtr dst = mp_to.mountpoint->get_entry(mp_to.path).value;
     if (dst && dst->get_type() == VfsEntryType::DIRECTORY)
-        final_path_to = StringUtils::format("%/%", path_to, path_from.extract_file_name());
+        final_path_to = StringUtils::format("%/%", mp_to.path, path_from.extract_file_name());
     else
-        final_path_to = path_to;
+        final_path_to = mp_to.path;
+    klog.format("final path %\n", final_path_to);
 
     // create actual dest entry
     if (auto result = mp_to.mountpoint->create_entry(final_path_to, false))
@@ -204,13 +205,24 @@ utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const 
         return {result.ec};
     }
 
-
     // dest entry created, just copy contents
     const u32 BUFF_SIZE = 1024;
     char buff[BUFF_SIZE];
-    u32 count;
-    while ((count = src->read(buff, BUFF_SIZE).value) > 0)
-        dst->write(buff, count);
+    while (true) {
+        auto read_result = src->read(buff, BUFF_SIZE);
+        if (!read_result)
+            return {read_result.ec};
+
+        if (read_result.value == 0)
+            break;
+
+        auto write_result = dst->write(buff, read_result.value);
+        if (!write_result)
+            return {write_result.ec};
+
+        if (write_result.value == 0)
+            break;
+    }
 
     return {ErrorCode::EC_OK};
 }
