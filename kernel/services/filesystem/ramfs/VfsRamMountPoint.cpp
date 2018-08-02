@@ -78,8 +78,9 @@ utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::create_entry(const UnixPath&
 
     if (parent_dir->attach_entry(entry))
         return {entry};
-    else
-        return {middlespace::ErrorCode::EC_EXIST};
+
+    klog.format("VfsRamMountPoint::create_entry: file exists: %\n", path);
+    return {middlespace::ErrorCode::EC_EXIST};
 }
 
 /**

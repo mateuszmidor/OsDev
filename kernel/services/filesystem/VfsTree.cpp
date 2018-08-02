@@ -158,14 +158,13 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
  * @brief   Copy persistent entry from one location to another
  */
 utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const UnixPath& path_to) {
-    klog.format("coping from % to %\n", path_from, path_to);
     if (!path_from.is_valid_absolute_path()) {
         klog.format("VfsTree::copy_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
         return {ErrorCode::EC_INVAL};
     }
 
     if (!path_to.is_valid_absolute_path()) {
-        klog.format("VfsTree::copy_entry '%' is empty or it is not an absolute path\n", path_to);
+        klog.format("VfsTree::copy_entry: path_to '%' is empty or it is not an absolute path\n", path_to);
         return {ErrorCode::EC_INVAL};
     }
 
@@ -190,7 +189,7 @@ utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const 
     }
 
     UnixPath final_path_to;
-    VfsEntryPtr dst = mp_to.mountpoint->get_entry(mp_to.path).value;
+    VfsEntryPtr dst = lookup_entry(path_to);
     if (dst && dst->get_type() == VfsEntryType::DIRECTORY)
         final_path_to = StringUtils::format("%/%", mp_to.path, path_from.extract_file_name());
     else

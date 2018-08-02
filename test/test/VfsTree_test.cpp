@@ -221,18 +221,6 @@ TEST_F(VfsTreeTest, test_copy_within_mountpoint_same_level) {
     ASSERT_TRUE(tree.exists("/HOME/picture.jpg"));
 }
 
-//TEST_F(VfsTreeTest, test_copy_within_mountpoint_same_level2) {
-//    // setup
-//    ASSERT_TRUE(tree.attach(std::make_shared<VfsRamMountPoint>("HOME"), "/"));
-//    ASSERT_TRUE(tree.create("/HOME/photo.jpg", false));
-//
-//    // test
-//    (tree.copy_entry("/HOME/photo.jpg", "/HOME"));
-//    print_log();
-//    ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
-//    ASSERT_TRUE(tree.exists("/HOME/picture.jpg"));
-//}
-
 TEST_F(VfsTreeTest, test_copy_within_mountpoint_different_level) {
     // setup
     ASSERT_TRUE(tree.attach(std::make_shared<VfsRamMountPoint>("HOME"), "/"));
@@ -241,6 +229,18 @@ TEST_F(VfsTreeTest, test_copy_within_mountpoint_different_level) {
 
     // test
     ASSERT_TRUE(tree.copy_entry("/HOME/photo.jpg", "/HOME/images/photo.jpg"));
+    ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
+    ASSERT_TRUE(tree.exists("/HOME/images/photo.jpg"));
+}
+
+TEST_F(VfsTreeTest, test_copy_within_mountpoint_different_level2) {
+    // setup
+    ASSERT_TRUE(tree.attach(std::make_shared<VfsRamMountPoint>("HOME"), "/"));
+    ASSERT_TRUE(tree.create("/HOME/images", true));
+    ASSERT_TRUE(tree.create("/HOME/photo.jpg", false));
+
+    // test
+    ASSERT_TRUE(tree.copy_entry("/HOME/photo.jpg", "/HOME/images/"));
     ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/images/photo.jpg"));
 }
