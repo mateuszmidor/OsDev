@@ -71,8 +71,15 @@ void VfsTree::install() {
 
 /**
  * @brief   Attach "entry" under given "parent_path", return error code on error
+ * @param   entry       Entry to be attached in virtual filesystem tree
+ * @param   parent_path Absolute path to directory to attach the entry to
  */
 utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixPath& parent_path) {
+    if (!parent_path.is_valid_absolute_path()) {
+        klog.format("VfsTree::attach: parent_path is empty or it is not an absolute path: %\n", parent_path);
+        return {ErrorCode::EC_INVAL};
+    }
+
     // get the parent from depths of virtual file system and cache it so we can attach to it
     auto parent_fd = get_or_bring_entry_to_cache(parent_path);
     if (!parent_fd) {
@@ -90,10 +97,16 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
 }
 
 /**
- * @brief   Create file/directory pointed by "path" and return its file descriptor on success, or error code otherwise
- * @note    The actual entry creation is delegated to a mountpoint on the "path" thus mountpoint is required
+ * @brief   Create file/directory pointed by "path" and return its file descriptor on success, or error code on error
+ * @param   path    Absolute path to the entry that is to be created
+ * @note    The actual entry creation is delegated to a mountpoint on the "path" thus mountpoint installed on the path is a must
  */
 utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path, bool is_directory) {
+    if (!path.is_valid_absolute_path()) {
+        klog.format("VfsTree::create: path is empty or it is not an absolute path: %\n", path);
+        return {ErrorCode::EC_INVAL};
+    }
+
     // find the mountpoint responsible for managing the "path"
     auto mp = get_mountpoint_path(path);
     if (!mp) {
@@ -101,7 +114,7 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path,
         return {ErrorCode::EC_ROFS};
     }
 
-    // make it create the entry
+    // make the mountpoint create the entry
     auto result = mp.mountpoint->create_entry(mp.path, is_directory);
     if (!result) {
         klog.format("VfsTree::create: target filesystem refused to create entry: %\n", path);
@@ -121,10 +134,15 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path,
 }
 
 /**
- * @brief   Delete file or an empty directory pointed by "path"
- *          From persistent (mountpoint) + from cache + from cache attachment, uff
+ * @brief   Delete entry pointed by "path" stored in filesystem or as an attachment
+ * @param   path    Absolute path to the entry to be deleted
  */
 utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
+    if (!path.is_valid_absolute_path()) {
+        klog.format("VfsTree::remove: path is empty or it is not an absolute path: %\n", path);
+        return {ErrorCode::EC_INVAL};
+    }
+
     bool uncached {false};
 
     // check if entry in cache and eligible for removal
@@ -135,26 +153,28 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
         }
 
         if (e->attachment_count() > 0) {
-            klog.format("VfsTree::remove: cant remove; entry not empty: %\n", path);
+            klog.format("VfsTree::remove: cant remove; entry is not empty: %\n", path);
             return {ErrorCode::EC_NOTEMPTY};
         }
 
-        // remove from cache
+        // remove from cache, will be successful because we already know it is in cache
         uncached = uncache(path);
     }
 
     // remove from persistent storage if eligible
-    bool uncreated = uncreate(path);
+    auto uncreated = uncreate(path);
 
     // any removal is a success
-    if (uncached || uncreated)
+    if (uncached || (bool)uncreated)
         return {ErrorCode::EC_OK};
 
-    return {ErrorCode::EC_NOENT};
+    return {uncreated.ec};
 }
 
 /**
  * @brief   Copy persistent entry from one location to another
+ * @param   path_from   Absolute source path
+ * @param   path_to     Absolute destination path, either full name or directory to move the entry to
  */
 utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const UnixPath& path_to) {
     if (!path_from.is_valid_absolute_path()) {
@@ -225,10 +245,41 @@ utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const 
 }
 
 /**
+ * @brief   Move entry from one location to another, both filesystem and attached entries are handled
+ * @param   path_from   Absolute source path
+ * @param   path_to     Absolute destination path, either full name or directory to move the entry to
+ * @note    Open entry can't be moved until it is closed.
+ */
+utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
+    if (path_from.is_root_path()) {
+        klog.format("VfsTree::move_entry: cannot move the root: %\n", path_from);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    if (!path_from.is_valid_absolute_path()) {
+        klog.format("VfsTree::move_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    if (!path_to.is_valid_absolute_path()) {
+        klog.format("VfsTree::move_entry: path_to '%' is empty or it is not an absolute path\n", path_to);
+        return {ErrorCode::EC_INVAL};
+    }
+
+    bool cache_moved = (bool)move_attached_entry(path_from, path_to);
+    bool mountpoint_moved = (bool)move_filesystem_entry(path_from, path_to);
+
+    if (cache_moved || mountpoint_moved)
+        return {ErrorCode::EC_OK};
+
+    return {ErrorCode::EC_PERM};
+}
+
+/**
  * @brief   Move entry that lives in cache
  * @note    Can move attachments only; open files should stay where they are until no one has them open
  */
-utils::SyscallResult<void> VfsTree::move_attachment(const UnixPath& path_from, const UnixPath& path_to) {
+utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_from, const UnixPath& path_to) {
     VfsCachedEntryPtr src = lookup_cached_entry(path_from);
     if (!src) {
         klog.format("VfsTree::move_attachment: cant move; source doesnt exist: %\n", path_from);
@@ -274,7 +325,7 @@ utils::SyscallResult<void> VfsTree::move_attachment(const UnixPath& path_from, c
 /**
  * @brief   Move entry that lives in mountpoint
  */
-utils::SyscallResult<void> VfsTree::move_persistent(const UnixPath& path_from, const UnixPath& path_to) {
+utils::SyscallResult<void> VfsTree::move_filesystem_entry(const UnixPath& path_from, const UnixPath& path_to) {
     auto mp_from = get_mountpoint_path(path_from);
     if (!mp_from) {
         klog.format("VfsTree::move_persistent: src located on unmodifiable filesystem: %\n", path_from);
@@ -316,35 +367,6 @@ utils::SyscallResult<void> VfsTree::move_persistent(const UnixPath& path_from, c
         return delete_result;
 
     return {ErrorCode::EC_OK};
-}
-
-/**
- * @brief   Move entry from one location to another, both persistent an attachment entries are handled
- * @note    Open entry can't be moved until it is closed.
- */
-utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
-    if (path_from.is_root_path()) {
-        klog.format("VfsTree::move_entry: cannot move root\n", path_from);
-        return {ErrorCode::EC_INVAL};
-    }
-
-    if (!path_from.is_valid_absolute_path()) {
-        klog.format("VfsTree::move_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
-        return {ErrorCode::EC_INVAL};
-    }
-
-    if (!path_to.is_valid_absolute_path()) {
-        klog.format("VfsTree::move_entry: path_to '%' is empty or it is not an absolute path\n", path_to);
-        return {ErrorCode::EC_INVAL};
-    }
-
-    bool cache_moved = (bool)move_attachment(path_from, path_to);
-    bool mountpoint_moved = (bool)move_persistent(path_from, path_to);
-
-    if (cache_moved || mountpoint_moved)
-        return {ErrorCode::EC_OK};
-
-    return {ErrorCode::EC_PERM};
 }
 
 /**
@@ -403,26 +425,20 @@ bool VfsTree::uncache(const UnixPath& path) {
 }
 
 /**
- * @brief   Remove entry from persistent storage
+ * @brief   Remove entry from filesystem managed by mountpoint installed on the "path"
  */
-bool VfsTree::uncreate(const UnixPath& path) {
+utils::SyscallResult<void> VfsTree::uncreate(const UnixPath& path) {
     // find the mountpoint responsible for managing the "path"
     auto mp = get_mountpoint_path(path);
-    if (!mp) {
-//        klog.format("VfsTree::remove: target located on unmodifiable filesystem: %\n", path);
-//        return {ErrorCode::EC_ROFS};
-        return false;
-    }
+    if (!mp)
+        return {ErrorCode::EC_ROFS};
 
-    // make it remove the entry
+    // make the mountpoint remove the entry
     auto result = mp.mountpoint->delete_entry(mp.path);
-    if (!result) {
-//        klog.format("VfsTree::remove: target filesystem refused to remove entry: %\n", path);
-//        return {result.ec};
-        return false;
-    }
+    if (!result)
+        return result;
 
-    return true;
+    return {ErrorCode::EC_OK};
 }
 
 /**

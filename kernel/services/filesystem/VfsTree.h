@@ -54,14 +54,14 @@ public:
 
 private:
     bool uncache(const UnixPath& path);
-    bool uncreate(const UnixPath& path);
+    utils::SyscallResult<void> uncreate(const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> get_or_bring_entry_to_cache(const UnixPath& path);
     VfsCachedEntryPtr lookup_cached_entry(const UnixPath& path) const;
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
     MountpointPath get_mountpoint_path(const cstd::string& path);
 
-    utils::SyscallResult<void> move_attachment(const UnixPath& path_from, const UnixPath& path_to);
-    utils::SyscallResult<void> move_persistent(const UnixPath& path_from, const UnixPath& path_to);
+    utils::SyscallResult<void> move_attached_entry(const UnixPath& path_from, const UnixPath& path_to);
+    utils::SyscallResult<void> move_filesystem_entry(const UnixPath& path_from, const UnixPath& path_to);
 
     EntryCache          entry_cache;
     logging::KernelLog& klog;
