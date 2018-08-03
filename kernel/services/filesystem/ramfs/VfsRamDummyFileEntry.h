@@ -8,6 +8,8 @@
 #ifndef KERNEL_SERVICES_FILESYSTEM_RAMFS_VFSRAMDUMMYFILEENTRY_H_
 #define KERNEL_SERVICES_FILESYSTEM_RAMFS_VFSRAMDUMMYFILEENTRY_H_
 
+#include "VfsEntry.h"
+
 namespace filesystem {
 
 /**
@@ -19,6 +21,7 @@ public:
 
     // [common interface]
     const cstd::string& get_name() const override                                                               { return name;                  }
+    utils::SyscallResult<void> set_name(const cstd::string& name) override;
     VfsEntryType get_type() const override                                                                      { return VfsEntryType::FILE;    }
 
     // [file interface]
