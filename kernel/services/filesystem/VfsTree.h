@@ -53,7 +53,7 @@ public:
     bool exists(const UnixPath& path) const;
 
 private:
-    bool uncache(const UnixPath& path);
+    utils::SyscallResult<void> try_uncache(const UnixPath& path);
     utils::SyscallResult<void> uncreate(const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> get_or_bring_entry_to_cache(const UnixPath& path);
     VfsCachedEntryPtr lookup_cached_entry(const UnixPath& path) const;

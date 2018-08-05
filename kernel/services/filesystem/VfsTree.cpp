@@ -143,29 +143,23 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
         return {ErrorCode::EC_INVAL};
     }
 
-    bool uncached {false};
+    auto uncached = try_uncache(path);
 
-    // check if entry in cache and eligible for removal
-    if (VfsCachedEntryPtr e = lookup_cached_entry(path)) {
-        if (e->refcount > 0) {
-            klog.format("VfsTree::remove: can't remove; entry is open: %\n", path);
-            return {ErrorCode::EC_ISOPEN};
-        }
+    switch (uncached.ec) {
+    case ErrorCode::EC_NOTEMPTY:
+        klog.format("VfsTree::remove: can't remove; entry is not empty: %\n", path);
+        return {ErrorCode::EC_NOTEMPTY};
 
-        if (e->attachment_count() > 0) {
-            klog.format("VfsTree::remove: can't remove; entry is not empty: %\n", path);
-            return {ErrorCode::EC_NOTEMPTY};
-        }
-
-        // remove from cache, will be successful because we already know it is in cache
-        uncached = uncache(path);
+    case ErrorCode::EC_ISOPEN:
+        klog.format("VfsTree::remove: can't remove; entry is open: %\n", path);
+        return {ErrorCode::EC_ISOPEN};
     }
 
     // remove from persistent storage if eligible
     auto uncreated = uncreate(path);
 
     // any removal is a success
-    if (uncached || (bool)uncreated)
+    if ((bool)uncached || (bool)uncreated)
         return {ErrorCode::EC_OK};
 
     return {uncreated.ec};
@@ -314,7 +308,7 @@ utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_fro
 
     // moving to different directory
     if (auto attach_result = attach(src->get_cached_entry(), final_path_to.extract_directory())) {
-        uncache(path_from); // only uncache if attach was successful so the entry doesnt disappear in case of error
+        try_uncache(path_from); // only uncache if attach was successful so the entry doesnt disappear in case of error
         src->set_name(final_path_to.extract_file_name());
         return {ErrorCode::EC_OK};
     }
@@ -401,25 +395,49 @@ utils::SyscallResult<void> VfsTree::close(GlobalFileDescriptor fd) {
     return {ErrorCode::EC_OK};
 }
 
+static utils::SyscallResult<void> check_can_uncache(const VfsCachedEntryPtr e) {
+    if (e->refcount > 0) {
+        return {ErrorCode::EC_ISOPEN};
+    }
+
+    if (e->attachment_count() > 0) {
+        return {ErrorCode::EC_NOTEMPTY};
+    }
+
+    return {ErrorCode::EC_OK};
+}
 /**
  * @brief   Remove entry from cache
  */
-bool VfsTree::uncache(const UnixPath& path) {
+utils::SyscallResult<void> VfsTree::try_uncache(const UnixPath& path) {
     bool uncached {false};
 
     // try uncache directly stored entry
     if (auto fd = entry_cache.find(path)) {
+        auto status = check_can_uncache(entry_cache[fd.value]);
+        if (!status)
+            return status;
+
         entry_cache.deallocate(fd.value);
         uncached = true;
     }
 
     // try detach parent-child
-    if (auto fd = entry_cache.find(path.extract_directory())) {
-        if (entry_cache[fd.value]->detach_entry(path.extract_file_name()))
-            uncached = true;
-    }
+    if (auto fd = entry_cache.find(path.extract_directory()))
+        if (auto e = entry_cache[fd.value]->get_attached_entry(path.extract_file_name()))
+        {
+            auto status = check_can_uncache(e);
+            if (!status)
+                return status;
 
-    return uncached;
+            if (entry_cache[fd.value]->detach_entry(path.extract_file_name()))
+                uncached = true;
+        }
+
+    if (uncached)
+        return {ErrorCode::EC_OK};
+    else
+        return {ErrorCode::EC_NOENT};
 }
 
 /**
