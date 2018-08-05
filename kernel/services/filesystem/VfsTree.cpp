@@ -148,12 +148,12 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
     // check if entry in cache and eligible for removal
     if (VfsCachedEntryPtr e = lookup_cached_entry(path)) {
         if (e->refcount > 0) {
-            klog.format("VfsTree::remove: cant remove; entry is open: %\n", path);
+            klog.format("VfsTree::remove: can't remove; entry is open: %\n", path);
             return {ErrorCode::EC_ISOPEN};
         }
 
         if (e->attachment_count() > 0) {
-            klog.format("VfsTree::remove: cant remove; entry is not empty: %\n", path);
+            klog.format("VfsTree::remove: can't remove; entry is not empty: %\n", path);
             return {ErrorCode::EC_NOTEMPTY};
         }
 
@@ -190,7 +190,7 @@ utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const 
     // source must exist
     VfsEntryPtr src = lookup_entry(path_from);
     if (!src) {
-        klog.format("VfsTree::copy_entry: src doesnt exist: %\n", path_from);
+        klog.format("VfsTree::copy_entry: src doesn't exist: %\n", path_from);
         return {ErrorCode::EC_NOENT};
     }
 
@@ -218,7 +218,7 @@ utils::SyscallResult<void> VfsTree::copy_entry(const UnixPath& path_from, const 
     if (auto result = mp_to.mountpoint->create_entry(relative_path_to, false))
         dst = result.value;
     else {
-        klog.format("VfsTree::copy_entry: target filesystem refued to create dst entry %\n", relative_path_to);
+        klog.format("VfsTree::copy_entry: target filesystem refused to create dst entry %\n", relative_path_to);
         return {result.ec};
     }
 
@@ -282,13 +282,13 @@ utils::SyscallResult<void> VfsTree::move_entry(const UnixPath& path_from, const 
 utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_from, const UnixPath& path_to) {
     VfsCachedEntryPtr src = lookup_cached_entry(path_from);
     if (!src) {
-        klog.format("VfsTree::move_attachment: cant move; source doesnt exist: %\n", path_from);
+        klog.format("VfsTree::move_attachment: can't move; source doesn't exist: %\n", path_from);
         return {ErrorCode::EC_NOENT};
     }
 
     // check if entry in cache and eligible for removal
     if (src->refcount > 0) {
-        klog.format("VfsTree::move_attachment: cant move; source is open: %\n", path_from);
+        klog.format("VfsTree::move_attachment: can't move; source is open: %\n", path_from);
         return {ErrorCode::EC_ISOPEN};
     }
 
@@ -296,7 +296,7 @@ utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_fro
     UnixPath final_path_to;
     VfsCachedEntryPtr dst = lookup_cached_entry(path_to);
     if (dst && dst->get_type() != VfsEntryType::DIRECTORY) {
-        klog.format("VfsTree::move_attachment: cant move; target exists: %\n", path_to);
+        klog.format("VfsTree::move_attachment: can't move; target exists: %\n", path_to);
         return {ErrorCode::EC_EXIST};
     }
 
@@ -395,11 +395,9 @@ utils::SyscallResult<void> VfsTree::close(GlobalFileDescriptor fd) {
     entry_cache[fd]->refcount--;
 
     // remove from cache if no longer needed. This needs testing
-    if (entry_cache[fd]->refcount > 0 && entry_cache[fd]->attachment_count() > 0)
-        return {ErrorCode::EC_PERM};
+    if (entry_cache[fd]->refcount == 0 && entry_cache[fd]->attachment_count() == 0)
+        entry_cache.deallocate(fd);
 
-
-    entry_cache.deallocate(fd);
     return {ErrorCode::EC_OK};
 }
 
@@ -417,8 +415,8 @@ bool VfsTree::uncache(const UnixPath& path) {
 
     // try detach parent-child
     if (auto fd = entry_cache.find(path.extract_directory())) {
-        entry_cache[fd.value]->detach_entry(path.extract_file_name());
-        uncached = true;
+        if (entry_cache[fd.value]->detach_entry(path.extract_file_name()))
+            uncached = true;
     }
 
     return uncached;
@@ -453,7 +451,7 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::get_or_bring_entry_to_cache(
     // otherwise lookup the file, allocate it in cache and return the file descriptor
     VfsEntryPtr e = lookup_entry(path);
     if (!e) {
-        klog.format("VfsTree::get_or_bring_entry_to_cache: entry not exists: %", path);
+        klog.format("VfsTree::get_or_bring_entry_to_cache: entry doesn't exists: %", path);
         return {ErrorCode::EC_NOENT};
     }
 
