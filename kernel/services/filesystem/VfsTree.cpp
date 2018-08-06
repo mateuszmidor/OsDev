@@ -63,6 +63,31 @@ static utils::SyscallResult<void> check_cached_entry_unused(const VfsCachedEntry
 }
 
 /**
+ * @brief   Copy contents of "src" to "dst"
+ */
+static utils::SyscallResult<void> copy_entry_contents(VfsEntryPtr& src, VfsEntryPtr& dst) {
+    // dest entry created, just copy contents
+    const u32 BUFF_SIZE {1024};
+    char buff[BUFF_SIZE];
+    while (true) {
+        auto read_result = src->read(buff, BUFF_SIZE);
+        if (!read_result)
+            return {read_result.ec};
+
+        if (read_result.value == 0)
+            break;
+
+        auto write_result = dst->write(buff, read_result.value);
+        if (!write_result)
+            return {write_result.ec};
+
+        if (write_result.value == 0)
+            break;
+    }
+    return {ErrorCode::EC_OK};
+}
+
+/**
  * @brief   Cut off the last segment of "path" and return it, "path" itself becomes shorter
  * @note    If last segment is cut, "path" becomes the root "/"
  */
@@ -237,26 +262,7 @@ utils::SyscallResult<void> VfsTree::copy(const UnixPath& path_from, const UnixPa
         return {result.ec};
     }
 
-    // dest entry created, just copy contents
-    const u32 BUFF_SIZE {1024};
-    char buff[BUFF_SIZE];
-    while (true) {
-        auto read_result = src->read(buff, BUFF_SIZE);
-        if (!read_result)
-            return {read_result.ec};
-
-        if (read_result.value == 0)
-            break;
-
-        auto write_result = dst->write(buff, read_result.value);
-        if (!write_result)
-            return {write_result.ec};
-
-        if (write_result.value == 0)
-            break;
-    }
-
-    return {ErrorCode::EC_OK};
+    return copy_entry_contents(src, dst);
 }
 
 /**
@@ -295,7 +301,7 @@ utils::SyscallResult<void> VfsTree::move(const UnixPath& path_from, const UnixPa
  * @note    Can move attachments only; open files should stay where they are until no one has them open
  */
 utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_from, const UnixPath& path_to) {
-    VfsCachedEntryPtr src = lookup_cached_entry(path_from);
+    VfsCachedEntryPtr src = lookup_attached_entry(path_from);
     if (!src) {
         klog.format("VfsTree::move_attachment: can't move; source doesn't exist: %\n", path_from);
         return {ErrorCode::EC_NOENT};
@@ -309,7 +315,7 @@ utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_fro
 
     // check if path_to is file and already exists
     UnixPath final_path_to;
-    VfsCachedEntryPtr dst = lookup_cached_entry(path_to);
+    VfsCachedEntryPtr dst = lookup_attached_entry(path_to);
     if (dst && dst->get_type() != VfsEntryType::DIRECTORY) {
         klog.format("VfsTree::move_attachment: can't move; target exists: %\n", path_to);
         return {ErrorCode::EC_EXIST};
@@ -511,7 +517,7 @@ bool VfsTree::exists(const UnixPath& path) const {
 /**
  * @brief   Lookup entry that is directly cached or directly cached attachment
  */
-VfsCachedEntryPtr VfsTree::lookup_cached_entry(const UnixPath& path) const {
+VfsCachedEntryPtr VfsTree::lookup_attached_entry(const UnixPath& path) const {
     if (auto fd = entry_cache.find(path))
         return entry_cache[fd.value];
 
@@ -534,7 +540,7 @@ VfsEntryPtr VfsTree::lookup_entry(const UnixPath& path) const {
     do {
         string segment = snap_path_tail(subpath);
         path_segments.push_front(segment);
-        e = lookup_cached_entry(subpath);
+        e = lookup_attached_entry(subpath);
     } while (!e);
 
     // now descent from the parent along the remembered segments
@@ -568,7 +574,7 @@ MountpointPath VfsTree::get_mountpoint_path(const cstd::string& path) {
 
     // ascend up the path looking for the mountpoint in cache. Mountpoint always lives as attachment in cache
     do {
-        e = lookup_cached_entry(subpath);
+        e = lookup_attached_entry(subpath);
         if (e && e->is_mountpoint())
             break;
         string segment = snap_path_tail(subpath);
