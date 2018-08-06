@@ -217,7 +217,7 @@ TEST_F(VfsTreeTest, test_copy_within_mountpoint_same_level) {
     ASSERT_TRUE(tree.create("/HOME/photo.jpg", false));
 
     // test
-    ASSERT_TRUE(tree.copy_entry("/HOME/photo.jpg", "/HOME/picture.jpg"));
+    ASSERT_TRUE(tree.copy("/HOME/photo.jpg", "/HOME/picture.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/picture.jpg"));
 }
@@ -229,7 +229,7 @@ TEST_F(VfsTreeTest, test_copy_within_mountpoint_different_level) {
     ASSERT_TRUE(tree.create("/HOME/photo.jpg", false));
 
     // test
-    ASSERT_TRUE(tree.copy_entry("/HOME/photo.jpg", "/HOME/images/photo.jpg"));
+    ASSERT_TRUE(tree.copy("/HOME/photo.jpg", "/HOME/images/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/images/photo.jpg"));
 }
@@ -241,7 +241,7 @@ TEST_F(VfsTreeTest, test_copy_within_mountpoint_different_level_to_dir) {
     ASSERT_TRUE(tree.create("/HOME/photo.jpg", false));
 
     // test
-    ASSERT_TRUE(tree.copy_entry("/HOME/photo.jpg", "/HOME/images/"));
+    ASSERT_TRUE(tree.copy("/HOME/photo.jpg", "/HOME/images/"));
     ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/images/photo.jpg"));
 }
@@ -255,7 +255,7 @@ TEST_F(VfsTreeTest, test_copy_within_different_mountpoints) {
     ASSERT_TRUE(tree.close(fd.value));
 
     // test
-    ASSERT_TRUE(tree.copy_entry("/HOME/photo.jpg", "/IMAGES/photo.jpg"));
+    ASSERT_TRUE(tree.copy("/HOME/photo.jpg", "/IMAGES/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/IMAGES/photo.jpg"));
 }
@@ -266,7 +266,7 @@ TEST_F(VfsTreeTest, test_copy_attachment_to_mountpoint) {
     ASSERT_TRUE(tree.attach(std::make_shared<VfsRamDummyFileEntry>("photo.jpg"), "/"));
 
     // test
-    ASSERT_TRUE(tree.copy_entry("/photo.jpg", "/HOME/photo.jpg"));
+    ASSERT_TRUE(tree.copy("/photo.jpg", "/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/photo.jpg"));
 }
@@ -279,14 +279,14 @@ TEST_F(VfsTreeTest, test_rename_attachment) {
     ASSERT_TRUE(tree.attach(mkdir("home"), "/"));
 
     // test
-    ASSERT_TRUE(tree.move_entry("/home", "/mydocs"));
+    ASSERT_TRUE(tree.move("/home", "/mydocs"));
     ASSERT_FALSE(tree.exists("/home"));
     ASSERT_TRUE(tree.exists("/mydocs"));
 }
 
 TEST_F(VfsTreeTest, test_rename_root) {
     // test
-    ASSERT_FALSE(tree.move_entry("/", "root"));
+    ASSERT_FALSE(tree.move("/", "root"));
 }
 
 TEST_F(VfsTreeTest, test_move_attachment) {
@@ -295,7 +295,7 @@ TEST_F(VfsTreeTest, test_move_attachment) {
     ASSERT_TRUE(tree.attach(mkdir("images"), "/"));
 
     // test
-    ASSERT_TRUE(tree.move_entry("/images", "/home/pictures"));
+    ASSERT_TRUE(tree.move("/images", "/home/pictures"));
     ASSERT_FALSE(tree.exists("/images"));
     ASSERT_TRUE(tree.exists("/home/pictures"));
 }
@@ -306,7 +306,7 @@ TEST_F(VfsTreeTest, test_move_attachment_to_dir) {
     ASSERT_TRUE(tree.attach(mkdir("images"), "/"));
 
     // test
-    ASSERT_TRUE(tree.move_entry("/images", "/home"));
+    ASSERT_TRUE(tree.move("/images", "/home"));
     ASSERT_FALSE(tree.exists("/images"));
     ASSERT_TRUE(tree.exists("/home/images"));
 }
@@ -319,7 +319,7 @@ TEST_F(VfsTreeTest, test_move_within_mountpoint_same_level) {
     ASSERT_TRUE(tree.close(fd.value));
 
     // test
-    ASSERT_TRUE(tree.move_entry("/HOME/photo.jpg", "/HOME/picture.jpg"));
+    ASSERT_TRUE(tree.move("/HOME/photo.jpg", "/HOME/picture.jpg"));
     ASSERT_FALSE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/picture.jpg"));
 }
@@ -333,7 +333,7 @@ TEST_F(VfsTreeTest, test_move_within_mountpoint_different_level) {
     ASSERT_TRUE(tree.close(fd.value));
 
     // test
-    ASSERT_TRUE(tree.move_entry("/HOME/photo.jpg", "/HOME/images/photo.jpg"));
+    ASSERT_TRUE(tree.move("/HOME/photo.jpg", "/HOME/images/photo.jpg"));
     ASSERT_FALSE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/images/photo.jpg"));
 }
@@ -347,7 +347,7 @@ TEST_F(VfsTreeTest, test_move_within_mountpoint_different_level_to_dir) {
     ASSERT_TRUE(tree.close(fd.value));
 
     // test
-    ASSERT_TRUE(tree.move_entry("/HOME/photo.jpg", "/HOME/images/"));
+    ASSERT_TRUE(tree.move("/HOME/photo.jpg", "/HOME/images/"));
     ASSERT_FALSE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/HOME/images/photo.jpg"));
 }
@@ -361,7 +361,7 @@ TEST_F(VfsTreeTest, test_move_within_different_mountpoints) {
     ASSERT_TRUE(tree.close(fd.value));
 
     // test
-    ASSERT_TRUE(tree.move_entry("/HOME/photo.jpg", "/IMAGES/photo.jpg"));
+    ASSERT_TRUE(tree.move("/HOME/photo.jpg", "/IMAGES/photo.jpg"));
     ASSERT_FALSE(tree.exists("/HOME/photo.jpg"));
     ASSERT_TRUE(tree.exists("/IMAGES/photo.jpg"));
 }
