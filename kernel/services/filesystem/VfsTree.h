@@ -50,7 +50,7 @@ private:
     MountpointPath get_mountpoint_path(const cstd::string& path);
 
     utils::SyscallResult<void> move_attached_entry(const UnixPath& path_from, const UnixPath& path_to);
-    utils::SyscallResult<void> move_filesystem_entry(const UnixPath& path_from, const UnixPath& path_to);
+    utils::SyscallResult<void> move_persistent_entry(const UnixPath& path_from, const UnixPath& path_to);
 
     EntryCache          entry_cache;
     logging::KernelLog& klog;

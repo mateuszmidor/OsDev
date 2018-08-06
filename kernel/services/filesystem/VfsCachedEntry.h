@@ -56,7 +56,7 @@ public:
     bool attach_entry(const VfsEntryPtr& entry);
     bool detach_entry(const cstd::string& name);
     VfsCachedEntryPtr get_attached_entry(const cstd::string& name);
-    VfsEntryPtr get_cached_entry() const                                                    { return e; }
+    VfsEntryPtr get_raw_entry() const                                                    { return e; }
     u32 attachment_count() const                                                            { return attached_entries.size(); }
     u32 open_count {0};
 private:

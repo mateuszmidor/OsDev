@@ -27,7 +27,7 @@ struct MountpointPath {
 };
 
 /**
- * @brief   Get entry in "parent_dir"
+ * @brief   Get child entry in "parent_dir"
  * @param   name Entry name. Case sensitive
  * @return  Valid entry if exists, nullptr otherwise
  */
@@ -48,7 +48,7 @@ static VfsEntryPtr get_entry_in_dir(const string& name, VfsEntryPtr parent_dir) 
 
 /**
  * @brief   Check if given cached entry is unused and thus can be removed from cache
- * @return  EC_OK if unused, error code if used
+ * @return  EC_OK if unused, error code explaining how if used
  */
 static utils::SyscallResult<void> check_cached_entry_unused(const VfsCachedEntryPtr& e) {
     if (e->open_count > 0) {
@@ -63,7 +63,7 @@ static utils::SyscallResult<void> check_cached_entry_unused(const VfsCachedEntry
 }
 
 /**
- * @brief   Copy contents of "src" to "dst"
+ * @brief   Copy contents of "src" to "dst", return error code on error
  */
 static utils::SyscallResult<void> copy_entry_contents(VfsEntryPtr& src, VfsEntryPtr& dst) {
     // dest entry created, just copy contents
@@ -111,7 +111,7 @@ void VfsTree::install() {
 }
 
 /**
- * @brief   Attach "entry" under given "parent_path", return error code on error
+ * @brief   Attach "entry" under given "parent_path" directory, return error code on error
  * @param   entry       Entry to be attached in virtual filesystem tree
  * @param   parent_path Absolute path to directory to attach the entry to
  */
@@ -126,6 +126,13 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
     if (!parent_fd) {
         klog.format("VfsTree::attach: can't attach to: %\n", parent_path);
         return {parent_fd.ec};
+    }
+
+    // check if parent is a directory
+    if (entry_cache[parent_fd.value]->get_type() != VfsEntryType::DIRECTORY) {
+        klog.format("VfsTree::attach: parent_path points to a non-directory: %\n", parent_path);
+        uncache_if_unused(parent_fd.value);
+        return {ErrorCode::EC_NOTDIR};
     }
 
     // attach entry to parent
@@ -212,9 +219,10 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
 }
 
 /**
- * @brief   Copy persistent entry from one location to another
+ * @brief   Copy persistent/attached entry to persistent location
  * @param   path_from   Absolute source path
- * @param   path_to     Absolute destination path, either full name or directory to move the entry to
+ * @param   path_to     Absolute destination path, either full name or directory to copy the entry to
+ * @note    Can't copy entire directory
  */
 utils::SyscallResult<void> VfsTree::copy(const UnixPath& path_from, const UnixPath& path_to) {
     if (!path_from.is_valid_absolute_path()) {
@@ -266,62 +274,60 @@ utils::SyscallResult<void> VfsTree::copy(const UnixPath& path_from, const UnixPa
 }
 
 /**
- * @brief   Move entry from one location to another, both filesystem and attached entries are handled
+ * @brief   Move entry from one location to another, both persistent and attached entries are handled
  * @param   path_from   Absolute source path
  * @param   path_to     Absolute destination path, either full name or directory to move the entry to
  * @note    Open entry can't be moved until it is closed.
  */
 utils::SyscallResult<void> VfsTree::move(const UnixPath& path_from, const UnixPath& path_to) {
     if (path_from.is_root_path()) {
-        klog.format("VfsTree::move_entry: cannot move the root: %\n", path_from);
+        klog.format("VfsTree::move: cannot move the root: %\n", path_from);
         return {ErrorCode::EC_INVAL};
     }
 
     if (!path_from.is_valid_absolute_path()) {
-        klog.format("VfsTree::move_entry: path_from '%' is empty or it is not an absolute path\n", path_from);
+        klog.format("VfsTree::move: path_from '%' is empty or it is not an absolute path\n", path_from);
         return {ErrorCode::EC_INVAL};
     }
 
     if (!path_to.is_valid_absolute_path()) {
-        klog.format("VfsTree::move_entry: path_to '%' is empty or it is not an absolute path\n", path_to);
+        klog.format("VfsTree::move: path_to '%' is empty or it is not an absolute path\n", path_to);
         return {ErrorCode::EC_INVAL};
     }
 
-    bool cache_moved = (bool)move_attached_entry(path_from, path_to);
-    bool mountpoint_moved = (bool)move_filesystem_entry(path_from, path_to);
+    auto move_attached_result = move_attached_entry(path_from, path_to);
+    auto move_persistent_result = move_persistent_entry(path_from, path_to);
 
-    if (cache_moved || mountpoint_moved)
+    if ((bool)move_attached_result || (bool)move_persistent_result)
         return {ErrorCode::EC_OK};
 
+    // if same error code - return it
+    if (move_attached_result.ec == move_persistent_result.ec)
+        return {move_attached_result.ec};
+
+    // if different error codes - return permission denied; what better to return?
     return {ErrorCode::EC_PERM};
 }
 
 /**
- * @brief   Move entry that lives in cache
+ * @brief   Move entry that lives as an attachment
  * @note    Can move attachments only; open files should stay where they are until no one has them open
  */
 utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_from, const UnixPath& path_to) {
     VfsCachedEntryPtr src = lookup_attached_entry(path_from);
     if (!src) {
-        klog.format("VfsTree::move_attachment: can't move; source doesn't exist: %\n", path_from);
+        klog.format("VfsTree::move_attached_entry: can't move; source doesn't exist: %\n", path_from);
         return {ErrorCode::EC_NOENT};
     }
 
     // check if entry in cache and eligible for removal
     if (src->open_count > 0) {
-        klog.format("VfsTree::move_attachment: can't move; source is open: %\n", path_from);
+        klog.format("VfsTree::move_attached_entry: can't move; source is open: %\n", path_from);
         return {ErrorCode::EC_ISOPEN};
     }
 
-    // check if path_to is file and already exists
     UnixPath final_path_to;
     VfsCachedEntryPtr dst = lookup_attached_entry(path_to);
-    if (dst && dst->get_type() != VfsEntryType::DIRECTORY) {
-        klog.format("VfsTree::move_attachment: can't move; target exists: %\n", path_to);
-        return {ErrorCode::EC_EXIST};
-    }
-
-    // check if path_to describes destination directory or final path with filename
     if (dst && dst->get_type() == VfsEntryType::DIRECTORY)
         final_path_to = StringUtils::format("%/%", path_to, path_from.extract_file_name());
     else
@@ -334,7 +340,7 @@ utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_fro
     }
 
     // moving to different directory
-    if (auto attach_result = attach(src->get_cached_entry(), final_path_to.extract_directory())) {
+    if (auto attach_result = attach(src->get_raw_entry(), final_path_to.extract_directory())) {
         try_unattach(path_from); // only uncache if attach was successful so the entry doesnt disappear in case of error
         src->set_name(final_path_to.extract_file_name());
         return {ErrorCode::EC_OK};
@@ -346,22 +352,22 @@ utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_fro
 /**
  * @brief   Move entry that lives in mountpoint
  */
-utils::SyscallResult<void> VfsTree::move_filesystem_entry(const UnixPath& path_from, const UnixPath& path_to) {
+utils::SyscallResult<void> VfsTree::move_persistent_entry(const UnixPath& path_from, const UnixPath& path_to) {
     auto mp_from = get_mountpoint_path(path_from);
     if (!mp_from) {
-        klog.format("VfsTree::move_persistent: src located on unmodifiable filesystem: %\n", path_from);
+        klog.format("VfsTree::move_persistent_entry: src located on unmodifiable filesystem: %\n", path_from);
         return {ErrorCode::EC_ROFS};
     }
 
     // check if moving mountpoint itself, cant do that
     if (mp_from.path == "/") {
-        klog.format("VfsTree::move_persistent: can't move a mountpoint just like that :) %\n", path_from);
+        klog.format("VfsTree::move_persistent_entry: can't move a mountpoint just like that :) %\n", path_from);
         return {ErrorCode::EC_PERM};
     }
 
     auto mp_to = get_mountpoint_path(path_to);
     if (!mp_to) {
-        klog.format("VfsTree::move_persistent: dst located on unmodifiable filesystem: %\n", path_to);
+        klog.format("VfsTree::move_persistent_entry: dst located on unmodifiable filesystem: %\n", path_to);
         return {ErrorCode::EC_ROFS};
     }
 
@@ -374,15 +380,16 @@ utils::SyscallResult<void> VfsTree::move_filesystem_entry(const UnixPath& path_f
 
     // check if move within same mount point, this is more optimal scenario
     if (mp_from.mountpoint == mp_to.mountpoint) {
-        klog.format("VfsTree::move_persistent: moving within same mountpoint: % -> %\n", path_from, relative_path_to);
+        klog.format("VfsTree::move_persistent_entry: moving within same mountpoint: % -> %\n", path_from, relative_path_to);
         return mp_from.mountpoint->move_entry(mp_from.path, relative_path_to);
     }
 
     // nope, move between different mountpoints
-    klog.format("VfsTree::move_persistent: moving between 2 mountpoints: % -> %\n", path_from, path_to);
+    klog.format("VfsTree::move_persistent_entry: moving between 2 mountpoints: % -> %\n", path_from, path_to);
     auto copy_result = copy(path_from, path_to);
     if (!copy_result)
         return copy_result;
+
     auto delete_result = mp_from.mountpoint->delete_entry(mp_from.path);
     if (!delete_result)
         return delete_result;
@@ -447,7 +454,7 @@ utils::SyscallResult<void> VfsTree::try_unattach(const UnixPath& path) {
     // detach the entry
     entry_cache[parent_fd.value]->detach_entry(path.extract_file_name());
 
-    // try uncache the entry; if something was attached to it previously then it must now be in cache
+    // try uncache the entry so it doesnt linger in cache while it should already be gone
     if (auto fd = entry_cache.find(path))
         uncache_if_unused(fd.value);
 
@@ -466,7 +473,7 @@ utils::SyscallResult<void> VfsTree::try_uncreate(const UnixPath& path) {
     // make the mountpoint remove the entry
     auto result = mp.mountpoint->delete_entry(mp.path);
     if (!result)
-        return result;
+        return {result.ec};
 
     return {ErrorCode::EC_OK};
 }
@@ -496,6 +503,9 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::get_or_bring_entry_to_cache(
     return {fd.value};
 }
 
+/**
+ * @brief   Remove given entry from cache if noone uses it
+ */
 void VfsTree::uncache_if_unused(GlobalFileDescriptor fd) {
     if (check_cached_entry_unused(entry_cache[fd]))
         entry_cache.deallocate(fd);
@@ -505,9 +515,6 @@ void VfsTree::uncache_if_unused(GlobalFileDescriptor fd) {
  * @brief   Check for entry existence at "path"
  */
 bool VfsTree::exists(const UnixPath& path) const {
-    if (entry_cache.find(path))
-        return true;
-
     if (lookup_entry(path))
         return true;
 
@@ -515,7 +522,7 @@ bool VfsTree::exists(const UnixPath& path) const {
 }
 
 /**
- * @brief   Lookup entry that is directly cached or directly cached attachment
+ * @brief   Lookup entry that is either root "/" or one of it's attachments (any deep)
  */
 VfsCachedEntryPtr VfsTree::lookup_attached_entry(const UnixPath& path) const {
     if (auto fd = entry_cache.find(path))
@@ -539,22 +546,18 @@ VfsEntryPtr VfsTree::lookup_entry(const UnixPath& path) const {
     // ascend up the path eventually to the root if no parent is found in cache
     do {
         string segment = snap_path_tail(subpath);
-        path_segments.push_front(segment);
         e = lookup_attached_entry(subpath);
+        if (!segment.empty()) path_segments.push_front(segment);
     } while (!e);
 
     // now descent from the parent along the remembered segments
     for (const auto& path_segment : path_segments) {
-        if (e->get_type() != VfsEntryType::DIRECTORY) {
-//            klog.format("VfsTree::lookup_entry: path segment '%' is not a directory\n", e->get_name());
+        if (e->get_type() != VfsEntryType::DIRECTORY)
             return {};   // path segment is not a directory. this is error
-        }
 
         e = get_entry_in_dir(path_segment, e);
-        if (!e) {
-//            klog.format("VfsTree::lookup_entry: path segment '%' does not exist\n", path_segment);
+        if (!e)
             return {};   // path segment does not exist. this is error
-        }
     }
 
     return e;
