@@ -32,7 +32,7 @@ using OnEntryFound = std::function<bool(Fat32Entry& e)>;
 
 /**
  * @name    Fat32Entry
- * @brief   User friendly replacement for DirectoryEntryFat32. Represents file or directory
+ * @brief   User friendly replacement for DirectoryEntryFat32. Represents file or directory. Instantiated only by VolumeFat32
  */
 class Fat32Entry {
 public:
@@ -48,11 +48,12 @@ public:
     const cstd::string& get_name() const;
 
     // [file interface]
-    u32 read(void* data, u32 count);
-    u32 write(const void* data, u32 count);
-    bool seek(u32 new_position);
-    bool truncate(u32 new_size);
-    u32 get_position() const;
+    Fat32State open() const;
+    u32 read(Fat32State& state, void* data, u32 count);
+    u32 write(Fat32State& state, const void* data, u32 count);
+    bool seek(Fat32State& state, u32 new_position);
+    bool truncate(Fat32State& state, u32 new_size);
+    u32 get_position(const Fat32State& state) const;
 
     // [directory interface]
     Fat32EnumerateResult enumerate_entries(const OnEntryFound& on_entry);
@@ -85,8 +86,8 @@ private:
     u8 get_entries_per_sector() const;
     void alloc_dot_dot_entries();
 
-    const Fat32Table   fat_table;
-    const Fat32Data    fat_data;
+    const Fat32Table    fat_table;
+    const Fat32Data     fat_data;
     logging::KernelLog& klog;
 
     // entry meta data

@@ -12,13 +12,13 @@ using namespace cstd;
 
 namespace filesystem {
 
-Fat32ClusterChain::Fat32ClusterChain(const Fat32Table& fat_table, const Fat32Data& fat_data, u32 start_cluster, u32 size) :
+Fat32ClusterChain::Fat32ClusterChain(const Fat32Table& fat_table, const Fat32Data& fat_data, u32 head_cluster, u32 size) :
     fat_table(fat_table),
     fat_data(fat_data),
-    head_cluster(start_cluster),
+    head_cluster(head_cluster),
     tail_cluster(Fat32Table::CLUSTER_UNUSED),
-    current_cluster(start_cluster),
-    current_byte(0),
+//    current_cluster(start_cluster),
+//    current_byte(0),
     size(size),
     klog(logging::KernelLog::instance())
 {
@@ -34,8 +34,8 @@ Fat32ClusterChain& Fat32ClusterChain::operator=(const Fat32ClusterChain& other) 
  */
 void Fat32ClusterChain::free() {
     resize(0);
-    current_byte = 0;
-    current_cluster = Fat32Table::CLUSTER_UNUSED;
+//    current_byte = 0;
+//    current_cluster = Fat32Table::CLUSTER_UNUSED;
 }
 
 /**
@@ -81,19 +81,19 @@ u32 Fat32ClusterChain::get_size() const {
     return size;
 }
 
-u32 Fat32ClusterChain::get_position() const {
-    return current_byte;
-}
+//u32 Fat32ClusterChain::get_position() const {
+//    return current_byte;
+//}
 
-bool Fat32ClusterChain::seek(u32 new_position) {
+bool Fat32ClusterChain::seek(Fat32State& state, u32 new_position) {
     if (new_position > size)
         return false;
 
-    if (new_position == current_byte)
+    if (new_position == state.current_byte)
         return true;
 
-    current_cluster = fat_table.find_cluster_for_byte(head_cluster, new_position);
-    current_byte = new_position;
+    state.current_cluster = fat_table.find_cluster_for_byte(head_cluster, new_position);
+    state.current_byte = new_position;
 
     return true;
 }
@@ -113,7 +113,7 @@ bool Fat32ClusterChain::attach_cluster() {
     if (head_cluster == Fat32Table::CLUSTER_UNUSED) {
         head_cluster = new_cluster;
         tail_cluster = new_cluster;
-        current_cluster = new_cluster;
+//        current_cluster = new_cluster;
     } else
     // if head present, attach to tail
     {
@@ -143,8 +143,8 @@ bool Fat32ClusterChain::attach_cluster_and_zero_it() {
 bool Fat32ClusterChain::detach_cluster(u32 cluster) {
     head_cluster = fat_table.detach_cluster(head_cluster, cluster);
     tail_cluster = Fat32Table::CLUSTER_UNUSED;
-    current_cluster = Fat32Table::CLUSTER_UNUSED;
-    current_byte = 0;
+//    current_cluster = Fat32Table::CLUSTER_UNUSED;
+//    current_byte = 0;
     return true;
 }
 
@@ -154,25 +154,25 @@ bool Fat32ClusterChain::detach_cluster(u32 cluster) {
  * @param   count Number of bytes to read
  * @return  Number of bytes actually read
  */
-u32 Fat32ClusterChain::read(void* data, u32 count) {
+u32 Fat32ClusterChain::read(Fat32State& state, void* data, u32 count) {
     if (is_empty()) {
         klog.format("Fat32ClusterChain::read: empty cluster chain\n");
         return 0;
     }
 
-    if (current_byte > size) {
+    if (state.current_byte > size) {
         klog.format("Fat32ClusterChain::read: tried reading after end of cluster chain\n");
         return 0;
     }
 
     // 1. setup reading status constants and variables
-    const u32 MAX_BYTES_TO_READ = size - current_byte;
+    const u32 MAX_BYTES_TO_READ = size - state.current_byte;
     u32 total_bytes_read = 0;
     u32 remaining_bytes_to_read = min(count, MAX_BYTES_TO_READ);
 
     // 2. locate reading start point
-    u32 position_in_cluster = current_byte; // modulo CLUSTER_SIZE_IN_BYTES but this is done in fat_data.read_data_cluster anyway
-    u32 cluster = current_cluster;
+    u32 position_in_cluster = state.current_byte; // modulo CLUSTER_SIZE_IN_BYTES but this is done in fat_data.read_data_cluster anyway
+    u32 cluster = state.current_cluster;
 
     // 3. follow cluster chain and read data from sectors until requested number of bytes is read
     u8* dst = (u8*) data;
@@ -184,7 +184,7 @@ u32 Fat32ClusterChain::read(void* data, u32 count) {
         dst += count;
 
         // move on to the next cluster if needed
-        if (fat_data.is_cluster_beginning(current_byte + total_bytes_read)) {
+        if (fat_data.is_cluster_beginning(state.current_byte + total_bytes_read)) {
             position_in_cluster = 0;
             cluster = fat_table.get_next_cluster(cluster);
         }
@@ -195,8 +195,8 @@ u32 Fat32ClusterChain::read(void* data, u32 count) {
     }
 
     // 4. done; update file position
-    current_byte += total_bytes_read;
-    current_cluster = cluster;
+    state.current_byte += total_bytes_read;
+    state.current_cluster = cluster;
     return total_bytes_read;
 }
 
@@ -206,8 +206,8 @@ u32 Fat32ClusterChain::read(void* data, u32 count) {
  * @param   count Number of bytes to be written
  * @return  Number of bytes actually written
  */
-u32 Fat32ClusterChain::write(const void* data, u32 count) {
-    if ((u64)current_byte + count > 0xFFFFFFFF){
+u32 Fat32ClusterChain::write(Fat32State& state, const void* data, u32 count) {
+    if ((u64)state.current_byte + count > 0xFFFFFFFF){
         klog.format("Fat32ClusterChain::write: would exceed Fat32 4GB limit\n");
         return 0;
     }
@@ -217,8 +217,8 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
     u32 remaining_bytes_to_write = count;
 
     // 2. locate writing start point
-    u32 position_in_cluster = current_byte;
-    u32 cluster = get_cluster_for_write(current_cluster);
+    u32 position_in_cluster = state.current_byte;
+    u32 cluster = get_cluster_for_write(state.current_cluster);
 
     // 3. follow/make cluster chain and write data to sectors until requested number of bytes is written
     const u8* src = (const u8*)data;
@@ -239,11 +239,11 @@ u32 Fat32ClusterChain::write(const void* data, u32 count) {
     }
 
     // 4. done; update file position and size if needed
-    current_byte += total_bytes_written;
-    current_cluster = (fat_data.is_cluster_beginning(current_byte)) ? fat_table.get_next_cluster(cluster) : cluster;
+    state.current_byte += total_bytes_written;
+    state.current_cluster = (fat_data.is_cluster_beginning(state.current_byte)) ? fat_table.get_next_cluster(cluster) : cluster;
 
-    if (size < current_byte) {
-        size = current_byte;
+    if (size < state.current_byte) {
+        size = state.current_byte;
     }
 
     return total_bytes_written;
