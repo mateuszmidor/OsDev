@@ -9,8 +9,7 @@
 
 namespace filesystem {
 
-VfsFat32FileEntry::VfsFat32FileEntry(const Fat32Entry& e) : entry(e) {
-    state = entry.open();
+VfsFat32FileEntry::VfsFat32FileEntry(const Fat32Entry& e) : entry(e), state(entry.open()) {
 }
 
 

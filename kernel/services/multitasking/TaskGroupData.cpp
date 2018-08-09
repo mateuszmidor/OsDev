@@ -30,7 +30,7 @@ TaskGroupData::~TaskGroupData() {
 void TaskGroupData::close_files() {
     for (auto& f : files)
         if (f)
-            f->close();
+            f->close(nullptr); // TODO: replace with open file state
 }
 
 /**

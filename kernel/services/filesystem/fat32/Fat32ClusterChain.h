@@ -8,6 +8,7 @@
 #ifndef SRC_FILESYSTEM_FAT32_FAT32CLUSTERCHAIN_H_
 #define SRC_FILESYSTEM_FAT32_FAT32CLUSTERCHAIN_H_
 
+#include "EntryState.h"
 #include "Fat32Data.h"
 #include "Fat32Table.h"
 #include "KernelLog.h"
@@ -19,7 +20,8 @@ namespace filesystem {
  *          This way one Fat32Entry can be used to handle many simultaneously open and read/written instances of a single file
  *          and every instance knows about changes done by the other instances in real time without reloading from the disk
  */
-struct Fat32State {
+struct Fat32State : public EntryState {
+    Fat32State(u32 cluster, u32 byte) : current_cluster(cluster), current_byte(byte) {}
     u32                 current_cluster;   // current read/write pos in file
     u32                 current_byte;      // current read/write pos in file
 };

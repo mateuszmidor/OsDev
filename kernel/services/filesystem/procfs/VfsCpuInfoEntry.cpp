@@ -16,15 +16,15 @@ using namespace cstd;
 namespace filesystem {
 
 
-utils::SyscallResult<void> VfsCpuInfoEntry::open() {
+utils::SyscallResult<EntryState*> VfsCpuInfoEntry::open() {
     if (is_open)
         return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return {middlespace::ErrorCode::EC_OK};
+    return {nullptr};   // no state required
 }
 
-utils::SyscallResult<void> VfsCpuInfoEntry::close() {
+utils::SyscallResult<void> VfsCpuInfoEntry::close(EntryState*) {
     is_open = false;
     return {middlespace::ErrorCode::EC_OK};
 }
@@ -55,7 +55,7 @@ utils::SyscallResult<u64> VfsCpuInfoEntry::read(void* data, u32 count) {
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
-    close();
+    close(nullptr);
     return {num_bytes_to_read};
 }
 

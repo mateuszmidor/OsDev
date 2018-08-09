@@ -10,6 +10,7 @@
 
 #include "types.h"
 #include "UnixPath.h"
+#include "EntryState.h"
 #include "SyscallResult.h"
 #include <memory>     // shared_ptr
 #include <functional> // function
@@ -49,8 +50,8 @@ public:
     virtual utils::SyscallResult<void> set_name(const cstd::string& name)                                   { return {INVALID_OP};  }
     virtual VfsEntryType get_type() const = 0;
     virtual bool is_mountpoint() const                                                                      { return false;         }
-    virtual utils::SyscallResult<void> open()                                                               { return {SUCCESS_OP};  }
-    virtual utils::SyscallResult<void> close()                                                              { return {SUCCESS_OP};  }
+    virtual utils::SyscallResult<EntryState*> open()                                                        { return {SUCCESS_OP};  }
+    virtual utils::SyscallResult<void> close(EntryState*)                                                   { return {SUCCESS_OP};  }
 
     // [file interface]
     virtual utils::SyscallResult<u64> get_size() const                                                      { return {INVALID_OP};  }

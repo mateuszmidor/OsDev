@@ -32,8 +32,8 @@ public:
     utils::SyscallResult<void> set_name(const cstd::string& name) override                  { return e->set_name(name);     }
     VfsEntryType get_type() const override                                                  { return e->get_type();         }
     bool is_mountpoint() const override                                                     { return e->is_mountpoint();    }
-    utils::SyscallResult<void> open()  override                                             { return e->open();             }
-    utils::SyscallResult<void> close()  override                                            { return e->close();            }
+    utils::SyscallResult<EntryState*> open()  override                                      { return e->open();             }
+    utils::SyscallResult<void> close(EntryState* state)  override                           { return e->close(state);       }
 
     // [file interface]
     utils::SyscallResult<u64> get_size() const  override                                    { return e->get_size();         }

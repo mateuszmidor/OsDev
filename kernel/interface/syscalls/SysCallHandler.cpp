@@ -82,7 +82,7 @@ s32 SysCallHandler::sys_close(u32 fd) {
     if (!files[fd])
         return -EBADF;
 
-    files[fd]->close();
+    files[fd]->close(nullptr); // TODO: replace with open file state
     files[fd].reset();
     return 0;
 }

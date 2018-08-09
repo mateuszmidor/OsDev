@@ -17,15 +17,15 @@ using namespace filesystem;
 
 namespace filesystem {
 
-utils::SyscallResult<void> VfsMountInfoEntry::open() {
+utils::SyscallResult<EntryState*> VfsMountInfoEntry::open() {
     if (is_open)
         return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return {middlespace::ErrorCode::EC_OK};
+    return {nullptr};
 }
 
-utils::SyscallResult<void> VfsMountInfoEntry::close() {
+utils::SyscallResult<void> VfsMountInfoEntry::close(EntryState*) {
     is_open = false;
     return {middlespace::ErrorCode::EC_OK};
 }
@@ -52,7 +52,7 @@ utils::SyscallResult<u64> VfsMountInfoEntry::read(void* data, u32 count) {
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
-    close();
+    close(nullptr);
     return {num_bytes_to_read};
 }
 

@@ -15,15 +15,15 @@ using namespace cstd;
 namespace filesystem {
 
 
-utils::SyscallResult<void> VfsDateEntry::open() {
+utils::SyscallResult<EntryState*> VfsDateEntry::open() {
     if (is_open)
         return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return {middlespace::ErrorCode::EC_OK};
+    return {nullptr};
 }
 
-utils::SyscallResult<void> VfsDateEntry::close() {
+utils::SyscallResult<void> VfsDateEntry::close(EntryState*) {
     is_open = false;
     return {middlespace::ErrorCode::EC_OK};
 }
@@ -49,7 +49,7 @@ utils::SyscallResult<u64> VfsDateEntry::read(void* data, u32 count) {
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
-    close();
+    close(nullptr);
     return {num_bytes_to_read};
 }
 

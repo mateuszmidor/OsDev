@@ -24,6 +24,7 @@ set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/services/cpuexceptions"
     "${PROJECT_SOURCE_DIR}/services/drivers"
     "${PROJECT_SOURCE_DIR}/services/filesystem"
+    "${PROJECT_SOURCE_DIR}/services/filesystem/base"
     "${PROJECT_SOURCE_DIR}/services/filesystem/adapters"
     "${PROJECT_SOURCE_DIR}/services/filesystem/fat32"
     "${PROJECT_SOURCE_DIR}/services/filesystem/procfs"

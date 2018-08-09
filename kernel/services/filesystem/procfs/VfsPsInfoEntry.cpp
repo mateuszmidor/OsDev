@@ -16,15 +16,15 @@ using namespace multitasking;
 
 namespace filesystem {
 
-utils::SyscallResult<void> VfsPsInfoEntry::open() {
+utils::SyscallResult<EntryState*> VfsPsInfoEntry::open() {
     if (is_open)
         return {middlespace::ErrorCode::EC_AGAIN};
 
     is_open = true;
-    return {middlespace::ErrorCode::EC_OK};
+    return {nullptr};
 }
 
-utils::SyscallResult<void> VfsPsInfoEntry::close() {
+utils::SyscallResult<void> VfsPsInfoEntry::close(EntryState*) {
     is_open = false;
     return {middlespace::ErrorCode::EC_OK};
 }
@@ -63,7 +63,7 @@ utils::SyscallResult<u64> VfsPsInfoEntry::read(void* data, u32 count) {
 
     memcpy(data, info.c_str() + read_start, num_bytes_to_read);
 
-    close();
+    close(nullptr);
     return num_bytes_to_read;
 }
 

@@ -20,8 +20,8 @@ public:
     // [common interface]
     const cstd::string& get_name() const override                           { return name; }
     VfsEntryType get_type() const override                                  { return VfsEntryType::FILE; }
-    utils::SyscallResult<void> open() override;
-    utils::SyscallResult<void> close() override;
+    utils::SyscallResult<EntryState*> open() override;
+    utils::SyscallResult<void> close(EntryState* state) override;
 
     // [file interface]
     utils::SyscallResult<u64> get_size() const override                     { return {0}; }
