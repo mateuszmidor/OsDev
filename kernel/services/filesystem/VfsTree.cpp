@@ -106,8 +106,8 @@ static string snap_path_tail(string& path) {
  */
 void VfsTree::install() {
     auto root_dir = std::make_shared<VfsRamDirectoryEntry>("/"); // empty root dir
-    entry_cache.install();
     entry_cache.allocate(root_dir, "/");
+    open_entry_table.install();
 }
 
 /**
@@ -122,21 +122,21 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
     }
 
     // get the parent from depths of virtual file system and cache it so we can attach to it
-    auto parent_fd = get_or_bring_entry_to_cache(parent_path);
-    if (!parent_fd) {
+    auto parent = get_or_bring_entry_to_cache(parent_path);
+    if (!parent) {
         klog.format("VfsTree::attach: can't attach to: %\n", parent_path);
-        return {parent_fd.ec};
+        return {ErrorCode::EC_NOENT};
     }
 
     // check if parent is a directory
-    if (entry_cache[parent_fd.value]->get_type() != VfsEntryType::DIRECTORY) {
+    if (parent->get_type() != VfsEntryType::DIRECTORY) {
         klog.format("VfsTree::attach: parent_path points to a non-directory: %\n", parent_path);
-        uncache_if_unused(parent_fd.value);
+        uncache_if_unused(parent);
         return {ErrorCode::EC_NOTDIR};
     }
 
     // attach entry to parent
-    if (!entry_cache[parent_fd.value]->attach_entry(entry)) {
+    if (!parent->attach_entry(entry)) {
         klog.format("VfsTree::attach: entry '%' already exists at '%'\n", entry->get_name(), parent_path);
         return {ErrorCode::EC_EXIST};
     }
@@ -148,6 +148,7 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
  * @brief   Create file/directory pointed by "path" and return its file descriptor on success, or error code on error
  * @param   path    Absolute path to the entry that is to be created
  * @note    The actual entry creation is delegated to a mountpoint installed on the "path" thus mountpoint is a must
+ *          Creation also opens, thus the returned file descriptor
  */
 utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path, bool is_directory) {
     if (!path.is_valid_absolute_path()) {
@@ -169,16 +170,11 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path,
         return {create_result.ec};
     }
 
-    // cache the created entry so it can be accessed with filedescriptor
-    auto fd = entry_cache.allocate(create_result.value, path);
-    if (!fd) {
-        klog.format("VfsTree::create: open file limit reached\n");
-        return {ErrorCode::EC_MFILE};
-    }
+    // cache the entry
+    auto cached_entry = entry_cache.allocate(create_result.value, path);
 
-    // create also opens, and open increases refcount
-    entry_cache[fd.value]->open_count++;
-    return {fd.value};
+    // open the entry
+    return open_entry_table.open(cached_entry);
 }
 
 /**
@@ -401,29 +397,29 @@ utils::SyscallResult<void> VfsTree::move_persistent_entry(const UnixPath& path_f
  * @brief   Open a file pointed by "path" and return its file descriptor on success, or error code otherwise
  */
 utils::SyscallResult<GlobalFileDescriptor> VfsTree::open(const UnixPath& path) {
-    auto fd = get_or_bring_entry_to_cache(path);
+    // cache the entry
+    auto cached_entry = get_or_bring_entry_to_cache(path);
 
-    if (!fd) {
-        klog.format("VfsTree::open: can't open '%s'", path);
-        return {fd.ec}; // propagate error code
+    if (!cached_entry) {
+        klog.format("VfsTree::open: no such entry '%s'", path);
+        return {ErrorCode::EC_NOENT};
     }
 
-    // open increases refcount
-    entry_cache[fd.value]->open_count++;
-    return fd;
+    // open the entry
+    return open_entry_table.open(cached_entry);
 }
 
 /**
  * @brief   Close the file and remove it from cache if no longer needed
  */
 utils::SyscallResult<void> VfsTree::close(GlobalFileDescriptor fd) {
-    if (!entry_cache.is_in_cache(fd))
-        return {ErrorCode::EC_BADF};
+    // close the entry
+    auto close_result = open_entry_table.close(fd);
+    if (!close_result)
+        return {close_result.ec};
 
-    entry_cache[fd]->open_count--;
-
-    // remove from cache if no longer needed. This needs testing
-    uncache_if_unused(fd);
+    // remove the entry from cache if no longer needed
+    uncache_if_unused(close_result.value);
 
     return {ErrorCode::EC_OK};
 }
@@ -437,26 +433,26 @@ utils::SyscallResult<void> VfsTree::close(GlobalFileDescriptor fd) {
  */
 utils::SyscallResult<void> VfsTree::try_unattach(const UnixPath& path) {
     // find parent
-    auto parent_fd = entry_cache.find(path.extract_directory());
-    if (!parent_fd)
+    auto cached_parent = entry_cache.find(path.extract_directory());
+    if (!cached_parent)
         return {ErrorCode::EC_NOENT};
 
     // find attachment
-    auto entry = entry_cache[parent_fd.value]->get_attached_entry(path.extract_file_name());
-    if (!entry)
+    auto attached_entry = cached_parent->get_attached_entry(path.extract_file_name());
+    if (!attached_entry)
         return {ErrorCode::EC_NOENT};
 
     // check if entry should be detached
-    auto unused = check_cached_entry_unused(entry);
+    auto unused = check_cached_entry_unused(attached_entry);
     if (!unused)
         return {unused.ec};
 
     // detach the entry
-    entry_cache[parent_fd.value]->detach_entry(path.extract_file_name());
+    cached_parent->detach_entry(path.extract_file_name());
 
     // try uncache the entry so it doesnt linger in cache while it should already be gone
-    if (auto fd = entry_cache.find(path))
-        uncache_if_unused(fd.value);
+    if (auto cached_entry = entry_cache.find(path))
+        uncache_if_unused(cached_entry);
 
     return {ErrorCode::EC_OK};
 }
@@ -479,36 +475,29 @@ utils::SyscallResult<void> VfsTree::try_uncreate(const UnixPath& path) {
 }
 
 /**
- * @brief   Get the entry pointed by "path" from cache or bring it from virtual file system to cache
- *          and return its file descriptor or error code on error
+ * @brief   Get and return the entry pointed by "path" from cache or bring it from virtual file system to cache
  */
-utils::SyscallResult<GlobalFileDescriptor> VfsTree::get_or_bring_entry_to_cache(const UnixPath& path) {
-    // if file already in cache, just return the file descriptor
-    if (auto fd = entry_cache.find(path))
-        return {fd.value};
+VfsCachedEntryPtr VfsTree::get_or_bring_entry_to_cache(const UnixPath& path) {
+    // if entry already in cache, just return it
+    if (auto e = entry_cache.find(path))
+        return e;
 
-    // otherwise lookup the file, allocate it in cache and return the file descriptor
-    VfsEntryPtr e = lookup_entry(path);
-    if (!e) {
+    // otherwise lookup the file, allocate it in cache and return the cached version
+    VfsEntryPtr entry = lookup_entry(path);
+    if (!entry) {
         klog.format("VfsTree::get_or_bring_entry_to_cache: entry doesn't exists: %", path);
-        return {ErrorCode::EC_NOENT};
+        return {};
     }
 
-    auto fd = entry_cache.allocate(e, path);
-    if (!fd) {
-        klog.format("VfsTree::get_or_bring_entry_to_cache: open file limit reached");
-        return {ErrorCode::EC_MFILE};
-    }
-
-    return {fd.value};
+    return entry_cache.allocate(entry, path);
 }
 
 /**
  * @brief   Remove given entry from cache if noone uses it
  */
-void VfsTree::uncache_if_unused(GlobalFileDescriptor fd) {
-    if (check_cached_entry_unused(entry_cache[fd]))
-        entry_cache.deallocate(fd);
+void VfsTree::uncache_if_unused(const VfsCachedEntryPtr& e) {
+    if (check_cached_entry_unused(e))
+        entry_cache.deallocate(e);
 }
 
 /**
@@ -522,14 +511,14 @@ bool VfsTree::exists(const UnixPath& path) const {
 }
 
 /**
- * @brief   Lookup entry that is either root "/" or one of it's attachments (any deep)
+ * @brief   Lookup entry that is either root "/" or one of it's attachments
  */
 VfsCachedEntryPtr VfsTree::lookup_attached_entry(const UnixPath& path) const {
-    if (auto fd = entry_cache.find(path))
-        return entry_cache[fd.value];
+    if (auto e = entry_cache.find(path))
+        return e;
 
-    if (auto fd = entry_cache.find(path.extract_directory()))
-        return entry_cache[fd.value]->get_attached_entry(path.extract_file_name());
+    if (auto parent = entry_cache.find(path.extract_directory()))
+        return parent->get_attached_entry(path.extract_file_name());
 
     return {};
 }

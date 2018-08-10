@@ -9,6 +9,7 @@
 #define KERNEL_SERVICES_FILESYSTEM_VFSTREE_H_
 
 
+#include "OpenEntryTable.h"
 #include "KernelLog.h"
 #include "SyscallResult.h"
 #include "EntryCache.h"
@@ -43,8 +44,8 @@ public:
 private:
     utils::SyscallResult<void> try_unattach(const UnixPath& path);
     utils::SyscallResult<void> try_uncreate(const UnixPath& path);
-    utils::SyscallResult<GlobalFileDescriptor> get_or_bring_entry_to_cache(const UnixPath& path);
-    void uncache_if_unused(GlobalFileDescriptor fd);
+    VfsCachedEntryPtr get_or_bring_entry_to_cache(const UnixPath& path);
+    void uncache_if_unused(const VfsCachedEntryPtr& e);
     VfsCachedEntryPtr lookup_attached_entry(const UnixPath& path) const;
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
     MountpointPath get_mountpoint_path(const cstd::string& path);
@@ -53,6 +54,7 @@ private:
     utils::SyscallResult<void> move_persistent_entry(const UnixPath& path_from, const UnixPath& path_to);
 
     EntryCache          entry_cache;
+    OpenEntryTable      open_entry_table;
     logging::KernelLog& klog;
 };
 

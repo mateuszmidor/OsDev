@@ -10,7 +10,9 @@
 
 #include "Vector.h"
 #include "Optional.h"
-#include "VfsEntry.h"
+#include "KernelLog.h"
+#include "SyscallResult.h"
+#include "VfsCachedEntry.h"
 
 namespace filesystem {
 
@@ -23,18 +25,23 @@ using GlobalFileDescriptor = u32;
  * @brief   This struct holds VFS Entry and it's individual open instance state
  */
 struct OpenEntry {
-    VfsEntryPtr entry   {nullptr};
-    EntryState* state   {nullptr};
+    VfsCachedEntryPtr   entry   {nullptr};
+    EntryState*         state   {nullptr};
 };
 
 class OpenEntryTable {
 public:
+    OpenEntryTable() : klog(logging::KernelLog::instance()) { }
     void install();
-    cstd::Optional<GlobalFileDescriptor> allocate(const VfsEntryPtr& e, EntryState* state);
-    void deallocate(GlobalFileDescriptor fd);
+    utils::SyscallResult<GlobalFileDescriptor> open(const VfsCachedEntryPtr& e);
+    utils::SyscallResult<VfsCachedEntryPtr> close(GlobalFileDescriptor fd);
+    bool is_open(GlobalFileDescriptor fd) const;
+    OpenEntry& operator[](GlobalFileDescriptor fd);
+    const OpenEntry& operator[](GlobalFileDescriptor fd) const;
 private:
     cstd::Optional<GlobalFileDescriptor> find_free_fd() const;
     cstd::vector<OpenEntry> open_entries;
+    logging::KernelLog& klog;
 };
 
 } /* namespace filesystem */
