@@ -40,24 +40,21 @@ void stop_loading_animation(u64 timer_id) {
     phobos::time_manager.cancel(timer_id);
 }
 
-VfsEntryPtr try_open_terminal_elf_file() {
-    VfsEntryPtr e = phobos::vfs_manager.get_entry("/BIN/TERMINAL").value;
-    if (!e) {
+GlobalFileDescriptor try_open_terminal_elf_file() {
+    auto open_result = phobos::vfs_manager.open("/BIN/TERMINAL");
+    if (!open_result) {
         phobos::printer.println(" /BIN/TERMINAL doesnt exist. System Halt", EgaColor::Red);
         phobos::halt();
     }
-    if (e->get_type() != VfsEntryType::FILE) {
-        phobos::printer.println(" /BIN/TERMINAL is not a file? System Halt", EgaColor::Red);
-        phobos::halt();
-    }
-    return e;
+
+    return open_result.value;
 }
 
-s32 try_load_and_run_terminal(VfsEntryPtr elf_file) {
+s32 try_load_and_run_terminal(GlobalFileDescriptor elf_fd) {
     // read elf file data
-    u32 size = elf_file->get_size().value;
+    u64 size = phobos::vfs_manager.get_size(elf_fd).value;
     u8* elf_data = new u8[size];
-    elf_file->read(elf_data, size);
+    phobos::vfs_manager.read(elf_fd, elf_data, size);
 
     // run the elf
     utils::ElfRunner runner;
@@ -107,8 +104,9 @@ void run_userspace_terminal() {
     // run in a loop so terminal restarts in case of a crash and kernel log can be read
     while (true) {
         auto timer_id = start_loading_animation();
-        auto terminal_elf_file = try_open_terminal_elf_file();
-        auto terminal_task_id = try_load_and_run_terminal(terminal_elf_file);
+        auto terminal_elf_fd = try_open_terminal_elf_file();
+        auto terminal_task_id = try_load_and_run_terminal(terminal_elf_fd);
+        phobos::vfs_manager.close(terminal_elf_fd);
         stop_loading_animation(timer_id);
 
         wait_terminal_crash(terminal_task_id);

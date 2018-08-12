@@ -40,7 +40,8 @@ public:
     utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
     utils::SyscallResult<void> close(GlobalFileDescriptor fd);
     bool exists(const UnixPath& path) const;
-
+    OpenEntry& get_entry(GlobalFileDescriptor fd) { return open_entry_table[fd]; }
+    const OpenEntry& get_entry(GlobalFileDescriptor fd) const { return open_entry_table[fd]; }
 private:
     utils::SyscallResult<void> try_unattach(const UnixPath& path);
     utils::SyscallResult<void> try_uncreate(const UnixPath& path);

@@ -24,6 +24,7 @@ VfsManager& VfsManager::instance() {
  */
 void VfsManager::install_root() {
     storage.install();
+    tree.install();
 }
 
 /**
@@ -35,12 +36,18 @@ utils::SyscallResult<void> VfsManager::mount(const VfsEntryPtr& mount_point) {
         return {ErrorCode::EC_INVAL};
     }
 
+    tree.attach(mount_point, "/");
+
     auto root_dir = storage.get_root();
     if (!root_dir)
         return {ErrorCode::EC_NOENT};   // root doesn't exist
 
     if (root_dir->attach_entry(mount_point))
         return {ErrorCode::EC_OK};
+
+    auto attach_result = tree.attach(mount_point, "/");
+    if (!attach_result)
+        return attach_result.ec;
 
     klog.format("VfsManager::mount: path '/%' already exists\n", mount_point->get_name());
     return {ErrorCode::EC_EXIST};   // entry already exists under the root
@@ -212,4 +219,45 @@ utils::SyscallResult<void> VfsManager::attach_special(const UnixPath& path, cons
     return (parent->attach_entry(entry)) ? ErrorCode::EC_OK : ErrorCode::EC_EXIST;
 }
 
+utils::SyscallResult<void> VfsManager::attach(const VfsEntryPtr& entry, const UnixPath& path) {
+    return tree.attach(entry, path);
+}
+
+utils::SyscallResult<GlobalFileDescriptor> VfsManager::create(const UnixPath& path, bool is_directory) {
+    return tree.create(path, is_directory);
+}
+
+utils::SyscallResult<void> VfsManager::remove(const UnixPath& path) {
+    return tree.remove(path);
+}
+
+utils::SyscallResult<void> VfsManager::copy(const UnixPath& path_from, const UnixPath& path_to) {
+    return tree.copy(path_from, path_to);
+}
+
+utils::SyscallResult<void> VfsManager::move(const UnixPath& path_from, const UnixPath& path_to) {
+    return tree.move(path_from, path_to);
+}
+
+utils::SyscallResult<GlobalFileDescriptor> VfsManager::open(const UnixPath& path) {
+    return tree.open(path);
+}
+
+utils::SyscallResult<void> VfsManager::close(GlobalFileDescriptor fd) {
+    return tree.close(fd);
+}
+
+bool VfsManager::exists(const UnixPath& path) const {
+    return tree.exists(path);
+}
+
+utils::SyscallResult<u64> VfsManager::get_size(GlobalFileDescriptor fd) const {
+    auto e = tree.get_entry(fd);
+    return e.entry->get_size();
+}
+
+utils::SyscallResult<u64> VfsManager::read(GlobalFileDescriptor fd, void* data, u32 count) {
+    auto e = tree.get_entry(fd);
+    return e.entry->read(data, count);
+}
 } /* namespace filesystem */

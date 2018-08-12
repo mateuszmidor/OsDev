@@ -13,6 +13,7 @@
 #include "VfsCache.h"
 #include "VfsCachedEntry.h"
 #include "VfsStorage.h"
+#include "VfsTree.h"
 
 namespace filesystem {
 
@@ -37,6 +38,19 @@ public:
     utils::SyscallResult<void> move_entry(const UnixPath& path_from, const UnixPath& path_to);
 //    bool copy_entry(const UnixPath& path_from, const UnixPath& path_to);
 
+// NEW INTERFACE
+public:
+    utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
+    utils::SyscallResult<GlobalFileDescriptor> create(const UnixPath& path, bool is_directory);
+    utils::SyscallResult<void> remove(const UnixPath& path);
+    utils::SyscallResult<void> copy(const UnixPath& path_from, const UnixPath& path_to);
+    utils::SyscallResult<void> move(const UnixPath& path_from, const UnixPath& path_to);
+    utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
+    utils::SyscallResult<void> close(GlobalFileDescriptor fd);
+    bool exists(const UnixPath& path) const;
+
+    utils::SyscallResult<u64> get_size(GlobalFileDescriptor fd) const;
+    utils::SyscallResult<u64> read(GlobalFileDescriptor fd, void* data, u32 count);
 private:
     VfsManager() : klog(logging::KernelLog::instance()) {}
     utils::SyscallResult<VfsCachedEntryPtr> get_or_cache_directory(const UnixPath& path);
@@ -45,6 +59,7 @@ private:
     logging::KernelLog& klog;
     VfsStorage          storage;
     VfsCache            directory_cache;
+    VfsTree             tree;
 };
 
 } /* namespace filesystem */

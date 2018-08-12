@@ -11,6 +11,7 @@
 #include "Vector.h"
 #include "Optional.h"
 #include "KernelLog.h"
+#include "EntryState.h"
 #include "SyscallResult.h"
 #include "VfsCachedEntry.h"
 
