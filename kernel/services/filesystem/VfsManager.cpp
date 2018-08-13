@@ -7,6 +7,7 @@
 
 #include "StringUtils.h"
 #include "VfsManager.h"
+#include "run_this_guy.h"
 
 using namespace utils;
 using namespace middlespace;
@@ -219,11 +220,26 @@ utils::SyscallResult<void> VfsManager::attach_special(const UnixPath& path, cons
     return (parent->attach_entry(entry)) ? ErrorCode::EC_OK : ErrorCode::EC_EXIST;
 }
 
+utils::SyscallResult<OpenEntry> VfsManager::open(const UnixPath& path) {
+    auto entry = tree.get_cached(path);
+    if (!entry)
+        return {ErrorCode::EC_NOENT};
+
+    auto open_result = entry->open();
+    if (!open_result)
+        return {open_result.ec};
+
+    auto state = open_result.value;
+
+    const auto on_destroy = rtg::run_this_guy(&VfsTree::release_cached, tree);
+    return { {on_destroy, entry, state} };
+}
+
 utils::SyscallResult<void> VfsManager::attach(const VfsEntryPtr& entry, const UnixPath& path) {
     return tree.attach(entry, path);
 }
 
-utils::SyscallResult<GlobalFileDescriptor> VfsManager::create(const UnixPath& path, bool is_directory) {
+utils::SyscallResult<void> VfsManager::create(const UnixPath& path, bool is_directory) {
     return tree.create(path, is_directory);
 }
 
@@ -239,25 +255,8 @@ utils::SyscallResult<void> VfsManager::move(const UnixPath& path_from, const Uni
     return tree.move(path_from, path_to);
 }
 
-utils::SyscallResult<GlobalFileDescriptor> VfsManager::open(const UnixPath& path) {
-    return tree.open(path);
-}
-
-utils::SyscallResult<void> VfsManager::close(GlobalFileDescriptor fd) {
-    return tree.close(fd);
-}
-
 bool VfsManager::exists(const UnixPath& path) const {
     return tree.exists(path);
 }
 
-utils::SyscallResult<u64> VfsManager::get_size(GlobalFileDescriptor fd) const {
-    auto e = tree.get_entry(fd);
-    return e.entry->get_size();
-}
-
-utils::SyscallResult<u64> VfsManager::read(GlobalFileDescriptor fd, void* data, u32 count) {
-    auto e = tree.get_entry(fd);
-    return e.entry->read(data, count);
-}
 } /* namespace filesystem */

@@ -9,7 +9,6 @@
 #define KERNEL_SERVICES_FILESYSTEM_VFSTREE_H_
 
 
-#include "OpenEntryTable.h"
 #include "KernelLog.h"
 #include "SyscallResult.h"
 #include "EntryCache.h"
@@ -33,15 +32,11 @@ public:
     void install();
 
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
-    utils::SyscallResult<GlobalFileDescriptor> create(const UnixPath& path, bool is_directory);
+    utils::SyscallResult<void> create(const UnixPath& path, bool is_directory);
     utils::SyscallResult<void> remove(const UnixPath& path);
     utils::SyscallResult<void> copy(const UnixPath& path_from, const UnixPath& path_to);
     utils::SyscallResult<void> move(const UnixPath& path_from, const UnixPath& path_to);
-    utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
-    utils::SyscallResult<void> close(GlobalFileDescriptor fd);
     bool exists(const UnixPath& path) const;
-    OpenEntry& get_entry(GlobalFileDescriptor fd) { return open_entry_table[fd]; }
-    const OpenEntry& get_entry(GlobalFileDescriptor fd) const { return open_entry_table[fd]; }
     VfsCachedEntryPtr get_cached(const UnixPath& path) { return get_or_bring_entry_to_cache(path); }
     void release_cached(const VfsCachedEntryPtr& e) { uncache_if_unused(e); }
 
@@ -58,7 +53,6 @@ private:
     utils::SyscallResult<void> move_persistent_entry(const UnixPath& path_from, const UnixPath& path_to);
 
     EntryCache          entry_cache;
-    OpenEntryTable      open_entry_table;
     logging::KernelLog& klog;
 };
 

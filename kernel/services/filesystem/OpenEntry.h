@@ -11,31 +11,40 @@
 #include "VfsCachedEntry.h"
 #include "EntryState.h"
 
+
 namespace filesystem {
 
 /**
- * @brief   This struct holds VFS Entry and it's individual open instance state
+ * @brief   This struct holds VFS Entry and it's individual open instance state and uses RAII to close when the time comes
  */
 
-class OpenEntry;
-using OpenEntryPtr = std::unique_ptr<OpenEntry>;
-
 class OpenEntry {
+    using OnDestroy = std::function<void(const VfsCachedEntryPtr&)>;
+
 public:
-    OpenEntry(VfsCachedEntryPtr e = {}, EntryState* s = {}) : entry(e), state(s) {}
+    OpenEntry(const OnDestroy& on_destroy = {}, VfsCachedEntryPtr e = {}, EntryState* s = {});
     ~OpenEntry();
     OpenEntry operator=(const OpenEntry&) = delete;
-//    OpenEntry(const OpenEntry&) = delete;
+    OpenEntry(const OpenEntry&) = delete;
+    OpenEntry(OpenEntry&& e) = default;
 
-    static utils::SyscallResult<OpenEntryPtr> open(const UnixPath& path);
+    // [file interface]
     utils::SyscallResult<u64> get_size() const                                      { return entry->get_size();         }
     utils::SyscallResult<u64> read(void* data, u32 count)                           { return entry->read(data, count);  }
+    utils::SyscallResult<u64> write(const void* data, u32 count)                    { return entry->write(data, count); }
+    utils::SyscallResult<void> seek(u32 new_position)                               { return entry->seek(new_position); }
+    utils::SyscallResult<void> truncate(u32 new_size)                               { return entry->truncate(new_size); }
+    utils::SyscallResult<u64> get_position() const                                  { return entry->get_position();     }
+
+    // [directory interface]
+    utils::SyscallResult<void> enumerate_entries(const OnVfsEntryFound& on_entry)   { return entry->enumerate_entries(on_entry);    }
+
 public:
     VfsCachedEntryPtr   entry   {nullptr};
     EntryState*         state   {nullptr};
 
 private:
-
+    OnDestroy  on_destroy;
 };
 
 

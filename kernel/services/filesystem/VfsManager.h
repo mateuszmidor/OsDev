@@ -11,6 +11,7 @@
 #include "KernelLog.h"
 #include "SyscallResult.h"
 #include "VfsCache.h"
+#include "OpenEntry.h"
 #include "VfsCachedEntry.h"
 #include "VfsStorage.h"
 #include "VfsTree.h"
@@ -40,19 +41,14 @@ public:
 
 // NEW INTERFACE
 public:
-    VfsCachedEntryPtr get(const UnixPath& path) { return tree.get_cached(path); }
-    void release(const VfsCachedEntryPtr& e) { tree.release_cached(e); }
+    utils::SyscallResult<OpenEntry> open(const UnixPath& path);
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
-    utils::SyscallResult<GlobalFileDescriptor> create(const UnixPath& path, bool is_directory);
+    utils::SyscallResult<void> create(const UnixPath& path, bool is_directory);
     utils::SyscallResult<void> remove(const UnixPath& path);
     utils::SyscallResult<void> copy(const UnixPath& path_from, const UnixPath& path_to);
     utils::SyscallResult<void> move(const UnixPath& path_from, const UnixPath& path_to);
-    utils::SyscallResult<GlobalFileDescriptor> open(const UnixPath& path);
-    utils::SyscallResult<void> close(GlobalFileDescriptor fd);
     bool exists(const UnixPath& path) const;
 
-    utils::SyscallResult<u64> get_size(GlobalFileDescriptor fd) const;
-    utils::SyscallResult<u64> read(GlobalFileDescriptor fd, void* data, u32 count);
 private:
     VfsManager() : klog(logging::KernelLog::instance()) {}
     utils::SyscallResult<VfsCachedEntryPtr> get_or_cache_directory(const UnixPath& path);

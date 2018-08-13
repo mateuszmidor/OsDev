@@ -107,7 +107,7 @@ static string snap_path_tail(string& path) {
 void VfsTree::install() {
     auto root_dir = std::make_shared<VfsRamDirectoryEntry>("/"); // empty root dir
     entry_cache.allocate(root_dir, "/");
-    open_entry_table.install();
+//    open_entry_table.install();
 }
 
 /**
@@ -150,7 +150,7 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
  * @note    The actual entry creation is delegated to a mountpoint installed on the "path" thus mountpoint is a must
  *          Creation also opens, thus the returned file descriptor
  */
-utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path, bool is_directory) {
+utils::SyscallResult<void> VfsTree::create(const UnixPath& path, bool is_directory) {
     if (!path.is_valid_absolute_path()) {
         klog.format("VfsTree::create: path is empty or it is not an absolute path: %\n", path);
         return {ErrorCode::EC_INVAL};
@@ -173,8 +173,7 @@ utils::SyscallResult<GlobalFileDescriptor> VfsTree::create(const UnixPath& path,
     // cache the entry
     auto cached_entry = entry_cache.allocate(create_result.value, path);
 
-    // open the entry
-    return open_entry_table.open(cached_entry);
+    return {ErrorCode::EC_OK};
 }
 
 /**
@@ -389,37 +388,6 @@ utils::SyscallResult<void> VfsTree::move_persistent_entry(const UnixPath& path_f
     auto delete_result = mp_from.mountpoint->delete_entry(mp_from.path);
     if (!delete_result)
         return delete_result;
-
-    return {ErrorCode::EC_OK};
-}
-
-/**
- * @brief   Open a file pointed by "path" and return its file descriptor on success, or error code otherwise
- */
-utils::SyscallResult<GlobalFileDescriptor> VfsTree::open(const UnixPath& path) {
-    // cache the entry
-    auto cached_entry = get_or_bring_entry_to_cache(path);
-
-    if (!cached_entry) {
-        klog.format("VfsTree::open: no such entry '%s'", path);
-        return {ErrorCode::EC_NOENT};
-    }
-
-    // open the entry
-    return open_entry_table.open(cached_entry);
-}
-
-/**
- * @brief   Close the file and remove it from cache if no longer needed
- */
-utils::SyscallResult<void> VfsTree::close(GlobalFileDescriptor fd) {
-    // close the entry
-    auto close_result = open_entry_table.close(fd);
-    if (!close_result)
-        return {close_result.ec};
-
-    // remove the entry from cache if no longer needed
-    uncache_if_unused(close_result.value);
 
     return {ErrorCode::EC_OK};
 }

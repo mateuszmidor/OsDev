@@ -43,7 +43,7 @@ void stop_loading_animation(u64 timer_id) {
 
 s32 try_load_and_run_terminal() {
     // open elf file
-    auto open_result = filesystem::OpenEntry::open("/BIN/TERMINAL");
+    auto open_result = phobos::vfs_manager.open("/BIN/TERMINAL");
     if (!open_result) {
         phobos::printer.println(" /BIN/TERMINAL can't be opened. System Halt", EgaColor::Red);
         phobos::halt();
@@ -51,9 +51,9 @@ s32 try_load_and_run_terminal() {
     auto& elf = open_result.value;
 
     // read elf file data
-    u64 size = elf->get_size().value;
+    u64 size = elf.get_size().value;
     u8* elf_data = new u8[size];
-    elf->read(elf_data, size);
+    elf.read(elf_data, size);
 
     // run the elf
     utils::ElfRunner runner;

@@ -6,28 +6,22 @@
  */
 
 #include "OpenEntry.h"
-#include "VfsManager.h"
 
 using namespace middlespace;
 
 namespace filesystem {
 
+OpenEntry::OpenEntry(const OnDestroy& on_destroy, VfsCachedEntryPtr e, EntryState* s) : entry(e), state(s), on_destroy(on_destroy) {
+    if (entry)
+        entry->open_count++;
+}
+
 OpenEntry::~OpenEntry() {
-    entry->open_count--;
-    VfsManager::instance().release(entry);
+    if (entry && on_destroy) {
+        entry->open_count--;
+        entry->close(state);
+        on_destroy(entry);
+    }
 }
 
-utils::SyscallResult<OpenEntryPtr> OpenEntry::open(const UnixPath& path) {
-    auto entry = VfsManager::instance().get(path);
-    if (!entry)
-        return {ErrorCode::EC_NOENT};
-
-    auto open_result = entry->open();
-    if (!open_result)
-        return {open_result.ec};
-
-    entry->open_count++;
-
-    return {OpenEntryPtr(new OpenEntry(entry, open_result.value))};
-}
 } /* namespace filesystem */
