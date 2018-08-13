@@ -12,6 +12,7 @@
 #include "Optional.h"
 #include "KernelLog.h"
 #include "EntryState.h"
+#include "OpenEntry.h"
 #include "SyscallResult.h"
 #include "VfsCachedEntry.h"
 
@@ -22,13 +23,6 @@ namespace filesystem {
  */
 using GlobalFileDescriptor = u32;
 
-/**
- * @brief   This struct holds VFS Entry and it's individual open instance state
- */
-struct OpenEntry {
-    VfsCachedEntryPtr   entry   {nullptr};
-    EntryState*         state   {nullptr};
-};
 
 class OpenEntryTable {
 public:

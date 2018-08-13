@@ -40,6 +40,8 @@ public:
 
 // NEW INTERFACE
 public:
+    VfsCachedEntryPtr get(const UnixPath& path) { return tree.get_cached(path); }
+    void release(const VfsCachedEntryPtr& e) { tree.release_cached(e); }
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
     utils::SyscallResult<GlobalFileDescriptor> create(const UnixPath& path, bool is_directory);
     utils::SyscallResult<void> remove(const UnixPath& path);

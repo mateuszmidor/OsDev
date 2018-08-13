@@ -42,6 +42,9 @@ public:
     bool exists(const UnixPath& path) const;
     OpenEntry& get_entry(GlobalFileDescriptor fd) { return open_entry_table[fd]; }
     const OpenEntry& get_entry(GlobalFileDescriptor fd) const { return open_entry_table[fd]; }
+    VfsCachedEntryPtr get_cached(const UnixPath& path) { return get_or_bring_entry_to_cache(path); }
+    void release_cached(const VfsCachedEntryPtr& e) { uncache_if_unused(e); }
+
 private:
     utils::SyscallResult<void> try_unattach(const UnixPath& path);
     utils::SyscallResult<void> try_uncreate(const UnixPath& path);
