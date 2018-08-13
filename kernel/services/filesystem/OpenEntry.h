@@ -27,6 +27,12 @@ public:
     OpenEntry operator=(const OpenEntry&) = delete;
     OpenEntry(const OpenEntry&) = delete;
     OpenEntry(OpenEntry&& e) = default;
+    OpenEntry& operator=(OpenEntry&&) = default;
+    operator bool() const                                                           { return (bool)entry;               }
+    bool operator!() const                                                          { return !entry;                    }
+
+    // [common interface]
+    VfsEntryType get_type() const                                                   { return entry->get_type();         }
 
     // [file interface]
     utils::SyscallResult<u64> get_size() const                                      { return entry->get_size();         }

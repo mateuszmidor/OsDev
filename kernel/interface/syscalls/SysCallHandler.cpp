@@ -52,16 +52,11 @@ s32 SysCallHandler::sys_open(const char path[], int flags, int mode) {
     for (u32 i = 0; i < files.size(); i++)
         if (!files[i]) {    // found empty file descriptor
             string absolute_path = make_absolute_path(path);
-            auto get_result = VfsManager::instance().get_entry(absolute_path);
-            if (!get_result)
-                return -(s32)get_result.ec;
-
-            auto entry = get_result.value;
-            auto open_result = entry->open();
+            auto open_result = VfsManager::instance().open(absolute_path);
             if (!open_result)
                 return -(s32)open_result.ec;
 
-            files[i] = entry;
+            std::swap(files[i], open_result.value);
             return i;
         }
     return -EMFILE; // open file limit reached
@@ -82,8 +77,7 @@ s32 SysCallHandler::sys_close(u32 fd) {
     if (!files[fd])
         return -EBADF;
 
-    files[fd]->close(nullptr); // TODO: replace with open file state
-    files[fd].reset();
+    files[fd] = {};
     return 0;
 }
 
@@ -102,7 +96,7 @@ s64 SysCallHandler::sys_read(u32 fd, void *buf, u64 count) {
     if (!files[fd])
         return -EBADF;
 
-    if (auto read_result = files[fd]->read(buf, count))
+    if (auto read_result = files[fd].read(buf, count))
         return read_result.value;
     else
         return -(s64)read_result.ec;
@@ -123,7 +117,7 @@ s64 SysCallHandler::sys_write(u32 fd, const void *buf, u64 count) {
     if (!files[fd])
         return -EBADF;
 
-    if (auto write_result = files[fd]->write(buf, count))
+    if (auto write_result = files[fd].write(buf, count))
         return write_result.value;
     else
         return -(s64)write_result.ec;
@@ -153,7 +147,7 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
     }
 
     case SEEK_CUR: {
-        if (auto result = files[fd]->get_position())
+        if (auto result = files[fd].get_position())
             new_position = result.value + offset;
         else
             return -(off_t)result.ec;
@@ -161,7 +155,7 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
     }
 
     case SEEK_END: {
-        if (auto result = files[fd]->get_size())
+        if (auto result = files[fd].get_size())
             new_position = result.value + offset;
         else
             return -(off_t)result.ec;
@@ -172,7 +166,7 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
         return -EINVAL;
     }
 
-    if (auto seek_result = files[fd]->seek(new_position))
+    if (auto seek_result = files[fd].seek(new_position))
         return new_position;
     else
         return -(off_t)seek_result.ec;
@@ -189,19 +183,19 @@ s32 SysCallHandler::sys_stat(const char path[], struct stat* buff) {
     string absolute_path = make_absolute_path(path);
 
     // first use entry_exists to prevent logging "no such entry exists" from get_entry
-    auto exists_result = VfsManager::instance().entry_exists(absolute_path);
+    auto exists_result = VfsManager::instance().exists(absolute_path);
     if (!exists_result)
-        return -(s32)exists_result.ec;
+        return -ENOENT;
 
-    auto get_result = VfsManager::instance().get_entry(absolute_path);
-    if (!get_result)
-        return -(s32)get_result.ec;
+    auto open_result = VfsManager::instance().open(absolute_path);
+    if (!open_result)
+        return -(s32)open_result.ec;
 
     memset(buff, 0, sizeof(struct stat));
-    auto entry = get_result.value;
-    buff->st_size = entry->get_size().value;
+    auto& entry = open_result.value;
+    buff->st_size = entry.get_size().value;
 
-    switch (entry->get_type()) {
+    switch (entry.get_type()) {
     case VfsEntryType::DIRECTORY:
         buff->st_mode = S_IFDIR;
         break;
@@ -231,18 +225,18 @@ s32 SysCallHandler::sys_truncate(const char path[], off_t length) {
         return -EINVAL;
 
     string absolute_path = make_absolute_path(path);
-    auto get_result = VfsManager::instance().get_entry(absolute_path);
-    if (!get_result)
-        return -(s32)get_result.ec;
+    auto open_result = VfsManager::instance().open(absolute_path);
+    if (!open_result)
+        return -(s32)open_result.ec;
 
-    auto entry = get_result.value;
-    if (entry->get_type() == VfsEntryType::DIRECTORY)
+    auto& entry = open_result.value;
+    if (entry.get_type() == VfsEntryType::DIRECTORY)
         return -EISDIR;
 
-    if (auto result = entry->truncate(length))
+    if (auto trunc_result = entry.truncate(length))
         return 0;
     else
-        return -(s32)result.ec;
+        return -(s32)trunc_result.ec;
 }
 
 /**
@@ -255,7 +249,7 @@ s32 SysCallHandler::sys_truncate(const char path[], off_t length) {
 s32 SysCallHandler::sys_rename(const char old_path[], const char new_path[]) {
     string absolute_old_path = make_absolute_path(old_path);
     string absolute_new_path = make_absolute_path(new_path);
-    if (auto move_result = VfsManager::instance().move_entry(absolute_old_path, absolute_new_path))
+    if (auto move_result = VfsManager::instance().move(absolute_old_path, absolute_new_path))
         return 0;
     else
         return -(s32)move_result.ec;
@@ -271,7 +265,7 @@ s32 SysCallHandler::sys_rename(const char old_path[], const char new_path[]) {
  */
 s32 SysCallHandler::sys_mkdir(const char path[], int mode) {
     string absolute_path = make_absolute_path(path);
-    if (auto create_result = VfsManager::instance().create_entry(absolute_path, true))
+    if (auto create_result = VfsManager::instance().create(absolute_path, true))
         return 0;
     else
         return -(s32)create_result.ec;
@@ -288,18 +282,18 @@ s32 SysCallHandler::sys_mkdir(const char path[], int mode) {
 s32 SysCallHandler::sys_rmdir(const char path[]) {
     string absolute_path = make_absolute_path(path);
 
-    auto get_result = VfsManager::instance().get_entry(absolute_path);
-    if (!get_result)
-        return -(s32)get_result.ec;
+    auto open_result = VfsManager::instance().open(absolute_path);
+    if (!open_result)
+        return -(s32)open_result.ec;
 
-    auto entry = get_result.value;
-    if (entry->get_type() != VfsEntryType::DIRECTORY)
+    auto& entry = open_result.value;
+    if (entry.get_type() != VfsEntryType::DIRECTORY)
         return -ENOTDIR;
 
-     if (auto delete_result = VfsManager::instance().delete_entry(absolute_path))
+     if (auto remove_result = VfsManager::instance().remove(absolute_path))
         return 0;
     else
-        return -(s32)delete_result.ec;
+        return -(s32)remove_result.ec;
 }
 
 /**
@@ -314,20 +308,21 @@ s32 SysCallHandler::sys_rmdir(const char path[]) {
 s32 SysCallHandler::sys_creat(const char path[], int mode) {
     string absolute_path = make_absolute_path(path);
 
-    auto create_result = VfsManager::instance().create_entry(absolute_path, false);
+    auto create_result = VfsManager::instance().create(absolute_path, false);
     if (!create_result)
         return -(s32)create_result.ec;
 
-    auto entry = create_result.value;
-    auto open_result = entry->open();
+    auto open_result = VfsManager::instance().open(absolute_path);
     if (!open_result)
         return -(s32)open_result.ec;
+
+    auto& entry = open_result.value;
 
     // alloc the created file in descriptor table
     auto& files = current().task_group_data->files;
     for (u32 i = 0; i < files.size(); i++)
         if (!files[i]) {    // found empty file descriptor
-            files[i] = entry;
+            std::swap(files[i], entry);
             return i;
         }
 
@@ -345,18 +340,18 @@ s32 SysCallHandler::sys_creat(const char path[], int mode) {
 s32 SysCallHandler::sys_unlink(const char path[]) {
     string absolute_path = make_absolute_path(path);
 
-    auto get_result = VfsManager::instance().get_entry(absolute_path);
-    if (!get_result)
-        return -(s32)get_result.ec;
+    auto open_result = VfsManager::instance().open(absolute_path);
+    if (!open_result)
+        return -(s32)open_result.ec;
 
-    auto entry = get_result.value;
-    if (entry->get_type() == VfsEntryType::DIRECTORY)
+    auto& entry = open_result.value;
+    if (entry.get_type() == VfsEntryType::DIRECTORY)
         return -EISDIR;
 
-    if (auto delete_result = VfsManager::instance().delete_entry(absolute_path))
+    if (auto remove_result = VfsManager::instance().remove(absolute_path))
         return 0;
     else
-        return -(s32)delete_result.ec;
+        return -(s32)remove_result.ec;
 }
 
 /**
@@ -412,12 +407,12 @@ s32 SysCallHandler::sys_get_cwd(char* buff, size_t size) {
 s32 SysCallHandler::sys_chdir(const char path[]) {
     string absolute_path = make_absolute_path(path);
 
-    auto get_result = VfsManager::instance().get_entry(absolute_path);
-    if (!get_result)
-        return -(s32)get_result.ec;
+    auto open_result = VfsManager::instance().open(absolute_path);
+    if (!open_result)
+        return -(s32)open_result.ec;
 
-    auto entry = get_result.value;
-    if (entry->get_type() != VfsEntryType::DIRECTORY)
+    auto& entry = open_result.value;
+    if (entry.get_type() != VfsEntryType::DIRECTORY)
         return -ENOTDIR;
 
     current().task_group_data->cwd = absolute_path;
@@ -485,7 +480,7 @@ s32 SysCallHandler::enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_en
     if (!files[fd])
         return -EBADF;
 
-    if (files[fd]->get_type() != VfsEntryType::DIRECTORY)
+    if (files[fd].get_type() != VfsEntryType::DIRECTORY)
         return -ENOTDIR;
 
     u32 entry_no = 0;
@@ -507,7 +502,7 @@ s32 SysCallHandler::enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_en
         return true;
     };
 
-    if (files[fd]->enumerate_entries(on_entry))
+    if (files[fd].enumerate_entries(on_entry))
         return entry_no;
     else
         return -EINVAL; // buffer too small
@@ -598,21 +593,21 @@ void SysCallHandler::vga_set_pixel_at(u16 x, u16 y, u8 c) {
 s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
     string absolute_path = make_absolute_path(path);
 
-    auto get_result = VfsManager::instance().get_entry(absolute_path);
-    if (!get_result)
-        return -(s64)get_result.ec; // no such file
+    auto open_result = VfsManager::instance().open(absolute_path);
+    if (!open_result)
+        return -(s64)open_result.ec; // no such file
 
-    auto entry = get_result.value;
-    if (entry->get_type() != VfsEntryType::FILE)
+    auto& entry = open_result.value;
+    if (entry.get_type() != VfsEntryType::FILE)
         return -EISDIR;
 
     // TODO: reading elf file should be done from kernel task not from syscall, this is experimental version
-    u32 size = entry->get_size().value;
+    u32 size = entry.get_size().value;
     u8* elf_data = new u8[size];
     if (!elf_data)
         return -ENOMEM;
 
-    auto read_result = entry->read(elf_data, size);
+    auto read_result = entry.read(elf_data, size);
     if (!read_result)
         return -(s64)read_result.ec;
 

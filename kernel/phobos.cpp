@@ -80,9 +80,10 @@ namespace phobos {
          * @brief   Install ram fs /dev
          */
         void install_dev_fs() {
-            vfs_manager.mount(std::make_shared<VfsRamMountPoint>("dev"));
-            vfs_manager.attach_special("/dev", std::make_shared<VfsRamFifoEntry>("mouse"));
-            vfs_manager.attach_special("/dev", std::make_shared<VfsRamFifoEntry>("keyboard"));
+            auto dev = std::make_shared<VfsRamDirectoryEntry>("dev");
+            dev->attach_entry(std::make_shared<VfsRamFifoEntry>("mouse"));
+            dev->attach_entry(std::make_shared<VfsRamFifoEntry>("keyboard"));
+            vfs_manager.attach("/", dev);
         }
 
         /**
@@ -90,13 +91,13 @@ namespace phobos {
          */
         void install_proc_fs() {
             vfs_manager.mount(std::make_shared<VfsRamMountPoint>("proc"));
-            vfs_manager.attach_special("/proc", std::make_shared<VfsKmsgEntry>());
-            vfs_manager.attach_special("/proc", std::make_shared<VfsMemInfoEntry>());
-            vfs_manager.attach_special("/proc", std::make_shared<VfsDateEntry>());
-            vfs_manager.attach_special("/proc", std::make_shared<VfsCpuInfoEntry>());
-            vfs_manager.attach_special("/proc", std::make_shared<VfsPciInfoEntry>());
-            vfs_manager.attach_special("/proc", std::make_shared<VfsPsInfoEntry>());
-            vfs_manager.attach_special("/proc", std::make_shared<VfsMountInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsKmsgEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsMemInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsDateEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsCpuInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsPciInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsPsInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsMountInfoEntry>());
         }
 
         /**
@@ -139,7 +140,7 @@ namespace phobos {
         /**
          * @brief   Keyboard handling
          */
-        VfsEntryPtr keyboard_vfe;
+        OpenEntry keyboard_vfe;
 
         /**
          * @brief   Interrupt handling. No blocking allowed
@@ -149,13 +150,13 @@ namespace phobos {
 
             // write key to /dev/keyboard RAM file
             if (!keyboard_vfe)
-                keyboard_vfe = vfs_manager.get_entry("/dev/keyboard").value;
+                keyboard_vfe = vfs_manager.open("/dev/keyboard").value;
 
             if (keyboard_vfe) {
                 // dont let the keyboard file overflow and block (we are in interrupt not task context)
-                if (keyboard_vfe->get_size().value > sizeof(key) * MAX_KEYS_IN_FILE)
-                    keyboard_vfe->truncate(sizeof(key) * MAX_KEYS_IN_FILE);
-                keyboard_vfe->write(&key, sizeof(key));
+                if (keyboard_vfe.get_size().value > sizeof(key) * MAX_KEYS_IN_FILE)
+                    keyboard_vfe.truncate(sizeof(key) * MAX_KEYS_IN_FILE);
+                keyboard_vfe.write(&key, sizeof(key));
             }
         }
 
@@ -163,7 +164,7 @@ namespace phobos {
          * @brief   Mouse handling
          */
         middlespace::MouseState mouse_state;
-        VfsEntryPtr mouse_vfe;
+        OpenEntry mouse_vfe;
 
         /**
          * @brief   Interrupt handling. No blocking allowed
@@ -173,13 +174,13 @@ namespace phobos {
 
             // write key to /dev/mouse RAM file
             if (!mouse_vfe)
-                mouse_vfe = vfs_manager.get_entry("/dev/mouse").value;
+                mouse_vfe = vfs_manager.open("/dev/mouse").value;
 
             if (mouse_vfe) {
                 // dont let the mouse state file overflow and block (we are in interrupt not task context)
-                if (mouse_vfe->get_size().value > sizeof(mouse_state) * MAX_STATES_IN_FILE)
-                    mouse_vfe->truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
-                mouse_vfe->write(&mouse_state, sizeof(mouse_state));
+                if (mouse_vfe.get_size().value > sizeof(mouse_state) * MAX_STATES_IN_FILE)
+                    mouse_vfe.truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
+                mouse_vfe.write(&mouse_state, sizeof(mouse_state));
             }
         }
 
@@ -295,7 +296,7 @@ namespace phobos {
         printer.println("  installing system calls...done");
 
         // 11. install filesystems
-        vfs_manager.install_root();
+        vfs_manager.install();
         install_dev_fs();
         install_proc_fs();
         install_fat32_fs();
