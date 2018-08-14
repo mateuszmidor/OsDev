@@ -22,7 +22,7 @@ class OpenEntry {
     using OnDestroy = std::function<void(const VfsCachedEntryPtr&)>;
 
 public:
-    OpenEntry(const OnDestroy& on_destroy = {}, VfsCachedEntryPtr e = {}, EntryState* s = {});
+    OpenEntry(VfsCachedEntryPtr e = {}, EntryState* s = {}, const OnDestroy& on_destroy = {});
     ~OpenEntry();
     OpenEntry operator=(const OpenEntry&) = delete;
     OpenEntry(const OpenEntry&) = delete;
@@ -35,12 +35,12 @@ public:
     VfsEntryType get_type() const                                                   { return entry->get_type();         }
 
     // [file interface]
-    utils::SyscallResult<u64> get_size() const                                      { return entry->get_size();         }
-    utils::SyscallResult<u64> read(void* data, u32 count)                           { return entry->read(data, count);  }
-    utils::SyscallResult<u64> write(const void* data, u32 count)                    { return entry->write(data, count); }
-    utils::SyscallResult<void> seek(u32 new_position)                               { return entry->seek(new_position); }
-    utils::SyscallResult<void> truncate(u32 new_size)                               { return entry->truncate(new_size); }
-    utils::SyscallResult<u64> get_position() const                                  { return entry->get_position();     }
+    utils::SyscallResult<u64> get_size() const                                      { return entry->get_size();                 }
+    utils::SyscallResult<u64> read(void* data, u32 count)                           { return entry->read(state, data, count);  }
+    utils::SyscallResult<u64> write(const void* data, u32 count)                    { return entry->write(state, data, count); }
+    utils::SyscallResult<void> seek(u32 new_position)                               { return entry->seek(state, new_position); }
+    utils::SyscallResult<void> truncate(u32 new_size)                               { return entry->truncate(state, new_size); }
+    utils::SyscallResult<u64> get_position() const                                  { return entry->get_position(state);       }
 
     // [directory interface]
     utils::SyscallResult<void> enumerate_entries(const OnVfsEntryFound& on_entry)   { return entry->enumerate_entries(on_entry);    }

@@ -35,7 +35,6 @@ public:
 private:
     cstd::vector<VfsEntryPtr>::iterator find_entry(const cstd::string& name);
     cstd::vector<VfsEntryPtr>  entries;
-
     cstd::string  name;
 };
 

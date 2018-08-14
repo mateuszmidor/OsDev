@@ -8,22 +8,15 @@
 #ifndef KERNEL_SERVICES_FILESYSTEM_BASE_ENTRYSTATE_H_
 #define KERNEL_SERVICES_FILESYSTEM_BASE_ENTRYSTATE_H_
 
-#include <memory>
-
 namespace filesystem {
 
 /**
- * @brief   Base for VfsEntry::open() return type and descendants
+ * @brief   Base for VfsEntry::open() return type and descendants, it will hold current read/write position
  */
 struct EntryState {
     virtual ~EntryState() {}
 };
 
-using EntryStatePtr = std::unique_ptr<EntryState>;
-
 }
-
-
-
 
 #endif /* KERNEL_SERVICES_FILESYSTEM_BASE_ENTRYSTATE_H_ */

@@ -21,7 +21,7 @@ class SyscallResult {
 public:
     SyscallResult(const T& value) : value(value), ec(middlespace::ErrorCode::EC_OK) {}
     SyscallResult(T&& value) : value(std::move(value)), ec(middlespace::ErrorCode::EC_OK) {}
-    SyscallResult(middlespace::ErrorCode error) : ec(error) {}
+    SyscallResult(middlespace::ErrorCode error) : value(T{}), ec(error) {}
     explicit operator bool() const { return ec == middlespace::ErrorCode::EC_OK; }
     bool operator!() const { return ec != middlespace::ErrorCode::EC_OK; }
 

@@ -11,16 +11,17 @@ using namespace middlespace;
 
 namespace filesystem {
 
-OpenEntry::OpenEntry(const OnDestroy& on_destroy, VfsCachedEntryPtr e, EntryState* s) : entry(e), state(s), on_destroy(on_destroy) {
+OpenEntry::OpenEntry(VfsCachedEntryPtr e, EntryState* s, const OnDestroy& on_destroy) : entry(e), state(s), on_destroy(on_destroy) {
     if (entry)
         entry->open_count++;
 }
 
 OpenEntry::~OpenEntry() {
-    if (entry && on_destroy) {
+    if (entry) {
         entry->open_count--;
         entry->close(state);
-        on_destroy(entry);
+        if (on_destroy)
+            on_destroy(entry);
     }
 }
 

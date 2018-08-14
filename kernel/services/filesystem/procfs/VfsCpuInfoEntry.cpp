@@ -15,7 +15,6 @@ using namespace cstd;
 
 namespace filesystem {
 
-
 utils::SyscallResult<EntryState*> VfsCpuInfoEntry::open() {
     if (is_open)
         return {middlespace::ErrorCode::EC_AGAIN};
@@ -30,10 +29,10 @@ utils::SyscallResult<void> VfsCpuInfoEntry::close(EntryState*) {
 }
 
 /**
- * @brief   Read the last "count" date time bytes
+ * @brief   Read the last "count" bytes of cpu info string
  * @return  Num of read bytes
  */
-utils::SyscallResult<u64> VfsCpuInfoEntry::read(void* data, u32 count) {
+utils::SyscallResult<u64> VfsCpuInfoEntry::read(EntryState*, void* data, u32 count) {
     if (!is_open) {
         return {0};
     }

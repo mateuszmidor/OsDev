@@ -23,10 +23,10 @@ utils::SyscallResult<u64> VfsKmsgEntry::get_size() const {
 }
 
 /**
- * @brief   Read the last "count" of kernel log bytes and clear the log
+ * @brief   Read the last "count" bytes of kernel log string and clear the log
  * @return  Num of read bytes
  */
-utils::SyscallResult<u64> VfsKmsgEntry::read(void* data, u32 count) {
+utils::SyscallResult<u64> VfsKmsgEntry::read(EntryState*, void* data, u32 count) {
     if (count == 0)
         return {0};
 

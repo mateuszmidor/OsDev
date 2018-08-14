@@ -17,7 +17,7 @@ namespace filesystem {
 /**
  * @brief   Read maximum of "count" bytes from the front of the pipe or block the reader if there is nothing to read
  */
-utils::SyscallResult<u64> VfsRamFifoEntry::read(void* data, u32 count) {
+utils::SyscallResult<u64> VfsRamFifoEntry::read(EntryState*, void* data, u32 count) {
     TaskManager& mngr = TaskManager::instance();
 
     // if buffer is empty - block the reader
@@ -50,7 +50,7 @@ utils::SyscallResult<u64> VfsRamFifoEntry::read(void* data, u32 count) {
 /**
  * @brief   Write maximum of "count" bytes to the end of the pipe or block the writer if there is no space left
  */
-utils::SyscallResult<u64> VfsRamFifoEntry::write(const void* data, u32 count) {
+utils::SyscallResult<u64> VfsRamFifoEntry::write(EntryState*, const void* data, u32 count) {
     TaskManager& mngr = TaskManager::instance();
 
     // if buffer is full - block the writer
@@ -78,7 +78,7 @@ utils::SyscallResult<u64> VfsRamFifoEntry::write(const void* data, u32 count) {
 /**
  * @brief   Remove some older data from the pipe making room for new writes
  */
-utils::SyscallResult<void> VfsRamFifoEntry::truncate(u32 new_size) {
+utils::SyscallResult<void> VfsRamFifoEntry::truncate(EntryState*, u32 new_size) {
     // enlarging fifo has no meaning
     if (new_size > size)
         return {middlespace::ErrorCode::EC_OK};

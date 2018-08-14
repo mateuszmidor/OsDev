@@ -17,8 +17,6 @@ Fat32ClusterChain::Fat32ClusterChain(const Fat32Table& fat_table, const Fat32Dat
     fat_data(fat_data),
     head_cluster(head_cluster),
     tail_cluster(Fat32Table::CLUSTER_UNUSED),
-//    current_cluster(start_cluster),
-//    current_byte(0),
     size(size),
     klog(logging::KernelLog::instance())
 {
@@ -34,8 +32,6 @@ Fat32ClusterChain& Fat32ClusterChain::operator=(const Fat32ClusterChain& other) 
  */
 void Fat32ClusterChain::free() {
     resize(0);
-//    current_byte = 0;
-//    current_cluster = Fat32Table::CLUSTER_UNUSED;
 }
 
 /**
@@ -80,10 +76,6 @@ u32 Fat32ClusterChain::get_tail() {
 u32 Fat32ClusterChain::get_size() const {
     return size;
 }
-
-//u32 Fat32ClusterChain::get_position() const {
-//    return current_byte;
-//}
 
 bool Fat32ClusterChain::seek(Fat32State& state, u32 new_position) {
     if (new_position > size)
@@ -143,8 +135,6 @@ bool Fat32ClusterChain::attach_cluster_and_zero_it() {
 bool Fat32ClusterChain::detach_cluster(u32 cluster) {
     head_cluster = fat_table.detach_cluster(head_cluster, cluster);
     tail_cluster = Fat32Table::CLUSTER_UNUSED;
-//    current_cluster = Fat32Table::CLUSTER_UNUSED;
-//    current_byte = 0;
     return true;
 }
 

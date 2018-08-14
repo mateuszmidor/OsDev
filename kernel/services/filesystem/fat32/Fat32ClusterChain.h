@@ -40,7 +40,6 @@ public:
     u32 get_head() const;
     u32 get_tail();
     u32 get_size() const;
-//    u32 get_position() const;
     bool seek(Fat32State& state, u32 new_position);
     bool attach_cluster();
     bool attach_cluster_and_zero_it();
@@ -56,8 +55,6 @@ private:
     logging::KernelLog& klog;
     u32                 head_cluster;
     u32                 tail_cluster;
-//    u32                 current_cluster;    // current read/write pos in file
-//    u32                 current_byte;       // current read/write pos in file
     u32                 size;
 
 };

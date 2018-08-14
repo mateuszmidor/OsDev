@@ -30,13 +30,12 @@ utils::SyscallResult<void> VfsPsInfoEntry::close(EntryState*) {
 }
 
 /**
- * @brief   Read the last "count" info bytes
+ * @brief   Read the last "count" bytes of process info string
  * @return  Num of read bytes
  */
-utils::SyscallResult<u64> VfsPsInfoEntry::read(void* data, u32 count) {
-    if (!is_open) {
+utils::SyscallResult<u64> VfsPsInfoEntry::read(EntryState*, void* data, u32 count) {
+    if (!is_open)
         return 0;
-    }
 
     if (count == 0)
         return 0;

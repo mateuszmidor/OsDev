@@ -50,16 +50,16 @@ public:
     virtual utils::SyscallResult<void> set_name(const cstd::string& name)                                   { return {INVALID_OP};  }
     virtual VfsEntryType get_type() const = 0;
     virtual bool is_mountpoint() const                                                                      { return false;         }
-    virtual utils::SyscallResult<EntryState*> open()                                                        { return {SUCCESS_OP};  }
-    virtual utils::SyscallResult<void> close(EntryState*)                                                   { return {SUCCESS_OP};  }
+    virtual utils::SyscallResult<EntryState*> open()                                                        { return {nullptr};     }
+    virtual utils::SyscallResult<void> close(EntryState* s)                                                 { delete s; return {SUCCESS_OP};  }
 
     // [file interface]
     virtual utils::SyscallResult<u64> get_size() const                                                      { return {INVALID_OP};  }
-    virtual utils::SyscallResult<u64> read(void* data, u32 count)                                           { return {INVALID_OP};  }
-    virtual utils::SyscallResult<u64> write(const void* data, u32 count)                                    { return {INVALID_OP};  }
-    virtual utils::SyscallResult<void> seek(u32 new_position)                                               { return {INVALID_OP};  }
-    virtual utils::SyscallResult<void> truncate(u32 new_size)                                               { return {INVALID_OP};  }
-    virtual utils::SyscallResult<u64> get_position() const                                                  { return {INVALID_OP};  }
+    virtual utils::SyscallResult<u64> read(EntryState* state, void* data, u32 count)                        { return {INVALID_OP};  }
+    virtual utils::SyscallResult<u64> write(EntryState* state, const void* data, u32 count)                 { return {INVALID_OP};  }
+    virtual utils::SyscallResult<void> seek(EntryState* state, u32 new_position)                            { return {INVALID_OP};  }
+    virtual utils::SyscallResult<void> truncate(EntryState* state, u32 new_size)                            { return {INVALID_OP};  }
+    virtual utils::SyscallResult<u64> get_position(EntryState* state) const                                 { return {INVALID_OP};  }
 
     // [directory interface]
     virtual utils::SyscallResult<VfsEntryPtr> get_entry(const UnixPath& path)                               { return {INVALID_OP};  }

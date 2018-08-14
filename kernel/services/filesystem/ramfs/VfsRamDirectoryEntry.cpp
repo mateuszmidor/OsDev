@@ -16,7 +16,7 @@ utils::SyscallResult<void> VfsRamDirectoryEntry::set_name(const cstd::string& na
 }
 
 /**
- * @brief   Get entry for given name, or nullptr if not exists
+ * @brief   Get entry for given name, or error code if does not exist
  */
 utils::SyscallResult<VfsEntryPtr> VfsRamDirectoryEntry::get_entry(const UnixPath& name) {
     auto it = find_entry(name);

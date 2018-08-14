@@ -66,25 +66,52 @@ static utils::SyscallResult<void> check_cached_entry_unused(const VfsCachedEntry
  * @brief   Copy contents of "src" to "dst", return error code on error
  */
 static utils::SyscallResult<void> copy_entry_contents(VfsEntryPtr& src, VfsEntryPtr& dst) {
-    // dest entry created, just copy contents
     const u32 BUFF_SIZE {1024};
     char buff[BUFF_SIZE];
-    while (true) {
-        auto read_result = src->read(buff, BUFF_SIZE);
-        if (!read_result)
-            return {read_result.ec};
+    ErrorCode result {ErrorCode::EC_OK};
+    EntryState* src_state {nullptr};
+    EntryState* dst_state {nullptr};
 
-        if (read_result.value == 0)
+    do {
+        auto src_open_result = src->open();
+        if (!src_open_result) {
+            result = src_open_result.ec;
             break;
+        }
+        src_state = src_open_result.value;
 
-        auto write_result = dst->write(buff, read_result.value);
-        if (!write_result)
-            return {write_result.ec};
-
-        if (write_result.value == 0)
+        auto dst_open_result = dst->open();
+        if (!dst_open_result) {
+            result = dst_open_result.ec;
             break;
-    }
-    return {ErrorCode::EC_OK};
+        }
+        dst_state = dst_open_result.value;
+
+
+        while (true) {
+            auto read_result = src->read(src_state, buff, BUFF_SIZE);
+            if (!read_result) {
+                result = read_result.ec;
+                break;
+            }
+
+            if (read_result.value == 0)
+                break;
+
+            auto write_result = dst->write(dst_state, buff, read_result.value);
+            if (!write_result) {
+                result = write_result.ec;
+                break;
+            }
+
+            if (write_result.value == 0)
+                break;
+        }
+    } while (0);
+
+    src->close(src_state);
+    dst->close(dst_state);
+    return {result};
 }
 
 /**
@@ -453,7 +480,7 @@ VfsCachedEntryPtr VfsTree::get_or_bring_entry_to_cache(const UnixPath& path) {
     // otherwise lookup the file, allocate it in cache and return the cached version
     VfsEntryPtr entry = lookup_entry(path);
     if (!entry) {
-        klog.format("VfsTree::get_or_bring_entry_to_cache: entry doesn't exists: %", path);
+        klog.format("VfsTree::get_or_bring_entry_to_cache: entry doesn't exists: %\n", path);
         return {};
     }
 

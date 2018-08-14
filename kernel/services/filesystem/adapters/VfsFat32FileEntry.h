@@ -13,27 +13,29 @@
 
 namespace filesystem {
 
+/**
+ * @brief   This class is a  Virtual File System adapter for Fat32 file entry
+ */
 class VfsFat32FileEntry: public VfsEntry {
 public:
     VfsFat32FileEntry(const Fat32Entry& e);
 
     // [common interface]
-    const cstd::string& get_name() const override                           { return entry.get_name();                  }
-    VfsEntryType get_type() const override                                  { return VfsEntryType::FILE;                }
-    utils::SyscallResult<EntryState*> open() override                       { return &state;                            }
-    utils::SyscallResult<void> close(EntryState* state) override            { /*delete state;*/ return {middlespace::ErrorCode::EC_OK};   }
+    const cstd::string& get_name() const override                                               { return entry.get_name();                  }
+    VfsEntryType get_type() const override                                                      { return VfsEntryType::FILE;                }
+    utils::SyscallResult<EntryState*> open() override                                           { return new Fat32State(entry.open());      }
+    utils::SyscallResult<void> close(EntryState* state) override                                { delete state; return {middlespace::ErrorCode::EC_OK};     }
 
     // [file interface]
-    utils::SyscallResult<u64> get_size() const override                     { return {entry.get_size()};                }
-    utils::SyscallResult<u64> read(void* data, u32 count) override          { return {entry.read(state, data, count)};  }
-    utils::SyscallResult<u64> write(const void* data, u32 count) override   { return {entry.write(state, data, count)}; }
-    utils::SyscallResult<void> seek(u32 new_position) override;
-    utils::SyscallResult<void> truncate(u32 new_size) override;
-    utils::SyscallResult<u64> get_position() const override                 { return {entry.get_position(state)};       }
+    utils::SyscallResult<u64> get_size() const override                                         { return {entry.get_size()};                                }
+    utils::SyscallResult<u64> read(EntryState* state, void* data, u32 count) override           { return {entry.read(*(Fat32State*)state, data, count)};     }
+    utils::SyscallResult<u64> write(EntryState* state, const void* data, u32 count) override    { return {entry.write(*(Fat32State*)state, data, count)};    }
+    utils::SyscallResult<void> seek(EntryState* state, u32 new_position) override;
+    utils::SyscallResult<void> truncate(EntryState* state, u32 new_size) override;
+    utils::SyscallResult<u64> get_position(EntryState* state) const override                    { return {entry.get_position(*(Fat32State*)state)};          }
 
 private:
     Fat32Entry      entry;
-    Fat32State      state;
 };
 
 } /* namespace filesystem */

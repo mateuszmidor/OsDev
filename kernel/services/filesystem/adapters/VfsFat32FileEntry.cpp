@@ -9,19 +9,19 @@
 
 namespace filesystem {
 
-VfsFat32FileEntry::VfsFat32FileEntry(const Fat32Entry& e) : entry(e), state(entry.open()) {
+VfsFat32FileEntry::VfsFat32FileEntry(const Fat32Entry& e) : entry(e) {
 }
 
 
-utils::SyscallResult<void> VfsFat32FileEntry::seek(u32 new_position) {
-    if (entry.seek(state, new_position))
+utils::SyscallResult<void> VfsFat32FileEntry::seek(EntryState* state, u32 new_position) {
+    if (entry.seek(*(Fat32State*)state, new_position))
         return {middlespace::ErrorCode::EC_OK};
     else
         return {middlespace::ErrorCode::EC_INVAL};
 }
 
-utils::SyscallResult<void> VfsFat32FileEntry::truncate(u32 new_size) {
-    if (entry.truncate(state, new_size))
+utils::SyscallResult<void> VfsFat32FileEntry::truncate(EntryState* state, u32 new_size) {
+    if (entry.truncate(*(Fat32State*)state, new_size))
         return {middlespace::ErrorCode::EC_OK};
     else
         return {middlespace::ErrorCode::EC_INVAL};

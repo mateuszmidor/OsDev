@@ -20,7 +20,7 @@ struct MountpointPath;
 /**
  * @brief   This class represents a virtual file system tree that can be extended by attaching entries like mountpoints and fifos to it.
  *          An entry is stored either as:
- *          1. attachment to the root or one of it's child entries, it is called "attached entry" here.
+ *          1. attachment to the root or one of it's child entries, it is called "attached entry" here as it is not managed by any mountpoint.
  *             It may but not need to be in cache(open entries, entries with own attachments are in cache)
  *          2. child of attached entry eg. in case of mountpoint that manages entire filesystem subtree,
  *              it is called "persistent entry" here

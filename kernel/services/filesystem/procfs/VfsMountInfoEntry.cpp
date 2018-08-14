@@ -31,17 +31,15 @@ utils::SyscallResult<void> VfsMountInfoEntry::close(EntryState*) {
 }
 
 /**
- * @brief   Read the last "count" of info bytes
+ * @brief   Read the last "count" bytes of mount info string
  * @return  Num of read bytes
  */
-utils::SyscallResult<u64> VfsMountInfoEntry::read(void* data, u32 count) {
-    if (!is_open) {
+utils::SyscallResult<u64> VfsMountInfoEntry::read(EntryState*, void* data, u32 count) {
+    if (!is_open)
         return {0};
-    }
 
     if (count == 0)
         return {0};
-
 
     const string info = get_info();
     if (info.empty())

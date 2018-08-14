@@ -13,6 +13,9 @@
 
 namespace filesystem {
 
+/**
+ * @brief   This class is a Virtual File System adapter for Fat32 directory entry
+ */
 class VfsFat32DirectoryEntry: public VfsEntry {
 public:
     VfsFat32DirectoryEntry(const Fat32Entry& e) : entry(e) {}

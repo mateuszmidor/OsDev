@@ -29,13 +29,12 @@ utils::SyscallResult<void> VfsDateEntry::close(EntryState*) {
 }
 
 /**
- * @brief   Read the last "count" date time bytes
+ * @brief   Read the last "count" bytes of date time string
  * @return  Num of read bytes
  */
-utils::SyscallResult<u64> VfsDateEntry::read(void* data, u32 count) {
-    if (!is_open) {
+utils::SyscallResult<u64> VfsDateEntry::read(EntryState*, void* data, u32 count) {
+    if (!is_open)
         return {0};
-    }
 
     if (count == 0)
         return {0};
