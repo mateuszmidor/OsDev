@@ -1,34 +1,39 @@
 Since UnixPath doesnt say if the pointed entry is a File or Directory, the base VfsEntry represents interface of both.
 Virtual File System is a tree made of VfsEntry nodes.
-VfsManager holds the root node "/" and manages the tree by means of get/create/copy/move/delete actions.
-To mount an actual physical filesystem under the root, you need to add VfsMountPoint, which exposes get/create/move/delete actions of specific filesystem to the VfsManager.
+VfsManager holds the root node "/" and manages the tree by means of get/attach/create/copy/move/remove actions.
+To mount an actual physical filesystem under the root, you need to attach VfsMountPoint, which exposes get/create/move/remove actions of specific filesystem to the VfsManager.
 
-+----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Vfs Key Class Diagram                                                                                                                                    |
-+----------------------------------------------------------------------------------------------------------------------------------------------------------+
-|                                                                                                                                                          |
-|  +-----------------------------------------+       +--------------------------------------------------------------------------------------------------+  |
-|  | VfsManager                              +-------+  VfsEntry(def impl returning errors)                                                             |  |
-|  +------+----------------------+-----------+       +-------------+-----------------------+-------------------+--------------------------+-------------+  |
-|         |                      |                                 ^                       ^                   ^                          ^                |
-|         |   +------------------+-----------+                     |                       |                   |                          |                |
-|         |   | VfsStorage                   |                     |                       |                   |                          |                |
-|         |   +------------------------------+                     |                       |                   |                 ++       |                |
-|         |   | get(unix_path) : VfsEntry    |                     |                       |                   |                          |                |
-|         |   | create(unix_path) : VfsEntry |                     |                       |                   |                          |                |
-|         |   | delete(unix_path) : bool     |                     |                       |                   |                          |                |
-|         |   +------------------------------+                     |                       |                   |                          |                |
-|         |                                          +-------------+-------------+   +-----+------+   +--------+--------+   +-------------+------------+   |
-|  +------+-----------------------------+            |VfsCachedEntry             |   |VfsFileEntry|   |VfsDirectoryEntry|   | VfsMountPoint            |   |
-|  | VfsDirCache(allows attaching)      |            +---------------------------+   +------------+   +-----------------+   +--------------------------+   |
-|  +------------------------------------+            |attach_entry(entry_ptr)    |                                          | get_entry : VfsEntry     |   |
-|  | get(unix_path) : VfsCachedEntry    |            |detach_entry(name)         |                                          | create_entry : VfsEntry  |   |
-|  | add(VfsEntry) : VfsCachedEntry     |            +---------------------------+                                          | delete_entry : bool      |   |
-|  | delete(unix_path) : bool           |                                                                                   +--------------------------+   |
-|  +------------------------------------+                                                                                                                  |
-|                                                                                                                                                          |
-+----------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-                 
-VfsManager looks for an entry of given path in VfsDirCache. If not found - it brings proper entry from VfsStorage.
-VfsStorage allows attaching extra, memory-only, entries to the directories, eg pipes, sockets.
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Vfs Key Class Diagram                                                                                                                                           |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                                                                                                                                                                 |
+|  +-----------------------------------------+           +------------------------------+            +-------------------------+         +---------------------+  |
+|  | VfsManager                              |           | OpenEntry                    |            | VfsCachedEntryPtr       |         | VfsEntryPtr         |  |
+|  +-----------------------------------------+           | (allows accessing Vfs entry) |            | (allows attaching)      +---------> (generic interface) |  |
+|  | OpenEntry open(UnixPath)                |           +------------------------------+            +-------------------------+         +---------------------+  |
+|  | ^oid attach(UnixPath, VfsEntry)         |           | u64 get_size(path)           |            | u64 get_size(path)      |                                  |
+|  | void create(UnixPath, is_dir)           +-----------> u64 read(data*, count)       +------------> u64 read(data*, count)  |                                  |
+|  | void remove(UnixPath)                   |           | u64 write(data*, count)      |            | u64 write(data*, count) |                                  |
+|  | void copy(from, to)                     |           | ^oid seek(new_position)      |            | ^oid seek(new_position) |                                  |
+|  | void mo^e_to(from, to)                  |           | void truncate(new_size)      |            | void truncate(new_size) |                                  |
+|  +-------------------+---------------------+           | void enumerate(on_entry)     |            | void enumerate(on_entry)|                                  |
+|                      |                                 +--------------+---------------+            | bool attach(entry)      |                                  |
+|                      |                                                |                            | bool detach(entry)      |                                  |
+|  +-------------------v---------------------+                          |                            | u32 attachment_count    |                                  |
+|  | VfsTree                                 |           +--------------v-------------+              | u32 open_count          |                                  |
+|  | (holds and manipulates the Vfs tree)    |           | EntryState                 |              +-------------------------+                                  |
+|  +-----------------------------------------+           | (holds read/write position)|                                                                           |
+|  | OpenEntry open(UnixPath)                |           +----------------------------+                                                                           |
+|  | ^oid attach(UnixPath, VfsEntry)         |                                                                                                                    |
+|  | void create(UnixPath, is_dir)           |                                                                                                                    |
+|  | void remove(UnixPath)                   |                                                                                                                    |
+|  | void copy(from, to)                     |                                                                                                                    |
+|  | void move_to(from, to)                  |                                                                                                                    |
+|  | VfsCachedEntryPtr get_cached(path)      |                                                                                                                    |
+|  | ^oid release_cached(cached_e_ptr)       |                                                                                                                    |
+|  +-----------------------------------------+                                                                                                                    |
+|                                                                                                                                                                 |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
