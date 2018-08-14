@@ -8,7 +8,7 @@
 #ifndef SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_
 #define SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_
 
-#include "VfsMountPoint.h"
+#include "VfsEntry.h"
 #include "fat32/VolumeFat32.h"
 
 namespace filesystem {
@@ -16,21 +16,23 @@ namespace filesystem {
 /**
  * @brief   This class is VfsMountPoint adapter for Fat32Volume, so Fat32Volume can be mounted in VFS
  */
-class VfsFat32MountPoint: public VfsMountPoint {
+class VfsFat32MountPoint: public VfsEntry {
 public:
     VfsFat32MountPoint(const VolumeFat32& volume);
 
     // [common interface]
     const cstd::string& get_name() const override   { return name; }
+    VfsEntryType get_type() const override          { return VfsEntryType::DIRECTORY; }
+    bool is_mountpoint() const override             { return true; }
 
     // [directory interface]
-    VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) override;
+    utils::SyscallResult<VfsEntryPtr> get_entry(const UnixPath& path) override;
+    utils::SyscallResult<void> enumerate_entries(const OnVfsEntryFound& on_entry) override;
 
     // [mount point interface]
-    VfsEntryPtr get_entry(const UnixPath& unix_path) override;
-    VfsEntryPtr create_entry(const UnixPath& unix_path, bool is_directory) const override;
-    bool delete_entry(const UnixPath& unix_path) const override;
-    bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const override;
+    utils::SyscallResult<VfsEntryPtr> create_entry(const UnixPath& path, bool is_directory) override;
+    utils::SyscallResult<void> delete_entry(const UnixPath& path) override;
+    utils::SyscallResult<void> move_entry(const UnixPath& from, const UnixPath& to) override;
 
 private:
     VfsEntryPtr wrap_entry(const Fat32Entry& e) const;

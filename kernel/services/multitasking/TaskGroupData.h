@@ -11,7 +11,7 @@
 #include <array>
 #include <memory>
 #include "String.h"
-#include "VfsEntry.h"
+#include "OpenEntry.h"
 
 namespace multitasking {
 
@@ -29,7 +29,7 @@ public:
     size_t                                  heap_high_limit;    // last address allocable for the heap
     cstd::string                            cwd;                // current working directory of task group
     u64                                     pml4_phys_addr;     // address space of task group. This uniquely identifies the group
-    std::array<filesystem::VfsEntryPtr, 16> files;              // list of open files. TODO: concurrent access to the same file. How?
+    std::array<filesystem::OpenEntry, 16>   files;              // list of open files. TODO: concurrent access to the same file. How?
     u32                                     parent_task_id;
 
 private:

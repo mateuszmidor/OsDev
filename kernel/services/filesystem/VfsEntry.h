@@ -8,54 +8,67 @@
 #ifndef SRC_FILESYSTEM_VFSENTRY_H_
 #define SRC_FILESYSTEM_VFSENTRY_H_
 
-#include <memory>
-#include <functional>
 #include "types.h"
-#include "String.h"
-
+#include "UnixPath.h"
+#include "EntryState.h"
+#include "SyscallResult.h"
+#include <memory>     // shared_ptr
+#include <functional> // function
 
 namespace filesystem {
 
-// directory enumeration result
-enum class VfsEnumerateResult {
-    ENUMERATION_FINISHED,   // all entries in directory have been enumerated
-    ENUMERATION_STOPPED,    // OnEntryFound callback returned false
-    ENUMERATION_CONTINUE,   // more entries to enumerate exist
-    ENUMERATION_FAILED      // could not enumerate eg. because entry is not a directory or is not initialized
+/**
+ * @brief   Types of entries in virtual filesystem; note that Mountpoint is an extended Directory
+ */
+enum class VfsEntryType {
+    INVALID,
+    FILE,
+    PIPE,
+    DIRECTORY,
 };
-
 
 class VfsEntry;
 using VfsEntryPtr = std::shared_ptr<VfsEntry>;
-using OnVfsEntryFound = std::function<bool(VfsEntryPtr e)>;
+using OnVfsEntryFound = std::function<bool(const VfsEntryPtr& e)>; // for directory contents enumeration. return false to stop the enumeration.
 
 /**
- * @brief   This class is an interface for Virtual File System entry (file or directory)
+ * @brief   This class is a common interface for Virtual File System entry (in general: file or directory; mountpoint is a superset of directory).
+ * @note    Default implementation returns invalid operation. Proper implementations of file/directory/mountpoint
+ *          shall overwrite related methods. This way we shorten both amount of typing and flatten type hierarchy.
  */
 class VfsEntry {
+protected:
+    constexpr static auto SUCCESS_OP    {middlespace::ErrorCode::EC_OK};
+    constexpr static auto INVALID_OP    {middlespace::ErrorCode::EC_PERM};
+
 public:
     VfsEntry() {};
     virtual ~VfsEntry() {}
 
     // [common interface]
-    virtual bool open() = 0;	// start file manipulating session. this can be used to eg. implement exclusive access to a file
-    virtual void close() = 0;	// end file manipulating session.
-    virtual bool is_directory() const = 0;
-    virtual bool is_mount_point() const = 0;
     virtual const cstd::string& get_name() const = 0;
+    virtual utils::SyscallResult<void> set_name(const cstd::string& name)                                   { return {INVALID_OP};  }
+    virtual VfsEntryType get_type() const = 0;
+    virtual bool is_mountpoint() const                                                                      { return false;         }
+    virtual utils::SyscallResult<EntryState*> open()                                                        { return {nullptr};     }
+    virtual utils::SyscallResult<void> close(EntryState* s)                                                 { delete s; return {SUCCESS_OP};  }
 
     // [file interface]
-    virtual u32 get_size() const = 0;
-    virtual s64 read(void* data, u32 count) = 0;
-    virtual s64 write(const void* data, u32 count) = 0;
-    virtual bool seek(u32 new_position) = 0;
-    virtual bool truncate(u32 new_size) = 0;
-    virtual u32 get_position() const = 0;
+    virtual utils::SyscallResult<u64> get_size() const                                                      { return {INVALID_OP};  }
+    virtual utils::SyscallResult<u64> read(EntryState* state, void* data, u32 count)                        { return {INVALID_OP};  }
+    virtual utils::SyscallResult<u64> write(EntryState* state, const void* data, u32 count)                 { return {INVALID_OP};  }
+    virtual utils::SyscallResult<void> seek(EntryState* state, u32 new_position)                            { return {INVALID_OP};  }
+    virtual utils::SyscallResult<void> truncate(EntryState* state, u32 new_size)                            { return {INVALID_OP};  }
+    virtual utils::SyscallResult<u64> get_position(EntryState* state) const                                 { return {INVALID_OP};  }
 
     // [directory interface]
-    virtual void attach_entry(const VfsEntryPtr entry) = 0;
-    virtual void detach_entry(const cstd::string& name) = 0;
-    virtual VfsEnumerateResult enumerate_entries(const OnVfsEntryFound& on_entry) = 0;
+    virtual utils::SyscallResult<VfsEntryPtr> get_entry(const UnixPath& path)                               { return {INVALID_OP};  }
+    virtual utils::SyscallResult<void> enumerate_entries(const OnVfsEntryFound& on_entry)                   { return {INVALID_OP};  }
+
+    // [mount point interface]
+    virtual utils::SyscallResult<VfsEntryPtr> create_entry(const UnixPath& path, bool is_directory)         { return {INVALID_OP};  }
+    virtual utils::SyscallResult<void> delete_entry(const UnixPath& path)                                   { return {INVALID_OP};  }
+    virtual utils::SyscallResult<void> move_entry(const UnixPath& from, const UnixPath& to)                 { return {INVALID_OP};  }
 };
 
 } /* namespace filesystem */

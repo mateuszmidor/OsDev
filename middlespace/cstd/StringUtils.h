@@ -157,6 +157,8 @@ public:
 
     static string snap_head(string& str, char delimiter);
 
+    static string snap_tail(string& str, char delimiter);
+
     static string rtrim(const char* in, size_t len);
 
 

@@ -17,7 +17,7 @@ PageTables64  PageTables::kernel_page_tables  __attribute__ ((aligned (4096)));
 /**
  * @brief   Map the kernel -2GB virtual memory address space at physical address 0 (where it already is loaded by bootloader)
  *          After this, the first 1GB identity mapping is no longer available and accessing any physical address will end up with page fault
- * @note    Right now only the single -2GB is mapped, -1GB stays unmapped as there is no need for so much virtual address space
+ * @note    -2GB is statically mapped for static (kernel image) data, -1GB is dynamically mapped for dynamic memory by page fault handler
  *          Page hierarchy is as follows:
  *          cr3 -> pml4
  *                  -pdpt

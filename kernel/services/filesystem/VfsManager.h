@@ -8,35 +8,36 @@
 #ifndef SRC_FILESYSTEM_VFSMANAGER_H_
 #define SRC_FILESYSTEM_VFSMANAGER_H_
 
-#include "VfsPersistentStorage.h"
 #include "KernelLog.h"
-#include "VfsRamStorage.h"
+#include "OpenEntry.h"
+#include "VfsTree.h"
 
 namespace filesystem {
 
+/**
+ * @brief   This class provides and interface to the Virtual File System.
+ */
 class VfsManager {
 public:
     static VfsManager& instance();
     VfsManager operator=(const VfsManager&) = delete;
     VfsManager operator=(VfsManager&&) = delete;
-    void install();
 
-    VfsEntryPtr get_entry(const UnixPath& unix_path);
-    void close_entry(VfsEntryPtr& entry);
-    VfsEntryPtr create_entry(const UnixPath& unix_path, bool is_directory);
-    bool delete_entry(const UnixPath& unix_path);
-    bool move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to);
-    bool copy_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to);
-    VfsEntryPtr create_fifo(const UnixPath& unix_path);
+    void install();
+    utils::SyscallResult<OpenEntry> open(const UnixPath& path);
+    utils::SyscallResult<void> attach(const UnixPath& path, const VfsEntryPtr& entry);
+    utils::SyscallResult<void> create(const UnixPath& path, bool is_directory);
+    utils::SyscallResult<void> remove(const UnixPath& path);
+    utils::SyscallResult<void> copy(const UnixPath& path_from, const UnixPath& path_to);
+    utils::SyscallResult<void> move(const UnixPath& path_from, const UnixPath& path_to);
+    bool exists(const UnixPath& path) const;
 
 private:
     VfsManager() : klog(logging::KernelLog::instance()) {}
 
-    static VfsManager _instance;
-
-    logging::KernelLog&         klog;
-    VfsPersistentStorage        persistent_storage;
-    VfsRamStorage               cache_storage;
+    static VfsManager   _instance;
+    logging::KernelLog& klog;
+    VfsTree             tree;
 };
 
 } /* namespace filesystem */

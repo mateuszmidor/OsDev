@@ -24,9 +24,9 @@ set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/services/cpuexceptions"
     "${PROJECT_SOURCE_DIR}/services/drivers"
     "${PROJECT_SOURCE_DIR}/services/filesystem"
+    "${PROJECT_SOURCE_DIR}/services/filesystem/base"
     "${PROJECT_SOURCE_DIR}/services/filesystem/adapters"
     "${PROJECT_SOURCE_DIR}/services/filesystem/fat32"
-    "${PROJECT_SOURCE_DIR}/services/filesystem/procfs"
     "${PROJECT_SOURCE_DIR}/services/filesystem/ramfs"
     "${PROJECT_SOURCE_DIR}/services/hardware"
     "${PROJECT_SOURCE_DIR}/services/kstd"
@@ -36,6 +36,7 @@ set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/services/time"
     "${PROJECT_SOURCE_DIR}/services/utils"
     "${PROJECT_SOURCE_DIR}/interface/syscalls"
+    "${PROJECT_SOURCE_DIR}/interface/procfs"
     "${PROJECT_SOURCE_DIR}"
 )
 

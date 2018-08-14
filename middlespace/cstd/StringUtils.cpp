@@ -170,6 +170,23 @@ string StringUtils::snap_head(string& str, char delimiter) {
 }
 
 /**
+ * @brief   Cut off tail of the str that starts with "delimiter" or return whole str if no "delimiter" found
+ * @note    Can return empty string in case str ends with delimiter
+ */
+string StringUtils::snap_tail(string& str, char delimiter) {
+    auto pivot = str.rfind(delimiter);
+
+    // last segment?
+    if (pivot == string::npos)
+        return std::move(str); // move clears str
+
+    string result = str.substr(pivot+1, str.length()-1);
+    str = str.substr(0, pivot);
+
+    return result;
+}
+
+/**
  * @brief   Build string from array of characters and trim non-writable characters on the right
  */
 string StringUtils::rtrim(const char* in, size_t len) {

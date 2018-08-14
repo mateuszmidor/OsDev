@@ -28,9 +28,7 @@ TaskGroupData::~TaskGroupData() {
  * @note    Execution context: Interrupt only (on kill_current_task, when Task is destroyed)
  */
 void TaskGroupData::close_files() {
-    for (auto& f : files)
-        if (f)
-            f->close();
+    // files closed automatically on "files" array destruction
 }
 
 /**

@@ -27,16 +27,18 @@
 #include "Assert.h"
 #include "KernelLog.h"
 
+#include "VfsRamMountPoint.h"
 #include "VfsRamDirectoryEntry.h"
 #include "VfsRamFifoEntry.h"
-#include "procfs/VfsKmsgEntry.h"
-#include "procfs/VfsMemInfoEntry.h"
-#include "procfs/VfsDateEntry.h"
-#include "procfs/VfsCpuInfoEntry.h"
-#include "procfs/VfsPciInfoEntry.h"
-#include "procfs/VfsPsInfoEntry.h"
-#include "procfs/VfsMountInfoEntry.h"
-#include "ramfs/VfsRamFifoEntry.h"
+#include "VfsKmsgEntry.h"
+#include "VfsMemInfoEntry.h"
+#include "VfsDateEntry.h"
+#include "VfsCpuInfoEntry.h"
+#include "VfsPciInfoEntry.h"
+#include "VfsPsInfoEntry.h"
+#include "VfsMountInfoEntry.h"
+#include "fat32/MassStorageMsDos.h"
+#include "adapters/VfsFat32MountPoint.h"
 
 #include "phobos.h"
 
@@ -69,6 +71,7 @@ namespace phobos {
         MouseDriver             mouse;
         PitDriver               pit;
         AtaPrimaryBusDriver     ata_primary_bus;
+        AtaSecondaryBusDriver   ata_secondary_bus;
         VgaDriver               vga;
         Int80hDriver            int80h;
         PageFaultHandler        page_fault;
@@ -77,51 +80,67 @@ namespace phobos {
          * @brief   Install ram fs /dev
          */
         void install_dev_fs() {
-            VfsEntryPtr root = vfs_manager.get_entry("/");
-            VfsEntryPtr dev = std::make_shared<VfsRamDirectoryEntry>("dev");
-            root->attach_entry(dev);
-
-            VfsRamFifoEntryPtr keyboard = std::make_shared<VfsRamFifoEntry>("keyboard");
-            dev->attach_entry(keyboard);
-
-            VfsRamFifoEntryPtr mouse = std::make_shared<VfsRamFifoEntry>("mouse");
-            dev->attach_entry(mouse);
+            auto dev = std::make_shared<VfsRamDirectoryEntry>("dev");
+            dev->attach_entry(std::make_shared<VfsRamFifoEntry>("mouse"));
+            dev->attach_entry(std::make_shared<VfsRamFifoEntry>("keyboard"));
+            vfs_manager.attach("/", dev);
         }
 
         /**
          * @brief   Install ram fs /proc
          */
         void install_proc_fs() {
-            VfsEntryPtr root = vfs_manager.get_entry("/");
-            VfsEntryPtr proc = std::make_shared<VfsRamDirectoryEntry>("proc");
-            root->attach_entry(proc);
+            vfs_manager.attach("/", std::make_shared<VfsRamMountPoint>("proc"));
+            vfs_manager.attach("/proc", std::make_shared<VfsKmsgEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsMemInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsDateEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsCpuInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsPciInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsPsInfoEntry>());
+            vfs_manager.attach("/proc", std::make_shared<VfsMountInfoEntry>());
+        }
 
-            VfsEntryPtr kmsg = std::make_shared<VfsKmsgEntry>();
-            proc->attach_entry(kmsg);
+        /**
+         * @brief   Mount all volumes available in "hdd" under the root
+         */
+        void mount_hdd_fat32_volumes(const AtaDevice& hdd) {
+            if (!MassStorageMsDos::verify(hdd))
+                return;
 
-            VfsEntryPtr meminfo = std::make_shared<VfsMemInfoEntry>();
-            proc->attach_entry(meminfo);
+            MassStorageMsDos ms(hdd);
+            for (const auto& v : ms.get_volumes())
+                vfs_manager.attach("/", std::make_shared<VfsFat32MountPoint>(v));
+        }
 
-            VfsEntryPtr date = std::make_shared<VfsDateEntry>();
-            proc->attach_entry(date);
+        /**
+         * @brief   Install all available fat32 volumes under "/"
+         */
+        void install_fat32_fs() {
+            if (const auto& ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>()) {
+                if (ata_primary_bus->master_hdd.is_present()) {
+                    mount_hdd_fat32_volumes(ata_primary_bus->master_hdd);
+                }
 
-            VfsEntryPtr cpuinfo = std::make_shared<VfsCpuInfoEntry>();
-            proc->attach_entry(cpuinfo);
+                if (ata_primary_bus->slave_hdd.is_present()) {
+                    mount_hdd_fat32_volumes(ata_primary_bus->slave_hdd);
+                }
+            }
 
-            VfsEntryPtr pciinfo = std::make_shared<VfsPciInfoEntry>();
-            proc->attach_entry(pciinfo);
+            if (const auto&  ata_secondary_bus = driver_manager.get_driver<AtaSecondaryBusDriver>()) {
+                if (ata_secondary_bus->master_hdd.is_present()) {
+                    mount_hdd_fat32_volumes(ata_secondary_bus->master_hdd);
+                }
 
-            VfsEntryPtr psinfo = std::make_shared<VfsPsInfoEntry>();
-            proc->attach_entry(psinfo);
-
-            VfsEntryPtr mountinfo = std::make_shared<VfsMountInfoEntry>();
-            proc->attach_entry(mountinfo);
+                if (ata_secondary_bus->slave_hdd.is_present()) {
+                    mount_hdd_fat32_volumes(ata_secondary_bus->slave_hdd);
+                }
+            }
         }
 
         /**
          * @brief   Keyboard handling
          */
-        VfsEntryPtr keyboard_vfe;
+        OpenEntry keyboard_vfe;
 
         /**
          * @brief   Interrupt handling. No blocking allowed
@@ -131,13 +150,13 @@ namespace phobos {
 
             // write key to /dev/keyboard RAM file
             if (!keyboard_vfe)
-                keyboard_vfe = vfs_manager.get_entry("/dev/keyboard");
+                keyboard_vfe = vfs_manager.open("/dev/keyboard").value;
 
             if (keyboard_vfe) {
                 // dont let the keyboard file overflow and block (we are in interrupt not task context)
-                if (keyboard_vfe->get_size() > sizeof(key) * MAX_KEYS_IN_FILE)
-                    keyboard_vfe->truncate(sizeof(key) * MAX_KEYS_IN_FILE);
-                keyboard_vfe->write(&key, sizeof(key));
+                if (keyboard_vfe.get_size().value > sizeof(key) * MAX_KEYS_IN_FILE)
+                    keyboard_vfe.truncate(sizeof(key) * MAX_KEYS_IN_FILE);
+                keyboard_vfe.write(&key, sizeof(key));
             }
         }
 
@@ -145,7 +164,7 @@ namespace phobos {
          * @brief   Mouse handling
          */
         middlespace::MouseState mouse_state;
-        VfsEntryPtr mouse_vfe;
+        OpenEntry mouse_vfe;
 
         /**
          * @brief   Interrupt handling. No blocking allowed
@@ -155,13 +174,13 @@ namespace phobos {
 
             // write key to /dev/mouse RAM file
             if (!mouse_vfe)
-                mouse_vfe = vfs_manager.get_entry("/dev/mouse");
+                mouse_vfe = vfs_manager.open("/dev/mouse").value;
 
             if (mouse_vfe) {
                 // dont let the mouse state file overflow and block (we are in interrupt not task context)
-                if (mouse_vfe->get_size() > sizeof(mouse_state) * MAX_STATES_IN_FILE)
-                    mouse_vfe->truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
-                mouse_vfe->write(&mouse_state, sizeof(mouse_state));
+                if (mouse_vfe.get_size().value > sizeof(mouse_state) * MAX_STATES_IN_FILE)
+                    mouse_vfe.truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
+                mouse_vfe.write(&mouse_state, sizeof(mouse_state));
             }
         }
 
@@ -231,14 +250,14 @@ namespace phobos {
         // 2. run constructors of global objects
         GlobalConstructorsRunner::run();
 
-        // 3. configure temporary console and print PhobOS
+        // 3. configure temporary console and print PhobOS logo & loading message
         print_phobos_loading();
 
         // 4. install new Global Descriptor Table that will allow user-space
         gdt.reinstall_gdt();
         printer.println("  installing GDT...done");
 
-        // 5. prepare drivers & install drivers
+        // 5. prepare drivers
         time_manager.set_hz(PIT_FREQUENCY_HZ);
         pit.set_channel0_hz(PIT_FREQUENCY_HZ);
         pit.set_channel0_on_tick(handle_timer_tick);
@@ -253,6 +272,7 @@ namespace phobos {
         driver_manager.install_driver(&mouse);
         driver_manager.install_driver(&pit);
         driver_manager.install_driver(&ata_primary_bus);
+        driver_manager.install_driver(&ata_secondary_bus);
         driver_manager.install_driver(&vga);
         driver_manager.install_driver(&int80h);
         printer.println("  installing drivers...done");
@@ -275,10 +295,11 @@ namespace phobos {
         syscall_manager.config_and_activate_syscalls();
         printer.println("  installing system calls...done");
 
-        // 11. install filesystem root "/"
+        // 11. install filesystems
         vfs_manager.install();
         install_dev_fs();
         install_proc_fs();
+        install_fat32_fs();
         printer.println("  installing virtual file system...done");
 
         // 12. start multitasking

@@ -33,7 +33,7 @@ public:
     u8 get_sectors_per_cluster() const { return sectors_per_cluster; }
 
 private:
-    const drivers::AtaDevice    hdd;
+    const drivers::AtaDevice&   hdd;
     u32                         data_start_in_sectors   = 0;
     u16                         bytes_per_sector        = 0;
     u8                          sectors_per_cluster     = 0;

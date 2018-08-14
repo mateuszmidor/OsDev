@@ -18,7 +18,7 @@
 namespace filesystem {
 
 // directory enumeration result
-enum class EnumerateResult {
+enum class Fat32EnumerateResult {
     ENUMERATION_FINISHED,   // all entries in directory have been enumerated
     ENUMERATION_STOPPED,    // OnEntryFound callback returned false
     ENUMERATION_CONTINUE,   // more entries to enumerate in following cluster
@@ -32,7 +32,7 @@ using OnEntryFound = std::function<bool(Fat32Entry& e)>;
 
 /**
  * @name    Fat32Entry
- * @brief   User friendly replacement for DirectoryEntryFat32. Represents file or directory
+ * @brief   User friendly replacement for DirectoryEntryFat32. Represents file or directory. Instantiated only by VolumeFat32
  */
 class Fat32Entry {
 public:
@@ -48,14 +48,15 @@ public:
     const cstd::string& get_name() const;
 
     // [file interface]
-    u32 read(void* data, u32 count);
-    u32 write(const void* data, u32 count);
-    bool seek(u32 new_position);
-    bool truncate(u32 new_size);
-    u32 get_position() const;
+    Fat32State open() const;
+    u32 read(Fat32State& state, void* data, u32 count);
+    u32 write(Fat32State& state, const void* data, u32 count);
+    bool seek(Fat32State& state, u32 new_position);
+    bool truncate(Fat32State& state, u32 new_size);
+    u32 get_position(const Fat32State& state) const;
 
     // [directory interface]
-    EnumerateResult enumerate_entries(const OnEntryFound& on_entry);
+    Fat32EnumerateResult enumerate_entries(const OnEntryFound& on_entry);
     bool is_directory_empty();
 
 private:
@@ -72,7 +73,7 @@ private:
     // nothing.
 
     // [directory interface]
-    EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
+    Fat32EnumerateResult enumerate_directory_cluster(u32 cluster, const OnEntryFound& on_entry, u8 start_sector = 0, u8 start_index = 0) const;
     bool alloc_entry_in_directory(Fat32Entry& out);
     bool alloc_entry_in_directory_at_index(u32 entry_index, Fat32Entry& out);
     bool dealloc_entry_in_directory(Fat32Entry& out, u32 root_cluster = 2); // 2 is normally the root_cluster
@@ -85,8 +86,8 @@ private:
     u8 get_entries_per_sector() const;
     void alloc_dot_dot_entries();
 
-    const Fat32Table   fat_table;
-    const Fat32Data    fat_data;
+    const Fat32Table    fat_table;
+    const Fat32Data     fat_data;
     logging::KernelLog& klog;
 
     // entry meta data

@@ -20,7 +20,7 @@ public:
     Optional(const string& error) : error_msg(error), invalid(true) {}
     Optional(const T& value) : value(value), invalid(false) {}
     Optional(T&& value) : value(std::move(value)), invalid(false) {}
-    operator bool() const { return !invalid; }
+    explicit operator bool()  const { return !invalid; }
     bool operator!() const { return invalid; }
 
     string  error_msg {};

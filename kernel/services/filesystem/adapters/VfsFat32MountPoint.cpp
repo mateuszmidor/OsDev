@@ -17,44 +17,44 @@ VfsFat32MountPoint::VfsFat32MountPoint(const VolumeFat32& volume) : volume(volum
 /**
  * @brief   Enumerate directory contents
  * @param   on_entry Callback called for every valid element in the directory
- * @return  ENUMERATION_FINISHED if all entries have been enumerated,
- *          ENUMERATION_STOPPED if enumeration stopped by on_entry() returning false
  */
-VfsEnumerateResult VfsFat32MountPoint::enumerate_entries(const OnVfsEntryFound& on_entry) {
-    // first enumerate the non-persistent entries like pipes, sockets, etc
-    VfsDirectoryEntry::enumerate_entries(on_entry);
-
-    // then enumerate the actual Fat32 directory entries
+utils::SyscallResult<void> VfsFat32MountPoint::enumerate_entries(const OnVfsEntryFound& on_entry) {
     auto on_fat_entry = [&](const Fat32Entry& e) -> bool {
         return on_entry(wrap_entry(e));
     };
 
-    if (root.enumerate_entries(on_fat_entry) == EnumerateResult::ENUMERATION_STOPPED)
-        return VfsEnumerateResult::ENUMERATION_STOPPED;
+    if (root.enumerate_entries(on_fat_entry) == Fat32EnumerateResult::ENUMERATION_FAILED)
+        return {middlespace::ErrorCode::EC_NOTDIR};
 
-    return VfsEnumerateResult::ENUMERATION_FINISHED; // all entries enumerated
+    return {middlespace::ErrorCode::EC_OK};
 }
 
-VfsEntryPtr VfsFat32MountPoint::get_entry(const UnixPath& unix_path) {
+utils::SyscallResult<VfsEntryPtr> VfsFat32MountPoint::get_entry(const UnixPath& unix_path) {
     if (auto e = volume.get_entry(unix_path))
-        return wrap_entry(e);
+        return {wrap_entry(e)};
     else
-        return {};
+        return {middlespace::ErrorCode::EC_NOENT};
 }
 
-VfsEntryPtr VfsFat32MountPoint::create_entry(const UnixPath& unix_path, bool is_directory) const {
+utils::SyscallResult<VfsEntryPtr> VfsFat32MountPoint::create_entry(const UnixPath& unix_path, bool is_directory) {
     if (auto e = volume.create_entry(unix_path, is_directory))
-        return wrap_entry(e);
+        return {wrap_entry(e)};
     else
-        return {};
+        return {middlespace::ErrorCode::EC_INVAL};
 }
 
-bool VfsFat32MountPoint::delete_entry(const UnixPath& unix_path) const {
-    return volume.delete_entry(unix_path);
+utils::SyscallResult<void> VfsFat32MountPoint::delete_entry(const UnixPath& unix_path) {
+    if (volume.delete_entry(unix_path))
+        return {middlespace::ErrorCode::EC_OK};
+    else
+        return {middlespace::ErrorCode::EC_INVAL};
 }
 
-bool VfsFat32MountPoint::move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const {
-    return volume.move_entry(unix_path_from, unix_path_to);
+utils::SyscallResult<void> VfsFat32MountPoint::move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) {
+    if (volume.move_entry(unix_path_from, unix_path_to))
+        return {middlespace::ErrorCode::EC_OK};
+    else
+        return {middlespace::ErrorCode::EC_INVAL};
 }
 
 VfsEntryPtr VfsFat32MountPoint::wrap_entry(const Fat32Entry& e) const {
