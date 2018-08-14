@@ -96,10 +96,6 @@ void print_terminal_crashed() {
  * Terminal runner
  */
 void run_userspace_terminal() {
-    // create pipes used by terminal and user space programs for cin and cout
-    phobos::vfs_manager.attach("/dev", std::make_shared<VfsRamFifoEntry>("stdin"));
-    phobos::vfs_manager.attach("/dev", std::make_shared<VfsRamFifoEntry>("stdout"));
-
     // run in a loop so terminal restarts in case of a crash and kernel log can be read
     while (true) {
         auto timer_id = start_loading_animation();

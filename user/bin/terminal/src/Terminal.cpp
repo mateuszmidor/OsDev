@@ -56,6 +56,14 @@ bool Terminal::init() {
         return false;
     }
 
+    auto stdin_result = syscalls::mknod("/dev/stdin");
+    if (stdin_result < 0)
+        return false;
+
+    auto stdout_result = syscalls::mknod("/dev/stdout");
+    if (stdout_result < 0)
+        return false;
+
     fd_stdin = syscalls::open("/dev/stdin");
     if (fd_stdin < 0) {
         return false;
