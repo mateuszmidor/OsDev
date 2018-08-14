@@ -30,6 +30,7 @@ enum class SysCallNumbers {
     FILE_RMDIR              = 84,
     FILE_CREAT              = 85,
     FILE_UNLINK             = 87,
+    FILE_MKNOD              = 133,
 
 //    FILE_GETDENTS           = 0xdc, //220
     EXIT                    = 60,

@@ -107,6 +107,13 @@ int creat(const char path[], int mode = 0);
 int unlink(const char path[]);
 
 /**
+ *
+ * @param   mode  Must be S_IFIFO
+ * @param   dev   Ignored
+ * @return  0 on success, negative error code on error
+ */
+int mknod(const char path[], int mode = S_IFIFO, int dev = 0);
+/**
  * @brief   Move program break effectively changing amount of dynamic memory available to the task
  * @param   new_brk New dynamic memory high limit
  * @return  New program break on success, current program break on failure (no memory, new_brk == 0)

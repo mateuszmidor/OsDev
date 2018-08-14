@@ -156,6 +156,10 @@ int unlink(const char path[]) {
     return syscall(middlespace::SysCallNumbers::FILE_UNLINK, (syscall_arg)path);
 }
 
+int mknod(const char path[], int mode, int dev) {
+    return syscall(middlespace::SysCallNumbers::FILE_MKNOD, (syscall_arg)path, (syscall_arg)mode, (syscall_arg)dev);
+}
+
 /**
  * @brief   Move program break effectively changing amount of dynamic memory available to the task
  * @param   new_brk New dynamic memory high limit

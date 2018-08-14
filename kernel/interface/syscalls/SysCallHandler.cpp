@@ -22,7 +22,7 @@
 #include "TimeManager.h"
 #include "ElfRunner.h"
 #include "SyscallResult.h"
-
+#include "VfsRamFifoEntry.h"
 
 using namespace cstd;
 using namespace drivers;
@@ -354,6 +354,23 @@ s32 SysCallHandler::sys_unlink(const char path[]) {
         return -(s32)remove_result.ec;
 }
 
+/**
+ * @brief   Create regualar or special file
+ * @param   path Path to be created
+ * @param   mode Must be S_IFIFO (others to be implemented)
+ * @param   dev Ignored
+ * @return  0 on success
+ * @see     http://man7.org/linux/man-pages/man2/mknod.2.html
+ */
+s32 SysCallHandler::sys_mknod(const char path[], int mode, int dev) {
+    if (mode != S_IFIFO)
+        return -EINVAL;
+
+    UnixPath absolute_path = make_absolute_path(path);
+    auto nod = std::make_shared<VfsRamFifoEntry>(absolute_path.extract_file_name());
+    auto attach_result = VfsManager::instance().attach(absolute_path.extract_directory(), nod);
+    return -(s32)attach_result.ec;
+}
 /**
  * @brief   Set new program break effectively changing the amount of dynamic memory available to a task
  * @return  New program break on success
