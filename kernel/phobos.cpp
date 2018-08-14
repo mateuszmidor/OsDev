@@ -320,3 +320,22 @@ namespace phobos {
         __builtin_unreachable();
     }
 }
+
+/**
+ * Necessary memory management global symbols
+ */
+void* operator new(size_t size) {
+    return phobos::details::memory_manager.alloc_virt_memory(size);
+}
+
+void* operator new[](size_t size) {
+    return phobos::details::memory_manager.alloc_virt_memory(size);
+}
+
+void operator delete[](void* ptr) {
+    phobos::details::memory_manager.free_virt_memory(ptr);
+}
+
+void operator delete(void *ptr) {
+    phobos::details::memory_manager.free_virt_memory(ptr);
+}

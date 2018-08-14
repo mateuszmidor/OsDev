@@ -19,8 +19,8 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 # Collect source directories
 set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/services/arch/${ARCH}"
-    "${PROJECT_SOURCE_DIR}/../middlespace"
-    "${PROJECT_SOURCE_DIR}/../middlespace/cstd"
+#    "${PROJECT_SOURCE_DIR}/../middlespace"
+#    "${PROJECT_SOURCE_DIR}/../middlespace/cstd"
     "${PROJECT_SOURCE_DIR}/services/cpuexceptions"
     "${PROJECT_SOURCE_DIR}/services/drivers"
     "${PROJECT_SOURCE_DIR}/services/filesystem"
@@ -28,12 +28,12 @@ set(SOURCE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/services/filesystem/adapters"
     "${PROJECT_SOURCE_DIR}/services/filesystem/fat32"
     "${PROJECT_SOURCE_DIR}/services/filesystem/ramfs"
-    "${PROJECT_SOURCE_DIR}/services/hardware"
-    "${PROJECT_SOURCE_DIR}/services/kstd"
-    "${PROJECT_SOURCE_DIR}/services/logging"
-    "${PROJECT_SOURCE_DIR}/services/memory"
+#    "${PROJECT_SOURCE_DIR}/services/hardware"
+#    "${PROJECT_SOURCE_DIR}/services/kstd"
+#    "${PROJECT_SOURCE_DIR}/services/logging"
+#    "${PROJECT_SOURCE_DIR}/services/memory"
     "${PROJECT_SOURCE_DIR}/services/multitasking"
-    "${PROJECT_SOURCE_DIR}/services/time"
+#    "${PROJECT_SOURCE_DIR}/services/time"
     "${PROJECT_SOURCE_DIR}/services/utils"
     "${PROJECT_SOURCE_DIR}/interface/syscalls"
     "${PROJECT_SOURCE_DIR}/interface/procfs"
@@ -52,3 +52,13 @@ add_executable(${BIN} "${SOURCES}" "main.cpp")
 foreach (DIR ${SOURCE_DIRECTORIES})
     target_include_directories(${BIN} PRIVATE ${DIR})    
 endforeach()
+target_link_libraries(${BIN} kstd middlespace hardware logging memory time)
+
+add_subdirectory(../middlespace kernel_middlespace)
+add_subdirectory(../middlespace/cstd kernel_cstd)
+add_subdirectory(services/kstd)
+add_subdirectory(services/hardware)
+add_subdirectory(services/logging)
+add_subdirectory(services/memory)
+add_subdirectory(services/time)
+#add_subdirectory(services/filesystem)
