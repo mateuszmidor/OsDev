@@ -240,7 +240,7 @@ kernel_stack_top:
 .section .rodata
 KERNEL_VIRTUAL_BASE:
     .quad KVIRT_BASE
-    .global KERNEL_VIRTUAL_BASE
+.global KERNEL_VIRTUAL_BASE
 
 # Global Descriptor Table for 64bit longmode
 gdt64:
