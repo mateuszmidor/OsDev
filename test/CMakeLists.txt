@@ -44,7 +44,6 @@ set(SOURCE_DIRECTORIES
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/base/UnixPath.cpp"
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/OpenEntry.cpp"
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/VfsCachedEntry.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/OpenEntryTable.cpp"
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/EntryCache.cpp"
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/VfsTree.cpp"
         "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/ramfs/VfsRamDirectoryEntry.cpp"

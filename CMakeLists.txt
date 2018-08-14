@@ -18,7 +18,7 @@ add_subdirectory("user")
 
 # Build unittests
 enable_testing()
-#add_subdirectory("test")
+add_subdirectory("test")
 
 # "make iso" - create bootable kernel iso image
 add_custom_target(iso
