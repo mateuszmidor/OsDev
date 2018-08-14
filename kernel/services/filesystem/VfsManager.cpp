@@ -26,18 +26,6 @@ void VfsManager::install() {
     tree.install();
 }
 
-/**
- * @brief   Mount a filesystem under the root "/"
- */
-utils::SyscallResult<void> VfsManager::mount(const VfsEntryPtr& mount_point) {
-    if (!mount_point->is_mountpoint()) {
-        klog.format("VfsManager::mount: provided entry is not a mountpoint\n");
-        return {ErrorCode::EC_INVAL};
-    }
-
-    return tree.attach(mount_point, "/");
-}
-
 utils::SyscallResult<OpenEntry> VfsManager::open(const UnixPath& path) {
     auto entry = tree.get_cached(path);
     if (!entry)

@@ -24,7 +24,6 @@ public:
     VfsManager operator=(VfsManager&&) = delete;
 
     void install();
-    utils::SyscallResult<void> mount(const VfsEntryPtr& mount_point);
     utils::SyscallResult<OpenEntry> open(const UnixPath& path);
     utils::SyscallResult<void> attach(const UnixPath& path, const VfsEntryPtr& entry);
     utils::SyscallResult<void> create(const UnixPath& path, bool is_directory);

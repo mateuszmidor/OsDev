@@ -90,7 +90,7 @@ namespace phobos {
          * @brief   Install ram fs /proc
          */
         void install_proc_fs() {
-            vfs_manager.mount(std::make_shared<VfsRamMountPoint>("proc"));
+            vfs_manager.attach("/", std::make_shared<VfsRamMountPoint>("proc"));
             vfs_manager.attach("/proc", std::make_shared<VfsKmsgEntry>());
             vfs_manager.attach("/proc", std::make_shared<VfsMemInfoEntry>());
             vfs_manager.attach("/proc", std::make_shared<VfsDateEntry>());
@@ -109,7 +109,7 @@ namespace phobos {
 
             MassStorageMsDos ms(hdd);
             for (const auto& v : ms.get_volumes())
-                vfs_manager.mount(std::make_shared<VfsFat32MountPoint>(v));
+                vfs_manager.attach("/", std::make_shared<VfsFat32MountPoint>(v));
         }
 
         /**
