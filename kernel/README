@@ -1,4 +1,4 @@
-The base layer is arch
-Services are built upon arch
-Modules are built upon services; they extend the system functionality
-Interface is built upon Services and Modules; it exposes system functionality to userspace programs
+The base layer is arch that throws us in long mode and calls kmain.
+Services are built upon arch and provide basic kernel functionality.
+Modules are built upon services and extend the kernel functionality.
+Interface is built upon Services and Modules; it exposes kernel functionality to userspace programs.

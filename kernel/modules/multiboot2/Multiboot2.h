@@ -2,7 +2,7 @@
  *   @file: Multiboot2.h
  *
  *   @date: Jun 6, 2017
- * @author: mateusz
+ * @author: Mateusz Mdor
  */
 
 #ifndef SRC_MULTIBOOT2_H_

@@ -30,7 +30,11 @@ add_subdirectory(services/drivers)
 add_subdirectory(services/cpuexceptions)
 add_subdirectory(services/ipc)
 add_subdirectory(services/utils)
+add_subdirectory(modules/vga)
 add_subdirectory(modules/fat32)
+add_subdirectory(modules/elf64)
+add_subdirectory(modules/multiboot2)
+add_subdirectory(interface/int80h)
 add_subdirectory(interface/procfs)
 add_subdirectory(interface/syscalls)
 
@@ -56,6 +60,6 @@ endforeach()
 
 target_link_libraries(${BIN}
     kstd middlespace hardware logging memory time filesystem multitasking drivers cpuexceptions ipc utils # sevices
-    fat32  # modules
-    procfs syscalls # interface
+    fat32 elf64 multiboot2 vga # modules
+    int80h procfs syscalls # interface
 )

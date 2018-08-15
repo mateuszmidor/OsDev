@@ -14,6 +14,7 @@ using logging::KernelLog;
 using namespace hardware;
 using namespace middlespace;
 using namespace multitasking;
+
 namespace drivers {
 
 s16 Int80hDriver::handled_interrupt_no() {
