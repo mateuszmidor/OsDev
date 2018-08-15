@@ -9,7 +9,7 @@
 #define SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_
 
 #include "VfsEntry.h"
-#include "fat32/VolumeFat32.h"
+#include "VolumeFat32.h"
 
 namespace filesystem {
 

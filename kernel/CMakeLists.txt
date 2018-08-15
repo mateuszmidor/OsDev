@@ -8,7 +8,7 @@ set(PROJECT_MAJOR_VERSION 0)
 set(PROJECT_MINOR_VERSION 1)
 set(PROJECT_PATCH_LEVEL 0)
 set(PROJECT_VERSION ${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_LEVEL})
-set(LINKER_SCRIPT "${PROJECT_SOURCE_DIR}/services/arch/${ARCH}/linker.ld")
+set(LINKER_SCRIPT "${PROJECT_SOURCE_DIR}/arch/${ARCH}/linker.ld")
 
 # Setup compilation and linking flags
 set(CMAKE_CXX_FLAGS "-std=c++11 -static -mcmodel=kernel -fno-stack-protector -fno-pic -mno-red-zone -fno-use-cxa-atexit -fno-rtti -fno-exceptions -nostdlib -ffreestanding")
@@ -16,27 +16,27 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g3")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 
+
+add_subdirectory(../middlespace middlespace)
+add_subdirectory(../middlespace/cstd middlespace/cstd)
+add_subdirectory(services/kstd)
+add_subdirectory(services/hardware)
+add_subdirectory(services/logging)
+add_subdirectory(services/memory)
+add_subdirectory(services/time)
+add_subdirectory(services/filesystem)
+add_subdirectory(services/multitasking)
+add_subdirectory(services/drivers)
+add_subdirectory(services/cpuexceptions)
+add_subdirectory(services/ipc)
+add_subdirectory(services/utils)
+add_subdirectory(modules/fat32)
+add_subdirectory(interface/procfs)
+add_subdirectory(interface/syscalls)
+
 # Collect source directories
 set(SOURCE_DIRECTORIES
-    "${PROJECT_SOURCE_DIR}/services/arch/${ARCH}"
-#    "${PROJECT_SOURCE_DIR}/../middlespace"
-#    "${PROJECT_SOURCE_DIR}/../middlespace/cstd"
-    "${PROJECT_SOURCE_DIR}/services/cpuexceptions"
-    "${PROJECT_SOURCE_DIR}/services/drivers"
-    "${PROJECT_SOURCE_DIR}/services/filesystem"
-    "${PROJECT_SOURCE_DIR}/services/filesystem/base"
-    "${PROJECT_SOURCE_DIR}/services/filesystem/adapters"
-    "${PROJECT_SOURCE_DIR}/services/filesystem/fat32"
-    "${PROJECT_SOURCE_DIR}/services/filesystem/ramfs"
-#    "${PROJECT_SOURCE_DIR}/services/hardware"
-#    "${PROJECT_SOURCE_DIR}/services/kstd"
-#    "${PROJECT_SOURCE_DIR}/services/logging"
-#    "${PROJECT_SOURCE_DIR}/services/memory"
-    "${PROJECT_SOURCE_DIR}/services/multitasking"
-#    "${PROJECT_SOURCE_DIR}/services/time"
-    "${PROJECT_SOURCE_DIR}/services/utils"
-    "${PROJECT_SOURCE_DIR}/interface/syscalls"
-    "${PROJECT_SOURCE_DIR}/interface/procfs"
+    "${PROJECT_SOURCE_DIR}/arch/${ARCH}"
     "${PROJECT_SOURCE_DIR}"
 )
 
@@ -48,17 +48,14 @@ foreach (DIR ${SOURCE_DIRECTORIES})
 endforeach()
     
 # Create the kernel binary
-add_executable(${BIN} "${SOURCES}" "main.cpp")
+add_executable(${BIN} "${SOURCES}")
+
 foreach (DIR ${SOURCE_DIRECTORIES})
     target_include_directories(${BIN} PRIVATE ${DIR})    
 endforeach()
-target_link_libraries(${BIN} kstd middlespace hardware logging memory time)
 
-add_subdirectory(../middlespace kernel_middlespace)
-add_subdirectory(../middlespace/cstd kernel_cstd)
-add_subdirectory(services/kstd)
-add_subdirectory(services/hardware)
-add_subdirectory(services/logging)
-add_subdirectory(services/memory)
-add_subdirectory(services/time)
-#add_subdirectory(services/filesystem)
+target_link_libraries(${BIN}
+    kstd middlespace hardware logging memory time filesystem multitasking drivers cpuexceptions ipc utils # sevices
+    fat32  # modules
+    procfs syscalls # interface
+)

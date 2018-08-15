@@ -9,7 +9,7 @@
 #define KERNEL_SERVICES_FILESYSTEM_ADAPTERS_VFSFAT32FILEENTRY_H_
 
 #include "VfsEntry.h"
-#include "fat32/Fat32Entry.h"
+#include "Fat32Entry.h"
 
 namespace filesystem {
 

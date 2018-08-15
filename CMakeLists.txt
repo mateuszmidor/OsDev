@@ -8,7 +8,7 @@ set(ARCH "x86_64")
 set(HDD "hdd.vdi")
 set(BIN "${PROJECT_NAME}-${ARCH}.bin")
 set(ISO "${PROJECT_NAME}-${ARCH}.iso")
-set(GRUB_CFG "${PROJECT_SOURCE_DIR}/kernel/services/arch/${ARCH}/grub.cfg")
+set(GRUB_CFG "${PROJECT_SOURCE_DIR}/kernel/arch/${ARCH}/grub.cfg")
 
 # Build kernel binary
 add_subdirectory("kernel")

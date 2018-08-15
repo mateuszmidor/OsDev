@@ -9,7 +9,7 @@
 #include "kstd.h"
 #include "DriverManager.h"
 #include "VfsMountInfoEntry.h"
-#include "fat32/MassStorageMsDos.h"
+#include "MassStorageMsDos.h"
 
 using namespace cstd;
 using namespace drivers;

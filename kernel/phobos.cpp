@@ -37,8 +37,8 @@
 #include "VfsPciInfoEntry.h"
 #include "VfsPsInfoEntry.h"
 #include "VfsMountInfoEntry.h"
-#include "fat32/MassStorageMsDos.h"
-#include "adapters/VfsFat32MountPoint.h"
+#include "MassStorageMsDos.h"
+#include "VfsFat32MountPoint.h"
 
 #include "phobos.h"
 

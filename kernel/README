@@ -1,0 +1,4 @@
+The base layer is arch
+Services are built upon arch
+Modules are built upon services; they extend the system functionality
+Interface is built upon Services and Modules; it exposes system functionality to userspace programs
