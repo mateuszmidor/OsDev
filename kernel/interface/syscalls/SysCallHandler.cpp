@@ -282,15 +282,18 @@ s32 SysCallHandler::sys_mkdir(const char path[], int mode) {
 s32 SysCallHandler::sys_rmdir(const char path[]) {
     string absolute_path = make_absolute_path(path);
 
-    auto open_result = VfsManager::instance().open(absolute_path);
-    if (!open_result)
-        return -(s32)open_result.ec;
+    // RAII of open directory
+    {
+        auto open_result = VfsManager::instance().open(absolute_path);
+        if (!open_result)
+            return -(s32)open_result.ec;
 
-    auto& entry = open_result.value;
-    if (entry.get_type() != VfsEntryType::DIRECTORY)
-        return -ENOTDIR;
+        auto& entry = open_result.value;
+        if (entry.get_type() != VfsEntryType::DIRECTORY)
+            return -ENOTDIR;
+    }
 
-     if (auto remove_result = VfsManager::instance().remove(absolute_path))
+    if (auto remove_result = VfsManager::instance().remove(absolute_path))
         return 0;
     else
         return -(s32)remove_result.ec;
