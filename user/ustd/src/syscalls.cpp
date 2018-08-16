@@ -256,8 +256,28 @@ s64 elf_run(const char path[], const char* nullterm_argv[]) {
     return syscall(middlespace::SysCallNumbers::ELF_RUN, (syscall_arg)path, (syscall_arg)nullterm_argv);
 }
 
+/**
+ * @brief   This is a wrapper that runs the given task function and calls syscalls::exit().
+ *          This way the task function itself can just return 0, instead of calling exit(0)
+ *          to properly end its life.
+ * @param   ta Task function to be run and argument to be passed to it
+ */
+static void run_and_exit(const TaskArg* ta) {
+    // get the task and argument to run it with
+    auto task = ta->task;
+    auto arg = ta->arg;
+    delete ta;
+
+    // run the task with argument
+    auto exit_code = task(arg);
+
+    // exit lightweight task
+    exit(exit_code);
+}
+
 s64 task_lightweight_run(unsigned long long entry_point, unsigned long long arg, const char name[]) {
-    return syscall(middlespace::SysCallNumbers::TASK_LIGHTWEIGHT_RUN, (syscall_arg)entry_point, (syscall_arg)arg, (syscall_arg)name);
+    auto ta = new TaskArg{(Task)entry_point, arg};
+    return syscall(middlespace::SysCallNumbers::TASK_LIGHTWEIGHT_RUN, (syscall_arg)run_and_exit, (syscall_arg)ta, (syscall_arg)name);
 }
 
 s64 task_wait(unsigned int task_id) {

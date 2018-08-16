@@ -11,20 +11,20 @@
 
 using namespace cstd::ustd;
 
-void print_a(unsigned ret) {
+s64 print_a(unsigned ret) {
     for (unsigned i = 0; i < 40; i++) {
         cout::print("A");
         syscalls::msleep(200);
     }
-    syscalls::exit(ret);
+    return ret;
 }
 
-void print_b(unsigned ret) {
+s64 print_b(unsigned ret) {
     for (unsigned i = 0; i < 40; i++) {
         cout::print("B");
         syscalls::msleep(200);
     }
-    syscalls::exit(ret);
+    return ret;
 }
 
 s64 run_thread(unsigned long long func, unsigned arg, const char name[]) {

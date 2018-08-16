@@ -31,8 +31,8 @@ private:
     void process_cmd(const cstd::string& cmd);
     bool run_cmd(const cstd::vector<cstd::string>& cmd_args, bool run_in_bg);
 
-    static void stdout_printer_thread(Terminal* term);
-    static void key_processor_thread(Terminal* term);
+    static s64 stdout_printer_thread(Terminal* term);
+    static s64 key_processor_thread(Terminal* term);
 
     const cstd::string  self_binary_name;           // "TERMINAL"
     CommandHistory      cmd_history;

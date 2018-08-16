@@ -307,13 +307,13 @@ private:
     u32 score = 0;
     double average_dt {0.02}; // 20 Milliseconds to begin with
 
-    static void mouse_input_task(u64 arg) {
+    static s64 mouse_input_task(u64 arg) {
         Game* game = (Game*)arg;
         int fd = syscalls::open("/dev/mouse", 2);
         if (fd < 0) {
             cout::print("arkanoid: cant open /dev/mouse\n");
             game->terminated = true;
-            syscalls::exit(1);
+            return 1;
         }
 
         MouseState ms;
@@ -323,7 +323,7 @@ private:
         }
 
         syscalls::close(fd);
-        syscalls::exit(0);
+        return 0;
     }
 
     void simulate_game(double delta_time) {

@@ -20,6 +20,11 @@ namespace syscalls {
 using syscall_res = signed long long;
 using syscall_arg = unsigned long long;
 
+using Task = s64 (*)(unsigned long long);
+using TaskArg = struct  {
+    Task task;
+    unsigned long long arg;
+};
 
 /**
  * @brief   Sleep current task for at least given amount of nanoseconds

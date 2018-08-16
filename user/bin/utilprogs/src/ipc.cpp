@@ -17,10 +17,10 @@ using namespace cstd::ustd;
 
 const char FIFO_NAME[] {"fifo"};
 
-void read_fifo() {
+s64 read_fifo_thread() {
     auto fd = syscalls::open(FIFO_NAME);
     if (fd < 0)
-        syscalls::exit(1);
+        return 1;
 
     char buff[128];
     do {
@@ -29,13 +29,13 @@ void read_fifo() {
     } while (buff[0] != '#');
 
     syscalls::close(fd);
-    syscalls::exit(0);
+    return 0;
 }
 
-void write_fifo(unsigned ret) {
+s64 write_fifo_thread(unsigned ret) {
     auto fd = syscalls::open(FIFO_NAME);
     if (fd < 0)
-        syscalls::exit(1);
+        return 1;
 
     vector<string> strings {
         "Litwo!\n",
@@ -53,7 +53,7 @@ void write_fifo(unsigned ret) {
     }
 
     syscalls::close(fd);
-    syscalls::exit(0);
+    return 0;
 }
 
 s64 run_thread(unsigned long long func, unsigned arg, const char name[]) {
@@ -83,11 +83,11 @@ int main(int argc, char* argv[]) {
         return 1;
 
 
-    auto t1 = run_thread((unsigned long long)read_fifo, 0, "read_fifo");
+    auto t1 = run_thread((unsigned long long)read_fifo_thread, 0, "read_fifo_thread");
     if (t1 < 0)
         return 1;
 
-    auto t2 = run_thread((unsigned long long)write_fifo, 0, "write_fifo");
+    auto t2 = run_thread((unsigned long long)write_fifo_thread, 0, "write_fifo_thread");
     if (t2 < 0)
         return 1;
 

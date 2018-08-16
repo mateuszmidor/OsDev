@@ -293,7 +293,7 @@ void Terminal::on_key_down(Key key) {
  * @brief   This function reads /dev/stdout in a loop and prints it to the screen
  * @note    This function is run in a separate thread
  */
-void Terminal::stdout_printer_thread(Terminal* term) {
+s64 Terminal::stdout_printer_thread(Terminal* term) {
     const u32 BUFF_SIZE = 512;
     char buff[BUFF_SIZE];
 
@@ -308,7 +308,7 @@ void Terminal::stdout_printer_thread(Terminal* term) {
  * @brief   This function reads /dev/keyboard and runs Terminal::on_key_down
  * @note    This function is run in a separate thread
  */
-void Terminal::key_processor_thread(Terminal* term) {
+s64 Terminal::key_processor_thread(Terminal* term) {
     Key key;
 
     while (true) {
