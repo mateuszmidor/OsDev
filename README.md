@@ -47,16 +47,16 @@ Simple arkanoid demo
 
 # Run it (tested on ubuntu 16.4 & recent manjaro)
 set your emulator to network chip AMD am79c973 (default for VBox, for QEMU add in command line: -net nic,model=pcnet)
-> sudo remount_hdd.sh  
-> cd build && cmake .. && make all iso hdd run  
+> sudo ./remount_hdd.sh
+> ./build_kernel.sh && ./build_user.sh && ./run.sh
 
 # Debug it in terminal
-> sudo remount_hdd.sh  
-> cd build && cmake .. && make all iso hdd rungdb  
-> gdb -symbols=build/kernel/phobos-x86_64.bin -ex "set arch i386:x86-64:intel" -ex "target remote localhost:1234"  
-(gdb) break kmain  
-(gdb) continue  
-(gdb) ^a + ^x  
+> sudo ./remount_hdd.sh
+> ./build_kernel.sh && ./build_user.sh && ./rungdb.sh
+> gdb -symbols=build/kernel/phobos-x86_64.bin -ex "set arch i386:x86-64:intel" -ex "target remote localhost:1234"
+(gdb) break kmain
+(gdb) continue
+(gdb) ^a + ^x
 
 # Debug in in Eclipse
 Run->Debug Configurations... ->C/C++ Remote Application->add  
