@@ -119,9 +119,9 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
-			<target name="2. build_kernel" path="build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="2. build_kernel_rel" path="build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>bash</buildCommand>
-				<buildArguments>-c "cd .. &amp;&amp; ./build_kernel.sh"</buildArguments>
+				<buildArguments>-c "cd .. &amp;&amp; ./build_kernel.sh  -DCMAKE_BUILD_TYPE=RELEASE"</buildArguments>
 				<buildTarget/>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
@@ -151,9 +151,25 @@
 				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="3. build_user" path="build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="3. build_user_dbg" path="build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>bash</buildCommand>
-				<buildArguments>-c "cd .. &amp;&amp; ./build_user.sh"</buildArguments>
+				<buildArguments>-c "cd .. &amp;&amp; ./build_user.sh  -DCMAKE_BUILD_TYPE=DEBUG"</buildArguments>
+				<buildTarget/>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="2. build_kernel_dbg" path="build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>bash</buildCommand>
+				<buildArguments>-c "cd .. &amp;&amp; ./build_kernel.sh -DCMAKE_BUILD_TYPE=DEBUG"</buildArguments>
+				<buildTarget/>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="3. build_user_rel" path="build" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>bash</buildCommand>
+				<buildArguments>-c "cd .. &amp;&amp; ./build_user.sh  -DCMAKE_BUILD_TYPE=RELEASE"</buildArguments>
 				<buildTarget/>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
