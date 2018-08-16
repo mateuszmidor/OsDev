@@ -143,6 +143,7 @@ CpuState* TaskManager::schedule(CpuState* cpu_state) {
 /**
  * @brief   Save cpu_state in current task
  * @note    cpu_state IS LOCATED ON THE KERNEL STACK AND NEEDS TO BE COPIED TO THE TASK-SPECIFIC LOCATION IF SWITCHING FROM RING 3 (USER SPACE)!!!
+ *          It is stored to kernel stack by interrupt handler (interrupts.S)
  *          This can be improved by storing cpu_state directly in task-specific location or using per-task kernel stack. To be done later.
  * @note    Execution context: Interrupt only
  */
