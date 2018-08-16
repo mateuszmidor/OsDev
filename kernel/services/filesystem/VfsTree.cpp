@@ -427,6 +427,14 @@ utils::SyscallResult<void> VfsTree::move_persistent_entry(const UnixPath& path_f
  *          EC_OK       if successfully unattached
  */
 utils::SyscallResult<void> VfsTree::try_unattach(const UnixPath& path) {
+    // check if entry in cache and if is unused, if so - uncache
+    if (auto cached_entry = entry_cache.find(path)) {
+        auto unused = check_cached_entry_unused(cached_entry);
+        if (!unused)
+            return {unused.ec};
+        uncache_if_unused(cached_entry);
+    }
+
     // find parent
     auto cached_parent = entry_cache.find(path.extract_directory());
     if (!cached_parent)
@@ -444,10 +452,6 @@ utils::SyscallResult<void> VfsTree::try_unattach(const UnixPath& path) {
 
     // detach the entry
     cached_parent->detach_entry(path.extract_file_name());
-
-    // try uncache the entry so it doesnt linger in cache while it should already be gone
-    if (auto cached_entry = entry_cache.find(path))
-        uncache_if_unused(cached_entry);
 
     return {ErrorCode::EC_OK};
 }

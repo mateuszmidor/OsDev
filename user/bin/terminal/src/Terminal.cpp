@@ -51,6 +51,8 @@ void Terminal::run() {
 }
 
 bool Terminal::init() {
+    syscalls::mknod("/dev/fifo");
+
     fd_keyboard = syscalls::open("/dev/keyboard");
     if (fd_keyboard < 0) {
         return false;

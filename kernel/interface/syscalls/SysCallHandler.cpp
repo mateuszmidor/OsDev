@@ -340,14 +340,18 @@ s32 SysCallHandler::sys_creat(const char path[], int mode) {
 s32 SysCallHandler::sys_unlink(const char path[]) {
     string absolute_path = make_absolute_path(path);
 
-    auto open_result = VfsManager::instance().open(absolute_path);
-    if (!open_result)
-        return -(s32)open_result.ec;
+    // RAII of open file
+    {
+        auto open_result = VfsManager::instance().open(absolute_path);
+        if (!open_result)
+            return -(s32)open_result.ec;
 
-    auto& entry = open_result.value;
-    if (entry.get_type() == VfsEntryType::DIRECTORY)
-        return -EISDIR;
+        auto& entry = open_result.value;
+        if (entry.get_type() == VfsEntryType::DIRECTORY)
+            return -EISDIR;
+    }
 
+    // RAII ensures the "path" entry is not open here by us
     if (auto remove_result = VfsManager::instance().remove(absolute_path))
         return 0;
     else
