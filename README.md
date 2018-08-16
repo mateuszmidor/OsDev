@@ -46,7 +46,6 @@ Simple arkanoid demo
  + qemu-system-x86_64 (with qemu-nbd)
 
 # Run it (tested on ubuntu 16.4 & recent manjaro)
-set your emulator to network chip AMD am79c973 (default for VBox, for QEMU add in command line: -net nic,model=pcnet)
 > sudo ./remount_hdd.sh
 > ./build_kernel.sh && ./build_user.sh && ./run.sh
 

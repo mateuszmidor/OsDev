@@ -17,7 +17,6 @@ set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g3")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 
 # Make the project from subprojects
-add_subdirectory("../middlespace/user_kernel_interface" "middlespace/user_kernel_interface")
-add_subdirectory("../middlespace/cstd" "middlespace/cstd")
+add_subdirectory("../middlespace" "middlespace")
 add_subdirectory("ustd") 
 add_subdirectory("bin")

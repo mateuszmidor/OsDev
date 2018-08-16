@@ -17,31 +17,20 @@ set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g3")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 
 
-add_subdirectory(../middlespace/user_kernel_interface middlespace/user_kernel_interface)
-add_subdirectory(../middlespace/cstd middlespace/cstd)
+# Add subprojects
+add_subdirectory(../middlespace middlespace)
 add_subdirectory(services)
 add_subdirectory(modules)
 add_subdirectory(interface)
 
-# Collect source directories
-set(SOURCE_DIRECTORIES
-    "${PROJECT_SOURCE_DIR}/arch/${ARCH}"
-    "${PROJECT_SOURCE_DIR}"
-)
 
 # Collect source files
-foreach (DIR ${SOURCE_DIRECTORIES})
-    file(GLOB ASMS "${DIR}/*.S") 
-    file(GLOB CPPS "${DIR}/*.cpp") 
-    list(APPEND SOURCES ${CPPS} ${ASMS})
-endforeach()
+file(GLOB SOURCES_ASM "arch/${ARCH}/*.S") 
+file(GLOB SOURCES_CPP "*.cpp") 
     
 # Create the kernel binary
-add_executable(${BIN} "${SOURCES}")
-
-foreach (DIR ${SOURCE_DIRECTORIES})
-    target_include_directories(${BIN} PRIVATE ${DIR})    
-endforeach()
+add_executable(${BIN} ${SOURCES_ASM} ${SOURCES_CPP})
+#target_include_directories(${BIN} .)    
 
 target_link_libraries(${BIN}
     kstd hardware logging memory time filesystem multitasking drivers cpuexceptions ipc utils # sevices
