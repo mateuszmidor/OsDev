@@ -156,6 +156,11 @@ int unlink(const char path[]) {
     return syscall(middlespace::SysCallNumbers::FILE_UNLINK, (syscall_arg)path);
 }
 
+/**
+ * @param   mode  Must be S_IFIFO
+ * @param   dev   Ignored
+ * @return  0 on success, negative error code on error
+ */
 int mknod(const char path[], int mode, int dev) {
     return syscall(middlespace::SysCallNumbers::FILE_MKNOD, (syscall_arg)path, (syscall_arg)mode, (syscall_arg)dev);
 }

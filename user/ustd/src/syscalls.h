@@ -107,7 +107,6 @@ int creat(const char path[], int mode = 0);
 int unlink(const char path[]);
 
 /**
- *
  * @param   mode  Must be S_IFIFO
  * @param   dev   Ignored
  * @return  0 on success, negative error code on error
