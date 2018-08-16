@@ -1,0 +1,2 @@
+add_library(user_kernel_interface INTERFACE)
+target_include_directories(user_kernel_interface INTERFACE .)

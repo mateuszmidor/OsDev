@@ -32,7 +32,7 @@ endif()
 # Build user binaries if requested
 if (BUILD_USER)
     add_subdirectory("user")
-    # `make install` to install user binaries in hdd.vdi (/BIN)
+    # run `make install` to install user binaries in hdd.vdi (/BIN)
 endif()
 
 # Build unit tests if requested
@@ -40,18 +40,3 @@ if (BUILD_TESTS)
     enable_testing()
     add_subdirectory("test")
 endif()
-
-# "make run" - just run the kernel under qemu
-add_custom_target(run
-    COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -d int -no-reboot # pcnet is AMD am79c973 network chip
-)
-
-# "make rungdb" - run the kernel under qemu, accept gdb connection at localhost:1234
-add_custom_target(rungdb
-    COMMAND qemu-system-x86_64 -net nic,model=pcnet -boot d -hdb ${HDD} -cdrom ${ISO} -s -S -no-reboot # pcnet is AMD am79c973 network chip
-)
-
-# "make cleanup" - remove all the files under build except for hdd
-add_custom_target(cleanup
-    COMMAND /usr/bin/env ls ../build | grep -v ${HDD} | xargs rm -rf
-)

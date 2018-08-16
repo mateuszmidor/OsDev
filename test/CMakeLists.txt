@@ -9,7 +9,7 @@ include(gtest.cmake)
 # Collect source directories
 set(SOURCE_DIRECTORIES
 #    "${PROJECT_SOURCE_DIR}/../kernel/services/arch/${ARCH}"
-    "${PROJECT_SOURCE_DIR}/../kernel/../middlespace"
+    "${PROJECT_SOURCE_DIR}/../kernel/../middlespace/user_kernel_interface"
     "${PROJECT_SOURCE_DIR}/../kernel/../middlespace/cstd"
 #    "${PROJECT_SOURCE_DIR}/../kernel/services/cpuexceptions"
 #    "${PROJECT_SOURCE_DIR}/../kernel/services/drivers"

@@ -11,7 +11,7 @@
 #include "types.h"
 #include "SysCallNumbers.h"
 #include "Vfs.h"
-#include "posix/posix.h"
+#include "posix.h"
 
 namespace cstd {
 namespace ustd {
