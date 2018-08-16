@@ -27,6 +27,8 @@ void read_fifo() {
         auto count = syscalls::read(fd, buff, sizeof(buff));
         cout::print(buff, count);
     } while (buff[0] != '#');
+
+    syscalls::close(fd);
     syscalls::exit(0);
 }
 
@@ -49,6 +51,8 @@ void write_fifo(unsigned ret) {
         syscalls::write(fd, s.c_str(), s.length());
         syscalls::msleep(1000);
     }
+
+    syscalls::close(fd);
     syscalls::exit(0);
 }
 
@@ -76,7 +80,8 @@ s64 run_thread(unsigned long long func, unsigned arg, const char name[]) {
 int main(int argc, char* argv[]) {
     auto result = syscalls::mknod(FIFO_NAME, S_IFIFO);
     if (result < 0)
-        syscalls::exit(1);
+        return 1;
+
 
     auto t1 = run_thread((unsigned long long)read_fifo, 0, "read_fifo");
     if (t1 < 0)
@@ -90,5 +95,6 @@ int main(int argc, char* argv[]) {
     syscalls::task_wait(t2);
     cout::print("\nIpc done.\n");
 
+    syscalls::unlink(FIFO_NAME);
     return 0;
 }
