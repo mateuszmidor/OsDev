@@ -26,8 +26,8 @@ public:
     ~OpenEntry();
     OpenEntry operator=(const OpenEntry&) = delete;
     OpenEntry(const OpenEntry&) = delete;
-    OpenEntry(OpenEntry&& e) = default;
-    OpenEntry& operator=(OpenEntry&&) = default;
+    OpenEntry(OpenEntry&& e);
+    OpenEntry& operator=(OpenEntry&&);
     operator bool() const                                                           { return (bool)entry;               }
     bool operator!() const                                                          { return !entry;                    }
 
@@ -51,6 +51,7 @@ public:
 
 private:
     OnDestroy  on_destroy;
+    void dispose();
 };
 
 

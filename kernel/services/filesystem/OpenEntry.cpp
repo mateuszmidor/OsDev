@@ -17,6 +17,25 @@ OpenEntry::OpenEntry(VfsCachedEntryPtr e, EntryState* s, const OnDestroy& on_des
 }
 
 OpenEntry::~OpenEntry() {
+    dispose();
+}
+
+OpenEntry::OpenEntry(OpenEntry&& e) {
+    dispose();  // this OpenEntry will now hold new payload so dispose old payload
+    entry = std::move(e.entry);
+    state = std::move(e.state);
+    on_destroy = std::move(e.on_destroy);
+}
+
+OpenEntry& OpenEntry::operator=(OpenEntry&& e) {
+    dispose();  // this OpenEntry will now hold new payload so dispose old payload
+    entry = std::move(e.entry);
+    state = std::move(e.state);
+    on_destroy = std::move(e.on_destroy);
+    return *this;
+}
+
+void OpenEntry::dispose() {
     if (entry) {
         entry->open_count--;
         entry->close(state);
@@ -24,5 +43,4 @@ OpenEntry::~OpenEntry() {
             on_destroy(entry);
     }
 }
-
 } /* namespace filesystem */
