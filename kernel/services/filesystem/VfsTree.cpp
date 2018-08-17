@@ -336,20 +336,14 @@ utils::SyscallResult<void> VfsTree::move(const UnixPath& path_from, const UnixPa
  * @note    Can move attachments only; open files should stay where they are until no one has them open
  */
 utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_from, const UnixPath& path_to) {
-    VfsCachedEntryPtr src = lookup_attached_entry(path_from);
+    VfsEntryPtr src = lookup_attached_entry(path_from);
     if (!src) {
         klog.format("VfsTree::move_attached_entry: can't move; source doesn't exist: %\n", path_from);
         return {ErrorCode::EC_NOENT};
     }
 
-    // check if entry in cache and eligible for removal
-    if (src->open_count > 0) {
-        klog.format("VfsTree::move_attached_entry: can't move; source is open: %\n", path_from);
-        return {ErrorCode::EC_ISOPEN};
-    }
-
     UnixPath final_path_to;
-    VfsCachedEntryPtr dst = lookup_attached_entry(path_to);
+    VfsEntryPtr dst = lookup_attached_entry(path_to);
     if (dst && dst->get_type() == VfsEntryType::DIRECTORY)
         final_path_to = StringUtils::format("%/%", path_to, path_from.extract_file_name());
     else
@@ -362,7 +356,7 @@ utils::SyscallResult<void> VfsTree::move_attached_entry(const UnixPath& path_fro
     }
 
     // moving to different directory
-    if (auto attach_result = attach(src->get_raw_entry(), final_path_to.extract_directory())) {
+    if (auto attach_result = attach(src, final_path_to.extract_directory())) {
         try_unattach(path_from); // only uncache if attach was successful so the entry doesnt disappear in case of error
         src->set_name(final_path_to.extract_file_name());
         return {ErrorCode::EC_OK};
@@ -427,7 +421,7 @@ utils::SyscallResult<void> VfsTree::move_persistent_entry(const UnixPath& path_f
  *          EC_OK       if successfully unattached
  */
 utils::SyscallResult<void> VfsTree::try_unattach(const UnixPath& path) {
-    // check if entry in cache and if is unused, if so - uncache
+    // check if entry is in cache and is unused, if so - uncache
     if (auto cached_entry = entry_cache.find(path)) {
         auto unused = check_cached_entry_unused(cached_entry);
         if (!unused)
@@ -444,11 +438,6 @@ utils::SyscallResult<void> VfsTree::try_unattach(const UnixPath& path) {
     auto attached_entry = cached_parent->get_attached_entry(path.extract_file_name());
     if (!attached_entry)
         return {ErrorCode::EC_NOENT};
-
-    // check if entry should be detached
-    auto unused = check_cached_entry_unused(attached_entry);
-    if (!unused)
-        return {unused.ec};
 
     // detach the entry
     cached_parent->detach_entry(path.extract_file_name());
@@ -512,7 +501,7 @@ bool VfsTree::exists(const UnixPath& path) const {
 /**
  * @brief   Lookup entry that is either root "/" or one of it's attachments
  */
-VfsCachedEntryPtr VfsTree::lookup_attached_entry(const UnixPath& path) const {
+VfsEntryPtr VfsTree::lookup_attached_entry(const UnixPath& path) const {
     if (auto e = entry_cache.find(path))
         return e;
 
@@ -561,7 +550,7 @@ VfsEntryPtr VfsTree::lookup_entry(const UnixPath& path) const {
 MountpointPath VfsTree::get_mountpoint_path(const cstd::string& path) {
     string subpath = path;
     string relative_path;
-    VfsCachedEntryPtr e;
+    VfsEntryPtr e;
 
     // ascend up the path looking for the mountpoint in cache. Mountpoint always lives as attachment in cache
     do {

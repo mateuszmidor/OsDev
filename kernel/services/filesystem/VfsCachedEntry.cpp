@@ -51,7 +51,7 @@ bool VfsCachedEntry::attach_entry(const VfsEntryPtr& entry) {
     if (find_attached_entry(entry->get_name()) != attached_entries.end())
         return false;
 
-    attached_entries.push_back(std::make_shared<VfsCachedEntry>(entry));
+    attached_entries.push_back(entry);
     return true;
 }
 
@@ -70,7 +70,7 @@ bool VfsCachedEntry::detach_entry(const cstd::string& name) {
 /**
  * @brief   Lookup entry of given "name" on the attachments list
  */
-VfsCachedEntryPtr VfsCachedEntry::get_attached_entry(const cstd::string& name) {
+VfsEntryPtr VfsCachedEntry::get_attached_entry(const cstd::string& name) {
     auto it = find_attached_entry(name);
     if (it != attached_entries.end())
         return {*it};
@@ -82,8 +82,8 @@ VfsCachedEntryPtr VfsCachedEntry::get_attached_entry(const cstd::string& name) {
 /**
  * @brief   Find iterator of attached entry of given "name"
  */
-cstd::vector<VfsCachedEntryPtr>::iterator VfsCachedEntry::find_attached_entry(const cstd::string& name) {
-    auto is_same_name = [&name](const VfsCachedEntryPtr& e) {
+cstd::vector<VfsEntryPtr>::iterator VfsCachedEntry::find_attached_entry(const cstd::string& name) {
+    auto is_same_name = [&name](const VfsEntryPtr& e) {
         return (e->get_name() == name);
     };
 

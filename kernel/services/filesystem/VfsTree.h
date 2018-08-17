@@ -45,7 +45,7 @@ private:
     utils::SyscallResult<void> try_uncreate(const UnixPath& path);
     VfsCachedEntryPtr get_or_bring_entry_to_cache(const UnixPath& path);
     void uncache_if_unused(const VfsCachedEntryPtr& e);
-    VfsCachedEntryPtr lookup_attached_entry(const UnixPath& path) const;
+    VfsEntryPtr lookup_attached_entry(const UnixPath& path) const;
     VfsEntryPtr lookup_entry(const UnixPath& path) const;
     MountpointPath get_mountpoint_path(const cstd::string& path);
 
