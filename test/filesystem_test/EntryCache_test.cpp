@@ -15,23 +15,38 @@ using namespace filesystem;
 class EntryCacheTest : public ::testing::Test {
 protected:
     EntryCache ec;
-    VfsCachedEntryPtr ROOT;
+    VfsCachedEntryPtr root;
+    VfsCachedEntryPtr home;
+    VfsCachedEntryPtr images;
 
     VfsEntryPtr mkdir(const char name[]) {
         return std::make_shared<VfsRamDirectoryEntry>(name);
     }
 
     void SetUp() override {
-        ROOT = ec.allocate(mkdir("/"), "/");
+        root = ec.allocate(mkdir("/"), "/");
+        home = ec.allocate(mkdir("HOME"), "/HOME");
+        images = ec.allocate(mkdir("images"), "/HOME/images");
     }
 };
 
+TEST_F(EntryCacheTest, test_allocate) {
+    ASSERT_TRUE(root);
+    ASSERT_TRUE(home);
+    ASSERT_TRUE(images);
+}
+
 TEST_F(EntryCacheTest, test_find) {
     ASSERT_TRUE(ec.find("/"));
+    ASSERT_TRUE(ec.find("/HOME"));
+    ASSERT_TRUE(ec.find("/HOME/images"));
 }
 
 TEST_F(EntryCacheTest, test_deallocate) {
-    ASSERT_TRUE(ec.find("/"));
-    ec.deallocate(ROOT);
+    ec.deallocate(root);
     ASSERT_FALSE(ec.find("/"));
+    ec.deallocate(home);
+    ASSERT_FALSE(ec.find("/HOME"));
+    ec.deallocate(images);
+    ASSERT_FALSE(ec.find("/HOME/images"));
 }
