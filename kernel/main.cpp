@@ -57,19 +57,19 @@ s32 try_load_and_run_terminal() {
 
     // run the elf
     utils::ElfRunner runner;
-    s32 task_id = runner.run(elf_data, new vector<string> { "terminal" });
-    switch (task_id) {
-    case -ENOMEM:
+    auto run_result = runner.run(elf_data, new vector<string> { "terminal" });
+    switch (run_result.ec) {
+    case ErrorCode::EC_NOMEM:
         phobos::printer.println(" Run failed - no enough memory. System Halt.", EgaColor::Red);
         phobos::halt();
         break;
 
-    case -ENOEXEC:
+    case ErrorCode::EC_NOEXEC:
         phobos::printer.println(" Run failed - not an executable. System Halt.", EgaColor::Red);
         phobos::halt();
         break;
 
-    case -EPERM:
+    case ErrorCode::EC_PERM:
         phobos::printer.println(" Run failed - manager didnt allow. System Halt.", EgaColor::Red);
         phobos::halt();
         break;
@@ -78,7 +78,7 @@ s32 try_load_and_run_terminal() {
         break;
     }
 
-    return task_id;
+    return run_result.value;
 }
 
 void wait_terminal_crash(s32 task_id) {

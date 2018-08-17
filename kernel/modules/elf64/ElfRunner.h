@@ -11,6 +11,7 @@
 #include "Vector.h"
 #include "TaskGroupData.h"
 #include "BumpAllocationPolicy.h"
+#include "SyscallResult.h"
 
 namespace utils {
 
@@ -19,7 +20,7 @@ namespace utils {
  */
 class ElfRunner {
 public:
-    s32 run(u8* elf_data, cstd::vector<cstd::string>* argv) const;
+    utils::SyscallResult<u32> run(u8* elf_data, cstd::vector<cstd::string>* argv) const;
 
 private:
     static void load_and_run_elf(u8* elf_file_data, cstd::vector<cstd::string>* args);

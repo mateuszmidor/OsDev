@@ -14,7 +14,9 @@
 #include "ElfRunner.h"
 
 using namespace cstd;
+using namespace utils;
 using namespace memory;
+using namespace middlespace;
 using namespace multitasking;
 
 namespace utils {
@@ -25,14 +27,14 @@ namespace utils {
  * @param   args User-provided cmd line arguments in kernel memory. This function finally free the "args"
  * @return  Error code on error, task id on success
  */
-s32 ElfRunner::run(u8* elf_data, vector<string>* args) const {
+SyscallResult<u32> ElfRunner::run(u8* elf_data, vector<string>* args) const {
     if (!Elf64::is_elf64(elf_data))
-        return -ENOEXEC; // not executable
+        return {ErrorCode::EC_NOEXEC}; // not executable
 
     MemoryManager& mm = MemoryManager::instance();
     size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(PageTables64)); // must be physical, continuous address space
     if (!pml4_phys_addr)
-        return -ENOMEM;
+        return {ErrorCode::EC_NOMEM};
 
     // create elf address space mapping, elf_loader will use this address space and load elf segments into it
     PageTables::map_elf_address_space(pml4_phys_addr);
@@ -48,12 +50,12 @@ s32 ElfRunner::run(u8* elf_data, vector<string>* args) const {
     task->task_group_data  = std::make_shared<TaskGroupData>(pml4_phys_addr, CWD, HEAP_LOW_LIMIT, HEAP_HIGH_LIMIT, current.task_id); // but in its own address space
 
     if (u32 tid = task_manager.add_task(task)) {
-        return tid;
+        return {tid};
     }
     else {
         delete[] elf_data;
         delete args;
-        return -EPERM;  // running new task not permitted at this time
+        return {ErrorCode::EC_PERM};  // running new task not permitted at this time
     }
 }
 

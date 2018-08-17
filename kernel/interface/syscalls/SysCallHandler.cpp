@@ -642,7 +642,10 @@ s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
     }
 
     utils::ElfRunner runner;
-    return runner.run(elf_data, args);
+    if (auto run_result = runner.run(elf_data, args))
+        return run_result.value;
+    else
+        return -(s64)run_result.ec;
 }
 
 /**
