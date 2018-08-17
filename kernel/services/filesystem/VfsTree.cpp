@@ -129,12 +129,11 @@ static string snap_path_tail(string& path) {
 }
 
 /**
- * @brief   Prepare the vfs tree to work with dynamic memory once it is available in system
+ * @brief   Install the root "/"
  */
 void VfsTree::install() {
     auto root_dir = std::make_shared<VfsRamDirectoryEntry>("/"); // empty root dir
     entry_cache.allocate(root_dir, "/");
-//    open_entry_table.install();
 }
 
 /**
@@ -483,9 +482,12 @@ VfsCachedEntryPtr VfsTree::get_or_bring_entry_to_cache(const UnixPath& path) {
 /**
  * @brief   Remove given entry from cache if noone uses it
  */
-void VfsTree::uncache_if_unused(const VfsCachedEntryPtr& e) {
-    if (check_cached_entry_unused(e))
+bool VfsTree::uncache_if_unused(const VfsCachedEntryPtr& e) {
+    if (check_cached_entry_unused(e)) {
         entry_cache.deallocate(e);
+        return true;
+    }
+    return false;
 }
 
 /**
