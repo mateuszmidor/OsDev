@@ -6,53 +6,15 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 # download google test and enable ctest
 include(gtest.cmake)
 
-# Collect source directories
-set(SOURCE_DIRECTORIES
-#    "${PROJECT_SOURCE_DIR}/../kernel/services/arch/${ARCH}"
-    "${PROJECT_SOURCE_DIR}/../kernel/../middlespace/user_kernel_interface"
-    "${PROJECT_SOURCE_DIR}/../kernel/../middlespace/cstd"
-#    "${PROJECT_SOURCE_DIR}/../kernel/services/cpuexceptions"
-#    "${PROJECT_SOURCE_DIR}/../kernel/services/drivers"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem"
-#    "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/adapters"
-#    "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/fat32"
-#    "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/procfs"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/ramfs"
-#    "${PROJECT_SOURCE_DIR}/../kernel/services/hardware"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/kstd"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/logging"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/memory"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/multitasking"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/time"
-    "${PROJECT_SOURCE_DIR}/../kernel/services/utils"
-#    "${PROJECT_SOURCE_DIR}/../kernel/interface/syscalls"
-#    "${PROJECT_SOURCE_DIR}/../kernel"
-)
+# build kernel libraries
+add_subdirectory(../middlespace middlespace)
+add_subdirectory(../kernel/services/kstd kstd)
+add_subdirectory(../kernel/services/logging logging)
+add_subdirectory(../kernel/services/hardware hardware)
+add_subdirectory(../kernel/services/filesystem filesystem)
 
-# Collect source files
-#foreach (DIR ${SOURCE_DIRECTORIES})
-#    file(GLOB ASMS "${DIR}/*.S") 
-#    file(GLOB CPPS "${DIR}/*.cpp") 
-#    list(APPEND SOURCES ${CPPS} ${ASMS})
-#endforeach()
- 
- set (SOURCES 
-        "${PROJECT_SOURCE_DIR}/../kernel/../middlespace/cstd/Conversions.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/../middlespace/cstd/StringUtils.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/logging/KernelLog.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/UnixPath.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/OpenEntry.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/VfsCachedEntry.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/EntryCache.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/VfsTree.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/ramfs/VfsRamDirectoryEntry.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/ramfs/VfsRamDummyFileEntry.cpp"
-        "${PROJECT_SOURCE_DIR}/../kernel/services/filesystem/ramfs/VfsRamMountPoint.cpp"
- )
- 
-add_library(kernel_test "${SOURCES}")
-foreach (DIR ${SOURCE_DIRECTORIES})
-    target_include_directories(kernel_test PUBLIC ${DIR})    
-endforeach()
+add_library(kernel_test INTERFACE)
+target_link_libraries(kernel_test INTERFACE kstd hardware logging filesystem)
 
-add_subdirectory("test")
+# build actual tests
+add_subdirectory("filesystem_test")
