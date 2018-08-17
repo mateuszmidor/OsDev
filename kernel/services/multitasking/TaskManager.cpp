@@ -115,7 +115,7 @@ CpuState* TaskManager::sleep_current_task(CpuState* cpu_state, u64 millis) {
     if (millis > 0) {
         TaskList* tl = new TaskList();
         TimeManager& mngr = TimeManager::instance();
-        auto on_expire = [tl] () { TaskManager::instance().unblock_tasks(*tl); delete tl; };
+        OnTimerExpire on_expire = [tl] () { TaskManager::instance().unblock_tasks(*tl); delete tl; };
         mngr.emplace(millis, on_expire);
         block_current_task(*tl);
     }
