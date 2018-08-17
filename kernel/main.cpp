@@ -33,8 +33,8 @@ void corner_counter() {
 
 u64 start_loading_animation() {
     phobos::printer.print("  loading terminal");
-    auto on_expire = [] { phobos::printer.print("."); };
-    return phobos::time_manager.emplace(1000, 1000, on_expire);
+    ktime::OnTimerExpire on_expire = [] () { phobos::printer.print("."); };
+    return phobos::time_manager.emplace(1000u, 1000u, on_expire);
 }
 
 void stop_loading_animation(u64 timer_id) {

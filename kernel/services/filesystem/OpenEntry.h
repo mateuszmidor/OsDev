@@ -46,7 +46,7 @@ public:
     utils::SyscallResult<void> enumerate_entries(const OnVfsEntryFound& on_entry)   { return entry->enumerate_entries(on_entry);    }
 
 public:
-    VfsCachedEntryPtr   entry   {nullptr};
+    VfsCachedEntryPtr   entry;//{nullptr}; - std::shared_ptr gets born as null by default
     EntryState*         state   {nullptr};
 
 private:

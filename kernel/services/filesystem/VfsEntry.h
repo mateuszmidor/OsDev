@@ -8,12 +8,12 @@
 #ifndef SRC_FILESYSTEM_VFSENTRY_H_
 #define SRC_FILESYSTEM_VFSENTRY_H_
 
+#include <memory>     // shared_ptr
+#include <functional> // function
 #include "types.h"
 #include "UnixPath.h"
 #include "EntryState.h"
 #include "SyscallResult.h"
-#include <memory>     // shared_ptr
-#include <functional> // function
 
 namespace filesystem {
 
