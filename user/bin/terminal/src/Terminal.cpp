@@ -24,6 +24,10 @@ using namespace middlespace;
 
 namespace terminal {
 
+static bool file_exists(const char path[]) {
+    struct stat s;
+    return (syscalls::stat(path, &s) == 0);
+}
 
 Terminal::Terminal(const string& terminal_binary_name) : self_binary_name(terminal_binary_name) {
 }
@@ -51,30 +55,29 @@ void Terminal::run() {
 }
 
 bool Terminal::init() {
-    syscalls::mknod("/dev/fifo");
-
-    fd_keyboard = syscalls::open("/dev/keyboard");
-    if (fd_keyboard < 0) {
-        return false;
+    if (!file_exists("/dev/stdin")) {
+        auto stdin_result = syscalls::mknod("/dev/stdin");
+        if (stdin_result < 0)
+            return false;
     }
 
-    auto stdin_result = syscalls::mknod("/dev/stdin");
-    if (stdin_result < 0)
-        return false;
-
-    auto stdout_result = syscalls::mknod("/dev/stdout");
-    if (stdout_result < 0)
-        return false;
+    if (!file_exists("/dev/stdout")) {
+        auto stdout_result = syscalls::mknod("/dev/stdout");
+        if (stdout_result < 0)
+            return false;
+    }
 
     fd_stdin = syscalls::open("/dev/stdin");
-    if (fd_stdin < 0) {
+    if (fd_stdin < 0)
         return false;
-    }
 
     fd_stdout = syscalls::open("/dev/stdout");
-    if (fd_stdout < 0) {
+    if (fd_stdout < 0)
         return false;
-    }
+
+    fd_keyboard = syscalls::open("/dev/keyboard");
+    if (fd_keyboard < 0)
+        return false;
 
     // start a thread reading /dev/keyboard
     if (syscalls::task_lightweight_run((unsigned long long)key_processor_thread, (unsigned long long)this, "terminal_key_processor") < 0)
