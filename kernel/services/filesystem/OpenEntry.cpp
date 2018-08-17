@@ -7,8 +7,6 @@
 
 #include "OpenEntry.h"
 
-using namespace middlespace;
-
 namespace filesystem {
 
 OpenEntry::OpenEntry(VfsCachedEntryPtr e, EntryState* s, const OnDestroy& on_destroy) : entry(e), state(s), on_destroy(on_destroy) {
@@ -21,7 +19,6 @@ OpenEntry::~OpenEntry() {
 }
 
 OpenEntry::OpenEntry(OpenEntry&& e) {
-    dispose();  // this OpenEntry will now hold new payload so dispose old payload
     entry = std::move(e.entry);
     state = std::move(e.state);
     on_destroy = std::move(e.on_destroy);
