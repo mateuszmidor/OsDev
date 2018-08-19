@@ -285,7 +285,7 @@ public:
     void run() {
 //        static constexpr const auto topline_board_constructor = [](u16 x, u16 y) { return EgaColor64((y == 0) * (u8)EgaColor64::LightBlue); };
 //        static constexpr const auto columns_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x % 2) == 0) * (u8)EgaColor64::LightCyan); };
-        static constexpr const auto chessboard_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x + y) % 2) * (u8)EgaColor64::DarkGreen); };
+        static const auto chessboard_board_constructor = [](u16 x, u16 y) { return EgaColor64(((x + y) % 2) * (u8)EgaColor64::DarkGreen); };
 
         board.init(chessboard_board_constructor);
         ball.pos = { vga.width / 2.0, vga.height - 25.0 };
