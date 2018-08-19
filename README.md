@@ -46,7 +46,7 @@ Simple arkanoid demo
  + mtools (for fat32 formatting of PhobOS virtual drive)
  + qemu-system-x86_64, with qemu-nbd (for running PhobOS, for mounting virtual phobos drive in linux)
 
-# Run it (tested on ubuntu 16.4 & recent manjaro)
+# Run it (tested on ubuntu 16.04 & manjaro 17.1.12)
 > sudo ./remount_hdd.sh
 > ./build_kernel.sh && ./build_user.sh && ./run.sh
 
