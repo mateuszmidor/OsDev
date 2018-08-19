@@ -41,9 +41,10 @@ Simple arkanoid demo
  + Simple terminal emulator (with TAB auto-completion) and a few basic system commands like cd, cat, cp, mkdir
  
 # Need install
- + cmake (at least v3.2)
- + xorriso
- + qemu-system-x86_64 (with qemu-nbd)
+ + cmake, at least v3.10
+ + xorriso (for building bootable iso PhobOS image)
+ + mtools (for fat32 formatting of PhobOS virtual drive)
+ + qemu-system-x86_64, with qemu-nbd (for running PhobOS, for mounting virtual phobos drive in linux)
 
 # Run it (tested on ubuntu 16.4 & recent manjaro)
 > sudo ./remount_hdd.sh
