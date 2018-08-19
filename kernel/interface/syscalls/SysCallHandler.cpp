@@ -478,6 +478,17 @@ void SysCallHandler::sys_exit(s32 status) {
 }
 
 /**
+ * @brief	Send signal to given task
+ * @note	Only SIGKILL is supported for now
+ * @see		http://man7.org/linux/man-pages/man2/kill.2.html
+ */
+s32 SysCallHandler::sys_kill(u32 task_id, s32 signal) {
+	if (signal != SIGKILL)
+		return -EINVAL;
+
+	return 0;
+}
+/**
  * @brief   Exit all threads in current process. Right now there is no multiple threads per process, so exit current task
  * @return  This function does not return; TaskManager schedules another task instead
  * @see     http://man7.org/linux/man-pages/man2/exit_group.2.html

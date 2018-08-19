@@ -248,6 +248,10 @@ void exit(u64 code) {
     syscall(middlespace::SysCallNumbers::EXIT, (syscall_arg)code);
 }
 
+s32 kill(u32 task_id, s32 signal) {
+	return syscall(middlespace::SysCallNumbers::KILL, (syscall_arg)task_id, (syscall_arg)signal);
+}
+
 void exit_group(u64 code) {
     syscall(middlespace::SysCallNumbers::EXIT_GROUP, (syscall_arg)code);
 }

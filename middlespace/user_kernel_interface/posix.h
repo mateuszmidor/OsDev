@@ -12,5 +12,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 #endif /* SRC_MIDDLESPACE_POSIX_POSIX_H_ */

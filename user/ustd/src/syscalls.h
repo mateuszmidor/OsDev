@@ -164,6 +164,8 @@ void vga_set_pixel_at(unsigned short x, unsigned short y, unsigned char color_in
 
 void exit(u64 code);
 
+s32 kill(u32 task_id, s32 signal);
+
 void exit_group(u64 code);
 
 s64 elf_run(const char path[], const char* nullterm_argv[]);
