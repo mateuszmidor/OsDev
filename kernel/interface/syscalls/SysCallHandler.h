@@ -38,7 +38,7 @@ public:
     s32 sys_chdir(const char path[]);
     s32 sys_clock_gettime(clockid_t clk_id, struct timespec* tp);
     void sys_exit(s32 status);
-    s32 sys_kill(u32 task_id, s32 signal);
+//    s32 sys_kill(u32 task_id, s32 signal); // done by int80h
     void sys_exit_group(s32 status);
 
     s32 enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_entries);

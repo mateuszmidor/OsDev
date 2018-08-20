@@ -65,6 +65,7 @@ enum class SysCallNumbers {
  */
 enum class Int80hSysCallNumbers {
     EXIT                    = 1,
+    KILL                    = 37,
     NANOSLEEP               = 162,
     EXIT_GROUP              = 252,
 };

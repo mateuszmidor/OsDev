@@ -94,4 +94,17 @@ void Task::exit_group(u64 result_code) {
     asm volatile("int $0x80" : : "a"(middlespace::Int80hSysCallNumbers::EXIT_GROUP), "b"(result_code));
 }
 
+/**
+ * @brief   Send a signal to a task
+ * @param   task_id Task to send a signal to
+ * @param   signal  Signal to kill the task with, unused for now
+ * @return  0 on success
+ *          Negative error code on failure
+ * @note    If task_id == current_task_id, this call never returns but another task is picked instead
+ */
+s32 Task::kill(u32 task_id, s32 signal) {
+    u32 result;
+    asm volatile("int $0x80" : "=a"(result) : "a"(middlespace::Int80hSysCallNumbers::KILL), "b"(task_id), "c"(signal));
+    return -result;
+}
 } /* namespace multitasking */

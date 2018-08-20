@@ -9,10 +9,11 @@
 #include "_start.h"
 #include "syscalls.h"
 #include "Cout.h"
+#include "ErrorCode.h"
 
 using namespace cstd;
 using namespace cstd::ustd;
-
+using namespace middlespace;
 
 bool is_digit(char c) {
 	return c >= '0' && c <= '9';
@@ -39,15 +40,23 @@ int main(int argc, char* argv[]) {
     }
 
     auto task_id = StringUtils::to_int(argv[1]);
-    auto kill_result = syscalls::kill(task_id, SIGKILL);
-    if (kill_result < 0) {
-        cout::format("kill: could not kill task: %; error code: %\n", task_id, -kill_result);
+    auto kill_result = (ErrorCode)-syscalls::kill(task_id, SIGKILL);
+
+    switch (kill_result) {
+    case ErrorCode::EC_OK:
+        cout::print("kill: SIGKILL sent\n");
+        return 0;
+
+    case ErrorCode::EC_PERM:
+        cout::print("kill: killing task not allowed\n");
+        return 1;
+
+    case ErrorCode::EC_SRCH:
+        cout::print("kill: no such task\n");
+        return 1;
+
+    default:
+        cout::format("kill: could not kill task: %; error code: %\n", task_id, (u32)kill_result);
         return 1;
     }
-
-    cout::print("kill: SIGKILL sent\n");
-    return 0;
 }
-
-
-

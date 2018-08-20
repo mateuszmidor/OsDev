@@ -47,6 +47,7 @@ struct Task {
     static void msleep(u64 milliseconds);
     static void exit(u64 result_code = 0);
     static void exit_group(u64 result_code = 0);
+    static s32 kill(u32 task_id, s32 signal);
 
 
     template <class T>

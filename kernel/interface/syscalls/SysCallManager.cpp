@@ -144,8 +144,8 @@ extern "C" s64 on_syscall(u64 sys_call_num, u64 arg1, u64 arg2, u64 arg3, u64 ar
         syscall_handler.sys_exit(arg1);
         return 0;   // never reached as the caller gets killed
 
-    case SysCallNumbers::KILL:
-    	return syscall_handler.sys_kill(arg1, arg2);
+//    case SysCallNumbers::KILL: // done by int80h
+//    	return syscall_handler.sys_kill(arg1, arg2);
 
     case SysCallNumbers::EXIT_GROUP:
         syscall_handler.sys_exit_group(arg1);

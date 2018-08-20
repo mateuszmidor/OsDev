@@ -29,6 +29,7 @@ public:
     hardware::CpuState* schedule(hardware::CpuState* cpu_state);
     hardware::CpuState* kill_current_task();
     hardware::CpuState* kill_current_task_group();
+    hardware::CpuState* kill_task_group(hardware::CpuState* cpu_state, u32 task_id);
     void collect_children_tasks_recursively(const Task* parent, TaskList& kill_list);
     bool wait(u32 task_id);
     void block_current_task(TaskList& list);

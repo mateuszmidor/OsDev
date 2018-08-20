@@ -12,6 +12,7 @@
 #include "MemoryManager.h"
 #include "TimeManager.h"
 #include "KLockGuard.h"
+#include "ErrorCode.h"
 
 using namespace ktime;
 using namespace memory;
@@ -183,12 +184,27 @@ void TaskManager::remove_task(Task* task) {
  * @note    Execution context: Interrupt only (int 80h)
  */
 hardware::CpuState* TaskManager::kill_current_task_group() {
-    auto current_task_group = scheduler.get_current_task()->task_group_data;
+    return kill_task_group(nullptr, get_current_task().task_id);
+}
+
+/**
+ * @brief   Kill entire task group the task_id belongs to
+ * @return  Newly selected task if suicide kill, current task otherwise
+ * @note    Execution context: Interrupt only (int 80h)
+ */
+hardware::CpuState* TaskManager::kill_task_group(CpuState* cpu_state, u32 task_id) {
+    auto task = scheduler.get_by_tid(task_id);
+    if (!task) {
+        cpu_state->rax = -(s64)middlespace::ErrorCode::EC_SRCH; // return value
+        return cpu_state;
+    }
+
+    auto task_group = task->task_group_data;
 
     // collect tasks in current group and their children
     TaskList kill_list;
     for (auto task : scheduler.get_task_list())
-        if (task->is_in_group(current_task_group)) {
+        if (task->is_in_group(task_group)) {
             kill_list.push_front(task);
             collect_children_tasks_recursively(task, kill_list);
         }
@@ -198,7 +214,12 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
         remove_task(task);
 
     // select next task to run
-    return pick_next_task_and_load_address_space();
+    if (scheduler.is_valid_task(scheduler.get_current_task())) {
+        cpu_state->rax = (s64)middlespace::ErrorCode::EC_OK; // return value
+        return cpu_state;
+    }
+    else
+        return pick_next_task_and_load_address_space();
 }
 
 /**

@@ -46,6 +46,14 @@ int msleep(unsigned long long msec);
 void yield();
 
 /**
+ * @brief   Send signal to task
+ * @return  0 on success
+ *          Negative error code on error
+ * @note    If task_id == current_task_id, this function never returns for SIGKILL
+ */
+s32 kill(u32 task_id, s32 signal);
+
+/**
  * @note    The below syscalls are received in SysCallManager and passed for handling to SysCallHandler
  */
 syscall_res syscall(middlespace::SysCallNumbers syscall,
@@ -163,8 +171,6 @@ void vga_exit_graphics_mode();
 void vga_set_pixel_at(unsigned short x, unsigned short y, unsigned char color_index);
 
 void exit(u64 code);
-
-s32 kill(u32 task_id, s32 signal);
 
 void exit_group(u64 code);
 
