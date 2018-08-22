@@ -17,13 +17,13 @@ namespace rtg {
     * @brief   Associate handler with an event.
     *          This is to prevent "everyone owns pointer to everyone's else interface" dependency infinite loop ∞
     * @example
-    *          SdarsRadio     sdars;
-    *          TunerCommander tc;
+    *          MainWindow window;
+    *          Application app;
     *
-    *          sdars.onUpdateRadioText = run_this_guy(&TunerCommander::doUpdateRadioText, tc);
+    *          window.onCloseClick = run_this_guy(&Application::doClose, app);
     *
-    *          , where onUpdateRadioText is defined eg. as:
-    *          std::function<void(const std::string& text)> onUpdateRadioText;
+    *          , where window.onCloseClick is defined eg. as:
+    *          std::function<void(void)> onCloseClick;
     * @warning This function is a nightmare. Don't look. Believe.
     */
     template <class FuncRet, class... FuncArgs, class Obj>
