@@ -207,6 +207,12 @@ KeyboardScanCodeSet1::KeyboardScanCodeSet1 () {
     extended_code_key[0x51] = Key::PgDown;
 }
 
+/**
+ * @brief   Add Key::LCtrl to the key and return it
+ */
+middlespace::Key KeyboardScanCodeSet1::add_left_ctrl(Key key) {
+    return (Key) (((u16) (key) | (u16) (Key::LCtrl)));
+}
 
 /**
  * @brief   Consume key scan code and return key if code sequence has ended or INVALID otherwise
@@ -235,6 +241,12 @@ const Key KeyboardScanCodeSet1::push_code(u8 key_code) {
             result = basic_code_key[key_code];
 
         switch (result) {
+        case Key::LCtrl:
+            is_lctrl_down = true;
+            break;
+        case Key::LCtrl_Released:
+            is_lctrl_down = false;
+            break;
         case Key::LShift:
             is_lshift_down = true;
             break;
@@ -243,11 +255,13 @@ const Key KeyboardScanCodeSet1::push_code(u8 key_code) {
             break;
         case Key::CapsLock:
             is_caps_active = !is_caps_active;
-//            klog.format("caps: %\n", is_caps_active);
             break;
 
         default:;
         }
+
+        if (is_lctrl_down)
+            result = add_left_ctrl(result);
     }
 
     return result;

@@ -30,8 +30,11 @@ private:
     std::array<middlespace::Key, 256> extended_code_key;
     bool extended_key_incoming = false;
     bool is_lshift_down = false;
+    bool is_lctrl_down  = false;
     bool is_caps_active = false;
     static const int EXTENDED_KEY_SEQUENCE_BEGIN = 0xE0;
+
+    middlespace::Key add_left_ctrl(middlespace::Key result);
 };
 
 }   /* namespace drivers */

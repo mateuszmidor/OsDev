@@ -207,8 +207,11 @@ bool Terminal::run_cmd(const vector<string>& cmd_args, bool run_in_bg) {
  */
 void Terminal::on_key_down(Key key) {
     // functional key
-    if (key & Key::FUNCTIONAL) {
-        switch (key) {
+    Key ascii = keyboard::get_printable(key);
+    Key functional = keyboard::get_functional(key);
+
+    if (functional) {
+        switch (functional) {
 
         // divide by zero
         case Key::F1: {
@@ -230,6 +233,12 @@ void Terminal::on_key_down(Key key) {
         case Key::F3: {
             while(auto ptr = new int)
                 *ptr = 0xBAAD;
+            break;
+        }
+
+        case Key::LCtrl: {
+            if (ascii == (Key)'c')
+                printer.get()->format("C^");
             break;
         }
 
