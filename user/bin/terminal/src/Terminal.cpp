@@ -199,17 +199,23 @@ bool Terminal::run_cmd(const vector<string>& cmd_args, bool run_in_bg) {
     if (cmd_args.empty())
         return false;
 
-    if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
-        current_cmd_task_id = task->run(cmd_args);
-        if (current_cmd_task_id && !run_in_bg)
-            syscalls::task_wait(current_cmd_task_id);
-        current_cmd_task_id = 0;
+    if (CmdBase* cmd = cmd_collection.get(cmd_args[0])) {
+        run_and_wait(cmd, cmd_args, !run_in_bg);
         return true;
     }
     else {
         cout::format("Unknown command: '%'\n", cmd_args[0]);
         return false;
     }
+}
+
+void Terminal::run_and_wait(CmdBase* cmd, const vector<string>& cmd_args, bool wait) {
+    current_cmd_task_id = cmd->run(cmd_args);
+
+    if (current_cmd_task_id && wait)
+        syscalls::task_wait(current_cmd_task_id);
+
+    current_cmd_task_id = 0;
 }
 
 /**

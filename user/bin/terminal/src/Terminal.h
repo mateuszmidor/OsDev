@@ -33,6 +33,7 @@ private:
 
     static s64 stdout_printer_thread(Terminal* term);
     static s64 key_processor_thread(Terminal* term);
+    void run_and_wait(cmds::CmdBase* cmd, const cstd::vector<cstd::string>& cmd_args, bool wait);
 
     const cstd::string  self_binary_name;           // "TERMINAL"
     CommandHistory      cmd_history;
