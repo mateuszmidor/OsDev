@@ -17,7 +17,7 @@ namespace cmds {
 class cls: public CmdBase {
 public:
     cls(cstd::ustd::Monitor<terminal::ScrollableScreenPrinter>& printer) : printer(printer) {}
-    void run(const CmdArgs& args,bool run_in_bg = false);
+    u32 run(const CmdArgs& args);
 
 private:
     cstd::ustd::Monitor<terminal::ScrollableScreenPrinter>&    printer;

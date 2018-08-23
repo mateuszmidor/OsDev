@@ -10,6 +10,7 @@
 
 #include "Vector.h"
 #include "String.h"
+#include "types.h"
 
 namespace cmds {
 
@@ -19,8 +20,9 @@ public:
 
     CmdBase() {}
     virtual ~CmdBase() {}
-    virtual void run(const CmdArgs& args, bool run_in_bg = false) = 0;
 
+    // return created task_id, or 0 if no task created
+    virtual u32 run(const CmdArgs& args) = 0;
 };
 
 } /* namespace cmds */

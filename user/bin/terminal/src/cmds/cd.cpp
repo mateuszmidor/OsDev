@@ -18,7 +18,7 @@ namespace cmds {
 string cd::prev_cwd = "";
 char cwd[256];
 
-void cd::run(const CmdArgs& args, bool run_in_bg) {
+u32 cd::run(const CmdArgs& args) {
     string path;
     if (args.size() > 1)
         path = args[1];
@@ -27,6 +27,8 @@ void cd::run(const CmdArgs& args, bool run_in_bg) {
         navigate_back();
     else
         navigate_path(path);
+
+    return 0;
 }
 
 void cd::navigate_back() {

@@ -174,9 +174,16 @@ void Terminal::process_cmd(const string& cmd) {
     auto cmd_args = StringUtils::split_string(cmd, ' ');
     bool run_in_background = false;
 
-    if (cmd_args.back() == "&") {
+    // "fibb 45 &"
+    if (cmd_args.back() == "&" ) {
         run_in_background = true;
         cmd_args.pop_back();
+    }
+
+    // "fibb 45&"
+    if (cmd_args.back().back() == '&' ) {
+        run_in_background = true;
+        cmd_args.back().pop_back();
     }
 
     if (run_cmd(cmd_args, run_in_background)) {
@@ -193,7 +200,10 @@ bool Terminal::run_cmd(const vector<string>& cmd_args, bool run_in_bg) {
         return false;
 
     if (CmdBase* task = cmd_collection.get(cmd_args[0])) {
-        task->run(cmd_args, run_in_bg);
+        current_cmd_task_id = task->run(cmd_args);
+        if (current_cmd_task_id && !run_in_bg)
+            syscalls::task_wait(current_cmd_task_id);
+        current_cmd_task_id = 0;
         return true;
     }
     else {
@@ -236,9 +246,13 @@ void Terminal::on_key_down(Key key) {
             break;
         }
 
+        // kill currently running command
         case Key::LCtrl: {
-            if (ascii == (Key)'c')
-                printer.get()->format("C^");
+            if (ascii == (Key)'c' && current_cmd_task_id) {
+                syscalls::kill(current_cmd_task_id, SIGKILL);
+                current_cmd_task_id = 0;
+                printer.get()->format("^C\n");
+            }
             break;
         }
 

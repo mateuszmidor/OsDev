@@ -17,7 +17,7 @@ specificelfrun::specificelfrun(const string& elf_absolute_path) :
         elf_path(elf_absolute_path){
 }
 
-void specificelfrun::run(const CmdArgs& args, bool run_in_bg) {
+u32 specificelfrun::run(const CmdArgs& args) {
     u32 count = args.size();
     const char** nullterm_argv = new const char*[count + 1]; // +1 for list terminating null
     for (u32 i = 0; i < count; i++)
@@ -47,13 +47,9 @@ void specificelfrun::run(const CmdArgs& args, bool run_in_bg) {
     case -EPERM:
         cout::print("specificelfrun: task mananger didnt allow to run new task. Too many tasks is running probably\n");
         break;
-
-    default:
-        if (!run_in_bg)
-            syscalls::task_wait(elf_run_result); // wait till task exits
-        break;
     }
 
     delete[] nullterm_argv;
+    return (elf_run_result > 0) ? elf_run_result : 0;
 }
 } /* namespace cmds */

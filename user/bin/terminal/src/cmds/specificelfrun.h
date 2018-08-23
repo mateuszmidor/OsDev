@@ -16,7 +16,7 @@ class specificelfrun: public CmdBase {
 public:
     specificelfrun(const cstd::string& elf_absolute_path);
     ~specificelfrun() override {}
-    void run(const CmdArgs& args, bool run_in_bg = false) override;
+    u32 run(const CmdArgs& args) override;
 
 private:
     cstd::string elf_path;

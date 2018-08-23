@@ -16,11 +16,11 @@ using namespace cstd::ustd;
 
 namespace cmds {
 
-void timeit::run(const CmdArgs& args, bool run_in_bg) {
+u32 timeit::run(const CmdArgs& args) {
     CmdArgs args_no_head = {args.begin() + 1, args.end()};
     if (args_no_head.empty()) {
         cout::format("timeit: please provide command to run\n");
-        return;
+        return 0;
     }
 
     Timer t;
@@ -28,6 +28,8 @@ void timeit::run(const CmdArgs& args, bool run_in_bg) {
     double dt = t.get_delta_seconds();
     string seconds = StringUtils::from_double(dt, 3);
     cout::format("execution took %s\n", seconds);
+
+    return 0;
 }
 
 } /* namespace cmds */

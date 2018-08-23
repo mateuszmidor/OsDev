@@ -9,9 +9,10 @@
 
 namespace cmds {
 
-void cls::run(const CmdArgs& args, bool run_in_bg) {
+u32 cls::run(const CmdArgs& args) {
     auto handle = printer.get();
     handle->clear_screen();
+    return 0;
 }
 
 } /* namespace cmds */

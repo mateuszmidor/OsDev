@@ -18,11 +18,13 @@ namespace cmds {
  * ELF image is organized as follows:
  * 0...x -> process image
  * ELF_VIRTUAL_MEM_BYTES - stack size -> process stack
+ * @return  0 on failure
+ *          task_id on success
  */
-void elfrun::run(const CmdArgs& args, bool run_in_bg) {
+u32 elfrun::run(const CmdArgs& args) {
     if (args.size() < 2) {
         cout::print("elfrun: please specify file name\n");
-        return;
+        return 0;
     }
 
     string filename = args[1];
@@ -56,14 +58,10 @@ void elfrun::run(const CmdArgs& args, bool run_in_bg) {
     case -EPERM:
         cout::print("elfrun: task mamanger didnt allow to run new task. Too many tasks is running probably\n");
         break;
-
-    default:
-        if (!run_in_bg)
-            syscalls::task_wait(elf_run_result); // wait till task exits. This deadlocks if task writes to "/dev/stdout, fills it up and blocks waiting for someone to read
-        break;
     }
 
     delete[] nullterm_argv;
+    return (elf_run_result > 0) ? elf_run_result : 0;
 }
 
 } /* namespace cmds */

@@ -45,6 +45,9 @@ private:
     int fd_keyboard     {-1};   // for reading keyboard input
     int fd_stdin        {-1};   // for reading formatted string user input
     int fd_stdout       {-1};   // for reading stdout of child tasks(elf64)
+
+    // currently executed cmd task_id. used for CTRL+C killing
+    u32 current_cmd_task_id {0};
 };
 
 } /* namespace terminal */

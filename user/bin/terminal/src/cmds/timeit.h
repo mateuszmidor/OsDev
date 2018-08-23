@@ -19,7 +19,7 @@ class timeit: public CmdBase {
 
 public:
     timeit(const RunCmdFunc& run_cmd) : run_cmd(run_cmd) {}
-    void run(const CmdArgs& args, bool run_in_bg = false) override;
+    u32 run(const CmdArgs& args) override;
 };
 
 } /* namespace cmds */
