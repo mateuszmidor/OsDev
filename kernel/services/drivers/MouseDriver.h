@@ -35,8 +35,8 @@ private:
     u8 buttons = 0;
     u8 offset = 0;
     u8 buffer[3];
-    hardware::Port8bit mouse_cmd_port   {0x64};
-    hardware::Port8bit mouse_data_port  {0x60};
+    hardware::Port8bit mouse_cmd_port_64   {0x64};
+    hardware::Port8bit mouse_data_port_60  {0x60};
     MouseMoveEvent on_move = [] (s8 dx, s8 dy) { /* do nothing */ };
     MouseButtonEvent on_down = [] (u8 button) { /* do nothing */ };
     MouseButtonEvent on_up = [] (u8 button) { /* do nothing */ };
