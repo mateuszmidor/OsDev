@@ -22,7 +22,7 @@ extern "C" void run_ctors() {
 }
 
 /**
- * @brief   Beacuse this is a -nostdlib binary, we need to provide "_start" symbol for the system to know where to start execution
+ * @brief   Beacuse we build -nostdlib binaries, we need to provide "_start" symbol for the linker to know where to start execution
  */
 __asm__ __volatile__(
     ".global _start     ;"
