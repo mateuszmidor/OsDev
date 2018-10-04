@@ -174,7 +174,6 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
  * @brief   Create file/directory pointed by "path" and return its file descriptor on success, or error code on error
  * @param   path    Absolute path to the entry that is to be created
  * @note    The actual entry creation is delegated to a mountpoint installed on the "path" thus mountpoint is a must
- *          Creation also opens, thus the returned file descriptor
  */
 utils::SyscallResult<void> VfsTree::create(const UnixPath& path, bool is_directory) {
     if (!path.is_valid_absolute_path()) {
@@ -195,9 +194,6 @@ utils::SyscallResult<void> VfsTree::create(const UnixPath& path, bool is_directo
         klog.format("VfsTree::create: target filesystem refused to create entry: %\n", path);
         return {create_result.ec};
     }
-
-    // cache the entry
-    auto cached_entry = entry_cache.allocate(create_result.value, path);
 
     return {ErrorCode::EC_OK};
 }
@@ -243,11 +239,11 @@ utils::SyscallResult<void> VfsTree::remove(const UnixPath& path) {
  * @brief   Copy persistent/attached entry to persistent location
  * @param   path_from   Absolute source path
  * @param   path_to     Absolute destination path, either full name or directory to copy the entry to
- * @note    Can't copy entire directory
+ * @note    Can't copy entire directory, just a file
  */
 utils::SyscallResult<void> VfsTree::copy(const UnixPath& path_from, const UnixPath& path_to) {
     if (!path_from.is_valid_absolute_path()) {
-        klog.format("VfsTree::copy: path_from  is empty or it is not an absolute path: %\n", path_from);
+        klog.format("VfsTree::copy: path_from is empty or it is not an absolute path: %\n", path_from);
         return {ErrorCode::EC_INVAL};
     }
 
