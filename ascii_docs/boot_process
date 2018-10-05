@@ -1,0 +1,53 @@
++---------------------------------------------------------+
+| multiboot2 compatible bootloader, eg GRUB2              |
++----------------------------+----------------------------+
+                             |
+                             |
++----------------------------v----------------------------+
+| boot.S: _start(32bit code here)                         |
++---------------------------------------------------------+
+| ~setup kernel stack                                     |
+| ~save multiboot2_info_ptr in edi                        |
+| ~check multiboot2 compatible bootloader was used        |
+| ~check CPUID supported                                  |
+| ~check long mode supported                              |
+| ~setup identity 2MB paging                              |
+| ~setup GDT64                                            |
+| ~jump to long_mode_start, switching to 64bit            |
++----------------------------+----------------------------+
+                             |
+                             |
++----------------------------v----------------------------+
+| long_mode_init.S: long_mode_start(64bit code from here) |
++---------------------------------------------------------+
+| ~reset all segment registers to 0                       |
+| ~shift kernel stack to higher half address              |
+| ~shift multiboot2_info_ptr to higher half address       |
+| ~call kmain with multiboot2_info_ptr as param in rdi    |
++----------------------------+----------------------------+
+                             |
+                             |
++----------------------------v----------------------------+
+| main.cpp: kmain(multiboot2_info_ptr aka mb2 for short)  |
++---------------------------------------------------------+
+| ~call boot_and_start_multitasking(mb2, init_task)       |
++----------------------------+----------------------------+
+                             |
+                             |
++----------------------------v----------------------------+
+| phobos.cpp: boot_and_start_multitasking(mb2, init_task) |
++---------------------------------------------------------+
+| ~activate SSE instructions                              |
+| ~remap 1GB phys to -2GB virtual memory (higher half)    |
+| ~initialize Multiboot2 struct using mb2 pointer         |
+| ~run global object constructors                         |
+| ~setup new GDT64 that allows for userspace              |
+| ~install interrupt handlers (device drivers)            |
+| ~install cpu exception handlers eg page fault handler   |
+| ~activate interrupts and exceptions                     |
+| ~setup dynamic memory manager (enables new & delete)    |
+| ~setup syscall cpu instruction handling                 |
+| ~install virtual file system                            |
+| ~install multitasking                                   |
+| ~run kernel init_task (which spawns userspace terminal) |
++---------------------------------------------------------+
