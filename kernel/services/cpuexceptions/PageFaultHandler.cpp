@@ -6,17 +6,14 @@
  */
 
 #include "PageFaultHandler.h"
-#include "KernelLog.h"
+#include "Requests.h"
 #include "HigherHalf.h"
 #include "PageTables.h"
 #include "FrameAllocator.h"
-#include "TaskManager.h"
 
-using logging::KernelLog;
+
 using hardware::CpuState;
-using multitasking::TaskManager;
 using namespace memory;
-using namespace hardware;
 
 namespace cpuexceptions {
 
@@ -44,26 +41,22 @@ s16 PageFaultHandler::handled_exception_no() {
  *          - logging proper information and killing the task if fault caused by protection violation
  */
 CpuState* PageFaultHandler::on_exception(CpuState* cpu_state) {
-    KernelLog& klog = KernelLog::instance();
-    TaskManager& mngr = TaskManager::instance();
-    multitasking::Task& current = mngr.get_current_task();
-
     u64 faulty_address = get_faulty_address();
     u64* faulty_page = PageTables::get_page_for_virt_address(faulty_address, cpu_state->cr3);
     PageFaultActualReason pf_reason = page_fault_reason(faulty_page, cpu_state->error_code);
 
     // check if PageFault caused by Page Non Present
     if (pf_reason != PageFaultActualReason::PAGE_NOT_PRESENT) {
-        klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". %. KILLING] \n",
-                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current.name.c_str(), PF_REASON[pf_reason]);
-        return mngr.kill_current_task_group();
+        requests->log(" [PAGE FAULT at % (%MB, %GB) by \"%\". %. KILLING] \n",
+                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, requests->get_current_task_name().c_str(), PF_REASON[pf_reason]);
+        return requests->kill_current_task_group();
     }
 
     // try alloc the page
     if (!alloc_page(faulty_address, faulty_page)) {
-        klog.format(" [PAGE FAULT at % (%MB, %GB) by \"%\". Could not alloc frame. KILLING] \n",
-                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, current.name.c_str());
-        return mngr.kill_current_task_group();
+    	requests->log(" [PAGE FAULT at % (%MB, %GB) by \"%\". Could not alloc frame. KILLING] \n",
+                    faulty_address, faulty_address /1024 / 1024, faulty_address /1024 / 1024 / 1024, requests->get_current_task_name().c_str());
+        return requests->kill_current_task_group();
     }
 
     // This triggers recursive page faulting, dont use

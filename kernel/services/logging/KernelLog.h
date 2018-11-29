@@ -27,6 +27,10 @@ public:
         log_str += cstd::StringUtils::format(fmt, args...);
     }
 
+    void put(const cstd::string& s) {
+    	log_str += s;
+    }
+
 private:
     KernelLog();
     static KernelLog _instance;

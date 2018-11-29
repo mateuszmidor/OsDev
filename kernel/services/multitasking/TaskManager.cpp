@@ -6,15 +6,14 @@
  */
 
 #include "TaskManager.h"
+#include "Requests.h"
 #include "TaskFactory.h"
 #include "PageTables.h"
 #include "KernelLog.h"
 #include "MemoryManager.h"
-#include "TimeManager.h"
 #include "KLockGuard.h"
 #include "ErrorCode.h"
 
-using namespace ktime;
 using namespace memory;
 using namespace hardware;
 namespace multitasking {
@@ -115,9 +114,8 @@ const TaskList& TaskManager::get_tasks() const {
 CpuState* TaskManager::sleep_current_task(CpuState* cpu_state, u64 millis) {
     if (millis > 0) {
         TaskList* tl = new TaskList();
-        TimeManager& mngr = TimeManager::instance();
-        OnTimerExpire on_expire = [tl] () { TaskManager::instance().unblock_tasks(*tl); delete tl; };
-        mngr.emplace(millis, on_expire);
+        Requests::OnTimerExpire on_expire = [tl] () { TaskManager::instance().unblock_tasks(*tl); delete tl; };
+        requests->timer_emplace(millis, on_expire);
         block_current_task(*tl);
     }
 

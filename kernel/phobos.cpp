@@ -4,7 +4,6 @@
  *   @date: Jan 23, 2018
  * @author: Mateusz Midor
  */
-
 #include "Sse.h"
 #include "Multiboot2.h"
 #include "GlobalConstructorsRunner.h"
@@ -40,8 +39,10 @@
 #include "MassStorageMsDos.h"
 #include "VfsFat32MountPoint.h"
 
-#include "phobos.h"
+#include "services/cpuexceptions/Requests.h"
+#include "services/multitasking/Requests.h"
 
+#include "phobos.h"
 
 using namespace cstd;
 using namespace logging;
@@ -220,6 +221,57 @@ namespace phobos {
             printer.println("");
             printer.println("Loading");
         }
+
+        void setup_filesystem() {
+        	// 11. install filesystems
+        //	filesystem::on_log = run_this_guy()
+        	vfs_manager.install();
+        	details::install_dev_fs();
+        	details::install_proc_fs();
+        	details::install_fat32_fs();
+        }
+
+        /**
+         * @brief	Requests that cpuexceptions component sends to the kernel
+         */
+        class CpuExceptinsRequests : public cpuexceptions::Requests {
+        public:
+        	void log(const cstd::string& s) override {
+        		klog.put(s);
+        	}
+        	cstd::string& get_current_task_name() override {
+        		return task_manager.get_current_task().name;
+        	}
+        	bool is_current_task_userspace_task() override {
+        		return task_manager.get_current_task().is_user_space;
+        	}
+        	hardware::CpuState* kill_current_task_group() override {
+        		return task_manager.kill_current_task_group();
+        	}
+        } cpuexceptions_requests;
+
+        void setup_cpuexceptions() {
+        	cpuexceptions::requests = &cpuexceptions_requests;
+        	exception_manager.install_handler(&page_fault); // this guy allows dynamic memory on-page-fault allocation
+        }
+
+        /**
+         * @brief	Requests that multitasking component sends to the kernel
+         */
+        class MultitaskingRequests: public multitasking::Requests {
+        public:
+        	void log(const cstd::string& s) override {
+        		klog.put(s);
+        	}
+        	void timer_emplace(u32 millis, const OnTimerExpire& on_expire) override {
+        		time_manager.emplace(millis, on_expire);
+        	}
+        } multitasking_requests;
+
+        void setup_multitasking() {
+        	multitasking::requests = &multitasking_requests;
+        	task_manager.install_multitasking();
+        }
     } // namespace details
 
 
@@ -231,6 +283,7 @@ namespace phobos {
     TaskManager&    task_manager            {multitasking::TaskManager::instance()};
     VfsManager&     vfs_manager             {filesystem::VfsManager::instance()};
     VgaPrinter      printer                 {details::vga};
+
 
 
     /**
@@ -278,7 +331,7 @@ namespace phobos {
         printer.println("  installing drivers...done");
 
         // 7. install exceptions
-        exception_manager.install_handler(&page_fault);    // this guy allows dynamic memory on-page-fault allocation
+        setup_cpuexceptions();
         printer.println("  installing exceptions...done");
 
         // 8. configure interrupt manager so that it forwards interrupts and exceptions to proper managers
@@ -296,17 +349,14 @@ namespace phobos {
         printer.println("  installing system calls...done");
 
         // 11. install filesystems
-        vfs_manager.install();
-        install_dev_fs();
-        install_proc_fs();
-        install_fat32_fs();
+        setup_filesystem();
         printer.println("  installing virtual file system...done");
 
         // 12. start multitasking
-        task_manager.install_multitasking();
-        task_manager.add_task(TaskFactory::make_kernel_task(init_task, "init"));
-        printer.println("  installing multitasking...done");
-        Task::idle();
+        setup_multitasking();
+    	printer.println("  installing multitasking...done");
+    	task_manager.add_task(TaskFactory::make_kernel_task(init_task, "init"));
+    	Task::idle();
 
         // 13. we nerver get past Task::idle()
         __builtin_unreachable();

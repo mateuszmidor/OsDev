@@ -1,4 +1,4 @@
 file(GLOB SOURCES "*.cpp") 
 add_library(cpuexceptions STATIC ${SOURCES})
 target_include_directories(cpuexceptions PUBLIC .)    
-target_link_libraries(cpuexceptions kstd logging memory multitasking)
+target_link_libraries(cpuexceptions kstd hardware memory)

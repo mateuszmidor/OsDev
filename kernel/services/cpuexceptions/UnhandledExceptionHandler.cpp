@@ -6,12 +6,9 @@
  */
 
 #include "UnhandledExceptionHandler.h"
-#include "KernelLog.h"
-#include "TaskManager.h"
+#include "Requests.h"
 
-using multitasking::TaskManager;
 using hardware::CpuState;
-using logging::KernelLog;
 
 namespace cpuexceptions {
 
@@ -51,18 +48,15 @@ const char* UnhandledExceptionHandler::EXCEPTION_NAMES[32] = {
 };
 
 CpuState* UnhandledExceptionHandler::on_exception(u8 exception_no, CpuState* cpu_state) {
-    KernelLog& klog = KernelLog::instance();
-    TaskManager& mngr = TaskManager::instance();
-    const auto& current = mngr.get_current_task();
-    klog.format("\nCPU EXCEPTION: %(%) at % by \"%\" [%], error %. KILLING\n",
+    requests->log("\nCPU EXCEPTION: %(%) at % by \"%\" [%], error %. KILLING\n",
                 EXCEPTION_NAMES[exception_no],
                 exception_no,
                 cpu_state->rip,
-                current.name.c_str(),
-                current.is_user_space ? "User" : "Kernel",
+                requests->get_current_task_name().c_str(),
+                requests->is_current_task_userspace_task() ? "User" : "Kernel",
                 cpu_state->error_code);
 
-    return mngr.kill_current_task_group();
+    return requests->kill_current_task_group();
 }
 
 } /* namespace cpuexceptions */
