@@ -6,9 +6,7 @@
  */
 
 #include "UnhandledDeviceDriver.h"
-#include "KernelLog.h"
-
-using logging::KernelLog;
+#include "Requests.h"
 
 namespace drivers {
 
@@ -24,10 +22,9 @@ s16 UnhandledDeviceDriver::handled_interrupt_no() {
 }
 
 hardware::CpuState* UnhandledDeviceDriver::on_interrupt(hardware::CpuState* cpu_state) {
-    KernelLog& klog = KernelLog::instance();
     // print warning msg that UnhandledDeviceDriver interrupt has been raised
     // WARNING: unhandled interrupt may stop PIC from sending any further interrupts so this is error
-    klog.format("\nUNHANDLED INTERRUPT %\n", interrupt_no);
+    requests->log("\nUNHANDLED INTERRUPT %\n", interrupt_no);
     return cpu_state;
 }
 

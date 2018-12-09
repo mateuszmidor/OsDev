@@ -6,9 +6,7 @@
  */
 
 #include "AtaDriver.h"
-#include "KernelLog.h"
-
-using logging::KernelLog;
+#include "Requests.h"
 
 namespace drivers {
 
@@ -59,16 +57,15 @@ bool AtaDevice::is_present() const {
 
 bool AtaDevice::read28(u32 sector, void* data, u32 count) const {
     const u32 SECTOR_LIMIT = 1 << 28;
-    KernelLog& klog = KernelLog::instance();
     u8* dst = (u8*)data;
 
     if (sector >= SECTOR_LIMIT) {
-        klog.format("AtaDevice::read28: Cant read from sector that far: % >= %\n", sector, SECTOR_LIMIT);
+        requests->log("AtaDevice::read28: Cant read from sector that far: % >= %\n", sector, SECTOR_LIMIT);
         return false;
     }
 
     if (count > 512) {
-        klog.format("AtaDevice::read28: Cant write across 512 bytes sectors: sector %, count %\n", sector, count);
+        requests->log("AtaDevice::read28: Cant write across 512 bytes sectors: sector %, count %\n", sector, count);
         return false;
     }
 
@@ -102,16 +99,15 @@ bool AtaDevice::read28(u32 sector, void* data, u32 count) const {
 
 bool AtaDevice::write28(u32 sector, void const* data, u32 count) const {
     const u32 SECTOR_LIMIT = 1 << 28;
-    KernelLog& klog = KernelLog::instance();
     u8 const* dst = (u8*)data;
 
     if (sector >= SECTOR_LIMIT) {
-        klog.format("AtaDevice::write28: Cant write to sector that far: % >= %\n", sector, SECTOR_LIMIT);
+        requests->log("AtaDevice::write28: Cant write to sector that far: % >= %\n", sector, SECTOR_LIMIT);
         return false;
     }
 
     if (count > BYTES_PER_SECTOR) {
-        klog.format("AtaDevice::write28: Cant write across % bytes sectors: sector %, count %\n", BYTES_PER_SECTOR, sector, count);
+        requests->log("AtaDevice::write28: Cant write across % bytes sectors: sector %, count %\n", BYTES_PER_SECTOR, sector, count);
         return false;
     }
 
@@ -143,8 +139,6 @@ bool AtaDevice::write28(u32 sector, void const* data, u32 count) const {
 }
 
 bool AtaDevice::flush_cache() const {
-    KernelLog& klog = KernelLog::instance();
-
     device_port.write(is_master ? 0xE0 : 0xF0);
     cmd_status_port.write(CMD_FLUSH_CACHE);
 
@@ -155,7 +149,7 @@ bool AtaDevice::flush_cache() const {
 
     if (status & STATUS_ERROR)
     {
-        klog.format("AtaDevice::flush_cache: flush cache ERROR");
+        requests->log("AtaDevice::flush_cache: flush cache ERROR");
         return false;
     }
 

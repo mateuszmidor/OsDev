@@ -41,6 +41,7 @@
 
 #include "services/cpuexceptions/Requests.h"
 #include "services/multitasking/Requests.h"
+#include "services/drivers/Requests.h"
 
 #include "PageFault.h"
 #include "phobos.h"
@@ -223,6 +224,28 @@ namespace phobos {
             printer.println("Loading");
         }
 
+        /**
+         * @brief	Requests that drivers component sends to the kernel
+         */
+        class DriversRequests : public drivers::Requests {
+        public:
+            void log(const cstd::string& s) override {
+                klog.put(s);
+            }
+        } drivers_requests;
+
+        void setup_drivers() {
+            drivers::requests = &drivers_requests;
+            //pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
+            driver_manager.install_driver(&keyboard);
+            driver_manager.install_driver(&mouse);
+            driver_manager.install_driver(&pit);
+            driver_manager.install_driver(&ata_primary_bus);
+            driver_manager.install_driver(&ata_secondary_bus);
+            driver_manager.install_driver(&vga);
+            driver_manager.install_driver(&int80h);
+        }
+
         void setup_filesystem() {
         	// 11. install filesystems
         //	filesystem::on_log = run_this_guy()
@@ -279,6 +302,7 @@ namespace phobos {
         	multitasking::requests = &multitasking_requests;
         	task_manager.install_multitasking();
         }
+
     } // namespace details
 
 
@@ -327,14 +351,7 @@ namespace phobos {
         mouse.set_on_move(handle_mouse_move);
 
         // 6. install drivers
-        //pcic.install_drivers_into(driver_manager);      // if VGA device is present -> VgaDriver will be installed here
-        driver_manager.install_driver(&keyboard);
-        driver_manager.install_driver(&mouse);
-        driver_manager.install_driver(&pit);
-        driver_manager.install_driver(&ata_primary_bus);
-        driver_manager.install_driver(&ata_secondary_bus);
-        driver_manager.install_driver(&vga);
-        driver_manager.install_driver(&int80h);
+        setup_drivers();
         printer.println("  installing drivers...done");
 
         // 7. install exceptions
