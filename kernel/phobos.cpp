@@ -42,6 +42,7 @@
 #include "services/cpuexceptions/Requests.h"
 #include "services/multitasking/Requests.h"
 
+#include "PageFault.h"
 #include "phobos.h"
 
 using namespace cstd;
@@ -238,6 +239,12 @@ namespace phobos {
         public:
         	void log(const cstd::string& s) override {
         		klog.put(s);
+        	}
+        	PageFaultActualReason get_page_fault_reason(u64 faulty_address, u64 pml4_phys_addr, u64 cpu_error_code) override {
+                return PageFault::get_page_fault_reason(faulty_address, pml4_phys_addr, cpu_error_code);
+        	}
+        	bool alloc_missing_page(u64 virtual_address, u64 pml4_phys_addr) override {
+                return PageFault::alloc_missing_page(virtual_address, pml4_phys_addr);
         	}
         	cstd::string& get_current_task_name() override {
         		return task_manager.get_current_task().name;
