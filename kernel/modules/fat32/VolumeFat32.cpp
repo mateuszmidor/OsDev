@@ -7,6 +7,7 @@
 
 #include "Fat32Utils.h"
 #include "VolumeFat32.h"
+#include "filesystem/Requests.h"
 
 using namespace cstd;
 
@@ -26,8 +27,7 @@ VolumeFat32::VolumeFat32(const drivers::AtaDevice& hdd, bool bootable, u32 parti
         partition_offset_in_sectors(partition_offset_in_sectors),
         partition_size_in_sectors(partition_size_in_sectors),
         fat_table(hdd),
-        fat_data(hdd),
-        klog(logging::KernelLog::instance()) {
+        fat_data(hdd) {
 
     hdd.read28(partition_offset_in_sectors, &vbr, sizeof(vbr));
 
@@ -70,7 +70,7 @@ u32 VolumeFat32::get_cluster_size_in_bytes() const {
  */
 Fat32Entry VolumeFat32::get_entry(const UnixPath& unix_path) const {
     if (!unix_path.is_valid_absolute_path()) {
-        klog.format("VolumeFat32::get_entry: path '%' is empty or it is not an absolute path\n", unix_path);
+        requests->log("VolumeFat32::get_entry: path '%' is empty or it is not an absolute path\n", unix_path);
         return empty_entry();
     }
 
@@ -81,13 +81,13 @@ Fat32Entry VolumeFat32::get_entry(const UnixPath& unix_path) const {
     auto segments = StringUtils::split_string(unix_path, '/');
     for (const auto& path_segment : segments) {
         if (!e.is_dir) {
-            klog.format("VolumeFat32::get_entry: entry '%' is not a directory\n", e.name);
+            requests->log("VolumeFat32::get_entry: entry '%' is not a directory\n", e.name);
             return empty_entry();   // path segment is not a directory. this is error
         }
 
         e = get_entry_for_name(e, path_segment);
         if (!e) {
-            klog.format("VolumeFat32::get_entry: entry '%' does not exist\n", path_segment);
+            requests->log("VolumeFat32::get_entry: entry '%' does not exist\n", path_segment);
             return empty_entry();   // path segment does not exist. this is error
         }
     }
@@ -102,14 +102,14 @@ Fat32Entry VolumeFat32::get_entry(const UnixPath& unix_path) const {
  */
 Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_directory) const {
     if (!unix_path.is_valid_absolute_path()) {
-        klog.format("VolumeFat32::create_entry: path '%' is empty or it is not an absolute path\n", unix_path);
+        requests->log("VolumeFat32::create_entry: path '%' is empty or it is not an absolute path\n", unix_path);
         return empty_entry();
     }
 
     // check if entry name specified
     string name = unix_path.extract_file_name();
     if (name.empty()) {
-        klog.format("VolumeFat32::create_entry: Please specify name for entry to create: %\n", unix_path);
+        requests->log("VolumeFat32::create_entry: Please specify name for entry to create: %\n", unix_path);
         return empty_entry();
     }
 
@@ -117,14 +117,14 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
     string directory = unix_path.extract_directory();
     Fat32Entry parent_dir = get_entry(directory);
     if (!parent_dir) {
-        klog.format("VolumeFat32::create_entry: Parent not exists: %\n", directory);
+        requests->log("VolumeFat32::create_entry: Parent not exists: %\n", directory);
         return empty_entry();
     }
 
     // try get valid 8.3 name that is not in use yet. We are using 8.3 names until support for long names is implemented :)
     string name_8_3;
     if (!get_free_name_8_3(parent_dir, name, name_8_3)) {
-        klog.format("VolumeFat32::create_entry: Entry already exists: %(full: %)\n", name_8_3, unix_path);
+        requests->log("VolumeFat32::create_entry: Entry already exists: %(full: %)\n", name_8_3, unix_path);
         return empty_entry();
     }
 
@@ -132,7 +132,7 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
     Fat32Entry out = empty_entry();
     out.name = name_8_3;
     out.is_dir = is_directory;
-    klog.format("VolumeFat32::create_entry: name is '%'\n", out.name);
+    requests->log("VolumeFat32::create_entry: name is '%'\n", out.name);
     if (!parent_dir.alloc_entry_in_directory(out))
         return empty_entry();
 
@@ -153,28 +153,28 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
 bool VolumeFat32::get_free_name_8_3(Fat32Entry& parent, const string& full_name, string& name_8_3) const {
     // case 1. full_name fits in 8_3 limits
     if (Fat32Utils::fits_in_8_3(full_name)) {
-        klog.format("VolumeFat32::get_free_name_8_3: name fits in 8_3\n");
+        requests->log("VolumeFat32::get_free_name_8_3: name fits in 8_3\n");
 
         // check if entry with such name exists
         name_8_3 = Fat32Utils::make_8_3_filename(full_name);
         if (get_entry_for_name(parent, name_8_3)) {
-            klog.format("VolumeFat32::get_free_name_8_3: but such file already exists\n");
+            requests->log("VolumeFat32::get_free_name_8_3: but such file already exists\n");
             return false;
         }
-        klog.format("VolumeFat32::get_free_name_8_3: and no such file exists yet\n");
+        requests->log("VolumeFat32::get_free_name_8_3: and no such file exists yet\n");
         return true;
     }
 
     // case 2. full_name exceeds 8_3 limits. Need generate name~x.ext version
-    klog.format("VolumeFat32::get_free_name_8_3: name doesnt fit in 8_3\n");
+    requests->log("VolumeFat32::get_free_name_8_3: name doesnt fit in 8_3\n");
     for (u8 i = 1; i < 255; i++) {
         name_8_3 = Fat32Utils::make_8_3_filename(full_name, i);
         if (!get_entry_for_name(parent, name_8_3)) {
-            klog.format("VolumeFat32::get_free_name_8_3: generated name %\n", name_8_3);
+            requests->log("VolumeFat32::get_free_name_8_3: generated name %\n", name_8_3);
             return true;
         }
     }
-    klog.format("VolumeFat32::get_free_name_8_3: couldnt generate free name\n");
+    requests->log("VolumeFat32::get_free_name_8_3: couldnt generate free name\n");
     return false;
 }
 
@@ -188,32 +188,32 @@ bool VolumeFat32::get_free_name_8_3(Fat32Entry& parent, const string& full_name,
  */
 bool VolumeFat32::delete_entry(const UnixPath& unix_path) const {
     if (!unix_path.is_valid_absolute_path()) {
-        klog.format("VolumeFat32::delete_entry: path '%' is empty or it is not an absolute path\n", unix_path);
+        requests->log("VolumeFat32::delete_entry: path '%' is empty or it is not an absolute path\n", unix_path);
         return false;
     }
 
     if (unix_path.is_root_path()) {
-        klog.format("VolumeFat32::delete_entry: path '%' root. Cant delete root\n", unix_path);
+        requests->log("VolumeFat32::delete_entry: path '%' root. Cant delete root\n", unix_path);
         return false;
     }
 
     // get entry parent dir to be updated
     Fat32Entry parent_dir = get_entry(unix_path.extract_directory());
     if (!parent_dir) {
-        klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
+        requests->log("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
     }
 
     // get entry to be deleted
     Fat32Entry e = get_entry_for_name(parent_dir, unix_path.extract_file_name());
     if (!e) {
-        klog.format("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
+        requests->log("VolumeFat32::delete_entry: path doesn't exist: %\n", unix_path);
         return false;
     }
 
     // for directory entry - ensure it is empty
     if (e.is_dir && !e.is_directory_empty()) {
-        klog.format("VolumeFat32::delete_entry: can't delete non-empty directory: %\n", unix_path);
+        requests->log("VolumeFat32::delete_entry: can't delete non-empty directory: %\n", unix_path);
         return false;
     }
 
@@ -231,19 +231,19 @@ bool VolumeFat32::delete_entry(const UnixPath& unix_path) const {
  */
 bool VolumeFat32::move_entry(const UnixPath& unix_path_from, const UnixPath& unix_path_to) const {
     if (!unix_path_from.is_valid_absolute_path()) {
-        klog.format("VolumeFat32::move_entry: path from '%' is empty or it is not an absolute path\n", unix_path_from);
+        requests->log("VolumeFat32::move_entry: path from '%' is empty or it is not an absolute path\n", unix_path_from);
         return false;
     }
 
     if (!unix_path_to.is_valid_absolute_path()) {
-        klog.format("VolumeFat32::move_entry: path to '%' is empty or it is not an absolute path\n", unix_path_to);
+        requests->log("VolumeFat32::move_entry: path to '%' is empty or it is not an absolute path\n", unix_path_to);
         return false;
     }
 
     // get source entry
     Fat32Entry src = get_entry(unix_path_from);
     if (!src) {
-        klog.format("VolumeFat32::move_entry: src entry doesn't exists '%'\n", unix_path_from);
+        requests->log("VolumeFat32::move_entry: src entry doesn't exists '%'\n", unix_path_from);
         return false;
     }
 
@@ -258,7 +258,7 @@ bool VolumeFat32::move_entry(const UnixPath& unix_path_from, const UnixPath& uni
     // create destination entry
     Fat32Entry dst = create_entry(path_to, src.is_dir);
     if (!dst) {
-        klog.format("VolumeFat32::move_entry: can't create dst entry '%'\n", path_to);
+        requests->log("VolumeFat32::move_entry: can't create dst entry '%'\n", path_to);
         return false;
     }
 
@@ -272,7 +272,7 @@ bool VolumeFat32::move_entry(const UnixPath& unix_path_from, const UnixPath& uni
 
     // remove src entry
     if (!delete_entry(unix_path_from)) {
-        klog.format("VolumeFat32::move_entry: can't remove src entry '%'\n", unix_path_from);
+        requests->log("VolumeFat32::move_entry: can't remove src entry '%'\n", unix_path_from);
         return false;
     }
 

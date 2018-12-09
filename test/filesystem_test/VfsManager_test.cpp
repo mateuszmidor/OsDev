@@ -12,17 +12,18 @@
 #include "VfsRamDirectoryEntry.h"
 #include "VfsRamDummyFileEntry.h"
 #include "VfsRamMountPoint.h"
-#include "KernelLog.h"
+#include "FilesystemRequests.h"
 
 using namespace filesystem;
 
 class VfsManagerTest : public ::testing::Test {
+    FilesystemRequests filesystem_requests;
 protected:
     VfsManager& manager = VfsManager::instance();
 
     void SetUp() override {
+        filesystem::requests = &filesystem_requests;
         manager.install();
-        logging::KernelLog::instance().clear();
     }
 };
 

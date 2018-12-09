@@ -11,10 +11,12 @@
 #include "OpenEntry.h"
 #include "VfsCachedEntry.h"
 #include "VfsRamDummyFileEntry.h"
+#include "FilesystemRequests.h"
 
 using namespace filesystem;
 
 class OpenEntryTest : public ::testing::Test {
+    FilesystemRequests filesystem_requests;
 protected:
     VfsCachedEntryPtr entry;
 
@@ -31,6 +33,7 @@ protected:
 //    }
 
     void SetUp() override {
+        filesystem::requests = &filesystem_requests;
         entry = std::make_shared<VfsCachedEntry>(std::make_shared<VfsRamDummyFileEntry>("picture.jpg"));
     }
 

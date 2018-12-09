@@ -11,7 +11,6 @@
 #include "EntryState.h"
 #include "Fat32Data.h"
 #include "Fat32Table.h"
-#include "KernelLog.h"
 
 namespace filesystem {
 
@@ -52,7 +51,6 @@ private:
 
     const Fat32Table    fat_table;
     const Fat32Data     fat_data;
-    logging::KernelLog& klog;
     u32                 head_cluster;
     u32                 tail_cluster;
     u32                 size;

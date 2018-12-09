@@ -7,9 +7,6 @@
 
 #include "kstd.h"
 #include "Fat32Data.h"
-#include "KernelLog.h"
-
-using namespace cstd;
 
 namespace filesystem {
 

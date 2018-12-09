@@ -7,6 +7,7 @@
 
 #include "kstd.h"
 #include "Fat32ClusterChain.h"
+#include "filesystem/Requests.h"
 
 using namespace cstd;
 
@@ -17,8 +18,7 @@ Fat32ClusterChain::Fat32ClusterChain(const Fat32Table& fat_table, const Fat32Dat
     fat_data(fat_data),
     head_cluster(head_cluster),
     tail_cluster(Fat32Table::CLUSTER_UNUSED),
-    size(size),
-    klog(logging::KernelLog::instance())
+    size(size)
 {
 }
 
@@ -146,12 +146,12 @@ bool Fat32ClusterChain::detach_cluster(u32 cluster) {
  */
 u32 Fat32ClusterChain::read(Fat32State& state, void* data, u32 count) {
     if (is_empty()) {
-        klog.format("Fat32ClusterChain::read: empty cluster chain\n");
+        filesystem::requests->log("Fat32ClusterChain::read: empty cluster chain\n");
         return 0;
     }
 
     if (state.current_byte > size) {
-        klog.format("Fat32ClusterChain::read: tried reading after end of cluster chain\n");
+        requests->log("Fat32ClusterChain::read: tried reading after end of cluster chain\n");
         return 0;
     }
 
@@ -198,7 +198,7 @@ u32 Fat32ClusterChain::read(Fat32State& state, void* data, u32 count) {
  */
 u32 Fat32ClusterChain::write(Fat32State& state, const void* data, u32 count) {
     if ((u64)state.current_byte + count > 0xFFFFFFFF){
-        klog.format("Fat32ClusterChain::write: would exceed Fat32 4GB limit\n");
+        requests->log("Fat32ClusterChain::write: would exceed Fat32 4GB limit\n");
         return 0;
     }
 
@@ -248,11 +248,11 @@ u32 Fat32ClusterChain::get_cluster_for_write(u32 current_cluster) {
 
     if (fat_table.is_allocated_cluster(current_cluster)) {
         cluster = current_cluster;
-        klog.format("Fat32ClusterChain::get_cluster_for_write: reusing cluster %\n", cluster);
+        requests->log("Fat32ClusterChain::get_cluster_for_write: reusing cluster %\n", cluster);
     } else {
         attach_cluster();
         cluster = get_tail();
-        klog.format("Fat32ClusterChain::get_cluster_for_write: attached new cluster %\n", cluster);
+        requests->log("Fat32ClusterChain::get_cluster_for_write: attached new cluster %\n", cluster);
     }
 
     return cluster;

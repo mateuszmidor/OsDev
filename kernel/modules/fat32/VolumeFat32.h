@@ -149,7 +149,6 @@ WRITE FILE ENTRY
 #ifndef SRC_FILESYSTEM_FAT32_VOLUMEFAT32_H_
 #define SRC_FILESYSTEM_FAT32_VOLUMEFAT32_H_
 
-#include "KernelLog.h"
 #include "AtaDriver.h"
 #include "Fat32Data.h"
 #include "Fat32Entry.h"
@@ -183,7 +182,6 @@ private:
     Fat32Entry empty_entry() const;
 
     const drivers::AtaDevice    hdd;
-    logging::KernelLog&         klog;
     VolumeBootRecordFat32       vbr;
     Fat32Table                  fat_table;
     Fat32Data                   fat_data;

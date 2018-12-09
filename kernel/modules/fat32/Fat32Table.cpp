@@ -6,12 +6,12 @@
  */
 
 #include "Fat32Table.h"
+#include "filesystem/Requests.h"
 
 namespace filesystem {
 
 Fat32Table::Fat32Table(const drivers::AtaDevice& hdd) :
-    hdd(hdd),
-    klog(logging::KernelLog::instance()) {
+    hdd(hdd) {
 }
 
 void Fat32Table::setup(u32 fat_start_in_sectors, u16 sector_size, u8 sectors_per_cluster, u32 fat_size_in_sectors) {
@@ -202,7 +202,7 @@ u32 Fat32Table::alloc_cluster() const {
         }
     }
 
-    klog.format("Fat32Table::alloc_cluster: no free cluster to allocate found\n");
+    requests->log("Fat32Table::alloc_cluster: no free cluster to allocate found\n");
     return CLUSTER_END_OF_CHAIN; // no free cluster found
 }
 

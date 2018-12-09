@@ -8,6 +8,7 @@
 #include "kstd.h"
 #include "Fat32Entry.h"
 #include "Fat32Utils.h"
+#include "filesystem/Requests.h"
 
 using namespace cstd;
 
@@ -20,7 +21,7 @@ DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32() const {
     const Fat32Entry& e = *this;
     Fat32Utils::make_8_3_space_padded_filename(e.name, name, ext);
 
-//    klog.format("Fat32Entry::make_directory_entry_fat32: name '%', ext '%'\n", name, ext);
+//    requests->log("Fat32Entry::make_directory_entry_fat32: name '%', ext '%'\n", name, ext);
     memcpy(result.name, name.data(), 8);
     memcpy(result.ext, ext.data(), 3);
     result.a_time = 0;
@@ -57,8 +58,7 @@ Fat32Entry::Fat32Entry(const Fat32Table& fat_table, const Fat32Data& fat_data, c
         is_dir(is_directory),
         data(fat_table, fat_data, data_cluster, is_directory ?  0xFFFFFFFF : size),
         parent_data(fat_table, fat_data, parent_data_cluster, 0xFFFFFFFF), // parent_data is directory data cluster which size is unknown
-        parent_index(parent_index),
-        klog(logging::KernelLog::instance()) {
+        parent_index(parent_index) {
 }
 
 Fat32Entry& Fat32Entry::operator=(const Fat32Entry& other) {
@@ -101,12 +101,12 @@ Fat32State Fat32Entry::open() const {
  */
 u32 Fat32Entry::read(Fat32State& state, void* data, u32 count) {
     if (!is_initialized()) {
-        klog.format("Fat32Entry::read: uninitialized entry\n");
+        requests->log("Fat32Entry::read: uninitialized entry\n");
         return 0;
     }
 
     if (is_dir) {
-        klog.format("Fat32Entry::read: entry is a directory\n");
+        requests->log("Fat32Entry::read: entry is a directory\n");
         return 0;
     }
 
@@ -121,17 +121,17 @@ u32 Fat32Entry::read(Fat32State& state, void* data, u32 count) {
  */
 u32 Fat32Entry::write(Fat32State& state, const void* data, u32 count) {
     if (!is_initialized()) {
-        klog.format("Fat32Entry::write: uninitialized entry\n");
+        requests->log("Fat32Entry::write: uninitialized entry\n");
         return 0;
     }
 
     if (is_dir) {
-        klog.format("Fat32Entry::write: specified entry is a directory\n");
+        requests->log("Fat32Entry::write: specified entry is a directory\n");
         return 0;
     }
 
     if ((u64)this->data.get_size() + count > 0xFFFFFFFF){
-        klog.format("Fat32Entry::write: would exceed Fat32 4GB limit\n");
+        requests->log("Fat32Entry::write: would exceed Fat32 4GB limit\n");
         return 0;
     }
 
@@ -152,17 +152,17 @@ bool Fat32Entry::seek(Fat32State& state, u32 new_position) {
         return true;
 
     if (!is_initialized()) {
-        klog.format("Fat32Entry::seek: uninitialized entry\n");
+        requests->log("Fat32Entry::seek: uninitialized entry\n");
         return false;
     }
 
     if (is_dir){
-        klog.format("Fat32Entry::seek: entry is a directory\n");
+        requests->log("Fat32Entry::seek: entry is a directory\n");
         return false;
     }
 
     if (new_position > data.get_size()) {
-        klog.format("Fat32Entry::seek: new_position > size (% > %)\n", new_position, data.get_size());
+        requests->log("Fat32Entry::seek: new_position > size (% > %)\n", new_position, data.get_size());
         return false;
     }
 
@@ -177,12 +177,12 @@ bool Fat32Entry::truncate(Fat32State& state, u32 new_size) {
         return true;
 
     if (!is_initialized()) {
-        klog.format("Fat32Entry::truncate: uninitialized entry\n");
+        requests->log("Fat32Entry::truncate: uninitialized entry\n");
         return false;
     }
 
     if (is_dir){
-        klog.format("Fat32Entry::truncate: entry is a directory\n");
+        requests->log("Fat32Entry::truncate: entry is a directory\n");
         return false;
     }
 
@@ -235,12 +235,12 @@ u32 Fat32Entry::get_position(const Fat32State& state) const {
  */
 Fat32EnumerateResult Fat32Entry::enumerate_entries(const OnEntryFound& on_entry) {
     if (!is_initialized()) {
-        klog.format("Fat32Entry::enumerate_entries: uninitialized entry\n");
+        requests->log("Fat32Entry::enumerate_entries: uninitialized entry\n");
         return Fat32EnumerateResult::ENUMERATION_FAILED;
     }
 
     if (!is_dir){
-        klog.format("Fat32Entry::enumerate_entries: not a directory\n");
+        requests->log("Fat32Entry::enumerate_entries: not a directory\n");
         return Fat32EnumerateResult::ENUMERATION_FAILED;
     }
 
@@ -419,12 +419,12 @@ bool Fat32Entry::alloc_entry_in_directory_at_index(u32 index_in_dir, Fat32Entry&
 bool Fat32Entry::dealloc_entry_in_directory(Fat32Entry& e, u32 root_cluster) {
     // mark entry as nomore/unused depending on it's position in the directory
     if (is_no_more_entires_after(e)) {
-        klog.format("Fat32Entry::dealloc_entry_in_directory: no more entries after\n");
+        requests->log("Fat32Entry::dealloc_entry_in_directory: no more entries after\n");
         if (!mark_entry_as_nomore(e))
             return false;
     }
     else {
-        klog.format("Fat32Entry::dealloc_entry_in_directory: set entry unused\n");
+        requests->log("Fat32Entry::dealloc_entry_in_directory: set entry unused\n");
         if (!mark_entry_as_unused(e))
            return false;
     }

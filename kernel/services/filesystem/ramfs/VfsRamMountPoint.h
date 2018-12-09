@@ -9,7 +9,6 @@
 #define KERNEL_SERVICES_FILESYSTEM_RAMFS_VFSRAMMOUNTPOINT_H_
 
 #include "VfsRamDirectoryEntry.h"
-#include "KernelLog.h"
 
 namespace filesystem {
 
@@ -39,7 +38,6 @@ private:
 
     const cstd::string          name;
     VfsRamDirectoryEntryPtr     root;
-    logging::KernelLog&         klog;
 };
 
 }  /* namespace filesystem */

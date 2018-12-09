@@ -13,7 +13,7 @@
 #include "Fat32Data.h"
 #include "Fat32Structs.h"
 #include "Fat32Table.h"
-#include "KernelLog.h"
+#include "String.h"
 
 namespace filesystem {
 
@@ -88,7 +88,6 @@ private:
 
     const Fat32Table    fat_table;
     const Fat32Data     fat_data;
-    logging::KernelLog& klog;
 
     // entry meta data
     cstd::string        name;

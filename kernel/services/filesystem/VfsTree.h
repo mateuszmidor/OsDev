@@ -9,7 +9,6 @@
 #define KERNEL_SERVICES_FILESYSTEM_VFSTREE_H_
 
 
-#include "KernelLog.h"
 #include "SyscallResult.h"
 #include "EntryCache.h"
 
@@ -28,7 +27,6 @@ struct MountpointPath;
  */
 class VfsTree {
 public:
-    VfsTree() : klog(logging::KernelLog::instance()) { }
     void install();
 
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
@@ -53,7 +51,6 @@ private:
     utils::SyscallResult<void> move_persistent_entry(const UnixPath& path_from, const UnixPath& path_to);
 
     EntryCache          entry_cache;
-    logging::KernelLog& klog;
 };
 
 } /* namespace filesystem */

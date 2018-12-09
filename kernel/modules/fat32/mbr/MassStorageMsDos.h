@@ -10,6 +10,7 @@
 
 #include "AtaDriver.h"
 #include "VolumeFat32.h"
+#include "Vector.h"
 
 namespace filesystem {
 

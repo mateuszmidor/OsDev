@@ -9,7 +9,6 @@
 #define SRC_FILESYSTEM_FAT32_FAT32TABLE_H_
 
 #include "AtaDriver.h"
-#include "KernelLog.h"
 
 namespace filesystem {
 
@@ -43,7 +42,6 @@ private:
     bool write_fat_table_sector(u32 sector, void const* data, u32 size) const;
 
     const drivers::AtaDevice&   hdd;
-    logging::KernelLog&         klog;
     u16                         fat_entries_per_sector  = 0;
     u32                         fat_start_in_sectors    = 0;
     u32                         fat_size_in_sectors     = 0;

@@ -8,7 +8,6 @@
 #ifndef SRC_FILESYSTEM_VFSMANAGER_H_
 #define SRC_FILESYSTEM_VFSMANAGER_H_
 
-#include "KernelLog.h"
 #include "OpenEntry.h"
 #include "VfsTree.h"
 
@@ -33,10 +32,7 @@ public:
     bool exists(const UnixPath& path) const;
 
 private:
-    VfsManager() : klog(logging::KernelLog::instance()) {}
-
     static VfsManager   _instance;
-    logging::KernelLog& klog;
     VfsTree             tree;
 };
 

@@ -10,6 +10,7 @@
 #include "DriverManager.h"
 #include "VfsMountInfoEntry.h"
 #include "MassStorageMsDos.h"
+#include "StringUtils.h"
 
 using namespace cstd;
 using namespace drivers;

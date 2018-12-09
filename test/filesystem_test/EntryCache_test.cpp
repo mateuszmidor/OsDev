@@ -9,10 +9,14 @@
 #include <gmock/gmock.h>
 #include "EntryCache.h"
 #include "VfsRamDirectoryEntry.h"
+#include "FilesystemRequests.h"
 
 using namespace filesystem;
 
+
+
 class EntryCacheTest : public ::testing::Test {
+    FilesystemRequests filesystem_requests;
 protected:
     EntryCache ec;
     VfsCachedEntryPtr root;
@@ -24,6 +28,7 @@ protected:
     }
 
     void SetUp() override {
+        filesystem::requests = &filesystem_requests;
         root = ec.allocate(mkdir("/"), "/");
         home = ec.allocate(mkdir("HOME"), "/HOME");
         images = ec.allocate(mkdir("images"), "/HOME/images");

@@ -42,6 +42,7 @@
 #include "services/cpuexceptions/Requests.h"
 #include "services/multitasking/Requests.h"
 #include "services/drivers/Requests.h"
+#include "filesystem/Requests.h"
 
 #include "PageFault.h"
 #include "phobos.h"
@@ -246,9 +247,18 @@ namespace phobos {
             driver_manager.install_driver(&int80h);
         }
 
+        /**
+         * @brief	Requests that filesystem component sends to the kernel
+         */
+        class FilesystemRequests : public filesystem::Requests {
+        public:
+            void log(const cstd::string& s) override {
+                klog.put(s);
+            }
+        } filesystem_requests;
+
         void setup_filesystem() {
-        	// 11. install filesystems
-        //	filesystem::on_log = run_this_guy()
+        	filesystem::requests = &filesystem_requests;
         	vfs_manager.install();
         	details::install_dev_fs();
         	details::install_proc_fs();

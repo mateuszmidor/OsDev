@@ -12,11 +12,12 @@
 #include "VfsRamDirectoryEntry.h"
 #include "VfsRamDummyFileEntry.h"
 #include "VfsRamMountPoint.h"
-#include "KernelLog.h"
+#include "FilesystemRequests.h"
 
 using namespace filesystem;
 
 class VfsTreeTest : public ::testing::Test {
+    FilesystemRequests filesystem_requests;
 protected:
     VfsTree tree;
 
@@ -33,12 +34,11 @@ protected:
     }
 
     void SetUp() override {
+        filesystem::requests = &filesystem_requests;
         tree.install();
-        logging::KernelLog::instance().clear();
     }
 
     void print_log() {
-        std::cout << logging::KernelLog::instance().get_text() << std::endl;
     }
 };
 

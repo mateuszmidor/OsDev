@@ -8,13 +8,14 @@
 #include "VfsRamMountPoint.h"
 #include "VfsRamDummyFileEntry.h"
 #include "StringUtils.h"
+#include "Requests.h"
 
 using namespace cstd;
 using namespace middlespace;
 
 namespace filesystem {
 
-VfsRamMountPoint::VfsRamMountPoint(const cstd::string& name) : name(name), klog(logging::KernelLog::instance()) {
+VfsRamMountPoint::VfsRamMountPoint(const cstd::string& name) : name(name) {
     root = std::make_shared<VfsRamDirectoryEntry>(name);
 }
 
@@ -24,7 +25,7 @@ VfsRamMountPoint::VfsRamMountPoint(const cstd::string& name) : name(name), klog(
  */
 utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::get_entry(const UnixPath& path) {
     if (!path.is_valid_path()) {
-        klog.format("VfsRamMountPoint::get_entry: not a valid path: %\n", path);
+        requests->log("VfsRamMountPoint::get_entry: not a valid path: %\n", path);
         return {ErrorCode::EC_INVAL};
     }
 
@@ -35,13 +36,13 @@ utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::get_entry(const UnixPath& pa
     auto segments = StringUtils::split_string(path, '/');
     for (const auto& path_segment : segments) {
         if (e->get_type() != VfsEntryType::DIRECTORY) {
-            klog.format("VfsRamMountPoint::get_entry: path segment '%' is not a directory\n", e->get_name());
+            requests->log("VfsRamMountPoint::get_entry: path segment '%' is not a directory\n", e->get_name());
             return {ErrorCode::EC_INVAL};   // path segment is not a directory. this is error
         }
 
         e = e->get_entry(path_segment).value;
         if (!e) {
-            klog.format("VfsRamMountPoint::get_entry: path segment '%' does not exist\n", path_segment);
+            requests->log("VfsRamMountPoint::get_entry: path segment '%' does not exist\n", path_segment);
             return {ErrorCode::EC_NOENT};   // path segment does not exist. this is error
         }
     }
@@ -63,14 +64,14 @@ utils::SyscallResult<void> VfsRamMountPoint::enumerate_entries(const OnVfsEntryF
  */
 utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::create_entry(const UnixPath& path, bool is_directory) {
     if (!path.is_valid_absolute_path()) {
-        klog.format("VfsRamMountPoint::create_entry: path is empty or it is not an absolute path: %\n", path);
+        requests->log("VfsRamMountPoint::create_entry: path is empty or it is not an absolute path: %\n", path);
         return {ErrorCode::EC_INVAL};
     }
 
     auto parent_path = path.extract_directory();
     auto parent = get_entry(parent_path).value;
     if (!parent || parent->get_type() != VfsEntryType::DIRECTORY) {
-        klog.format("VfsRamMountPoint::create_entry: invalid parent directory path: %\n", parent_path);
+        requests->log("VfsRamMountPoint::create_entry: invalid parent directory path: %\n", parent_path);
         return {ErrorCode::EC_INVAL};
     }
 
@@ -83,7 +84,7 @@ utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::create_entry(const UnixPath&
 
     auto parent_dir = std::static_pointer_cast<VfsRamDirectoryEntry>(parent);
     if (!parent_dir->attach_entry(entry))  {
-        klog.format("VfsRamMountPoint::create_entry: file already exists: %\n", path);
+        requests->log("VfsRamMountPoint::create_entry: file already exists: %\n", path);
         return {ErrorCode::EC_EXIST};
     }
 
@@ -95,12 +96,12 @@ utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::create_entry(const UnixPath&
  */
 utils::SyscallResult<void> VfsRamMountPoint::delete_entry(const UnixPath& path) {
     if (!path.is_valid_absolute_path()) {
-        klog.format("VfsRamMountPoint::delete_entry: path is empty or it is not an absolute path: %\n", path);
+        requests->log("VfsRamMountPoint::delete_entry: path is empty or it is not an absolute path: %\n", path);
         return {ErrorCode::EC_INVAL};
     }
 
     if (path.is_root_path()) {
-        klog.format("VfsRamMountPoint::delete_entry: can't delete the root: %\n", path);
+        requests->log("VfsRamMountPoint::delete_entry: can't delete the root: %\n", path);
         return {ErrorCode::EC_INVAL};
     }
 
@@ -108,7 +109,7 @@ utils::SyscallResult<void> VfsRamMountPoint::delete_entry(const UnixPath& path) 
     auto parent_path = path.extract_directory();
     auto parent = get_entry(parent_path).value;
     if (!parent || parent->get_type() != VfsEntryType::DIRECTORY) {
-        klog.format("VfsRamMountPoint::delete_entry: invalid parent directory path: %\n", parent_path);
+        requests->log("VfsRamMountPoint::delete_entry: invalid parent directory path: %\n", parent_path);
         return {ErrorCode::EC_INVAL};
     }
 
@@ -117,13 +118,13 @@ utils::SyscallResult<void> VfsRamMountPoint::delete_entry(const UnixPath& path) 
     auto parent_dir = std::static_pointer_cast<VfsRamDirectoryEntry>(parent);
     auto entry = parent_dir->get_entry(entry_name).value;
     if (!entry) {
-        klog.format("VfsRamMountPoint::delete_entry: invalid path: %\n", path);
+        requests->log("VfsRamMountPoint::delete_entry: invalid path: %\n", path);
         return {ErrorCode::EC_NOENT};
     }
 
     // check if target entry is nonempty directory
     if (is_non_empty_directory(entry)) {
-        klog.format("VfsRamMountPoint::delete_entry: can't delete non-empty directory: %\n", path);
+        requests->log("VfsRamMountPoint::delete_entry: can't delete non-empty directory: %\n", path);
         return {ErrorCode::EC_INVAL};
     }
 
@@ -148,30 +149,30 @@ bool VfsRamMountPoint::is_non_empty_directory(const VfsEntryPtr& e) const {
  */
 utils::SyscallResult<void> VfsRamMountPoint::move_entry(const UnixPath& path_from, const UnixPath& path_to) {
     if (path_from.is_root_path()) {
-        klog.format("VfsRamMountPoint::move_entry: can't move the root: %\n", path_from);
+        requests->log("VfsRamMountPoint::move_entry: can't move the root: %\n", path_from);
         return {ErrorCode::EC_INVAL};
     }
 
     if (!path_from.is_valid_absolute_path()) {
-        klog.format("VfsRamMountPoint::move_entry: path_from is empty or it is not an absolute path: %\n", path_from);
+        requests->log("VfsRamMountPoint::move_entry: path_from is empty or it is not an absolute path: %\n", path_from);
         return {ErrorCode::EC_INVAL};
     }
 
     if (!path_to.is_valid_absolute_path()) {
-        klog.format("VfsRamMountPoint::move_entry: path_to is empty or it is not an absolute path: %\n", path_to);
+        requests->log("VfsRamMountPoint::move_entry: path_to is empty or it is not an absolute path: %\n", path_to);
         return {ErrorCode::EC_INVAL};
     }
 
     auto src = get_entry(path_from);
     if (!src) {
-        klog.format("VfsRamMountPoint::move_entry: src doesnt exist: %\n", path_from);
+        requests->log("VfsRamMountPoint::move_entry: src doesnt exist: %\n", path_from);
         return {ErrorCode::EC_NOENT};
     }
 
     string parent_path_to = path_to.extract_directory();
     auto dst_parent = get_entry(parent_path_to);
     if (!dst_parent) {
-        klog.format("VfsRamMountPoint::move_entry: dst parent dir doesnt exist: %\n", parent_path_to);
+        requests->log("VfsRamMountPoint::move_entry: dst parent dir doesnt exist: %\n", parent_path_to);
         return {dst_parent.ec};
     }
 
@@ -194,7 +195,7 @@ utils::SyscallResult<void> VfsRamMountPoint::move_entry(const UnixPath& path_fro
         return {ErrorCode::EC_OK};
     }
     else {
-        klog.format("VfsRamMountPoint::move_entry: dst exists: %\n", path_to);
+        requests->log("VfsRamMountPoint::move_entry: dst exists: %\n", path_to);
         return {ErrorCode::EC_EXIST};
     }
 }
