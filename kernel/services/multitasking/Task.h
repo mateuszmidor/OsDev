@@ -9,8 +9,8 @@
 #define SRC_MULTITASKING_TASK_H_
 
 #include "CpuState.h"
-#include "TaskList.h"
 #include "TaskGroupData.h"
+#include "../CommonStructs.h"
 
 namespace multitasking {
 

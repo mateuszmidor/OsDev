@@ -57,7 +57,11 @@ bool RoundRobinScheduler::is_valid_task(Task* task) const {
  * @return  Task pointer on success, nullptr otherwise
  */
 Task* RoundRobinScheduler::get_by_tid(u32 task_id) {
-    return tasks.get_by_tid(task_id);
+    for (Task* t : tasks)
+        if (t->task_id == task_id)
+            return t;
+
+    return nullptr;
 }
 
 /**

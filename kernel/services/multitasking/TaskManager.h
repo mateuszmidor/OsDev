@@ -9,8 +9,8 @@
 #define SRC_TASKMANAGER_H_
 
 #include "Task.h"
-#include "TaskList.h"
 #include "RoundRobinScheduler.h"
+#include "../CommonStructs.h"
 
 namespace multitasking {
 

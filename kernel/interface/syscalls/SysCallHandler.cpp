@@ -27,6 +27,7 @@
 using namespace cstd;
 using namespace drivers;
 using namespace filesystem;
+using namespace ipc;
 
 namespace syscalls {
 

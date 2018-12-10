@@ -43,7 +43,7 @@
 #include "services/multitasking/Requests.h"
 #include "services/drivers/Requests.h"
 #include "filesystem/Requests.h"
-
+#include "services/ipc/Requests.h"
 #include "PageFault.h"
 #include "phobos.h"
 
@@ -58,6 +58,7 @@ using namespace syscalls;
 using namespace utils;
 using namespace filesystem;
 using namespace ktime;
+using namespace ipc;
 using namespace middlespace;
 
 namespace phobos {
@@ -313,6 +314,19 @@ namespace phobos {
         	task_manager.install_multitasking();
         }
 
+        class IpcRequests : public ipc::Requests {
+        public:
+            void block_current_task(TaskList& list) override  {
+                task_manager.block_current_task(list);
+            }
+            void unblock_tasks(TaskList& list) override {
+                task_manager.unblock_tasks(list);
+            }
+        } ipc_requests;
+
+        void setup_ipc() {
+            ipc::requests = &ipc_requests;
+        }
     } // namespace details
 
 
@@ -386,7 +400,10 @@ namespace phobos {
         setup_filesystem();
         printer.println("  installing virtual file system...done");
 
-        // 12. start multitasking
+        // 12. setup inter process communication before multitasking starts
+        setup_ipc();
+
+        // 13. start multitasking
         setup_multitasking();
     	printer.println("  installing multitasking...done");
     	task_manager.add_task(TaskFactory::make_kernel_task(init_task, "init"));

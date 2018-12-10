@@ -9,20 +9,19 @@
 #include <errno.h>
 #include "kstd.h"
 #include "VfsRamFifoEntry.h"
+#include "Requests.h"
 
-using namespace multitasking;
+using namespace filesystem;
 
-namespace filesystem {
+namespace ipc {
 
 /**
  * @brief   Read maximum of "count" bytes from the front of the pipe or block the reader if there is nothing to read
  */
 utils::SyscallResult<u64> VfsRamFifoEntry::read(EntryState*, void* data, u32 count) {
-    TaskManager& mngr = TaskManager::instance();
-
     // if buffer is empty - block the reader
     if (size == 0) {
-        mngr.block_current_task(read_wait_list);
+        requests->block_current_task(read_wait_list);
         return {middlespace::ErrorCode::EC_AGAIN};
     }
 
@@ -42,7 +41,7 @@ utils::SyscallResult<u64> VfsRamFifoEntry::read(EntryState*, void* data, u32 cou
     size = num_bytes_remaining;
 
     // we made some room in the buffer - unblock the writers
-    mngr.unblock_tasks(write_wait_list);
+    requests->unblock_tasks(write_wait_list);
 
     return {num_bytes_to_read};
 }
@@ -51,11 +50,9 @@ utils::SyscallResult<u64> VfsRamFifoEntry::read(EntryState*, void* data, u32 cou
  * @brief   Write maximum of "count" bytes to the end of the pipe or block the writer if there is no space left
  */
 utils::SyscallResult<u64> VfsRamFifoEntry::write(EntryState*, const void* data, u32 count) {
-    TaskManager& mngr = TaskManager::instance();
-
     // if buffer is full - block the writer
     if (size == BUFF_SIZE) {
-        mngr.block_current_task(write_wait_list);
+        requests->block_current_task(write_wait_list);
         return {middlespace::ErrorCode::EC_AGAIN};
     }
 
@@ -70,7 +67,7 @@ utils::SyscallResult<u64> VfsRamFifoEntry::write(EntryState*, const void* data, 
     size += num_bytes_to_write;
 
     // we got some data into the buffer - unblock the readers
-    mngr.unblock_tasks(read_wait_list);
+    requests->unblock_tasks(read_wait_list);
 
     return {num_bytes_to_write};
 }
@@ -89,8 +86,7 @@ utils::SyscallResult<void> VfsRamFifoEntry::truncate(EntryState*, u32 new_size) 
     size = new_size;
 
     // we made some room in the buffer - unblock the writers
-    TaskManager& mngr = TaskManager::instance();
-    mngr.unblock_tasks(write_wait_list);
+    requests->unblock_tasks(write_wait_list);
 
     return {middlespace::ErrorCode::EC_OK};
 }
