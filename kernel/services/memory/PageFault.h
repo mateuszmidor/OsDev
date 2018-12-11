@@ -92,7 +92,7 @@ static bool alloc_missing_page(u64 virtual_address, u64 pml4_phys_addr) {
     u64* page_virt_addr = PageTables::get_page_for_virt_address(virtual_address, pml4_phys_addr);
     *page_virt_addr = frame_phys_addr | PageAttr::PRESENT | PageAttr::WRITABLE | PageAttr::HUGE_PAGE;
 
-    bool is_kernel_address_space = (u64)page_virt_addr >= HigherHalf::get_kernel_heap_low_limit();
+    bool is_kernel_address_space = (u64)virtual_address >= HigherHalf::get_kernel_heap_low_limit();
     if (is_kernel_address_space)
         *page_virt_addr |= PageAttr::GLOBAL_PAGE;
     else
