@@ -52,13 +52,13 @@ Simple arkanoid demo
 
 # Debug it in terminal
 > sudo ./remount_hdd.sh
-> ./build_kernel.sh && ./build_user.sh && ./rungdb.sh
-> gdb -symbols=build/kernel/phobos-x86_64.bin -ex "set arch i386:x86-64:intel" -ex "target remote localhost:1234"
+> ./build_kernel.sh -DCMAKE_BUILD_TYPE=DEBUG && ./build_user.sh && ./rungdb.sh
+> gdb -symbols=build/kernel/kernel/phobos-x86_64.bin -ex "set arch i386:x86-64:intel" -ex "target remote localhost:1234"
 (gdb) break kmain
 (gdb) continue
 (gdb) ^a + ^x
 
-# Debug in in Eclipse
+# Debug in Eclipse
 Run->Debug Configurations... ->C/C++ Remote Application->add  
 Set Project to PhobOS  
 Set "Using GDB(DSF) Manual Remote Debugging Launcher" instead of Automatic one  
@@ -66,8 +66,28 @@ Under Debugger->Connection tab set:
  + Stop on startup at: kmain  
  + Port number to 1234  
  
-(terminal) make rungdb  
+(terminal) ./build_kernel.sh -DCMAKE_BUILD_TYPE=DEBUG && ./build_user.sh && ./rungdb.sh
 (eclipse) Debug->our newly created configuration  
+
+# Debug in VS Code
+Install Native Debug from market
+launch.json:
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "gdb",
+        "request": "attach",
+        "name": "Attach to QEMU",
+        "executable": "${workspaceRoot}/build/kernel/kernel/phobos-x86_64.bin",
+        "target": ":1234",
+        "remote": true,
+        "cwd": "${workspaceRoot}"
+      }
+    ]
+}
+(terminal) ./build_kernel.sh -DCMAKE_BUILD_TYPE=DEBUG && ./build_user.sh && ./rungdb.sh
+(vscode) Debug->"Attach to QEMU"
 
 # GDB pretty printing of STL containers
  + Install python3
