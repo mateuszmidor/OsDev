@@ -8,7 +8,6 @@
 #ifndef KERNEL_SERVICES_FILESYSTEM_REQUESTS_H_
 #define KERNEL_SERVICES_FILESYSTEM_REQUESTS_H_
 
-#include <functional>
 #include "StringUtils.h"
 
 namespace filesystem {

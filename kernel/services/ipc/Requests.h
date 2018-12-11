@@ -8,8 +8,6 @@
 #ifndef KERNEL_SERVICES_IPC_REQUESTS_H_
 #define KERNEL_SERVICES_IPC_REQUESTS_H_
 
-#include <functional>
-#include "StringUtils.h"
 #include "../CommonStructs.h"
 
 namespace ipc {
