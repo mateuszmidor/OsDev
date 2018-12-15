@@ -60,7 +60,7 @@ void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
 
     // prepare task cpu state to setup cpu register with
     cpu_state = (CpuState*)(STACK_END - sizeof(CpuState) - sizeof(TaskEpilogue));
-    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg1, arg2, is_user_space, task_group_data->pml4_phys_addr};
+    new (cpu_state) CpuState {(u64)entrypoint, (u64)task_epilogue, arg1, arg2, is_user_space, task_group_data->address_space.pml4_phys_addr};
 
     task_id = tid;
 }

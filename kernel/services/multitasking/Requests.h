@@ -10,6 +10,7 @@
 
 #include <functional>
 #include "StringUtils.h"
+#include "../CommonStructs.h"
 
 namespace multitasking {
 
@@ -31,6 +32,10 @@ public: // Boilerplate
 public: // Actual methods to implement
 	virtual void log(const cstd::string& s) = 0;
 	virtual void timer_emplace(u32 millis, const OnTimerExpire& on_expire) = 0;
+	virtual void* alloc_stack_and_mark_guard_page(AddressSpace& as, size_t num_bytes) = 0;
+	virtual AddressSpace get_kernel_address_space() = 0;
+	virtual void load_address_space(const AddressSpace& as) = 0;
+	virtual void release_address_space(AddressSpace& as) = 0;
 };
 
 /**

@@ -12,6 +12,7 @@
 #include "PageTables.h"
 #include "MemoryManager.h"
 #include "ElfRunner.h"
+#include "AddressSpaceManager.h"
 
 using namespace cstd;
 using namespace utils;
@@ -47,7 +48,8 @@ SyscallResult<u32> ElfRunner::run(u8* elf_data, vector<string>* args) const {
     const auto& current = task_manager.get_current_task();
     const string& CWD = current.task_group_data->cwd;           // inherit current working directory
     Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(args); // kernel task so it can run "load_and_run_elf"
-    task->task_group_data  = std::make_shared<TaskGroupData>(pml4_phys_addr, CWD, HEAP_LOW_LIMIT, HEAP_HIGH_LIMIT, current.task_id); // but in its own address space
+    AddressSpace as {HEAP_LOW_LIMIT, HEAP_HIGH_LIMIT, pml4_phys_addr};
+    task->task_group_data  = std::make_shared<TaskGroupData>(as, CWD, current.task_id); // but in its own address space
 
     if (u32 tid = task_manager.add_task(task)) {
         return {tid};
@@ -91,10 +93,10 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
  */
 char** ElfRunner::string_vec_to_argv(const vector<string>& src_vec, TaskGroupDataPtr tgr) {
     u8 argc = src_vec.size();
-    char** argv =  (char**)tgr->alloc_static(argc * sizeof(char*));
+    char** argv =  (char**)memory::alloc_static(tgr->address_space, argc * sizeof(char*));
     for (u8 i = 0; i < argc; i++) {
         const string& src = src_vec[i];
-        argv[i] = (char*)tgr->alloc_static(src.length() + 1); // +1 for null terminator
+        argv[i] = (char*)memory::alloc_static(tgr->address_space, src.length() + 1); // +1 for null terminator
         memcpy(argv[i], src.c_str(), src.length() + 1); // +1 for null terminator
     }
 

@@ -8,13 +8,9 @@
 #include "TaskManager.h"
 #include "Requests.h"
 #include "TaskFactory.h"
-#include "PageTables.h"
-#include "KernelLog.h"
-#include "MemoryManager.h"
 #include "KLockGuard.h"
 #include "ErrorCode.h"
 
-using namespace memory;
 using namespace hardware;
 namespace multitasking {
 
@@ -298,10 +294,8 @@ CpuState* TaskManager::pick_next_task_and_load_address_space() {
     Task* next_task {scheduler.pick_next_task()};
 
     // reload address space only if task_group changes (each group has its own address space)
-    if (curr_task->task_group_data != next_task->task_group_data) {
-        u64 pml4_physical_address = next_task->task_group_data->pml4_phys_addr;
-        PageTables::load_address_space(pml4_physical_address);
-    }
+    if (curr_task->task_group_data != next_task->task_group_data) 
+        requests->load_address_space(next_task->task_group_data->address_space);
 
     return next_task->cpu_state;
 }

@@ -389,16 +389,18 @@ u64 SysCallHandler::sys_brk(u64 new_brk) {
     multitasking::TaskManager& mngr = multitasking::TaskManager::instance();
     multitasking::TaskGroupDataPtr tgd = mngr.get_current_task().task_group_data;
 
+    AddressSpace& as = tgd->address_space;
+
     // invalid argument
     if (new_brk == 0)
-        return tgd->heap_low_limit;
+        return as.heap_low_limit;
 
     // out of memory
-    if (new_brk >= tgd->heap_high_limit)
-        return tgd->heap_low_limit;
+    if (new_brk >= as.heap_high_limit)
+        return as.heap_low_limit;
 
     // move program break
-    tgd->heap_low_limit = new_brk;
+    as.heap_low_limit = new_brk;
     return new_brk;
 }
 

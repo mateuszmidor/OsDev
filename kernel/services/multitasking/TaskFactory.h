@@ -9,6 +9,7 @@
 #define SRC_MULTITASKING_TASKFACTORY_H_
 
 #include "Task.h"
+#include "Requests.h"
 
 namespace multitasking {
 
@@ -18,8 +19,10 @@ private:
     static TaskGroupDataPtr kernel_task_group_ptr;
 
     static TaskGroupDataPtr get_kernel_task_group_ptr() {
-        if (!kernel_task_group_ptr)
+        if (!kernel_task_group_ptr) {
+            kernel_task_group.address_space = requests->get_kernel_address_space();
             kernel_task_group_ptr.reset(&kernel_task_group);
+        }
         return kernel_task_group_ptr;
     }
 
@@ -56,7 +59,7 @@ public:
     template <class EntrypointT>
     static Task* make_lightweight_task(const Task& src, EntrypointT entrypoint, const char name[], u64 stack_size) {
         TaskGroupDataPtr task_group_data = src.task_group_data;
-        u64 stack_addr = (u64)task_group_data->alloc_stack_and_mark_guard_page(stack_size);
+        u64 stack_addr = (u64)requests->alloc_stack_and_mark_guard_page(task_group_data->address_space, stack_size);
 
         // out of memory
         if (stack_addr == 0)

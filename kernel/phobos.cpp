@@ -45,6 +45,7 @@
 #include "filesystem/Requests.h"
 #include "services/ipc/Requests.h"
 #include "PageFault.h"
+#include "AddressSpaceManager.h"
 #include "phobos.h"
 
 using namespace cstd;
@@ -307,6 +308,20 @@ namespace phobos {
         	void timer_emplace(u32 millis, const OnTimerExpire& on_expire) override {
         		time_manager.emplace(millis, on_expire);
         	}
+            void* alloc_stack_and_mark_guard_page(AddressSpace& as, size_t num_bytes) override {
+                return memory::alloc_stack_and_mark_guard_page(as, num_bytes);
+            }
+            AddressSpace get_kernel_address_space() override {
+                return {HigherHalf::get_kernel_heap_low_limit(), 
+                    HigherHalf::get_kernel_heap_high_limit(),
+                    PageTables::get_kernel_pml4_phys_addr()};
+            }
+            void load_address_space(const AddressSpace& as) override {
+                PageTables::load_address_space(as.pml4_phys_addr);
+            }
+            void release_address_space(AddressSpace& as) override {
+                memory::release_address_space(as);
+            }
         } multitasking_requests;
 
         void setup_multitasking() {
