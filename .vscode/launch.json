@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      
+      {
+        "type": "gdb",
+        "request": "attach",
+        "name": "Attach to QEMU",
+        "executable": "${workspaceRoot}/build/kernel/kernel/phobos-x86_64.bin",
+        "target": ":1234",
+        "remote": true,
+        "cwd": "${workspaceRoot}",
+        
+      }
+    ]
+  }
