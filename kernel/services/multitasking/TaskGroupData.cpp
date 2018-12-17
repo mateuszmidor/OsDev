@@ -15,16 +15,7 @@ TaskGroupData::TaskGroupData(const AddressSpace& as, const cstd::string& cwd, u3
 }
 
 TaskGroupData::~TaskGroupData() {
-    close_files();
     requests->release_address_space(address_space);
-}
-
-/**
- * @brief   Close all the open files in task group
- * @note    Execution context: Interrupt only (on kill_current_task, when Task is destroyed)
- */
-void TaskGroupData::close_files() {
-    // files closed automatically on "files" array destruction
 }
 
 } /* namespace multitasking */

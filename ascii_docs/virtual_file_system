@@ -3,35 +3,39 @@ Virtual File System is a tree made of VfsEntry nodes.
 VfsTree holds the root node "/" and manages the tree by means of get/attach/create/copy/move/remove actions.
 To mount an actual physical filesystem under the root, you need to attach VfsMountPoint, which exposes get/create/move/remove actions of specific filesystem to the VfsManager.
 
-
+                                                         +------------------------------+
+                                                         |          OpenEntry           |
+                                                         +--------------^---------------+
+                                                                        | implement
+                                                                        |
 +-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Vfs Key Class Diagram                                                                                                                                           |
-+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|                                                                                                                                                                 |
-|  +-----------------------------------------+           +------------------------------+            +-------------------------+         +---------------------+  |
-|  | VfsManager                              |           | OpenEntry                    |            | VfsCachedEntryPtr       |         | VfsEntryPtr         |  |
-|  +-----------------------------------------+           | (allows accessing Vfs entry) |            | (allows attaching)      +---------> (generic interface) |  |
-|  | OpenEntry open(path)                    |           +------------------------------+            +-------------------------+         +---------------------+  |
-|  | void attach(path, entry)                |           | u64 get_size(path)           |            | u64 get_size(path)      |                                  |
-|  | void create(path, is_directory)         +-----------> u64 read(data*, count)       +------------> u64 read(data*, count)  |                                  |
-|  | void remove(path)                       |           | u64 write(data*, count)      |            | u64 write(data*, count) |                                  |
-|  | void copy(from, to)                     |           | void seek(new_position)      |            | void seek(new_position) |                                  |
-|  | void move_to(from, to)                  |           | void truncate(new_size)      |            | void truncate(new_size) |                                  |
-|  +-----------------------------------------+           | void enumerate(on_entry)     |            | void enumerate(on_entry)|                                  |
-|                      |                                 +------------------------------+            | bool attach(entry)      |                                  |
-|                      |                                                |                            | bool detach(entry)      |                                  |
-|  +-------------------v---------------------+                          |                            | u32 attachment_count    |                                  |
-|  | VfsTree                                 |           +--------------v-------------+              | u32 open_count          |                                  |
-|  | (holds and manipulates the Vfs tree)    |           | EntryState                 |              +-------------------------+                                  |
-|  +-----------------------------------------+           | (holds read/write position)|                                                                           |
-|  | OpenEntry open(path)                    |           +----------------------------+                                                                           |
-|  | void attach(path, entry)                |                                                                                                                    |
-|  | void create(path, is_dir)               |                                                                                                                    |
-|  | void remove(path)                       |                                                                                                                    |
-|  | void copy(from, to)                     |                                                                                                                    |
-|  | void move_to(from, to)                  |                                                                                                                    |
+| Vfs Key Class Diagram                                                 |                                                                                         |
+|                                                                       |                                                                                         |
+|                                                                       |                                                                                         |
+|  +-----------------------------------------+           +--------------+----------------+           +-------------------------+                                  |
+|  | VfsManager                              |           | VfsOpenEntry                  |           | VfsCachedEntryPtr       |                                  |
+|  +-----------------------------------------+           | (coordinates access to Entry) |           | (allows attaching)      |                                  |
+|  | OpenEntryPtr open(path)                 |           +-------------------------------+           +-------------------------+         +---------------------+  |
+|  | ^oid attach(path, entry)                |    use    | u64 get_size(path)            |   use     | u64 get_size(path)      |   use   | VfsEntry            |  |
+|  | ^oid create(path, is_directory)         +-----------> u64 read(data*, count)        +-----------> u64 read(data*, count)  +---------> (generic interface) |  |
+|  | ^oid remo^e(path)                       |           | u64 write(data*, count)       |           | u64 write(data*, count) |         +----------^----------+  |
+|  | ^oid copy(from, to)                     |           | ^oid seek(new_position)       |           | ^oid seek(new_position) |                    |             |
+|  | ^oid mo^e_to(from, to)                  |           | ^oid truncate(new_size)       |           | ^oid truncate(new_size) |                    |             |
+|  +-------------------+---------------------+           | ^oid enumerate(on_entry)      |           | void enumerate(on_entry)|                    | implement   |
+|                      |                                 +--------------+----------------+           | bool attach(entry)      |                    |             |
+|                      | use                                            |                            | bool detach(entry)      |                    |             |
+|  +-------------------v---------------------+                          | use                        | u32 attachment_count    |         +----------+----------+  |
+|  | VfsTree                                 |           +--------------v-------------+              | u32 open_count          |         |   VfsFat32Entry     |  |
+|  | (holds and manipulates the Vfs tree)    |           | EntryState                 |              +-------------^-----------+         +---------------------+  |
+|  +-----------------------------------------+           | (holds read/write position)|                            |                                              |
+|  | OpenEntry open(path)                    |           +----------------------------+                            |                                              |
+|  | ^oid attach(path, entry)                |                                                                     |                                              |
+|  | ^oid create(path, is_dir)               |                                                                     |                                              |
+|  | ^oid remo^e(path)                       |                                  use                                |                                              |
+|  | ^oid copy(from, to)                     +---------------------------------------------------------------------+                                              |
+|  | void mo^e_to(from, to)                  |                                                                                                                    |
 |  | VfsCachedEntryPtr get_cached(path)      |                                                                                                                    |
-|  | void release_cached(cached_entry_ptr)   |                                                                                                                    |
+|  | ^oid release_cached(cached_entry_ptr)   |                                                                                                                    |
 |  +-----------------------------------------+                                                                                                                    |
 |                                                                                                                                                                 |
 +-----------------------------------------------------------------------------------------------------------------------------------------------------------------+

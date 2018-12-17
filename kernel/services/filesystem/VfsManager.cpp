@@ -6,6 +6,7 @@
  */
 
 #include "VfsManager.h"
+#include "VfsOpenEntry.h"
 #include "run_this_guy.h"
 
 using namespace utils;
@@ -20,14 +21,14 @@ VfsManager& VfsManager::instance() {
 }
 
 /**
- * @brief   Install vfs elements that use dynamic memory
+ * @brief   Install vfs root "/" directory
  */
 void VfsManager::install() {
     tree.install();
 }
 
-utils::SyscallResult<OpenEntry> VfsManager::open(const UnixPath& path) {
-    auto entry = tree.get_cached(path);
+utils::SyscallResult<OpenEntryPtr> VfsManager::open(const UnixPath& path) {
+    auto entry = tree.get_or_bring_entry_to_cache(path);
     if (!entry)
         return {ErrorCode::EC_NOENT};
 
@@ -38,7 +39,8 @@ utils::SyscallResult<OpenEntry> VfsManager::open(const UnixPath& path) {
     auto state = open_result.value;
 
     const auto on_destroy = rtg::run_this_guy(&VfsTree::release_cached, tree);
-    return { {entry, state, on_destroy} };
+
+    return {std::make_shared<VfsOpenEntry>(entry, state, on_destroy)};
 }
 
 utils::SyscallResult<void> VfsManager::attach(const UnixPath& path, const VfsEntryPtr& entry) {

@@ -146,7 +146,7 @@ namespace phobos {
         /**
          * @brief   Keyboard handling
          */
-        OpenEntry keyboard_vfe;
+        OpenEntryPtr keyboard_vfe;
 
         /**
          * @brief   Interrupt handling. No blocking allowed
@@ -160,9 +160,9 @@ namespace phobos {
 
             if (keyboard_vfe) {
                 // dont let the keyboard file overflow and block (we are in interrupt not task context)
-                if (keyboard_vfe.get_size().value > sizeof(key) * MAX_KEYS_IN_FILE)
-                    keyboard_vfe.truncate(sizeof(key) * MAX_KEYS_IN_FILE);
-                keyboard_vfe.write(&key, sizeof(key));
+                if (keyboard_vfe->get_size().value > sizeof(key) * MAX_KEYS_IN_FILE)
+                    keyboard_vfe->truncate(sizeof(key) * MAX_KEYS_IN_FILE);
+                keyboard_vfe->write(&key, sizeof(key));
             }
         }
 
@@ -170,7 +170,7 @@ namespace phobos {
          * @brief   Mouse handling
          */
         middlespace::MouseState mouse_state;
-        OpenEntry mouse_vfe;
+        OpenEntryPtr mouse_vfe;
 
         /**
          * @brief   Interrupt handling. No blocking allowed
@@ -184,9 +184,9 @@ namespace phobos {
 
             if (mouse_vfe) {
                 // dont let the mouse state file overflow and block (we are in interrupt not task context)
-                if (mouse_vfe.get_size().value > sizeof(mouse_state) * MAX_STATES_IN_FILE)
-                    mouse_vfe.truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
-                mouse_vfe.write(&mouse_state, sizeof(mouse_state));
+                if (mouse_vfe->get_size().value > sizeof(mouse_state) * MAX_STATES_IN_FILE)
+                    mouse_vfe->truncate(sizeof(mouse_state) * MAX_STATES_IN_FILE);
+                mouse_vfe->write(&mouse_state, sizeof(mouse_state));
             }
         }
 

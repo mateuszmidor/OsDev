@@ -6,7 +6,6 @@
  */
 
 #include "phobos.h"
-#include "OpenEntry.h"
 #include "VfsRamFifoEntry.h"
 
 using namespace cstd;
@@ -51,9 +50,9 @@ s32 try_load_and_run_terminal() {
     auto& elf = open_result.value;
 
     // read elf file data
-    u64 size = elf.get_size().value;
+    u64 size = elf->get_size().value;
     u8* elf_data = new u8[size];
-    elf.read(elf_data, size);
+    elf->read(elf_data, size);
 
     // run the elf
     utils::ElfRunner runner;

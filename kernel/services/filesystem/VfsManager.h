@@ -8,7 +8,6 @@
 #ifndef SRC_FILESYSTEM_VFSMANAGER_H_
 #define SRC_FILESYSTEM_VFSMANAGER_H_
 
-#include "OpenEntry.h"
 #include "VfsTree.h"
 
 namespace filesystem {
@@ -23,7 +22,7 @@ public:
     VfsManager operator=(VfsManager&&) = delete;
 
     void install();
-    utils::SyscallResult<OpenEntry> open(const UnixPath& path);
+    utils::SyscallResult<OpenEntryPtr> open(const UnixPath& path);
     utils::SyscallResult<void> attach(const UnixPath& path, const VfsEntryPtr& entry);
     utils::SyscallResult<void> create(const UnixPath& path, bool is_directory);
     utils::SyscallResult<void> remove(const UnixPath& path);

@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "OpenEntry.h"
+#include "VfsOpenEntry.h"
 #include "VfsCachedEntry.h"
 #include "VfsRamDummyFileEntry.h"
 #include "FilesystemRequests.h"
@@ -45,33 +45,33 @@ TEST_F(OpenEntryTest, test_constructor_increments_open_count) {
     ASSERT_EQ(entry->open_count, 0);
 
     // test
-    OpenEntry open1(entry);
+    VfsOpenEntry open1(entry);
     ASSERT_EQ(entry->open_count, 1);
 
-    OpenEntry open2(entry);
+    VfsOpenEntry open2(entry);
     ASSERT_EQ(entry->open_count, 2);
 }
 
 TEST_F(OpenEntryTest, test_destructor_decrements_open_count) {
     // setup
     ASSERT_EQ(entry->open_count, 0);
-    OpenEntry open1(entry);
-    OpenEntry open2(entry);
+    VfsOpenEntry open1(entry);
+    VfsOpenEntry open2(entry);
     ASSERT_EQ(entry->open_count, 2);
 
     // test
-    open1.~OpenEntry();
+    open1.~VfsOpenEntry();
     ASSERT_EQ(entry->open_count, 1);
 
-    open2.~OpenEntry();
+    open2.~VfsOpenEntry();
     ASSERT_EQ(entry->open_count, 0);
 }
 
 TEST_F(OpenEntryTest, test_assignment_decrements_open_count) {
     // setup
     ASSERT_EQ(entry->open_count, 0);
-    OpenEntry open1(entry);
-    OpenEntry open2(entry);
+    VfsOpenEntry open1(entry);
+    VfsOpenEntry open2(entry);
     ASSERT_EQ(entry->open_count, 2);
 
     // test

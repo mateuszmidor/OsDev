@@ -97,7 +97,7 @@ s64 SysCallHandler::sys_read(u32 fd, void *buf, u64 count) {
     if (!files[fd])
         return -EBADF;
 
-    if (auto read_result = files[fd].read(buf, count))
+    if (auto read_result = files[fd]->read(buf, count))
         return read_result.value;
     else
         return -(s64)read_result.ec;
@@ -118,7 +118,7 @@ s64 SysCallHandler::sys_write(u32 fd, const void *buf, u64 count) {
     if (!files[fd])
         return -EBADF;
 
-    if (auto write_result = files[fd].write(buf, count))
+    if (auto write_result = files[fd]->write(buf, count))
         return write_result.value;
     else
         return -(s64)write_result.ec;
@@ -148,7 +148,7 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
     }
 
     case SEEK_CUR: {
-        if (auto result = files[fd].get_position())
+        if (auto result = files[fd]->get_position())
             new_position = result.value + offset;
         else
             return -(off_t)result.ec;
@@ -156,7 +156,7 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
     }
 
     case SEEK_END: {
-        if (auto result = files[fd].get_size())
+        if (auto result = files[fd]->get_size())
             new_position = result.value + offset;
         else
             return -(off_t)result.ec;
@@ -167,7 +167,7 @@ off_t SysCallHandler::sys_lseek(int fd, off_t offset, int whence) {
         return -EINVAL;
     }
 
-    if (auto seek_result = files[fd].seek(new_position))
+    if (auto seek_result = files[fd]->seek(new_position))
         return new_position;
     else
         return -(off_t)seek_result.ec;
@@ -194,9 +194,9 @@ s32 SysCallHandler::sys_stat(const char path[], struct stat* buff) {
 
     memset(buff, 0, sizeof(struct stat));
     auto& entry = open_result.value;
-    buff->st_size = entry.get_size().value;
+    buff->st_size = entry->get_size().value;
 
-    switch (entry.get_type()) {
+    switch (entry->get_type()) {
     case VfsEntryType::DIRECTORY:
         buff->st_mode = S_IFDIR;
         break;
@@ -231,10 +231,10 @@ s32 SysCallHandler::sys_truncate(const char path[], off_t length) {
         return -(s32)open_result.ec;
 
     auto& entry = open_result.value;
-    if (entry.get_type() == VfsEntryType::DIRECTORY)
+    if (entry->get_type() == VfsEntryType::DIRECTORY)
         return -EISDIR;
 
-    if (auto trunc_result = entry.truncate(length))
+    if (auto trunc_result = entry->truncate(length))
         return 0;
     else
         return -(s32)trunc_result.ec;
@@ -290,7 +290,7 @@ s32 SysCallHandler::sys_rmdir(const char path[]) {
             return -(s32)open_result.ec;
 
         auto& entry = open_result.value;
-        if (entry.get_type() != VfsEntryType::DIRECTORY)
+        if (entry->get_type() != VfsEntryType::DIRECTORY)
             return -ENOTDIR;
     }
 
@@ -351,7 +351,7 @@ s32 SysCallHandler::sys_unlink(const char path[]) {
             return -(s32)open_result.ec;
 
         auto& entry = open_result.value;
-        if (entry.get_type() == VfsEntryType::DIRECTORY)
+        if (entry->get_type() == VfsEntryType::DIRECTORY)
             return -EISDIR;
     }
 
@@ -439,7 +439,7 @@ s32 SysCallHandler::sys_chdir(const char path[]) {
         return -(s32)open_result.ec;
 
     auto& entry = open_result.value;
-    if (entry.get_type() != VfsEntryType::DIRECTORY)
+    if (entry->get_type() != VfsEntryType::DIRECTORY)
         return -ENOTDIR;
 
     current().task_group_data->cwd = absolute_path;
@@ -518,7 +518,7 @@ s32 SysCallHandler::enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_en
     if (!files[fd])
         return -EBADF;
 
-    if (files[fd].get_type() != VfsEntryType::DIRECTORY)
+    if (files[fd]->get_type() != VfsEntryType::DIRECTORY)
         return -ENOTDIR;
 
     u32 entry_no = 0;
@@ -540,7 +540,7 @@ s32 SysCallHandler::enumerate(u32 fd, middlespace::VfsEntry* entries, u32 max_en
         return true;
     };
 
-    if (files[fd].enumerate_entries(on_entry))
+    if (files[fd]->enumerate_entries(on_entry))
         return entry_no;
     else
         return -EINVAL; // buffer too small
@@ -636,16 +636,16 @@ s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
         return -(s64)open_result.ec; // no such file
 
     auto& entry = open_result.value;
-    if (entry.get_type() != VfsEntryType::FILE)
+    if (entry->get_type() != VfsEntryType::FILE)
         return -EISDIR;
 
     // TODO: reading elf file should be done from kernel task not from syscall, this is experimental version
-    u32 size = entry.get_size().value;
+    u32 size = entry->get_size().value;
     u8* elf_data = new u8[size];
     if (!elf_data)
         return -ENOMEM;
 
-    auto read_result = entry.read(elf_data, size);
+    auto read_result = entry->read(elf_data, size);
     if (!read_result)
         return -(s64)read_result.ec;
 
