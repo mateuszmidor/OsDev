@@ -11,7 +11,7 @@
 #include "types.h"
 #include "UnixPath.h"
 #include "EntryState.h"
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace filesystem {
 

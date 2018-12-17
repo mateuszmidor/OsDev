@@ -389,7 +389,7 @@ u64 SysCallHandler::sys_brk(u64 new_brk) {
     multitasking::TaskManager& mngr = multitasking::TaskManager::instance();
     multitasking::TaskGroupDataPtr tgd = mngr.get_current_task().task_group_data;
 
-    AddressSpace& as = tgd->address_space;
+    memory::AddressSpace& as = tgd->address_space;
 
     // invalid argument
     if (new_brk == 0)

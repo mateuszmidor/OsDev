@@ -10,7 +10,7 @@
 
 #include "Task.h"
 #include "RoundRobinScheduler.h"
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace multitasking {
 

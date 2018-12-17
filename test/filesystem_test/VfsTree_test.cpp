@@ -337,7 +337,7 @@ TEST_F(VfsTreeTest, test_get_cached_basic) {
     ASSERT_TRUE(tree.attach(mkfile("photo.jpg"), "/"));
 
     // test
-    auto cached = tree.get_cached("/photo.jpg");
+    auto cached = tree.get_or_bring_entry_to_cache("/photo.jpg");
     ASSERT_TRUE(cached);
     ASSERT_TRUE(cached->get_name() == "photo.jpg");
 }
@@ -347,10 +347,10 @@ TEST_F(VfsTreeTest, test_get_cached_twice_brings_same_entry) {
     ASSERT_TRUE(tree.attach(mkfile("photo.jpg"), "/"));
 
     // test
-    auto cached1 = tree.get_cached("/photo.jpg");
+    auto cached1 = tree.get_or_bring_entry_to_cache("/photo.jpg");
     ASSERT_TRUE(cached1);
 
-    auto cached2 = tree.get_cached("/photo.jpg");
+    auto cached2 = tree.get_or_bring_entry_to_cache("/photo.jpg");
     ASSERT_TRUE(cached2);
 
     ASSERT_TRUE(cached1 == cached2);
@@ -362,7 +362,7 @@ TEST_F(VfsTreeTest, test_get_cached_twice_brings_same_entry) {
 TEST_F(VfsTreeTest, test_release_cached_basic) {
     // setup
     ASSERT_TRUE(tree.attach(mkfile("photo.jpg"), "/"));
-    auto cached = tree.get_cached("/photo.jpg");
+    auto cached = tree.get_or_bring_entry_to_cache("/photo.jpg");
     ASSERT_TRUE(cached);
 
     // test
@@ -372,7 +372,7 @@ TEST_F(VfsTreeTest, test_release_cached_basic) {
 TEST_F(VfsTreeTest, test_release_cached_open_fails) {
     // setup
     ASSERT_TRUE(tree.attach(mkfile("photo.jpg"), "/"));
-    auto cached = tree.get_cached("/photo.jpg");
+    auto cached = tree.get_or_bring_entry_to_cache("/photo.jpg");
     ASSERT_TRUE(cached);
     cached->open_count = 1;
 
@@ -383,7 +383,7 @@ TEST_F(VfsTreeTest, test_release_cached_open_fails) {
 TEST_F(VfsTreeTest, test_release_cached_with_attachment_fails) {
     // setup
     ASSERT_TRUE(tree.attach(mkfile("photo.jpg"), "/"));
-    auto cached = tree.get_cached("/photo.jpg");
+    auto cached = tree.get_or_bring_entry_to_cache("/photo.jpg");
     ASSERT_TRUE(cached);
     cached->attach_entry(mkfile("attachment"));
 

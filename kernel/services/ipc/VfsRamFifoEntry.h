@@ -9,7 +9,7 @@
 #define SRC_FILESYSTEM_VFSRAMFIFOENTRY_H_
 
 #include "VfsEntry.h"
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace ipc {
 
@@ -39,8 +39,8 @@ private:
     const cstd::string          name;
     u8                          buff[BUFF_SIZE];
     u32                         size                {0};
-    TaskList      read_wait_list;
-    TaskList      write_wait_list;
+    multitasking::TaskList      read_wait_list;
+    multitasking::TaskList      write_wait_list;
 
 };
 

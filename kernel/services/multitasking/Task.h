@@ -10,7 +10,7 @@
 
 #include "CpuState.h"
 #include "TaskGroupData.h"
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace multitasking {
 

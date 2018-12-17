@@ -10,7 +10,7 @@
 
 #include "StringUtils.h"
 #include "CpuState.h"
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace cpuexceptions {
 

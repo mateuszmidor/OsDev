@@ -7,14 +7,16 @@
 #include <functional>
 
 namespace multitasking {
-    class Task;
+class Task;
 }
 
+namespace memory {
 struct AddressSpace {
     u64     heap_low_limit;     // last address allocated for the heap, current program break
     u64     heap_high_limit;    // last address allocable for the heap
     u64     pml4_phys_addr;     // page table root physical address
 };
+}
 
 namespace filesystem {
 /**
@@ -51,13 +53,17 @@ public:
     virtual utils::SyscallResult<void> enumerate_entries(const OnVfsEntryFound& on_entry) = 0;
 
 };
+
 using OpenEntryPtr = std::shared_ptr<OpenEntry>;
-}
+} // filesystem
+
 /**
  * @brief   This class represents a list of Tasks to hold the running/waiting tasks
  */
+namespace multitasking {
 class TaskList : public cstd::List<multitasking::Task*> {
 };
+}
 
 enum PageFaultActualReason {
     PAGE_NOT_PRESENT,

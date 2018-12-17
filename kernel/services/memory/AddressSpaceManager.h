@@ -8,7 +8,7 @@
 #ifndef SRC_MEMORY_ADDRESSSPACEMANAGER_H_
 #define SRC_MEMORY_ADDRESSSPACEMANAGER_H_
 
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace memory {
 

@@ -10,7 +10,7 @@
 
 #include "VfsCachedEntry.h"
 #include "EntryState.h"
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace filesystem {
 

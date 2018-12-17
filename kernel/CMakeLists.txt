@@ -19,6 +19,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=none -n -T ${LINKER_SCRIPT}")
 
 # Add subprojects
 add_subdirectory(../middlespace middlespace)
+add_subdirectory(understructure)
 add_subdirectory(services)
 add_subdirectory(modules)
 add_subdirectory(interface)

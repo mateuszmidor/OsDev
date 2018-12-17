@@ -4,7 +4,7 @@
 #include "HigherHalf.h"
 #include "PageTables.h"
 #include "FrameAllocator.h"
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace memory{
 namespace PageFault {

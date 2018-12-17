@@ -1,0 +1,2 @@
+add_subdirectory(kstd)
+add_subdirectory(commontypes)

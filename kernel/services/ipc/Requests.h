@@ -8,7 +8,7 @@
 #ifndef KERNEL_SERVICES_IPC_REQUESTS_H_
 #define KERNEL_SERVICES_IPC_REQUESTS_H_
 
-#include "../CommonStructs.h"
+#include "CommonStructs.h"
 
 namespace ipc {
 
@@ -23,8 +23,8 @@ public: // Boilerplate
 	virtual ~Requests() = default;
 
 public: // Actual methods to implement
-	virtual void block_current_task(TaskList& task_list) = 0;
-	virtual void unblock_tasks(TaskList& task_list) = 0;
+	virtual void block_current_task(multitasking::TaskList& task_list) = 0;
+	virtual void unblock_tasks(multitasking::TaskList& task_list) = 0;
 };
 
 /**

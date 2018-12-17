@@ -1,4 +1,3 @@
-add_subdirectory(kstd)
 add_subdirectory(hardware)
 add_subdirectory(logging)
 add_subdirectory(memory)
