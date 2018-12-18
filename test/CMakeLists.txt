@@ -9,13 +9,13 @@ include(gtest.cmake)
 # build kernel libraries
 add_subdirectory(../middlespace middlespace)
 add_subdirectory(../kernel/understructure/kstd kstd)
-add_subdirectory(../kernel/understructure/commontypes commontypes)
+add_subdirectory(../kernel/understructure/abstractfilesystem abstractfilesystem)
 # add_subdirectory(../kernel/services/logging logging)
 add_subdirectory(../kernel/services/hardware hardware)
 add_subdirectory(../kernel/services/filesystem filesystem)
 
 add_library(kernel_test INTERFACE)
-target_link_libraries(kernel_test INTERFACE kstd common hardware filesystem)
+target_link_libraries(kernel_test INTERFACE kstd hardware filesystem)
 
 # build actual tests
 add_subdirectory("filesystem_test")
