@@ -7,7 +7,7 @@
 
 #include "kstd.h"
 #include "Fat32ClusterChain.h"
-#include "filesystem/Requests.h"
+#include "Requests.h"
 
 using namespace cstd;
 
@@ -146,7 +146,7 @@ bool Fat32ClusterChain::detach_cluster(u32 cluster) {
  */
 u32 Fat32ClusterChain::read(Fat32State& state, void* data, u32 count) {
     if (is_empty()) {
-        filesystem::requests->log("Fat32ClusterChain::read: empty cluster chain\n");
+        requests->log("Fat32ClusterChain::read: empty cluster chain\n");
         return 0;
     }
 
@@ -248,7 +248,7 @@ u32 Fat32ClusterChain::get_cluster_for_write(u32 current_cluster) {
 
     if (fat_table.is_allocated_cluster(current_cluster)) {
         cluster = current_cluster;
-        requests->log("Fat32ClusterChain::get_cluster_for_write: reusing cluster %\n", cluster);
+        filesystem::requests->log("Fat32ClusterChain::get_cluster_for_write: reusing cluster %\n", cluster);
     } else {
         attach_cluster();
         cluster = get_tail();

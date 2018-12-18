@@ -7,7 +7,7 @@
 
 #include "Fat32Utils.h"
 #include "VolumeFat32.h"
-#include "filesystem/Requests.h"
+#include "Requests.h"
 
 using namespace cstd;
 
@@ -124,7 +124,7 @@ Fat32Entry VolumeFat32::create_entry(const UnixPath& unix_path, bool is_director
     // try get valid 8.3 name that is not in use yet. We are using 8.3 names until support for long names is implemented :)
     string name_8_3;
     if (!get_free_name_8_3(parent_dir, name, name_8_3)) {
-        requests->log("VolumeFat32::create_entry: Entry already exists: %(full: %)\n", name_8_3, unix_path);
+        requests->log("VolumeFat32::create_entry: Entry already exists: %(full: <mountpoint>\%)\n", name_8_3, unix_path);
         return empty_entry();
     }
 

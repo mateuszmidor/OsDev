@@ -13,7 +13,9 @@
 
 namespace filesystem {
 
-
+/**
+ * @brief   This class represents a filesystem entry in open state (has current read/write position)
+ */
 class OpenEntry {
 public:
     virtual ~OpenEntry() = default;
