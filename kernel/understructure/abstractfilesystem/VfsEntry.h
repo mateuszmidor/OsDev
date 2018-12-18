@@ -8,12 +8,28 @@
 #ifndef SRC_FILESYSTEM_VFSENTRY_H_
 #define SRC_FILESYSTEM_VFSENTRY_H_
 
+#include <memory>
+#include <functional>
 #include "types.h"
 #include "UnixPath.h"
 #include "EntryState.h"
-#include "CommonStructs.h"
+#include "SyscallResult.h"
 
 namespace filesystem {
+
+/**
+ * @brief   Types of entries in virtual filesystem; note that Mountpoint is an extended Directory
+ */
+enum class VfsEntryType {
+    INVALID,
+    FILE,
+    PIPE,
+    DIRECTORY,
+};
+
+class VfsEntry;
+using VfsEntryPtr = std::shared_ptr<VfsEntry>;
+using OnVfsEntryFound = std::function<bool(const VfsEntryPtr& e)>; // for directory contents enumeration. return false to stop the enumeration.
 
 
 /**

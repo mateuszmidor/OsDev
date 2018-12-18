@@ -6,9 +6,10 @@
  */
 
 #include "PageFaultHandler.h"
+#include "PageFaultActualReason.h"
 #include "Requests.h"
 
-using hardware::CpuState;
+using namespace hardware;
 
 namespace cpuexceptions {
 

@@ -10,7 +10,7 @@
 
 #include <functional>
 #include "StringUtils.h"
-#include "CommonStructs.h"
+#include "AddressSpace.h"
 
 namespace multitasking {
 

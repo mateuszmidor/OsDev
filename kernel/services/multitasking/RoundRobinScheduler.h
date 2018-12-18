@@ -8,7 +8,7 @@
 #ifndef KERNEL_MULTITASKING_ROUNDROBINSCHEDULER_H_
 #define KERNEL_MULTITASKING_ROUNDROBINSCHEDULER_H_
 
-#include "CommonStructs.h"
+#include "TaskList.h"
 
 namespace multitasking {
 

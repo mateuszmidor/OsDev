@@ -4,7 +4,7 @@
 #include "HigherHalf.h"
 #include "PageTables.h"
 #include "FrameAllocator.h"
-#include "CommonStructs.h"
+#include "PageFaultActualReason.h"
 
 namespace memory{
 namespace PageFault {
@@ -37,10 +37,10 @@ static bool is_flag_set(u64 bits, EnumType flag) {
  * @param   pml4_phys_addr Page Tables physical address
  * @param   cpu_error_code Error code that came with PageFault exception
  */
-static PageFaultActualReason get_page_fault_reason(u64 faulty_address, u64 pml4_phys_addr, u64 cpu_error_code) {
+static hardware::PageFaultActualReason get_page_fault_reason(u64 faulty_address, u64 pml4_phys_addr, u64 cpu_error_code) {
     u64* violated_page_addr = PageTables::get_page_for_virt_address(faulty_address, pml4_phys_addr);
     if (!violated_page_addr)
-        return PageFaultActualReason::INVALID_ADDRESS_SPACE;
+        return hardware::PageFaultActualReason::INVALID_ADDRESS_SPACE;
 
     u64 violated_page = *violated_page_addr;
 
@@ -49,9 +49,9 @@ static PageFaultActualReason get_page_fault_reason(u64 faulty_address, u64 pml4_
     if (page_not_present) {
         bool stack_guard_page = is_flag_set(violated_page, PageAttr::STACK_GUARD_PAGE);
         if (stack_guard_page)
-            return PageFaultActualReason::STACK_OVERFLOW;
+            return hardware::PageFaultActualReason::STACK_OVERFLOW;
         else
-            return PageFaultActualReason::PAGE_NOT_PRESENT;
+            return hardware::PageFaultActualReason::PAGE_NOT_PRESENT;
     }
 
     // if PageFault caused by page-protection violation, examine the actual reason
@@ -59,24 +59,24 @@ static PageFaultActualReason get_page_fault_reason(u64 faulty_address, u64 pml4_
     bool page_readonly = !is_flag_set(violated_page, PageAttr::WRITABLE);
     bool readonly_violation = caused_by_write && page_readonly;
     if (readonly_violation)
-        return PageFaultActualReason::READONLY_VIOLATION;
+        return hardware::PageFaultActualReason::READONLY_VIOLATION;
 
 
     bool caused_in_usermode = is_flag_set(cpu_error_code, PageFaultErrorCode::USER);
     bool page_kernel_access_only = !is_flag_set(violated_page, PageAttr::USER_ACCESSIBLE);
     bool privilege_violation = caused_in_usermode && page_kernel_access_only;
     if (privilege_violation)
-        return PageFaultActualReason::PRIVILEGE_VIOLATION;
+        return hardware::PageFaultActualReason::PRIVILEGE_VIOLATION;
 
     bool caused_by_reserved = is_flag_set(cpu_error_code, PageFaultErrorCode::RESERVED);
     if (caused_by_reserved)
-        return PageFaultActualReason::RESERVED_WRITE_VIOLATION;
+        return hardware::PageFaultActualReason::RESERVED_WRITE_VIOLATION;
 
     bool caused_by_instrfetch = is_flag_set(cpu_error_code, PageFaultErrorCode::INSTR_FETCH);
     if (caused_by_instrfetch)
-        return PageFaultActualReason::INSTRUCTION_FETCH;
+        return hardware::PageFaultActualReason::INSTRUCTION_FETCH;
 
-    return PageFaultActualReason::UNKNOWN_PROTECTION_VIOLATION;
+    return hardware::PageFaultActualReason::UNKNOWN_PROTECTION_VIOLATION;
 }
 
 /**

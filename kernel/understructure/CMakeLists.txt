@@ -1,2 +1,4 @@
 add_subdirectory(kstd)
-add_subdirectory(commontypes)
+add_subdirectory(abstractmemory)
+add_subdirectory(abstractfilesystem)
+add_subdirectory(abstractmultitasking)

@@ -9,6 +9,7 @@
 #define SRC_FILESYSTEM_VFSMANAGER_H_
 
 #include "VfsTree.h"
+#include "OpenEntry.h"
 
 namespace filesystem {
 

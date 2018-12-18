@@ -1,0 +1,3 @@
+add_library(abstractmultitasking INTERFACE)
+target_include_directories(abstractmultitasking INTERFACE .)
+target_link_libraries(abstractmultitasking INTERFACE kstd)

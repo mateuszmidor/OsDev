@@ -8,7 +8,7 @@
 #ifndef KERNEL_SERVICES_IPC_REQUESTS_H_
 #define KERNEL_SERVICES_IPC_REQUESTS_H_
 
-#include "CommonStructs.h"
+#include "TaskList.h"
 
 namespace ipc {
 

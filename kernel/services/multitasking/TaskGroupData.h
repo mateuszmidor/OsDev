@@ -11,7 +11,8 @@
 #include <array>
 #include <memory>
 #include "String.h"
-#include "CommonStructs.h"
+#include "AddressSpace.h"
+#include "OpenEntry.h"
 
 namespace multitasking {
  

@@ -9,7 +9,7 @@
 #define SRC_FILESYSTEM_VFSRAMFIFOENTRY_H_
 
 #include "VfsEntry.h"
-#include "CommonStructs.h"
+#include "TaskList.h"
 
 namespace ipc {
 

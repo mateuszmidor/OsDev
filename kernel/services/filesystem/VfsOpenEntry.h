@@ -9,8 +9,7 @@
 #define KERNEL_SERVICES_FILESYSTEM_OPENENTRY_H_
 
 #include "VfsCachedEntry.h"
-#include "EntryState.h"
-#include "CommonStructs.h"
+#include "OpenEntry.h"
 
 namespace filesystem {
 

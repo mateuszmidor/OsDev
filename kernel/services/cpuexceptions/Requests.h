@@ -10,7 +10,7 @@
 
 #include "StringUtils.h"
 #include "CpuState.h"
-#include "CommonStructs.h"
+#include "PageFaultActualReason.h"
 
 namespace cpuexceptions {
 
@@ -28,7 +28,7 @@ public: // Boilerplate
 
 public: // Actual methods to implement
 	virtual void log(const cstd::string& s) = 0;
-	virtual PageFaultActualReason get_page_fault_reason(u64 faulty_address, u64 pml4_phys_addr, u64 cpu_error_code) = 0;
+	virtual hardware::PageFaultActualReason get_page_fault_reason(u64 faulty_address, u64 pml4_phys_addr, u64 cpu_error_code) = 0;
 	virtual bool alloc_missing_page(u64 virtual_address, u64 pml4_phys_addr) = 0;
 	virtual cstd::string& get_current_task_name() = 0;
 	virtual bool is_current_task_userspace_task() = 0;

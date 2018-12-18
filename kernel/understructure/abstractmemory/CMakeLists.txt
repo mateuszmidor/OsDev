@@ -1,0 +1,3 @@
+add_library(abstractmemory INTERFACE)
+target_include_directories(abstractmemory INTERFACE .)
+target_link_libraries(abstractmemory INTERFACE kstd)
