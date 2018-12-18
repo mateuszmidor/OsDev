@@ -316,7 +316,8 @@ s32 SysCallHandler::sys_creat(const char path[], int mode) {
     if (!create_result)
         return -(s32)create_result.ec;
 
-    auto open_result = VfsManager::instance().open(absolute_path);
+    // problem: created file may have different name eg. due to fat32 8.3 name restrictions
+    auto open_result = VfsManager::instance().open(create_result.value);
     if (!open_result)
         return -(s32)open_result.ec;
 

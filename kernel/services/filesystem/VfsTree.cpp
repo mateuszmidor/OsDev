@@ -175,8 +175,9 @@ utils::SyscallResult<void> VfsTree::attach(const VfsEntryPtr& entry, const UnixP
  * @brief   Create file/directory pointed by "path" and return its file descriptor on success, or error code on error
  * @param   path    Absolute path to the entry that is to be created
  * @note    The actual entry creation is delegated to a mountpoint installed on the "path" thus mountpoint is a must
+ * @return  Absolute path to created entry; it can be different from "path" eg.  due to fat32 8.3 name restriction
  */
-utils::SyscallResult<void> VfsTree::create(const UnixPath& path, bool is_directory) {
+utils::SyscallResult<UnixPath> VfsTree::create(const UnixPath& path, bool is_directory) {
     if (!path.is_valid_absolute_path()) {
         requests->log("VfsTree::create: path is empty or it is not an absolute path: %\n", path);
         return {ErrorCode::EC_INVAL};
@@ -196,7 +197,7 @@ utils::SyscallResult<void> VfsTree::create(const UnixPath& path, bool is_directo
         return {create_result.ec};
     }
 
-    return {ErrorCode::EC_OK};
+    return {path.extract_directory() + "/" + create_result.value->get_name()};
 }
 
 /**

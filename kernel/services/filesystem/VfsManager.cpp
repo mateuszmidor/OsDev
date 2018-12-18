@@ -47,7 +47,7 @@ utils::SyscallResult<void> VfsManager::attach(const UnixPath& path, const VfsEnt
     return tree.attach(entry, path);
 }
 
-utils::SyscallResult<void> VfsManager::create(const UnixPath& path, bool is_directory) {
+utils::SyscallResult<UnixPath> VfsManager::create(const UnixPath& path, bool is_directory) {
     return tree.create(path, is_directory);
 }
 

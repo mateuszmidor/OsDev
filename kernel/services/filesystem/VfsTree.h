@@ -30,7 +30,7 @@ public:
     void install();
 
     utils::SyscallResult<void> attach(const VfsEntryPtr& entry, const UnixPath& path);
-    utils::SyscallResult<void> create(const UnixPath& path, bool is_directory);
+    utils::SyscallResult<UnixPath> create(const UnixPath& path, bool is_directory);
     utils::SyscallResult<void> remove(const UnixPath& path);
     utils::SyscallResult<void> copy(const UnixPath& path_from, const UnixPath& path_to);
     utils::SyscallResult<void> move(const UnixPath& path_from, const UnixPath& path_to);
