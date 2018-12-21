@@ -1,5 +1,6 @@
-The base layer is arch that throws us in long mode and calls kmain.
-Services are built upon arch and provide basic kernel functionality.
+Arch is the CPU specific code that throws us in long mode and calls kmain; it provides hardware level routines.
+Understructure is the system bedrock, providing abstractions and structures for services.
+Services are built upon understructure and provide basic kernel functionality.
 Modules are built upon services and extend the kernel functionality.
 Interface is built upon Services and Modules; it exposes kernel functionality to userspace programs.
 
@@ -11,11 +12,10 @@ Interface is built upon Services and Modules; it exposes kernel functionality to
     |   Modules   |    |
     +------+------+    |
            |           |
-           |           |
-    +------v-----------v----+
-    |        Services       |
-    +-----------------------+
+    +------v-----------v----+     +------------+
+    |        Services       |----->    Arch    |
+    +-----------------------+     +------------+
                 |
     +-----------v-----------+
-    |         Arch          |
+    |     Understructure    |
     +-----------------------+
