@@ -11,7 +11,7 @@
 #include "Vector.h"
 #include "SyscallResult.h"
 
-namespace utils {
+namespace elf64 {
 
 /**
  * @brief   This class runs elfs from kernel address space
@@ -21,10 +21,9 @@ public:
     utils::SyscallResult<u32> run(u8* elf_data, const cstd::vector<cstd::string>& args) const;
 
 private:
-    static void load_and_run_elf(u8* elf_file_data, cstd::vector<cstd::string>* args);
     static constexpr size_t ELF_VIRTUAL_MEM_BYTES   = 1024*1024*1024;  // 1GB of virtual memory can be dynamically mapped on Page Fault, as for now
 };
 
-} /* namespace userspace */
+} /* namespace elf64 */
 
 #endif /* SRC_USERSPACE_ELFRUNNER_H_ */

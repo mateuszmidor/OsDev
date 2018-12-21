@@ -54,7 +54,7 @@ s32 try_load_and_run_terminal() {
     elf->read(elf_data, size);
 
     // run the elf
-    utils::ElfRunner runner;
+    elf64::ElfRunner runner;
     auto run_result = runner.run(elf_data, { "terminal" });
     switch (run_result.ec) {
     case ErrorCode::EC_NOMEM:

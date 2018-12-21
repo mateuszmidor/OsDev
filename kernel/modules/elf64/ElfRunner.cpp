@@ -14,11 +14,12 @@
 #include "AddressSpaceManager.h"
 
 using namespace cstd;
+using namespace utils;
 using namespace memory;
 using namespace middlespace;
 using namespace multitasking;
 
-namespace utils {
+namespace elf64 {
 
 /**
  * @brief   Convert vector<string> into char*[] that is stored in user space virtual memory
@@ -36,48 +37,14 @@ static char** string_vec_to_argv(const vector<string>& src_vec, AddressSpace& ad
 }
 
 /**
- * @brief   Run elf as user task and return immediately
- * @param   elf_data ELF64 file data loaded into kernel memory. This function finally free the "elf_data"
- * @param   args User-provided cmd line arguments
- * @return  Error code on error, task id on success
- */
-SyscallResult<u32> ElfRunner::run(u8* elf_data, const vector<string>& args) const {
-    if (!Elf64::is_elf64(elf_data))
-        return {ErrorCode::EC_NOEXEC}; // not executable
-
-    AddressSpace as;
-    if (auto result = memory::alloc_address_space(Elf64::get_available_memory_first_byte(elf_data), ELF_VIRTUAL_MEM_BYTES))
-        as = result.value;
-    else
-        return {result.ec};
-
-    // run load_and_run_elf in target address space, so the elf segments can be loaded
-    TaskManager& task_manager = TaskManager::instance();
-    const auto& current = task_manager.get_current_task();
-    const string& CWD = current.task_group_data->cwd;           // inherit current working directory
-    vector<string>* pargs = new vector<string>(args);
-    Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(pargs); // kernel task so it can run "load_and_run_elf"
-    task->task_group_data  = std::make_shared<TaskGroupData>(as, CWD, current.task_id); // but in its own address space
-
-    if (u32 tid = task_manager.add_task(task)) {
-        return {tid};
-    }
-    else {
-        delete[] elf_data;
-        delete pargs;
-        return {ErrorCode::EC_PERM};  // running new task not permitted at this time
-    }
-}
-
-/**
  * @brief   ELF loader kernel task that runs already in the task address space
  *          and thus is able to load the elf program segments into memory at virtual addresses starting at "0"
  * @note    This function frees the elf_file_data and args
  *          The actual task gets task_id of elf_loader
  */
-void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
+static void load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     // copy elf sections into address space and remember where free virtual memory starts
-    size_t entry_point = Elf64::load_into_current_addressspace(elf_file_data);
+    size_t entry_point = utils::Elf64::load_into_current_addressspace(elf_file_data);
     delete[] elf_file_data;
 
     TaskManager& task_manager = TaskManager::instance();
@@ -96,5 +63,55 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     task_manager.replace_current_task(task);
 }
 
+/**
+ * @brief   Prepare a task for loading elf program.
+ *          This task runs in kernel space, but owns its own address space 'as' to load the elf code&data into
+ */
+static Task* make_elf_loader_task(const AddressSpace& as) {
+    TaskManager& task_manager = TaskManager::instance();
+    const auto& current = task_manager.get_current_task();
+    const string& CWD = current.task_group_data->cwd;           // inherit current working directory
 
-} /* namespace userspace */
+    Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader"); // kernel task so it can run "load_and_run_elf"
+    task->task_group_data  = std::make_shared<TaskGroupData>(as, CWD, current.task_id); // but in its own address space
+    return task;
+}
+
+/**
+ * @brief   Run elf as user task and return immediately
+ * @param   elf_data ELF64 file data loaded into kernel memory. This function finally free the "elf_data"
+ * @param   args User-provided cmd line arguments
+ * @return  Error code on error, task id on success
+ */
+SyscallResult<u32> ElfRunner::run(u8* elf_data, const vector<string>& args) const {
+    // check if elf_data points to actual Elf64
+    if (!Elf64::is_elf64(elf_data))
+        return {ErrorCode::EC_NOEXEC};
+
+    // try alloc new address space for our elf program
+    AddressSpace as;
+    if (auto result = alloc_address_space(Elf64::get_available_memory_first_byte(elf_data), ELF_VIRTUAL_MEM_BYTES))
+        as = result.value;
+    else
+        return {result.ec};
+
+    // alloc arguments in kernel address space so they can be safely passed to elf_loader kernel task
+    vector<string>* pargs = new vector<string>(args);
+
+    // prepare elf_loader kernel task with fresh address space to load elf segments into
+    Task* elf_loader = make_elf_loader_task(as)->set_arg1(elf_data)->set_arg2(pargs);
+
+    // try run the elf_loader; it will release the memory
+    TaskManager& task_manager = TaskManager::instance();
+    if (u32 tid = task_manager.add_task(elf_loader)) {
+        return {tid};
+    }
+    // on failure release the memory by ourself
+    else {
+        delete[] elf_data;
+        delete pargs;
+        return {ErrorCode::EC_PERM};  // running new task not permitted at this time
+    }
+}
+
+} /* namespace elf64 */

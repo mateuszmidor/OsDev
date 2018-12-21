@@ -656,7 +656,7 @@ s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
         nullterm_argv++;
     }
 
-    utils::ElfRunner runner;
+    elf64::ElfRunner runner;
     if (auto run_result = runner.run(elf_data, args))
         return run_result.value;
     else
