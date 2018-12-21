@@ -39,16 +39,12 @@ void release_address_space(AddressSpace& as) {
 
     // scan 0..1GB of virtual memory
     MemoryManager& mngr = MemoryManager::instance();
-
-    //requests->log("Removing address space\n");
     for (u32 i = 0; i < 512; i++)   // scan 512 * 2MB pages
         if ((pde_virt_addr[i] & PageAttr::PRESENT) == PageAttr::PRESENT) {
-        	//requests->log("  Releasing mem frame: %\n", pde_virt_addr[i] / FrameAllocator::get_frame_size());
             mngr.free_frames((void*)pde_virt_addr[i], 1); // 1 byte will always correspond to just 1 frame
         }
 
     // release the page table itself
-    //requests->log("  Releasing mem frames of PageTables64: %\n\n", pml4_phys_addr / FrameAllocator::get_frame_size());
     mngr.free_frames((void*)as.pml4_phys_addr, sizeof(PageTables64));
 
     // mark address space as invalid
