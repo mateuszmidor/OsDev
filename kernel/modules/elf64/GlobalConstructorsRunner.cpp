@@ -11,7 +11,7 @@ typedef void (*Constructor)();
 extern "C" Constructor start_ctors;
 extern "C" Constructor end_ctors;
 
-namespace utils {
+namespace elf64 {
 
 
 /**
@@ -19,9 +19,9 @@ namespace utils {
  * @brief   Call the constructors of objects defined in global namespace (if any)
  * @note    start_ctors and end_ctors defined in linker.ld
  */
-void GlobalConstructorsRunner::run() {
+void run_global_constructors() {
     for (Constructor* c = &start_ctors; c != &end_ctors; c++)
         (*c)();
 }
 
-} // namespace utils
+} /* namespace elf64 */

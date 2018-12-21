@@ -6,14 +6,22 @@
  */
 
 #include <errno.h>
-#include "kstd.h"
-#include "StringUtils.h"
 #include "VfsCpuInfoEntry.h"
+#include "kstd.h"
 #include "CpuInfo.h"
+#include "StringUtils.h"
+#include "CpuSpeedEstimator.h"
 
 using namespace cstd;
 
 namespace filesystem {
+
+static string cpu_speed_in_mhz_or(const string& fallback_msg) {
+    if (auto result = sysinfo::cpuspeedestimator::estimate_peak_mhz())
+    	return StringUtils::from_int(result.value);
+
+    return fallback_msg;
+}
 
 utils::SyscallResult<EntryState*> VfsCpuInfoEntry::open() {
     if (is_open)
@@ -40,14 +48,11 @@ utils::SyscallResult<u64> VfsCpuInfoEntry::read(EntryState*, void* data, u32 cou
     if (count == 0)
         return {0};
 
-    utils::CpuInfo cpu_info;
+    hardware::CpuInfo cpu_info;
     const string info = StringUtils::format("CPU: % @ %MHz, %\n",
             cpu_info.get_vendor(),
-            cpu_info.get_peak_mhz(),
+            cpu_speed_in_mhz_or("<unknown>"),
             cpu_info.get_multimedia_extensions().to_string());
-
-    if (info.empty())
-        return {0};
 
     u32 read_start = max((s64)info.length() - count, 0);
     u32 num_bytes_to_read = min(count, info.length());

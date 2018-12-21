@@ -28,9 +28,12 @@ struct CpuMultimediaExtensions {
     cstd::string to_string() const;
 };
 
+/**
+ * @brief	This class provides info related to CPU hardware
+ */
 class CpuInfo {
 public:
-	u64 rtdsc() const;
+	u64 get_rtdsc() const;
     cstd::string get_vendor() const;
     CpuMultimediaExtensions get_multimedia_extensions() const;
 

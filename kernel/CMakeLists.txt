@@ -34,7 +34,7 @@ add_executable(${BIN} ${SOURCES_ASM} ${SOURCES_CPP})
 #target_include_directories(${BIN} .)    
 
 target_link_libraries(${BIN}
-    kstd hardware logging memory time filesystem multitasking drivers cpuexceptions ipc utils # sevices
-    fat32 elf64 multiboot2 vga # modules
+    kstd hardware logging memory time filesystem multitasking drivers cpuexceptions ipc # sevices
+    fat32 elf64 multiboot2 vga sysinfo # modules
     int80h procfs syscalls # interface
 )

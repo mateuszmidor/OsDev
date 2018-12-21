@@ -7,7 +7,6 @@
 
 #include "kstd.h"
 #include "Gdt.h"
-#include "KernelLog.h"
 #include "SysCallManager.h"
 #include "SysCallHandler.h"
 #include "SysCallNumbers.h"

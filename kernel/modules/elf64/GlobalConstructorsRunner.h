@@ -8,12 +8,10 @@
 #ifndef SRC_GLOBALCONSTRUCTORSRUNNER_H_
 #define SRC_GLOBALCONSTRUCTORSRUNNER_H_
 
-namespace utils {
+namespace elf64 {
 
-class GlobalConstructorsRunner {
-public:
-    static void run();
-};
+void run_global_constructors();
 
-} // namespace utils
+} /* namespace elf64 */
+
 #endif /* SRC_GLOBALCONSTRUCTORSRUNNER_H_ */

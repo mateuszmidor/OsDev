@@ -30,7 +30,7 @@ string CpuMultimediaExtensions::to_string() const {
 /**
  * @brief   Read Time Stamp Counter that is incremented by CPU on every cycle
  */
-u64 CpuInfo::rtdsc() const {
+u64 CpuInfo::get_rtdsc() const {
     u32 hi, lo;
     asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
     return ((u64)lo | ((u64)hi << 32));

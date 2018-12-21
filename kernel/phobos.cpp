@@ -4,7 +4,7 @@
  *   @date: Jan 23, 2018
  * @author: Mateusz Midor
  */
-#include "Sse.h"
+#include "CpuConfig.h"
 #include "Multiboot2.h"
 #include "GlobalConstructorsRunner.h"
 #include "Gdt.h"
@@ -374,14 +374,14 @@ namespace phobos {
         using namespace details;
 
         // 0. activate the SSE so the kernel code compiled under -O2 can actually run, remap the kernel to higher half
-        Sse::activate_legacy_sse();
+        cpuconfig::activate_legacy_sse();
         PageTables::map_and_load_kernel_address_space();
 
         // 1. initialize multiboot2 info from the data provided by the boot loader
         Multiboot2::initialize(multiboot2_info_ptr);
 
         // 2. run constructors of global objects
-        GlobalConstructorsRunner::run();
+        elf64::run_global_constructors();
 
         // 3. configure temporary console and print PhobOS logo & loading message
         print_phobos_loading();
