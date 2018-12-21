@@ -25,7 +25,7 @@ public:
 
     string  error_msg {};
     T       value {};
-
+    T value_or(const T& fallback) { return (invalid) ? fallback : value; }
 private:
     bool    invalid;
 };
