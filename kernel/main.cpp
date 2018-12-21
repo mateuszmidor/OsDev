@@ -6,7 +6,6 @@
  */
 
 #include "phobos.h"
-#include "VfsRamFifoEntry.h"
 
 using namespace cstd;
 using namespace drivers;

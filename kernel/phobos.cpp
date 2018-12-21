@@ -38,6 +38,9 @@
 #include "VfsMountInfoEntry.h"
 #include "MassStorageMsDos.h"
 #include "VfsFat32MountPoint.h"
+#include "PageFault.h"
+#include "AddressSpaceManager.h"
+#include "phobos.h"
 
 #include "services/cpuexceptions/Requests.h"
 #include "services/multitasking/Requests.h"
@@ -45,9 +48,6 @@
 #include "services/filesystem/Requests.h"
 #include "services/ipc/Requests.h"
 #include "modules/fat32/Requests.h"
-#include "PageFault.h"
-#include "AddressSpaceManager.h"
-#include "phobos.h"
 
 using namespace cstd;
 using namespace logging;
@@ -142,7 +142,7 @@ namespace phobos {
                 }
             }
 
-            if (const auto&  ata_secondary_bus = driver_manager.get_driver<AtaSecondaryBusDriver>()) {
+            if (const auto& ata_secondary_bus = driver_manager.get_driver<AtaSecondaryBusDriver>()) {
                 if (ata_secondary_bus->master_hdd.is_present()) {
                     mount_hdd_fat32_volumes(ata_secondary_bus->master_hdd);
                 }
@@ -434,7 +434,7 @@ namespace phobos {
     	task_manager.add_task(TaskFactory::make_kernel_task(init_task, "init"));
     	Task::idle();
 
-        // 13. we nerver get past Task::idle()
+        // 14. we nerver get past Task::idle()
         __builtin_unreachable();
     }
 
