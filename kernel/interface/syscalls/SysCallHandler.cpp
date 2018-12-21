@@ -650,9 +650,9 @@ s64 SysCallHandler::elf_run(const char path[], const char* nullterm_argv[]) {
     if (!read_result)
         return -(s64)read_result.ec;
 
-    vector<string>* args = new vector<string>;
+    vector<string> args;
     while (*nullterm_argv) {
-        args->push_back(*nullterm_argv);
+        args.push_back(*nullterm_argv);
         nullterm_argv++;
     }
 

@@ -23,7 +23,7 @@ namespace utils {
 /**
  * @brief   Convert vector<string> into char*[] that is stored in user space virtual memory
  */
-char** string_vec_to_argv(const vector<string>& src_vec, AddressSpace& address_space) {
+static char** string_vec_to_argv(const vector<string>& src_vec, AddressSpace& address_space) {
     u8 argc = src_vec.size();
     char** argv =  (char**)memory::alloc_static(address_space, argc * sizeof(char*));
     for (u8 i = 0; i < argc; i++) {
@@ -38,30 +38,25 @@ char** string_vec_to_argv(const vector<string>& src_vec, AddressSpace& address_s
 /**
  * @brief   Run elf as user task and return immediately
  * @param   elf_data ELF64 file data loaded into kernel memory. This function finally free the "elf_data"
- * @param   args User-provided cmd line arguments in kernel memory. This function finally free the "args"
+ * @param   args User-provided cmd line arguments
  * @return  Error code on error, task id on success
  */
-SyscallResult<u32> ElfRunner::run(u8* elf_data, vector<string>* args) const {
+SyscallResult<u32> ElfRunner::run(u8* elf_data, const vector<string>& args) const {
     if (!Elf64::is_elf64(elf_data))
         return {ErrorCode::EC_NOEXEC}; // not executable
 
-    MemoryManager& mm = MemoryManager::instance();
-    size_t pml4_phys_addr = (size_t)mm.alloc_frames(sizeof(PageTables64)); // must be physical, continuous address space
-    if (!pml4_phys_addr)
-        return {ErrorCode::EC_NOMEM};
-
-    // create elf address space mapping, elf_loader will use this address space and load elf segments into it
-    PageTables::map_elf_address_space(pml4_phys_addr);
+    AddressSpace as;
+    if (auto result = memory::alloc_address_space(Elf64::get_available_memory_first_byte(elf_data), ELF_VIRTUAL_MEM_BYTES))
+        as = result.value;
+    else
+        return {result.ec};
 
     // run load_and_run_elf in target address space, so the elf segments can be loaded
     TaskManager& task_manager = TaskManager::instance();
-
-    const size_t HEAP_LOW_LIMIT = Elf64::get_available_memory_first_byte(elf_data);     // first free byte after ELF segments
-    const size_t HEAP_HIGH_LIMIT = ELF_VIRTUAL_MEM_BYTES;
     const auto& current = task_manager.get_current_task();
     const string& CWD = current.task_group_data->cwd;           // inherit current working directory
-    Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(args); // kernel task so it can run "load_and_run_elf"
-    AddressSpace as {HEAP_LOW_LIMIT, HEAP_HIGH_LIMIT, pml4_phys_addr};
+    vector<string>* pargs = new vector<string>(args);
+    Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader")->set_arg1(elf_data)->set_arg2(pargs); // kernel task so it can run "load_and_run_elf"
     task->task_group_data  = std::make_shared<TaskGroupData>(as, CWD, current.task_id); // but in its own address space
 
     if (u32 tid = task_manager.add_task(task)) {
@@ -69,7 +64,7 @@ SyscallResult<u32> ElfRunner::run(u8* elf_data, vector<string>* args) const {
     }
     else {
         delete[] elf_data;
-        delete args;
+        delete pargs;
         return {ErrorCode::EC_PERM};  // running new task not permitted at this time
     }
 }

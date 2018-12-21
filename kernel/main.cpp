@@ -55,7 +55,7 @@ s32 try_load_and_run_terminal() {
 
     // run the elf
     utils::ElfRunner runner;
-    auto run_result = runner.run(elf_data, new vector<string> { "terminal" });
+    auto run_result = runner.run(elf_data, { "terminal" });
     switch (run_result.ec) {
     case ErrorCode::EC_NOMEM:
         phobos::printer.println(" Run failed - no enough memory. System Halt.", EgaColor::Red);
@@ -86,7 +86,7 @@ void wait_terminal_crash(s32 task_id) {
 
 void print_terminal_crashed() {
     phobos::printer.clear_screen();
-    phobos::printer.println("Terminal crashed. Check kernel logs");
+    phobos::printer.println("Terminal crashed. Check kernel logs with 'dmesg' command");
     Task::msleep(3000);
 }
 
