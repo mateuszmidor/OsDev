@@ -9,18 +9,31 @@
 #include "Elf64.h"
 #include "TaskManager.h"
 #include "TaskFactory.h"
-#include "PageTables.h"
 #include "MemoryManager.h"
 #include "ElfRunner.h"
 #include "AddressSpaceManager.h"
 
 using namespace cstd;
-using namespace utils;
 using namespace memory;
 using namespace middlespace;
 using namespace multitasking;
 
 namespace utils {
+
+/**
+ * @brief   Convert vector<string> into char*[] that is stored in user space virtual memory
+ */
+char** string_vec_to_argv(const vector<string>& src_vec, AddressSpace& address_space) {
+    u8 argc = src_vec.size();
+    char** argv =  (char**)memory::alloc_static(address_space, argc * sizeof(char*));
+    for (u8 i = 0; i < argc; i++) {
+        const string& src = src_vec[i];
+        argv[i] = (char*)memory::alloc_static(address_space, src.length() + 1); // +1 for null terminator
+        memcpy(argv[i], src.c_str(), src.length() + 1); // +1 for null terminator
+    }
+
+    return argv;
+}
 
 /**
  * @brief   Run elf as user task and return immediately
@@ -77,7 +90,7 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
 
     // prepare the target run environment in use memory space
     size_t argc = args->size();
-    char** argv = string_vec_to_argv(*args, elf_loader_task.task_group_data);
+    char** argv = string_vec_to_argv(*args, elf_loader_task.task_group_data->address_space);
     delete args;
 
     // run the actual elf task
@@ -88,18 +101,5 @@ void ElfRunner::load_and_run_elf(u8* elf_file_data, vector<string>* args) {
     task_manager.replace_current_task(task);
 }
 
-/**
- * @brief   Convert vector<string> into char*[] that is stored in user space virtual memory
- */
-char** ElfRunner::string_vec_to_argv(const vector<string>& src_vec, TaskGroupDataPtr tgr) {
-    u8 argc = src_vec.size();
-    char** argv =  (char**)memory::alloc_static(tgr->address_space, argc * sizeof(char*));
-    for (u8 i = 0; i < argc; i++) {
-        const string& src = src_vec[i];
-        argv[i] = (char*)memory::alloc_static(tgr->address_space, src.length() + 1); // +1 for null terminator
-        memcpy(argv[i], src.c_str(), src.length() + 1); // +1 for null terminator
-    }
 
-    return argv;
-}
 } /* namespace userspace */
