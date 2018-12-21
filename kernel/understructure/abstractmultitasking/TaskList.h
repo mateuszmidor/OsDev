@@ -14,9 +14,9 @@ class Task;
  * @brief   This class represents a list of Tasks to hold the running/waiting tasks
  */
 
-class TaskList : public cstd::List<multitasking::Task*> {
+class TaskList : public cstd::List<Task*> {
 };
 
-}
+} /* namespace multitasking */
 
 #endif

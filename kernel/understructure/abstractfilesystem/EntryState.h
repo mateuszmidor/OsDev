@@ -17,6 +17,6 @@ struct EntryState {
     virtual ~EntryState() {}
 };
 
-}
+} /* namespace filesystem */
 
 #endif /* KERNEL_SERVICES_FILESYSTEM_BASE_ENTRYSTATE_H_ */

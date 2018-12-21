@@ -38,6 +38,6 @@ public:
 
 using OpenEntryPtr = std::shared_ptr<OpenEntry>;
 
-} // filesystem
+} /* namespace filesystem */
 
 #endif

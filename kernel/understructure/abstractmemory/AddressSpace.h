@@ -11,6 +11,6 @@ struct AddressSpace {
     u64     pml4_phys_addr;     // page table root physical address
 };
 
-}
+} /* namespace memory */
 
 #endif
