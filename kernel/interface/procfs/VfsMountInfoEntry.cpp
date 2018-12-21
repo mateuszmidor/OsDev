@@ -87,12 +87,12 @@ string VfsMountInfoEntry::get_info() const {
 }
 
 string VfsMountInfoEntry::get_hdd_info(drivers::AtaDevice& hdd) const {
-    if (!MassStorageMsDos::verify(hdd)) {
+    if (!fat32::MassStorageMsDos::verify(hdd)) {
         return "Not MBR formatted device\n";
     }
 
     string result;
-    MassStorageMsDos ms(hdd);
+    fat32::MassStorageMsDos ms(hdd);
     for (auto& v : ms.get_volumes()) {
         u32 size_in_bytes = v.get_size_in_bytes();
         u32 used_space_in_bytes = v.get_used_space_in_bytes();

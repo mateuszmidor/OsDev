@@ -9,6 +9,7 @@
 #include "VfsFat32FileEntry.h"
 
 namespace filesystem {
+namespace fat32 {
 
 
 /**
@@ -51,4 +52,5 @@ VfsEntryPtr VfsFat32DirectoryEntry::wrap_entry(const Fat32Entry& e) const {
         return std::static_pointer_cast<VfsEntry>(std::make_shared<VfsFat32FileEntry>(e));
 }
 
+} /* namespace fat32 */
 } /* namespace filesystem */

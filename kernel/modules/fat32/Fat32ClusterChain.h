@@ -13,6 +13,7 @@
 #include "Fat32Table.h"
 
 namespace filesystem {
+namespace fat32 {
 
 /**
  * @brief   This struct holds fat32 entry read/write state - read/write offset.
@@ -57,6 +58,7 @@ private:
 
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_FAT32_FAT32CLUSTERCHAIN_H_ */

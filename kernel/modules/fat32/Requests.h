@@ -5,14 +5,13 @@
  * @author: Mateusz Midor
  */
 
-#ifndef KERNEL_SERVICES_FILESYSTEM_REQUESTS_H_
-#define KERNEL_SERVICES_FILESYSTEM_REQUESTS_H_
+#ifndef KERNEL_MODULES_FAT32_REQUESTS_H_
+#define KERNEL_MODULES_FAT32_REQUESTS_H_
 
 #include "StringUtils.h"
 
-// CAREFUL: when changed namespace name,extern Requests* requests; will no longer share
-//			pointer from filesystem::requests
 namespace filesystem {
+namespace fat32 {
 
 /**
  * @brief	This interface allows the component to access the outer world services,
@@ -36,6 +35,7 @@ public: // Actual methods to implement
  */
 extern Requests* requests;
 
-}
+} /* namespace fat32 */
+} /* namespace filesystem */
 
-#endif /* KERNEL_SERVICES_FILESYSTEM_REQUESTS_H_ */
+#endif /* KERNEL_MODULES_FAT32_REQUESTS_H_ */

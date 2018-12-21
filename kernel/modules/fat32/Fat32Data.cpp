@@ -9,6 +9,7 @@
 #include "Fat32Data.h"
 
 namespace filesystem {
+namespace fat32 {
 
 Fat32Data::Fat32Data(const drivers::AtaDevice& hdd) :
     hdd(hdd) {
@@ -148,4 +149,5 @@ bool Fat32Data::is_cluster_beginning(u32 position) const {
     const u16 CLUSTER_SIZE_IN_BYTES = sectors_per_cluster * bytes_per_sector;
     return (position % CLUSTER_SIZE_IN_BYTES) == 0;
 }
+} /* namespace fat32 */
 } /* namespace filesystem */

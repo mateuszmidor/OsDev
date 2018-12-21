@@ -8,6 +8,7 @@
 #include "VfsFat32FileEntry.h"
 
 namespace filesystem {
+namespace fat32 {
 
 VfsFat32FileEntry::VfsFat32FileEntry(const Fat32Entry& e) : entry(e) {
 }
@@ -27,4 +28,5 @@ utils::SyscallResult<void> VfsFat32FileEntry::truncate(EntryState* state, u32 ne
         return {middlespace::ErrorCode::EC_INVAL};
 }
 
+} /* namespace fat32 */
 } /* namespace filesystem */

@@ -12,6 +12,7 @@
 #include "String.h"
 
 namespace filesystem {
+namespace fat32 {
 
 class Fat32Utils {
 public:
@@ -21,6 +22,7 @@ public:
     static void make_8_3_space_padded_filename(const cstd::string& filename, cstd::string& name, cstd::string& ext);
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_FAT32_FAT32UTILS_H_ */

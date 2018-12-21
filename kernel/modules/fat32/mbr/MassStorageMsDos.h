@@ -13,6 +13,7 @@
 #include "Vector.h"
 
 namespace filesystem {
+namespace fat32 {
 
 struct PartitionTableEntry {
     u8  bootable;
@@ -61,6 +62,7 @@ private:
     cstd::vector<VolumeFat32> volumes;  // in the future should be of type: shared_ptr<GenericVolume>
 };
 
-} /* namespace cpuexceptions */
+} /* namespace fat32 */
+} /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_MASSSTORAGEMSDOS_H_ */

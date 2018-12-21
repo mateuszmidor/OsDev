@@ -12,6 +12,7 @@
 #include "Fat32Structs.h"
 
 namespace filesystem {
+namespace fat32 {
 
 /**
  * @brief   Fat32 volume data. It knows about sectors and clusters but not about cluster chains so read/write cant cross cluster boundary.
@@ -40,6 +41,7 @@ private:
 
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_FAT32_FAT32DATA_H_ */

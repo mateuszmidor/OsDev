@@ -11,6 +11,7 @@
 #include "types.h"
 
 namespace filesystem {
+namespace fat32 {
 /**
  * @name    VolumeBootRecordFat32
  * @brief   Volume metainfo; located at partition first sector
@@ -111,7 +112,7 @@ struct DirectoryEntryFat32 {
 
 } __attribute__((packed));  // 32 bytes in total
 
-
-} // filesystem
+}  /* namespace fat32 */
+}  /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_FAT32_FAT32STRUCTS_H_ */

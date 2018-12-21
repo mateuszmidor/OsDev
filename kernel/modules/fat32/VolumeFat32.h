@@ -156,6 +156,7 @@ WRITE FILE ENTRY
 #include "UnixPath.h"
 
 namespace filesystem {
+namespace fat32 {
 
 /**
  * @name    VolumeFat32
@@ -190,6 +191,7 @@ private:
     u32                         partition_size_in_sectors;
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_FAT32_VOLUMEFAT32_H_ */

@@ -13,6 +13,7 @@
 using namespace cstd;
 
 namespace filesystem {
+namespace fat32 {
 
 DirectoryEntryFat32 Fat32Entry::make_directory_entry_fat32() const {
     DirectoryEntryFat32 result;
@@ -531,4 +532,5 @@ bool Fat32Entry::is_initialized() const {
     return !parent_data.is_empty();
 }
 
+} /* namespace fat32 */
 } /* namespace filesystem */

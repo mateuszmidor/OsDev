@@ -11,6 +11,7 @@
 using namespace cstd;
 
 namespace filesystem {
+namespace fat32 {
 
 bool Fat32Utils::fits_in_8_3(const cstd::string& filename) {
     if (filename.empty())
@@ -84,4 +85,5 @@ void Fat32Utils::make_8_3_space_padded_filename(const string& filename, string& 
          ext.push_back(' ');
 }
 
+} /* namespace fat32 */
 } /* namespace filesystem */

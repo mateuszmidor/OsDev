@@ -111,18 +111,27 @@ namespace phobos {
          * @brief   Mount all volumes available in "hdd" under the root
          */
         void mount_hdd_fat32_volumes(const AtaDevice& hdd) {
-            if (!MassStorageMsDos::verify(hdd))
+            if (!fat32::MassStorageMsDos::verify(hdd))
                 return;
 
-            MassStorageMsDos ms(hdd);
+            fat32::MassStorageMsDos ms(hdd);
             for (const auto& v : ms.get_volumes())
-                vfs_manager.attach("/", std::make_shared<VfsFat32MountPoint>(v));
+                vfs_manager.attach("/", std::make_shared<fat32::VfsFat32MountPoint>(v));
         }
 
         /**
          * @brief   Install all available fat32 volumes under "/"
          */
+        class Fat32Requests : public filesystem::fat32::Requests {
+        public:
+            void log(const cstd::string& s) override {
+                klog.put(s);
+            }
+        } fat32_requests;
+
         void install_fat32_fs() {
+            filesystem::fat32::requests = &fat32_requests;
+
             if (const auto& ata_primary_bus = driver_manager.get_driver<AtaPrimaryBusDriver>()) {
                 if (ata_primary_bus->master_hdd.is_present()) {
                     mount_hdd_fat32_volumes(ata_primary_bus->master_hdd);

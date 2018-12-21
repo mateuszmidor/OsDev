@@ -16,6 +16,7 @@
 #include "String.h"
 
 namespace filesystem {
+namespace fat32 {
 
 // directory enumeration result
 enum class Fat32EnumerateResult {
@@ -99,6 +100,7 @@ private:
     u32                 parent_index;   // DirectoryEntryFat32 index in parent_data
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_FAT32_FAT32ENTRY_H_ */

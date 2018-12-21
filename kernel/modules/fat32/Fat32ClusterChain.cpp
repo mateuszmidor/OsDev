@@ -12,6 +12,7 @@
 using namespace cstd;
 
 namespace filesystem {
+namespace fat32 {
 
 Fat32ClusterChain::Fat32ClusterChain(const Fat32Table& fat_table, const Fat32Data& fat_data, u32 head_cluster, u32 size) :
     fat_table(fat_table),
@@ -248,7 +249,7 @@ u32 Fat32ClusterChain::get_cluster_for_write(u32 current_cluster) {
 
     if (fat_table.is_allocated_cluster(current_cluster)) {
         cluster = current_cluster;
-        filesystem::requests->log("Fat32ClusterChain::get_cluster_for_write: reusing cluster %\n", cluster);
+        requests->log("Fat32ClusterChain::get_cluster_for_write: reusing cluster %\n", cluster);
     } else {
         attach_cluster();
         cluster = get_tail();
@@ -257,4 +258,5 @@ u32 Fat32ClusterChain::get_cluster_for_write(u32 current_cluster) {
 
     return cluster;
 }
+} /* namespace fat32 */
 } /* namespace filesystem */

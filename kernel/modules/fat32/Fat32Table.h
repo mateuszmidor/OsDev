@@ -11,6 +11,7 @@
 #include "AtaDriver.h"
 
 namespace filesystem {
+namespace fat32 {
 
 class Fat32Table {
 public:
@@ -49,6 +50,7 @@ private:
     u8                          sectors_per_cluster     = 0;
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_FAT32_FAT32TABLE_H_ */

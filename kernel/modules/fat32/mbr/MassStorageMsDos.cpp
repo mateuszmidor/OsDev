@@ -11,6 +11,7 @@ using drivers::AtaDevice;
 using namespace cstd;
 
 namespace filesystem {
+namespace fat32 {
 
 MasterBootRecord MassStorageMsDos::read_mbr(const drivers::AtaDevice& hdd) {
     MasterBootRecord mbr;
@@ -41,4 +42,5 @@ vector<VolumeFat32>& MassStorageMsDos::get_volumes() {
     return volumes;
 }
 
+} /* namespace fat32 */
 } /* namespace filesystem */

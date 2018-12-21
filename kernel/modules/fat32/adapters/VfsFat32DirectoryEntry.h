@@ -12,6 +12,7 @@
 #include "Fat32Entry.h"
 
 namespace filesystem {
+namespace fat32 {
 
 /**
  * @brief   This class is a Virtual File System adapter for Fat32 directory entry
@@ -34,6 +35,7 @@ private:
 
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* KERNEL_SERVICES_FILESYSTEM_ADAPTERS_VFSFAT32DIRECTORYENTRY_H_ */

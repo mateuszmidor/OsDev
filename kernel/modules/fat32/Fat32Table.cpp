@@ -9,6 +9,7 @@
 #include "Requests.h"
 
 namespace filesystem {
+namespace fat32 {
 
 Fat32Table::Fat32Table(const drivers::AtaDevice& hdd) :
     hdd(hdd) {
@@ -250,4 +251,5 @@ u32 Fat32Table::detach_cluster(u32 first_cluster, u32 cluster) const {
     return first_cluster;
 }
 
+} /* namespace fat32 */
 } /* namespace filesystem */

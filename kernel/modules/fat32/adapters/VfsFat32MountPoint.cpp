@@ -10,6 +10,7 @@
 #include "VfsFat32MountPoint.h"
 
 namespace filesystem {
+namespace fat32 {
 
 VfsFat32MountPoint::VfsFat32MountPoint(const VolumeFat32& volume) : volume(volume), root(volume.get_entry("/")), name(volume.get_label()) {
 }
@@ -63,4 +64,5 @@ VfsEntryPtr VfsFat32MountPoint::wrap_entry(const Fat32Entry& e) const {
     else
         return std::static_pointer_cast<VfsEntry>(std::make_shared<VfsFat32FileEntry>(e));
 }
+} /* namespace fat32 */
 } /* namespace filesystem */

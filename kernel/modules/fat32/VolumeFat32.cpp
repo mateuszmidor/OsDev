@@ -12,6 +12,7 @@
 using namespace cstd;
 
 namespace filesystem {
+namespace fat32 {
 
 /**
  * Constructor.
@@ -311,4 +312,5 @@ Fat32Entry VolumeFat32::empty_entry() const {
 }
 
 
+} /* namespace fat32 */
 } /* namespace filesystem */

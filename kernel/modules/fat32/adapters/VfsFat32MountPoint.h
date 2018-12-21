@@ -12,6 +12,7 @@
 #include "VolumeFat32.h"
 
 namespace filesystem {
+namespace fat32 {
 
 /**
  * @brief   This class is VfsMountPoint adapter for Fat32Volume, so Fat32Volume can be mounted in VFS
@@ -42,6 +43,7 @@ private:
     cstd::string        name;
 };
 
+} /* namespace fat32 */
 } /* namespace filesystem */
 
 #endif /* SRC_FILESYSTEM_VFSFAT32MOUNTPOINT_H_ */
