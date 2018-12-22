@@ -69,7 +69,7 @@ u64 TimeManager::get_hz() const {
  * @return  Newly added timer id
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-u64 TimeManager::emplace(u32 expire_millis, const OnTimerExpire& on_expire) {
+TimerId TimeManager::emplace(u32 expire_millis, const OnTimerExpire& on_expire) {
     return emplace(expire_millis, 0, on_expire);
 }
 
@@ -81,7 +81,7 @@ u64 TimeManager::emplace(u32 expire_millis, const OnTimerExpire& on_expire) {
  * @return  Newly added timer id
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-u64 TimeManager::emplace(u32 expire_millis, u32 reload_millis, const OnTimerExpire& on_expire) {
+TimerId TimeManager::emplace(u32 expire_millis, u32 reload_millis, const OnTimerExpire& on_expire) {
     KLockGuard lock;    // prevent reschedule
 
     u32 remaining_ticks = get_hz() * expire_millis / 1000;
@@ -97,7 +97,7 @@ u64 TimeManager::emplace(u32 expire_millis, u32 reload_millis, const OnTimerExpi
  * @brief   Cancel timer of given id
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-void TimeManager::cancel(u64 timer_id) {
+void TimeManager::cancel(TimerId timer_id) {
     KLockGuard lock;    // prevent reschedule
 
     if (Timer* t = timers.get_by_tid(timer_id))

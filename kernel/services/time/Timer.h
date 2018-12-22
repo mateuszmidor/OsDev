@@ -9,7 +9,7 @@
 #define KERNEL_TIME_TIMER_H_
 
 #include <functional>
-#include "types.h"
+#include "TimerId.h"
 
 namespace ktime {
 
@@ -23,7 +23,7 @@ public:
     OnTimerExpire   on_expire;
     s64             remaining_ticks;        // how many clock ticks left to expire
     u32             reload_ticks;           // value to reset the remaining_ticks to after timer expires
-    u64             timer_id        {0};    // set by TimeManager when adding timer
+    TimerId         timer_id        {0};    // set by TimeManager when adding timer
 };
 
 } /* namespace time */

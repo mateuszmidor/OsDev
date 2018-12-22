@@ -29,13 +29,13 @@ void corner_counter() {
     }
 }
 
-u64 start_loading_animation() {
+TimerId start_loading_animation() {
     phobos::printer.print("  loading terminal");
     ktime::OnTimerExpire on_expire = [] () { phobos::printer.print("."); };
     return phobos::time_manager.emplace(1000u, 1000u, on_expire);
 }
 
-void stop_loading_animation(u64 timer_id) {
+void stop_loading_animation(TimerId timer_id) {
     phobos::time_manager.cancel(timer_id);
 }
 
@@ -79,7 +79,7 @@ s32 try_load_and_run_terminal() {
     return run_result.value;
 }
 
-void wait_terminal_crash(s32 task_id) {
+void wait_terminal_crash(TaskId task_id) {
     phobos::task_manager.wait(task_id);
     Task::yield();
 }
