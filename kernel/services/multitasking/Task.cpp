@@ -51,7 +51,7 @@ Task::~Task() {
  * @brief   Setup cpu state and return address on the task stack before running the task
  * @param   exitpoint Address of a function that the task should return to upon exit
  */
-void Task::prepare(u32 tid, TaskExitPoint exitpoint) {
+void Task::prepare(TaskId tid, TaskExitPoint exitpoint) {
     const u64 STACK_END = (u64)stack_addr + stack_size;
 
     // prepare task epilogue ie. where to return from task function
@@ -102,7 +102,7 @@ void Task::exit_group(u64 result_code) {
  *          Negative error code on failure
  * @note    If task_id == current_task_id, this call never returns but another task is picked instead
  */
-s32 Task::kill(u32 task_id, s32 signal) {
+s32 Task::kill(TaskId task_id, s32 signal) {
     u32 result;
     asm volatile("int $0x80" : "=a"(result) : "a"(middlespace::Int80hSysCallNumbers::KILL), "b"(task_id), "c"(signal));
     return -result;

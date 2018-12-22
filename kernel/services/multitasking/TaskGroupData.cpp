@@ -10,7 +10,7 @@
 
 namespace multitasking {
 
-TaskGroupData::TaskGroupData(const memory::AddressSpace& as, const cstd::string& cwd, u32 parent_id) :
+TaskGroupData::TaskGroupData(const memory::AddressSpace& as, const cstd::string& cwd, TaskId parent_id) :
         address_space(as), cwd(cwd), parent_task_id(parent_id) {
 }
 

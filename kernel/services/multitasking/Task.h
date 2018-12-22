@@ -9,6 +9,7 @@
 #define SRC_MULTITASKING_TASK_H_
 
 #include "CpuState.h"
+#include "TaskId.h"
 #include "TaskList.h"
 #include "TaskGroupData.h"
 
@@ -37,7 +38,7 @@ struct Task {
     // Or created from scratch
     Task(TaskEntryPoint2 entrypoint, const char name[], u64 arg1, u64 arg2, bool user_space, u64 stack_addr, u64 stack_size, TaskGroupDataPtr task_group_data);
     ~Task();
-    void prepare(u32 tid, TaskExitPoint exitpoint);
+    void prepare(TaskId tid, TaskExitPoint exitpoint);
 
     bool is_parent_of(const Task& t) const;
     bool is_in_group(const TaskGroupDataPtr& g) const;
@@ -47,7 +48,7 @@ struct Task {
     static void msleep(u64 milliseconds);
     static void exit(u64 result_code = 0);
     static void exit_group(u64 result_code = 0);
-    static s32 kill(u32 task_id, s32 signal);
+    static s32 kill(TaskId task_id, s32 signal);
 
 
     template <class T>
@@ -58,7 +59,7 @@ struct Task {
 
 
 
-    u32                 task_id;            // set by TaskManager when first adding the task
+    TaskId              task_id;            // set by TaskManager when first adding the task
     TaskState           state;
     TaskEntryPoint2     entrypoint;         // covers TaskEntryPoint0 and TaskEntryPoint1
     cstd::string        name;

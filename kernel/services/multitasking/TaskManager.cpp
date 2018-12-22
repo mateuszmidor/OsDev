@@ -48,10 +48,10 @@ void TaskManager::install_multitasking() {
  * @return  Newly added task id or 0 if max task count is reached
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  */
-u32 TaskManager::add_task(Task* task) {
+TaskId TaskManager::add_task(Task* task) {
     KLockGuard lock;    // prevent reschedule
 
-    u32 tid = next_task_id;
+    TaskId tid = next_task_id;
     task->prepare(tid, TaskManager::on_task_finished);
     if (!scheduler.add(task)) {
         delete task;
@@ -72,7 +72,7 @@ void TaskManager::replace_current_task(Task* task) {
     KLockGuard lock;    // prevent reschedule, especially between "current_task->pml4_phys_addr = 0" and "Task::exit()"
 
     Task* current_task = scheduler.get_current_task();
-    u32 tid = current_task->task_id;
+    TaskId tid = current_task->task_id;
     task->prepare(tid, TaskManager::on_task_finished);
     if (!scheduler.add(task)) {
         delete task;
@@ -186,7 +186,7 @@ hardware::CpuState* TaskManager::kill_current_task_group() {
  * @return  Newly selected task if suicide kill, current task otherwise
  * @note    Execution context: Interrupt only (int 80h)
  */
-hardware::CpuState* TaskManager::kill_task_group(CpuState* cpu_state, u32 task_id) {
+hardware::CpuState* TaskManager::kill_task_group(CpuState* cpu_state, TaskId task_id) {
     auto task = scheduler.get_by_tid(task_id);
     if (!task) {
         cpu_state->rax = -(s64)middlespace::ErrorCode::EC_SRCH; // return value
@@ -248,7 +248,7 @@ Task TaskManager::get_boot_task() const {
  * @note    Execution context: Task/Interrupt; be careful with possible reschedule during execution of this method
  * @note    To actually reschedule, one should call Task::yield() afterwards
  */
-bool TaskManager::wait(u32 task_id) {
+bool TaskManager::wait(TaskId task_id) {
     KLockGuard lock;    // prevent reschedule
 
     if (Task* t = scheduler.get_by_tid(task_id)) {
