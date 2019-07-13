@@ -87,9 +87,9 @@ namespace phobos {
          * @brief   Install ram fs /dev
          */
         void install_dev_fs() {
-            auto dev = std::make_shared<VfsRamDirectoryEntry>("dev");
-            dev->attach_entry(std::make_shared<VfsRamFifoEntry>("mouse"));
-            dev->attach_entry(std::make_shared<VfsRamFifoEntry>("keyboard"));
+            auto dev = cstd::make_shared<VfsRamDirectoryEntry>("dev");
+            dev->attach_entry(cstd::make_shared<VfsRamFifoEntry>("mouse"));
+            dev->attach_entry(cstd::make_shared<VfsRamFifoEntry>("keyboard"));
             vfs_manager.attach("/", dev);
         }
 
@@ -97,14 +97,14 @@ namespace phobos {
          * @brief   Install ram fs /proc
          */
         void install_proc_fs() {
-            vfs_manager.attach("/", std::make_shared<VfsRamMountPoint>("proc"));
-            vfs_manager.attach("/proc", std::make_shared<VfsKmsgEntry>());
-            vfs_manager.attach("/proc", std::make_shared<VfsMemInfoEntry>());
-            vfs_manager.attach("/proc", std::make_shared<VfsDateEntry>());
-            vfs_manager.attach("/proc", std::make_shared<VfsCpuInfoEntry>());
-            vfs_manager.attach("/proc", std::make_shared<VfsPciInfoEntry>());
-            vfs_manager.attach("/proc", std::make_shared<VfsPsInfoEntry>());
-            vfs_manager.attach("/proc", std::make_shared<VfsMountInfoEntry>());
+            vfs_manager.attach("/", cstd::make_shared<VfsRamMountPoint>("proc"));
+            vfs_manager.attach("/proc", cstd::make_shared<VfsKmsgEntry>());
+            vfs_manager.attach("/proc", cstd::make_shared<VfsMemInfoEntry>());
+            vfs_manager.attach("/proc", cstd::make_shared<VfsDateEntry>());
+            vfs_manager.attach("/proc", cstd::make_shared<VfsCpuInfoEntry>());
+            vfs_manager.attach("/proc", cstd::make_shared<VfsPciInfoEntry>());
+            vfs_manager.attach("/proc", cstd::make_shared<VfsPsInfoEntry>());
+            vfs_manager.attach("/proc", cstd::make_shared<VfsMountInfoEntry>());
         }
 
         /**
@@ -116,7 +116,7 @@ namespace phobos {
 
             fat32::MassStorageMsDos ms(hdd);
             for (const auto& v : ms.get_volumes())
-                vfs_manager.attach("/", std::make_shared<fat32::VfsFat32MountPoint>(v));
+                vfs_manager.attach("/", cstd::make_shared<fat32::VfsFat32MountPoint>(v));
         }
 
         /**

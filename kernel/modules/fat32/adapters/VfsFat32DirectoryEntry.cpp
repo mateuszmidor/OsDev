@@ -47,9 +47,9 @@ utils::SyscallResult<VfsEntryPtr> VfsFat32DirectoryEntry::get_entry(const UnixPa
 
 VfsEntryPtr VfsFat32DirectoryEntry::wrap_entry(const Fat32Entry& e) const {
     if (e.is_directory())
-        return std::static_pointer_cast<VfsEntry>(std::make_shared<VfsFat32DirectoryEntry>(e));
+        return std::static_pointer_cast<VfsEntry>(cstd::make_shared<VfsFat32DirectoryEntry>(e));
     else
-        return std::static_pointer_cast<VfsEntry>(std::make_shared<VfsFat32FileEntry>(e));
+        return std::static_pointer_cast<VfsEntry>(cstd::make_shared<VfsFat32FileEntry>(e));
 }
 
 } /* namespace fat32 */

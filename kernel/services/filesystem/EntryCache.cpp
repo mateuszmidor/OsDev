@@ -16,7 +16,7 @@ namespace filesystem {
  * @brief   Put entry to cache and return its cached version
  */
 VfsCachedEntryPtr EntryCache::allocate(const VfsEntryPtr& e, const UnixPath& path) {
-    auto cached = std::make_shared<VfsCachedEntry>(e);
+    auto cached = cstd::make_shared<VfsCachedEntry>(e);
     path_to_entry[path] = cached;
     return cached;
 }

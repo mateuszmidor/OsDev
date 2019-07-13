@@ -133,7 +133,7 @@ static string snap_path_tail(string& path) {
  * @brief   Install the root "/"
  */
 void VfsTree::install() {
-    auto root_dir = std::make_shared<VfsRamDirectoryEntry>("/"); // empty root dir
+    auto root_dir = cstd::make_shared<VfsRamDirectoryEntry>("/"); // empty root dir
     entry_cache.allocate(root_dir, "/");
 }
 

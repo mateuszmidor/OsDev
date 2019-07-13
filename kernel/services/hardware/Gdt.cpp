@@ -7,6 +7,7 @@
 
 #include "kstd.h"
 #include "Gdt.h"
+
 /**
  * @brief   Statically allocated normal kernel stack (the top of it)
  * @see     boot.S

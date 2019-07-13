@@ -40,7 +40,7 @@ utils::SyscallResult<OpenEntryPtr> VfsManager::open(const UnixPath& path) {
 
     const auto on_destroy = rtg::run_this_guy(&VfsTree::release_cached, tree);
 
-    return {std::make_shared<VfsOpenEntry>(entry, state, on_destroy)};
+    return {cstd::make_shared<VfsOpenEntry>(entry, state, on_destroy)};
 }
 
 utils::SyscallResult<void> VfsManager::attach(const UnixPath& path, const VfsEntryPtr& entry) {

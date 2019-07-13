@@ -16,7 +16,7 @@ using namespace middlespace;
 namespace filesystem {
 
 VfsRamMountPoint::VfsRamMountPoint(const cstd::string& name) : name(name) {
-    root = std::make_shared<VfsRamDirectoryEntry>(name);
+    root = cstd::make_shared<VfsRamDirectoryEntry>(name);
 }
 
 /**
@@ -78,9 +78,9 @@ utils::SyscallResult<VfsEntryPtr> VfsRamMountPoint::create_entry(const UnixPath&
     VfsEntryPtr entry;
     auto entry_name = path.extract_file_name();
     if (is_directory)
-        entry = std::make_shared<VfsRamDirectoryEntry>(entry_name);
+        entry = cstd::make_shared<VfsRamDirectoryEntry>(entry_name);
     else
-        entry = std::make_shared<VfsRamDummyFileEntry>(entry_name);
+        entry = cstd::make_shared<VfsRamDummyFileEntry>(entry_name);
 
     auto parent_dir = std::static_pointer_cast<VfsRamDirectoryEntry>(parent);
     if (!parent_dir->attach_entry(entry))  {

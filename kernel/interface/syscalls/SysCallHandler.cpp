@@ -376,7 +376,7 @@ s32 SysCallHandler::sys_mknod(const char path[], int mode, int dev) {
         return -EINVAL;
 
     UnixPath absolute_path = make_absolute_path(path);
-    auto nod = std::make_shared<VfsRamFifoEntry>(absolute_path.extract_file_name());
+    auto nod = cstd::make_shared<VfsRamFifoEntry>(absolute_path.extract_file_name());
     auto attach_result = VfsManager::instance().attach(absolute_path.extract_directory(), nod);
     return -(s32)attach_result.ec;
 }

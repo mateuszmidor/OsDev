@@ -5,6 +5,7 @@
  * @author: Mateusz Midor
  */
 
+
 #include "VfsFat32FileEntry.h"
 #include "VfsFat32DirectoryEntry.h"
 #include "VfsFat32MountPoint.h"
@@ -60,9 +61,9 @@ utils::SyscallResult<void> VfsFat32MountPoint::move_entry(const UnixPath& unix_p
 
 VfsEntryPtr VfsFat32MountPoint::wrap_entry(const Fat32Entry& e) const {
     if (e.is_directory())
-        return std::static_pointer_cast<VfsEntry>(std::make_shared<VfsFat32DirectoryEntry>(e));
+        return std::static_pointer_cast<VfsEntry>(cstd::make_shared<VfsFat32DirectoryEntry>(e));
     else
-        return std::static_pointer_cast<VfsEntry>(std::make_shared<VfsFat32FileEntry>(e));
+        return std::static_pointer_cast<VfsEntry>(cstd::make_shared<VfsFat32FileEntry>(e));
 }
 } /* namespace fat32 */
 } /* namespace filesystem */

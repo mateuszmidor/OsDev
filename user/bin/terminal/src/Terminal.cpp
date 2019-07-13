@@ -10,6 +10,7 @@
 #include "Cin.h"
 #include "Cout.h"
 #include "Terminal.h"
+#include "MakeShared.h"
 #include "StringUtils.h"
 
 #include "cmds/cd.h"
@@ -112,7 +113,7 @@ void Terminal::setup_screen_and_print_welcome() {
     u16 vga_width;
     u16 vga_height;
     syscalls::vga_get_width_height(&vga_width, &vga_height);
-    printer.reset(std::make_shared<ScrollableScreenPrinter>(0, 0, vga_width - 1, vga_height - 1));
+    printer.reset(cstd::make_shared<ScrollableScreenPrinter>(0, 0, vga_width - 1, vga_height - 1));
 
     // print welcome message
     string line(vga_width - 1, '=');

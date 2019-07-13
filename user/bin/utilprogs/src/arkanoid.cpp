@@ -17,6 +17,7 @@
 #include "Mouse.h"
 #include "Monitor.h"
 #include "VgaDevice.h"
+#include "MakeShared.h"
 #include "StringUtils.h"
 #include "Optional.h"
 
@@ -271,10 +272,11 @@ public:
     }
 };
 
+
 class Game {
 public:
     Game(VgaDevice& vga) : killer_bottom_edge(0, vga.height, vga.width, 50.0), vga(vga), board(vga.width, vga.height) {
-        paddle.reset(std::make_shared<Paddle>());
+        paddle.reset(cstd::make_shared<Paddle>()); // doesnt compile as make_shared needs rtti for some reason
         mouse_input_task_id = syscalls::task_lightweight_run((unsigned long long)mouse_input_task, (u64)this, "arkanoid_mouse_input");
     }
 

@@ -73,7 +73,7 @@ static Task* make_elf_loader_task(const AddressSpace& as) {
     const string& CWD = current.task_group_data->cwd;           // inherit current working directory
 
     Task* task = TaskFactory::make_kernel_task(load_and_run_elf, "elf_loader"); // kernel task so it can run "load_and_run_elf"
-    task->task_group_data  = std::make_shared<TaskGroupData>(as, CWD, current.task_id); // but in its own address space
+    task->task_group_data  = cstd::make_shared<TaskGroupData>(as, CWD, current.task_id); // but in its own address space
     return task;
 }
 

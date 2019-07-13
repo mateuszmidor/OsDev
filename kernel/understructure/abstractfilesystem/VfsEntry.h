@@ -13,6 +13,7 @@
 #include "types.h"
 #include "UnixPath.h"
 #include "EntryState.h"
+#include "MakeShared.h"
 #include "SyscallResult.h"
 
 namespace filesystem {
